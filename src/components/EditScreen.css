@@ -1,12 +1,13 @@
 .edit-screen-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 90px);
 }
 
 .main-container {
   display: flex;
   flex: 1;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -15,6 +16,7 @@
   background-color: #f9f9f9;
   border-right: 1px solid #ddd;
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .data-list {
@@ -44,9 +46,6 @@
   flex: 1;
   padding: 30px;
   overflow-y: auto;
-  width: 700px; 
-  min-width: 700px;
-  max-width: 700px; 
 }
 
 .welcome-message {
@@ -68,7 +67,7 @@
 }
 
 .form-container {
-  max-width: 600px;
+  max-width: 100%;
 }
 
 .form-group {
@@ -87,6 +86,7 @@
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .dynamic-list .item {
@@ -110,19 +110,39 @@
   line-height: 1;
 }
 
+/* General Button Styling */
+.editor-panel button,
+.btn-secondary {
+  padding: 8px 16px;
+  border: 1px solid #adadad;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #fff;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+  color: #333;
+}
+
+.editor-panel button:hover {
+  background-color: #f0f0f0;
+}
+
 .btn-primary {
-  background-color: #4CAF50;
-  color: white;
+  background-color: #4CAF50 !important;
+  color: white !important;
+  border-color: #4CAF50 !important;
+}
+.btn-primary:hover {
+  background-color: #45a049 !important;
 }
 
 .btn-danger {
-  background-color: #f44336;
-  color: white;
+  background-color: #f44336 !important;
+  color: white !important;
+  border-color: #f44336 !important;
 }
-
-.btn-secondary {
-  background-color: #e7e7e7;
-  color: black;
+.btn-danger:hover {
+  background-color: #e53935 !important;
 }
 
 .btn-block {

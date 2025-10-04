@@ -21,6 +21,7 @@ const App = () => {
   return (
     <div className={`App ${isEditMode ? "edit-mode" : ""}`}>
       <header className="App-header">
+        <div className="header-spacer"></div>
         <h1>Family Lineage</h1>
         <button
           className="edit-button"
