@@ -1,0 +1,168 @@
+
+/* --- Google Font --- */
+@import url("https://fonts.googleapis.com/css2?family=Hind:wght@300;400;600&family=Yatra+One&display=swap");
+
+/* --- Base Styles & Colors --- */
+:root {
+    --font-heading: "Yatra One", cursive;
+    --font-body: "Hind", sans-serif;
+    --color-bg: #fff8e1; /* Pastel Cream */
+    --color-text: #4e342e; /* Dark Brown */
+    --color-primary: #ffab91; /* Pastel Coral */
+    --color-secondary: #c5e1a5; /* Pastel Green */
+    --color-accent: #80cbc4; /* Pastel Teal */
+    --color-node-border: #ffcc80; /* Pastel Orange */
+    --color-shadow: rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    /* Subtle paisley background pattern */
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23FFCC80' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* --- Header --- */
+.App-header {
+    width: 100%;
+    text-align: center;
+    padding: 20px 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(5px);
+    border-bottom: 2px solid var(--color-node-border);
+    z-index: 10;
+}
+
+.App-header h1 {
+    font-family: var(--font-heading);
+    color: var(--color-text);
+    margin: 0;
+    font-size: 2.5em;
+    font-weight: 400;
+}
+
+/* --- SVG and Tree Styles --- */
+#tree-container {
+    width: 100vw;
+    height: calc(100vh - 90px);
+    cursor: grab;
+}
+
+.node circle {
+    stroke: var(--color-node-border);
+    stroke-width: 3px;
+    fill: #fff;
+    transition: transform 0.3s ease;
+}
+
+.node text {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    text-anchor: middle;
+    fill: var(--color-text);
+    pointer-events: none;
+}
+
+.node .person-image {
+    transition: transform 0.3s ease;
+}
+
+.node:hover .person-image,
+.node:hover circle {
+    transform: scale(1.1);
+}
+
+.link,
+.partner-link {
+    fill: none;
+    stroke: var(--color-node-border);
+    stroke-opacity: 0.6;
+    stroke-width: 2px;
+}
+
+.heart {
+    fill: var(--color-primary);
+    stroke: #fff;
+    stroke-width: 2px;
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+}
+
+.family-unit:hover .heart {
+    transform: scale(1);
+}
+
+/* --- Details Card Styles --- */
+.details-card {
+    background-color: white;
+    border: 2px solid var(--color-primary);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 4px 15px var(--color-shadow);
+    width: 280px;
+    font-size: 14px;
+    line-height: 1.6;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(10px);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.node:hover .details-card {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.details-card h3 {
+    font-family: var(--font-heading);
+    font-size: 1.5em;
+    margin: 0 0 10px;
+    color: var(--color-primary);
+    text-align: center;
+}
+
+.details-card .aliases,
+.details-card .parents-info {
+    font-style: italic;
+    color: #757575;
+    text-align: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.details-card strong {
+    color: var(--color-text);
+}
+
+.details-card .event,
+.details-card .custom-field {
+    margin-bottom: 8px;
+    padding-left: 15px;
+    position: relative;
+}
+
+.details-card .event::before {
+    content: "❁";
+    position: absolute;
+    left: 0;
+    color: var(--color-secondary);
+}
+
+.details-card .custom-field::before {
+    content: "✧";
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+}

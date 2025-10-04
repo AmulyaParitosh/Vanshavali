@@ -1,0 +1,300 @@
+{
+    "people": [
+        {
+            "id": "p_aananddev_narayan_sinha",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Aananddev Narayan Sinha",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=ANS",
+            "events": []
+        },
+        {
+            "id": "p_amulya_paritosh",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Amulya Paritosh",
+                "aliases": ["Shivam", "Gulton"]
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=AP",
+            "events": [
+                {
+                    "type": "Birth",
+                    "date": "16-05-2001",
+                    "place": "Ranchi"
+                },
+                {
+                    "type": "Education (12th)",
+                    "date": "10-5-2021",
+                    "place": "Loyola Convent"
+                }
+            ],
+            "custom_fields": {
+                "occupation": "Software Engineer",
+                "Lives in": "banglore"
+            }
+        },
+        {
+            "id": "p_atulya_tajas",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Atulya Tajas",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=AT",
+            "events": []
+        },
+        {
+            "id": "p_bari_bua",
+            "root": false,
+            "sex": "F",
+            "name": {
+                "official_name": "Bari Bua",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=BB",
+            "events": []
+        },
+        {
+            "id": "p_chandradev_narayan_sinha",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Chandradev Narayan Sinha",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=CNS",
+            "events": []
+        },
+        {
+            "id": "p_gayandev_narayan_sinha",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Gayandev Narayan Sinha",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=GNS",
+            "events": []
+        },
+        {
+            "id": "p_indradev_narayan_sinha",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Indradev Narayan Sinha",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=INS",
+            "events": []
+        },
+        {
+            "id": "p_janhavi_chandra",
+            "root": false,
+            "sex": "F",
+            "name": {
+                "official_name": "Janhavi Chandra",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=JC",
+            "events": []
+        },
+        {
+            "id": "p_mahendradev_narayan_sinha",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Mahendradev Narayan Sinha",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=MNS",
+            "events": []
+        },
+        {
+            "id": "p_muneshwari_devi",
+            "root": false,
+            "sex": "F",
+            "name": {
+                "official_name": "Muneshwari Devi",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=MD",
+            "events": []
+        },
+        {
+            "id": "p_par_dadi",
+            "root": false,
+            "sex": "F",
+            "name": {
+                "official_name": "Par Dadi",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=PD",
+            "events": []
+        },
+        {
+            "id": "p_sandhya_sinha",
+            "root": false,
+            "sex": "F",
+            "name": {
+                "official_name": "Sandhya Sinha",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=SS",
+            "events": []
+        },
+        {
+            "id": "p_sanjay_kumar",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Sanjay Kumar",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=SK",
+            "events": []
+        },
+        {
+            "id": "p_sanjeev_kumar",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Sanjeev Kumar",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=SK",
+            "events": []
+        },
+        {
+            "id": "p_seema",
+            "root": false,
+            "sex": "F",
+            "name": {
+                "official_name": "Seema",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=S",
+            "events": []
+        },
+        {
+            "id": "p_shyamdev_narayan_sinha",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Shyamdev Narayan Sinha",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=SNS",
+            "events": []
+        },
+        {
+            "id": "p_sushmita_ranjan",
+            "root": false,
+            "sex": "F",
+            "name": {
+                "official_name": "Sushmita ranjan",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=SR",
+            "events": []
+        },
+        {
+            "id": "p_thakur_prasad",
+            "root": true,
+            "sex": "M",
+            "name": {
+                "official_name": "Thakur Prasad",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=TP",
+            "events": []
+        },
+        {
+            "id": "p_tripti_shreya",
+            "root": false,
+            "sex": "F",
+            "name": {
+                "official_name": "Tripti Shreya",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=TS",
+            "events": []
+        },
+        {
+            "id": "p_vamdev_narayan_sinha",
+            "root": false,
+            "sex": "M",
+            "name": {
+                "official_name": "Vamdev Narayan Sinha",
+                "aliases": []
+            },
+            "image_url": "https://placehold.co/100x100/A0522D/FFFFFF?text=VNS",
+            "events": []
+        }
+    ],
+    "families": [
+        {
+            "id": "f_p_thakur_prasad_p_muneshwari_devi",
+            "partners": [
+                "p_thakur_prasad",
+                "p_muneshwari_devi"
+            ],
+            "children": [
+                "p_chandradev_narayan_sinha",
+                "p_indradev_narayan_sinha",
+                "p_mahendradev_narayan_sinha"
+            ]
+        },
+        {
+            "id": "f_p_indradev_narayan_sinha_p_par_dadi",
+            "partners": [
+                "p_indradev_narayan_sinha",
+                "p_par_dadi"
+            ],
+            "children": [
+                "p_aananddev_narayan_sinha",
+                "p_chandradev_narayan_sinha",
+                "p_gayandev_narayan_sinha",
+                "p_shyamdev_narayan_sinha"
+            ]
+        },
+        {
+            "id": "f_p_shyamdev_narayan_sinha_p_sandhya_sinha",
+            "partners": [
+                "p_shyamdev_narayan_sinha",
+                "p_sandhya_sinha"
+            ],
+            "children": [
+                "p_bari_bua",
+                "p_sanjay_kumar",
+                "p_sanjeev_kumar",
+                "p_sushmita_ranjan"
+            ]
+        },
+        {
+            "id": "f_p_sanjay_kumar_p_janhavi_chandra",
+            "partners": [
+                "p_sanjay_kumar",
+                "p_janhavi_chandra"
+            ],
+            "children": [
+                "p_amulya_paritosh",
+                "p_tripti_shreya"
+            ]
+        },
+        {
+            "id": "f_p_sanjeev_kumar_p_seema",
+            "partners": [
+                "p_sanjeev_kumar",
+                "p_seema"
+            ],
+            "children": [
+                "p_atulya_tajas"
+            ]
+        }
+    ]
+}
