@@ -37,6 +37,7 @@ body {
   backdrop-filter: blur(5px);
   border-bottom: 2px solid var(--color-node-border);
   z-index: 10;
+  position: relative; /* Add this for positioning the button */
 }
 
 .App-header h1 {
@@ -45,6 +46,19 @@ body {
   margin: 0;
   font-size: 2.5em;
   font-weight: 400;
+}
+
+.edit-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
 }
 
 /* --- SVG and Tree Styles --- */

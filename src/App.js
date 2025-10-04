@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import FamilyTree from "./components/FamilyTree";
+import EditScreen from "./components/EditScreen";
 import "./App.css";
 
 const App = () => {
   const [treeData, setTreeData] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     fetch("/data.json")
@@ -12,19 +14,27 @@ const App = () => {
       .catch((error) => console.error("Error fetching data: ", error));
   }, []);
 
+  if (!treeData) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className="App">
+    <div className={`App ${isEditMode ? "edit-mode" : ""}`}>
       <header className="App-header">
         <h1>Family Lineage</h1>
+        <button
+          className="edit-button"
+          onClick={() => setIsEditMode(!isEditMode)}
+        >
+          {isEditMode ? "Back to Tree" : "Edit"}
+        </button>
       </header>
       <main>
-        <div className="tree-view">
-          {treeData ? (
-            <FamilyTree people={treeData.people} families={treeData.families} />
-          ) : (
-            <p>Loading family data...</p>
-          )}
-        </div>
+        {isEditMode ? (
+          <EditScreen treeData={treeData} onExit={() => setIsEditMode(false)} />
+        ) : (
+          <FamilyTree people={treeData.people} families={treeData.families} />
+        )}
       </main>
     </div>
   );
