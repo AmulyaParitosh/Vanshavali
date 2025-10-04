@@ -31,7 +31,7 @@ const Tree = ({ data }) => {
 
     useEffect(() => {
         if (data) {
-            const nodeWidth = 500; // Increased to prevent popup overlap
+            const nodeWidth = 500;
             const nodeHeight = 300;
 
             const root = d3.hierarchy(data);
