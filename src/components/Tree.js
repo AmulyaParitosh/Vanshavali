@@ -5,7 +5,7 @@ const Tree = ({ data }) => {
     const svgRef = useRef();
 
     const getRandomPastelColor = () => {
-        return `hsl(${Math.random() * 360}, 70%, 80%)`;
+        return d3.hsl(Math.random() * 360, 0.7, 0.8).hex();
     };
 
     function createDetailsHtml(person) {
