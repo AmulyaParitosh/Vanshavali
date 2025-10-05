@@ -4,6 +4,7 @@ import { ref, onValue, set, get } from 'firebase/database';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 import FamilyTree from './components/FamilyTree';
 import EditScreen from './components/EditScreen';
+import AdminDashboard from './components/AdminDashboard';
 import LoginScreen from './components/LoginScreen';
 import './App.css';
 
@@ -12,6 +13,7 @@ const App = () => {
   const [userRole, setUserRole] = useState(null);
   const [treeData, setTreeData] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isDashboardMode, setIsDashboardMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (user && userRole) { // Only fetch data if user is logged in and role is determined
+    if (user && userRole) {
       const dbRef = ref(database, '/');
       const unsubscribe = onValue(dbRef, (snapshot) => {
         const data = snapshot.val();
@@ -51,11 +53,10 @@ const App = () => {
     if (snapshot.exists()) {
       userData = snapshot.val();
     } else {
-      // User is logging in for the first time
       userData = {
         email: firebaseUser.email,
         name: firebaseUser.displayName,
-        role: 'viewer', // Default role
+        role: 'pending'
       };
       await set(userRef, userData);
     }
@@ -98,11 +99,24 @@ const App = () => {
       return <LoginScreen onLoginRequest={handleLogin} />;
     }
 
+    if (userRole === 'pending') {
+        return <div className="pending-approval-screen"><h2>Your request is pending approval.</h2><p>An administrator will review your request soon. Thank you for your patience.</p><button onClick={handleLogout} className="btn-logout">Logout</button></div>;
+    }
+
+    if (userRole === 'denied') {
+        return <div className="access-denied-screen"><h2>Access Denied</h2><p>Your access request has been denied. Please contact an administrator if you believe this is a mistake.</p><button onClick={handleLogout} className="btn-logout">Logout</button></div>;
+    }
+
     if (!treeData) {
       return <div>Loading family data...</div>;
     }
     
-    const canEdit = userRole === 'editor' || userRole === 'admin';
+    const isAdmin = userRole === 'admin';
+    const canEdit = userRole === 'editor' || isAdmin;
+
+    if (isDashboardMode && isAdmin) {
+      return <AdminDashboard onExit={() => setIsDashboardMode(false)} />;
+    }
 
     if (isEditMode && canEdit) {
       return (
@@ -117,17 +131,34 @@ const App = () => {
     return <FamilyTree people={treeData.people || []} families={treeData.families || []} />;
   };
 
-  const canEdit = userRole === 'editor' || userRole === 'admin';
+  const isAdmin = userRole === 'admin';
+  const canEdit = userRole === 'editor' || isAdmin;
 
   return (
     <div className={`App ${isEditMode && canEdit ? 'edit-mode' : ''}`}>
         <header className="App-header">
             <div className="header-left">
-                {user && canEdit && (
-                <button className="edit-button" onClick={() => setIsEditMode(!isEditMode)}>
-                    {isEditMode ? 'Back to Tree' : 'Edit'}
+              {user && (isEditMode || isDashboardMode) ? (
+                <button className="back-button" onClick={() => {
+                  setIsEditMode(false);
+                  setIsDashboardMode(false);
+                }}>
+                  Back to Tree
                 </button>
-                )}
+              ) : (
+                <>
+                  {user && canEdit && (
+                    <button className="edit-button" onClick={() => setIsEditMode(true)}>
+                      Edit
+                    </button>
+                  )}
+                  {user && isAdmin && (
+                    <button className="admin-button" onClick={() => setIsDashboardMode(true)}>
+                      Admin Dashboard
+                    </button>
+                  )}
+                </>
+              )}
             </div>
             <h1>Vanshavali</h1>
             <div className="header-right">

@@ -39,7 +39,8 @@ const FamilyTree = ({ people, families }) => {
     families.forEach((family) => {
       const familyNode = familyMap[family.id];
       if (familyNode) {
-        family.children.forEach((childId) => {
+        const children = family.children || [];
+        children.forEach((childId) => {
           // Check if this child is a parent in another family
           const childFamily = families.find((f) =>
             f.partners.includes(childId)
@@ -49,8 +50,9 @@ const FamilyTree = ({ people, families }) => {
           } else {
             // Child is a leaf node (for now)
             const childPerson = findPerson(childId);
-            if (childPerson)
+            if (childPerson) {
               familyNode.children.push({ ...childPerson, children: [] });
+            }
           }
         });
       }
