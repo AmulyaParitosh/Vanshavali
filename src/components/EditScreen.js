@@ -3,7 +3,7 @@ import PersonForm from './PersonForm';
 import FamilyForm from './FamilyForm';
 import './EditScreen.css';
 
-const EditScreen = ({ treeData, onExit }) => {
+const EditScreen = ({ treeData, onSave, onExit }) => {
   const [data, setData] = useState(treeData);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [selectedFamily, setSelectedFamily] = useState(null);
@@ -37,7 +37,9 @@ const EditScreen = ({ treeData, onExit }) => {
       updatedPeople = [...data.people, newPerson];
       setSelectedPerson(newPerson);
     }
-    setData({ ...data, people: updatedPeople });
+    const newData = { ...data, people: updatedPeople };
+    setData(newData);
+    onSave(newData);
   };
 
   const handleDeletePerson = (personId) => {
@@ -46,7 +48,9 @@ const EditScreen = ({ treeData, onExit }) => {
       .map(f => ({ ...f, children: f.children.filter(c => c !== personId) }))
       .filter(f => f.partners[0] !== personId && f.partners[1] !== personId);
     
-    setData({ ...data, people: updatedPeople, families: updatedFamilies });
+    const newData = { ...data, people: updatedPeople, families: updatedFamilies };
+    setData(newData);
+    onSave(newData);
     setSelectedPerson(null);
   };
 
@@ -59,21 +63,17 @@ const EditScreen = ({ treeData, onExit }) => {
       updatedFamilies = [...data.families, newFamily];
       setSelectedFamily(newFamily);
     }
-    setData({ ...data, families: updatedFamilies });
+    const newData = { ...data, families: updatedFamilies };
+    setData(newData);
+    onSave(newData);
   };
 
   const handleDeleteFamily = (familyId) => {
     const updatedFamilies = data.families.filter(f => f.id !== familyId);
-    setData({ ...data, families: updatedFamilies });
+    const newData = { ...data, families: updatedFamilies };
+    setData(newData);
+    onSave(newData);
     setSelectedFamily(null);
-  };
-
-  const handleDownload = () => {
-    const a = document.createElement("a");
-    const file = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    a.href = URL.createObjectURL(file);
-    a.download = 'my_tree.json';
-    a.click();
   };
 
   const getPersonName = (personId) => {
@@ -110,6 +110,7 @@ const EditScreen = ({ treeData, onExit }) => {
             <div className="welcome-message">
               <p>Welcome to the Family Tree Editor!</p>
               <p>Select a person or family to edit, or add new ones using the buttons on the left.</p>
+              <p>Your changes will be saved automatically.</p>
             </div>
           )}
           {selectedPerson && (
@@ -119,10 +120,6 @@ const EditScreen = ({ treeData, onExit }) => {
             <FamilyForm family={selectedFamily} people={data.people} onSave={handleSaveFamily} onDelete={handleDeleteFamily} />
           )}
         </main>
-      </div>
-      <div className="action-bar">
-        <button className="btn-primary" onClick={handleDownload}>Download Updated Data</button>
-        <p>Your changes are saved in this session. Click here to download the file.</p>
       </div>
     </div>
   );
