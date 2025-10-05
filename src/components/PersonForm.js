@@ -35,6 +35,12 @@ const PersonForm = ({ person, onSave, onDelete }) => {
     onSave(formData);
   };
 
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this person? This action cannot be undone and may affect family structures.')) {
+      onDelete(person.id);
+    }
+  };
+
   return (
     <div className="form-container active">
       <h2>{person.id ? 'Edit Person' : 'Add New Person'}</h2>
@@ -66,7 +72,7 @@ const PersonForm = ({ person, onSave, onDelete }) => {
         <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between' }}>
           <button type="submit" className="btn-primary">Save Person</button>
           {person.id && (
-            <button type="button" className="btn-danger" onClick={() => onDelete(person.id)}>
+            <button type="button" className="btn-danger" onClick={handleDelete}>
               Delete Person
             </button>
           )}

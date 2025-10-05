@@ -59,6 +59,12 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
     onSave(formData);
   };
 
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this family? This will not delete the individuals but will remove their connections as a family unit.')) {
+      onDelete(family.id);
+    }
+  };
+
   const partner1Id = formData.partners ? formData.partners[0] : '';
   const partner2Id = formData.partners ? formData.partners[1] : '';
   const currentChildrenIds = formData.children || [];
@@ -142,7 +148,7 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
         <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between' }}>
           <button type="submit" className="btn-primary">Save Family</button>
           {family.id && (
-            <button type="button" className="btn-danger" onClick={() => onDelete(family.id)}>
+            <button type="button" className="btn-danger" onClick={handleDelete}>
               Delete Family
             </button>
           )}
