@@ -1,0 +1,166 @@
+/* --- Form Styles --- */
+.form-container {
+  background-color: var(--color-surface);
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px var(--color-shadow);
+}
+
+.form-container h2 {
+  font-family: var(--font-heading);
+  font-size: 2em;
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.form-section-heading {
+  font-family: var(--font-heading);
+  font-size: 1.5em;
+  color: var(--color-text);
+  margin-top: 30px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--color-node-border);
+  padding-bottom: 8px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.form-group input[type="text"],
+.form-group select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-node-border);
+  border-radius: 4px;
+  background-color: #fff;
+  font-family: var(--font-body);
+  font-size: 1em;
+  transition: border-color 0.3s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.form-actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+/* --- Dynamic List Styles (for Events & Custom Fields) --- */
+.dynamic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.dynamic-list .item {
+  background-color: var(--color-bg);
+  padding: 20px;
+  border: 1px solid var(--color-node-border);
+  border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-end; /* Aligns form inputs and buttons nicely */
+}
+
+.dynamic-list .item .form-group {
+  flex: 1 1 200px; /* Each form group will take up space, wrapping as needed */
+  margin-bottom: 0;
+}
+
+.dynamic-list .item .btn-danger {
+  margin-left: auto; /* Push the remove button to the far right */
+  height: fit-content;
+}
+
+.dynamic-list > .btn-secondary {
+  align-self: flex-start; /* Align 'Add' button to the left */
+}
+
+/* --- Children List Styles --- */
+.children-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.child-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-bg);
+  padding: 12px 15px;
+  border: 1px solid var(--color-node-border);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.child-item span {
+  font-weight: 500;
+}
+
+.remove-child-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 1.5em;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 5px;
+}
+
+.remove-child-btn:hover {
+    color: var(--color-secondary);
+}
+
+.add-child-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.add-child-container select {
+  flex-grow: 1;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-node-border);
+  border-radius: 4px;
+  background-color: #fff;
+  font-family: var(--font-body);
+  font-size: 1em;
+  transition: border-color 0.3s;
+}
+
+.add-child-container select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}

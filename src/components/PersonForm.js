@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import EventsEditor from './EventsEditor';
 import CustomFieldsEditor from './CustomFieldsEditor';
+import './Forms.css';
 
 const PersonForm = ({ person, onSave, onDelete }) => {
   const [formData, setFormData] = useState(person);
@@ -42,7 +43,7 @@ const PersonForm = ({ person, onSave, onDelete }) => {
   };
 
   return (
-    <div className="form-container active">
+    <div className="form-container">
       <h2>{person.id ? 'Edit Person' : 'Add New Person'}</h2>
       <form onSubmit={handleSave}>
         <div className="form-group">
@@ -61,18 +62,22 @@ const PersonForm = ({ person, onSave, onDelete }) => {
           <input type="text" id="person-image" name="image_url" value={formData.image_url || ''} onChange={handleChange} />
         </div>
         <div className="form-group">
-          <label>
-            <input type="checkbox" name="root" checked={formData.root || false} onChange={handleChange} /> Set as Tree Root
+          <label className="checkbox-label">
+            <input type="checkbox" name="root" checked={formData.root || false} onChange={handleChange} />
+            <span>Set as Tree Root</span>
           </label>
         </div>
-        <hr />
+        
+        <h3 className="form-section-heading">Events</h3>
         <EventsEditor events={formData.events || []} onChange={handleEventsChange} />
-        <hr />
+        
+        <h3 className="form-section-heading">Custom Fields</h3>
         <CustomFieldsEditor customFields={Object.entries(formData.custom_fields || {}).map(([key, value]) => ({ key, value }))} onChange={handleCustomFieldsChange} />
-        <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between' }}>
-          <button type="submit" className="btn-primary">Save Person</button>
+        
+        <div className="form-actions">
+          <button type="submit" className="btn btn-primary">Save Person</button>
           {person.id && (
-            <button type="button" className="btn-danger" onClick={handleDelete}>
+            <button type="button" className="btn btn-danger" onClick={handleDelete}>
               Delete Person
             </button>
           )}

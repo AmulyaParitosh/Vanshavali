@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import './Forms.css';
 
 const FamilyForm = ({ family, people, onSave, onDelete }) => {
   const [formData, setFormData] = useState(family);
@@ -76,7 +77,7 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
   );
 
   return (
-    <div className="form-container active">
+    <div className="form-container">
       <h2>{family.id ? 'Edit Family' : 'Add New Family'}</h2>
       <form onSubmit={handleSave}>
         <div className="form-group">
@@ -98,57 +99,55 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
           </select>
         </div>
         
-        <div className="form-group">
-            <label>Children</label>
-            <DragDropContext onDragEnd={onDragEnd}>
-                <Droppable droppableId="children-list">
-                    {(provided, snapshot) => (
-                        <ol
-                            {...provided.droppableProps}
-                            ref={provided.innerRef}
-                            className={`children-list ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
-                        >
-                            {(formData.children || []).map((childId, index) => (
-                                <Draggable key={childId} draggableId={childId} index={index}>
-                                    {(provided, snapshot) => (
-                                        <li
-                                            ref={provided.innerRef}
-                                            {...provided.draggableProps}
-                                            {...provided.dragHandleProps}
-                                            className={`child-item ${snapshot.isDragging ? 'dragging' : ''}`}
+        <h3 className="form-section-heading">Children</h3>
+        <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="children-list">
+                {(provided) => (
+                    <ol
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="children-list"
+                    >
+                        {(formData.children || []).map((childId, index) => (
+                            <Draggable key={childId} draggableId={childId} index={index}>
+                                {(provided) => (
+                                    <li
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        className="child-item"
+                                    >
+                                        <span>{getPersonName(childId)}</span>
+                                        <button
+                                            type="button"
+                                            className="remove-child-btn"
+                                            onClick={() => handleRemoveChild(childId)}
                                         >
-                                            <span>{getPersonName(childId)}</span>
-                                            <button
-                                                type="button"
-                                                className="remove-child-btn"
-                                                onClick={() => handleRemoveChild(childId)}
-                                            >
-                                                &times;
-                                            </button>
-                                        </li>
-                                    )}
-                                </Draggable>
-                            ))}
-                            {provided.placeholder}
-                        </ol>
-                    )}
-                </Droppable>
-            </DragDropContext>
-            <div className="add-child-container">
-              <select value={selectedChild} onChange={(e) => setSelectedChild(e.target.value)}>
-                  <option value="">Select a child to add</option>
-                  {availableChildren.map(p => (
-                      <option key={p.id} value={p.id}>{p.name.official_name}</option>
-                  ))}
-              </select>
-              <button type="button" className="btn-secondary" onClick={handleAddChild}>Add Child</button>
-            </div>
+                                            &times;
+                                        </button>
+                                    </li>
+                                )}
+                            </Draggable>
+                        ))}
+                        {provided.placeholder}
+                    </ol>
+                )}
+            </Droppable>
+        </DragDropContext>
+        <div className="add-child-container">
+          <select value={selectedChild} onChange={(e) => setSelectedChild(e.target.value)}>
+              <option value="">Select a child to add</option>
+              {availableChildren.map(p => (
+                  <option key={p.id} value={p.id}>{p.name.official_name}</option>
+              ))}
+          </select>
+          <button type="button" className="btn btn-secondary" onClick={handleAddChild}>Add Child</button>
         </div>
 
-        <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between' }}>
-          <button type="submit" className="btn-primary">Save Family</button>
+        <div className="form-actions">
+          <button type="submit" className="btn btn-primary">Save Family</button>
           {family.id && (
-            <button type="button" className="btn-danger" onClick={handleDelete}>
+            <button type="button" className="btn btn-danger" onClick={handleDelete}>
               Delete Family
             </button>
           )}

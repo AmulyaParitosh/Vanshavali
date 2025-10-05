@@ -18,10 +18,8 @@ const CustomFieldsEditor = ({ customFields, onChange }) => {
 
   return (
     <div className="dynamic-list">
-      <h3>Custom Fields</h3>
       {customFields.map((field, index) => (
         <div key={index} className="item">
-          <button type="button" className="remove-item-btn btn-danger" onClick={() => removeField(index)}>X</button>
           <div className="form-group">
             <label>Field Name</label>
             <input type="text" value={field.key} onChange={(e) => handleFieldChange(index, e.target.value, field.value)} placeholder="e.g., occupation" />
@@ -30,9 +28,10 @@ const CustomFieldsEditor = ({ customFields, onChange }) => {
             <label>Field Value</label>
             <input type="text" value={field.value} onChange={(e) => handleFieldChange(index, field.key, e.target.value)} />
           </div>
+          <button type="button" className="btn btn-danger" onClick={() => removeField(index)}>Remove Field</button>
         </div>
       ))}
-      <button type="button" className="btn-secondary" onClick={addField}>Add Custom Field</button>
+      <button type="button" className="btn btn-secondary" onClick={addField}>Add Custom Field</button>
     </div>
   );
 };

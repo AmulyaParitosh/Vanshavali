@@ -18,10 +18,8 @@ const EventsEditor = ({ events, onChange }) => {
 
   return (
     <div className="dynamic-list">
-      <h3>Events</h3>
       {events.map((event, index) => (
         <div key={index} className="item">
-          <button type="button" className="remove-item-btn btn-danger" onClick={() => removeEvent(index)}>X</button>
           <div className="form-group">
             <label>Event Type</label>
             <input type="text" value={event.type} onChange={(e) => handleEventChange(index, 'type', e.target.value)} placeholder="e.g., Birth, Death" />
@@ -34,9 +32,10 @@ const EventsEditor = ({ events, onChange }) => {
             <label>Place</label>
             <input type="text" value={event.place} onChange={(e) => handleEventChange(index, 'place', e.target.value)} />
           </div>
+          <button type="button" className="btn btn-danger" onClick={() => removeEvent(index)}>Remove Event</button>
         </div>
       ))}
-      <button type="button" className="btn-secondary" onClick={addEvent}>Add Event</button>
+      <button type="button" className="btn btn-secondary" onClick={addEvent}>Add Event</button>
     </div>
   );
 };

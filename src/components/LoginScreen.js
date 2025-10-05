@@ -1,13 +1,13 @@
 import React from 'react';
+import './LoginScreen.css';
 
 const LoginScreen = ({ onLoginRequest }) => {
   return (
-    <div className="no-access-container">
-      <div className="no-access-content">
+    <div className="login-screen">
+      <div className="login-content">
         <h2>Access Required</h2>
-        <p>You do not have access to this vanshavali.</p>
-        <p>You can request access from the administrator by logging in.</p>
-        <button onClick={onLoginRequest} className="login-button">
+        <p>You do not have access to this vanshavali. You can request access from the administrator by logging in.</p>
+        <button onClick={onLoginRequest} className="btn btn-primary">
           Login with Google to Request Access
         </button>
       </div>

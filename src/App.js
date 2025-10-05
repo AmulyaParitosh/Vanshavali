@@ -100,11 +100,11 @@ const App = () => {
     }
 
     if (userRole === 'pending') {
-        return <div className="pending-approval-screen"><h2>Your request is pending approval.</h2><p>An administrator will review your request soon. Thank you for your patience.</p><button onClick={handleLogout} className="btn-logout">Logout</button></div>;
+        return <div className="pending-approval-screen"><h2>Your request is pending approval.</h2><p>An administrator will review your request soon. Thank you for your patience.</p><button onClick={handleLogout} className="btn btn-secondary">Logout</button></div>;
     }
 
     if (userRole === 'denied') {
-        return <div className="access-denied-screen"><h2>Access Denied</h2><p>Your access request has been denied. Please contact an administrator if you believe this is a mistake.</p><button onClick={handleLogout} className="btn-logout">Logout</button></div>;
+        return <div className="access-denied-screen"><h2>Access Denied</h2><p>Your access request has been denied. Please contact an administrator if you believe this is a mistake.</p><button onClick={handleLogout} className="btn btn-secondary">Logout</button></div>;
     }
 
     if (!treeData) {
@@ -139,7 +139,7 @@ const App = () => {
         <header className="App-header">
             <div className="header-left">
               {user && (isEditMode || isDashboardMode) ? (
-                <button className="back-button" onClick={() => {
+                <button className="btn back-button" onClick={() => {
                   setIsEditMode(false);
                   setIsDashboardMode(false);
                 }}>
@@ -148,12 +148,12 @@ const App = () => {
               ) : (
                 <>
                   {user && canEdit && (
-                    <button className="edit-button" onClick={() => setIsEditMode(true)}>
+                    <button className="btn" onClick={() => setIsEditMode(true)}>
                       Edit
                     </button>
                   )}
                   {user && isAdmin && (
-                    <button className="admin-button" onClick={() => setIsDashboardMode(true)}>
+                    <button className="btn btn-secondary" onClick={() => setIsDashboardMode(true)}>
                       Admin Dashboard
                     </button>
                   )}
@@ -165,7 +165,7 @@ const App = () => {
                 {user && (
                 <>
                     <span className="user-name">{user.displayName}</span>
-                    <button onClick={handleLogout} className="btn-logout">Logout</button>
+                    <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
                 </>
                 )}
             </div>

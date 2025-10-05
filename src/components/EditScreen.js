@@ -7,13 +7,14 @@ const EditScreen = ({ treeData, onSave, onExit }) => {
   const [data, setData] = useState(treeData);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [selectedFamily, setSelectedFamily] = useState(null);
+  const [activeTab, setActiveTab] = useState('people'); // 'people' or 'families'
 
   useEffect(() => {
     setData(treeData);
   }, [treeData]);
 
   if (!data) {
-    return <div>Loading Editor...</div>;
+    return <div className="loading-editor">Loading Editor...</div>;
   }
 
   const generateIdFromName = (name) => {
@@ -59,7 +60,12 @@ const EditScreen = ({ treeData, onSave, onExit }) => {
     if (family.id) {
       updatedFamilies = data.families.map(f => f.id === family.id ? family : f);
     } else {
-      const newFamily = { ...family, id: `${family.partners[0]}_${family.partners[1]}_family` };
+        const newFamilyId = `${family.partners[0]}_${family.partners[1]}_family`;
+        if (data.families.some(f => f.id === newFamilyId)) {
+            alert('A family with these partners already exists.');
+            return;
+        }
+      const newFamily = { ...family, id: newFamilyId };
       updatedFamilies = [...data.families, newFamily];
       setSelectedFamily(newFamily);
     }
@@ -81,46 +87,72 @@ const EditScreen = ({ treeData, onSave, onExit }) => {
     return person ? person.name.official_name : '?';
   };
 
-  return (
-    <div className="edit-screen-container">
-      <div className="main-container">
-        <aside className="sidebar">
-          <h2>People</h2>
-          <ul className="data-list">
-            {data.people.map((p) => (
-              <li key={p.id} onClick={() => { setSelectedPerson(p); setSelectedFamily(null); }} className={selectedPerson && selectedPerson.id === p.id ? 'active' : ''}>
-                {p.name.official_name}
-              </li>
-            ))}
-          </ul>
-          <button className="btn-secondary btn-block" onClick={() => { setSelectedPerson({ name: { official_name: '' }, sex: 'M', events: [], custom_fields: {} }); setSelectedFamily(null); }}>Add New Person</button>
+  const handleAddNewPerson = () => {
+    setSelectedPerson({ name: { official_name: '' }, sex: 'M', events: [], custom_fields: {} });
+    setSelectedFamily(null);
+  };
 
-          <h2 style={{ marginTop: '30px' }}>Families</h2>
-          <ul className="data-list">
-            {data.families.map((f) => (
-              <li key={f.id} onClick={() => { setSelectedFamily(f); setSelectedPerson(null); }} className={selectedFamily && selectedFamily.id === f.id ? 'active' : ''}>
-                {getPersonName(f.partners[0])} & {getPersonName(f.partners[1])}
-              </li>
-            ))}
-          </ul>
-          <button className="btn-secondary btn-block" onClick={() => { setSelectedFamily({ partners: ['', ''], children: [] }); setSelectedPerson(null); }}>Add New Family</button>
-        </aside>
-        <main className="editor-panel">
-          {(!selectedPerson && !selectedFamily) && (
-            <div className="welcome-message">
-              <p>Welcome to the Family Tree Editor!</p>
-              <p>Select a person or family to edit, or add new ones using the buttons on the left.</p>
-              <p>Your changes will be saved automatically.</p>
-            </div>
-          )}
-          {selectedPerson && (
-            <PersonForm person={selectedPerson} onSave={handleSavePerson} onDelete={handleDeletePerson} />
-          )}
-          {selectedFamily && (
-            <FamilyForm family={selectedFamily} people={data.people} onSave={handleSaveFamily} onDelete={handleDeleteFamily} />
-          )}
-        </main>
-      </div>
+  const handleAddNewFamily = () => {
+    setSelectedFamily({ partners: ['', ''], children: [] });
+    setSelectedPerson(null);
+  };
+
+  const renderSidebarList = () => {
+    if (activeTab === 'people') {
+      return (
+        <ul className="data-list">
+          {data.people.map((p) => (
+            <li key={p.id} onClick={() => { setSelectedPerson(p); setSelectedFamily(null); }} className={selectedPerson && selectedPerson.id === p.id ? 'active' : ''}>
+              {p.name.official_name}
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    return (
+      <ul className="data-list">
+        {data.families.map((f) => (
+          <li key={f.id} onClick={() => { setSelectedFamily(f); setSelectedPerson(null); }} className={selectedFamily && selectedFamily.id === f.id ? 'active' : ''}>
+            {getPersonName(f.partners[0])} & {getPersonName(f.partners[1])}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <div className="edit-screen">
+      <aside className="sidebar">
+        <div className="sidebar-tabs">
+            <button onClick={() => setActiveTab('people')} className={activeTab === 'people' ? 'active' : ''}>People</button>
+            <button onClick={() => setActiveTab('families')} className={activeTab === 'families' ? 'active' : ''}>Families</button>
+        </div>
+        <div className="sidebar-content">
+            {renderSidebarList()}
+        </div>
+        <div className="sidebar-actions">
+            {activeTab === 'people' ? 
+                <button className="btn-primary btn-block" onClick={handleAddNewPerson}>Add New Person</button> : 
+                <button className="btn-primary btn-block" onClick={handleAddNewFamily}>Add New Family</button>
+            }
+        </div>
+      </aside>
+      <main className="editor-panel">
+        {(!selectedPerson && !selectedFamily) && (
+          <div className="welcome-message">
+            <h2>Welcome to the Family Tree Editor</h2>
+            <p>Select an item from the sidebar to begin editing.</p>
+            <p>You can add new people or families using the buttons at the bottom of the sidebar.</p>
+            <p>All your changes are saved automatically.</p>
+          </div>
+        )}
+        {selectedPerson && (
+          <PersonForm person={selectedPerson} onSave={handleSavePerson} onDelete={handleDeletePerson} />
+        )}
+        {selectedFamily && (
+          <FamilyForm family={selectedFamily} people={data.people} onSave={handleSaveFamily} onDelete={handleDeleteFamily} />
+        )}
+      </main>
     </div>
   );
 };
