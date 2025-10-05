@@ -30,14 +30,16 @@ body {
 
 /* --- Header --- */
 .App-header {
-  width: 100%;
-  text-align: center;
-  padding: 20px 0;
-  background-color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(5px);
-  border-bottom: 2px solid var(--color-node-border);
-  z-index: 10;
-  position: relative; /* Add this for positioning the button */
+    width: 100%;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(5px);
+    border-bottom: 2px solid var(--color-node-border);
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
 }
 
 .App-header h1 {
@@ -46,12 +48,26 @@ body {
   margin: 0;
   font-size: 2.5em;
   font-weight: 400;
+  text-align: center;
+  flex-grow: 1; /* Allows the title to take up the central space */
+}
+
+.header-left,
+.header-right {
+    flex: 1; /* Each side takes up equal space */
+    display: flex;
+    align-items: center;
+}
+
+.header-left {
+    justify-content: flex-start;
+}
+
+.header-right {
+    justify-content: flex-end;
 }
 
 .edit-button {
-  position: absolute;
-  top: 20px;
-  right: 20px;
   padding: 10px 20px;
   background-color: var(--color-primary);
   color: white;
@@ -60,6 +76,22 @@ body {
   cursor: pointer;
   font-size: 1em;
 }
+
+.user-name {
+    margin-right: 15px;
+    font-weight: 600;
+}
+
+.btn-logout {
+    padding: 8px 15px;
+    background-color: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
 
 /* --- SVG and Tree Styles --- */
 #tree-container {

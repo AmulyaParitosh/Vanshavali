@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { database, auth } from './firebase';
 import { ref, onValue, set, get } from 'firebase/database';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 import FamilyTree from './components/FamilyTree';
 import EditScreen from './components/EditScreen';
 import LoginScreen from './components/LoginScreen';
@@ -70,6 +70,12 @@ const App = () => {
       console.error("Authentication error: ", error);
     });
   };
+  
+  const handleLogout = () => {
+    signOut(auth).catch((error) => {
+        console.error("Sign out error", error);
+    });
+  };
 
   const handleSaveData = (newData) => {
     if (userRole !== 'editor' && userRole !== 'admin') {
@@ -115,17 +121,27 @@ const App = () => {
 
   return (
     <div className={`App ${isEditMode && canEdit ? 'edit-mode' : ''}`}>
-      <header className="App-header">
-        <h1>Family Lineage</h1>
-        {user && canEdit && (
-          <button className="edit-button" onClick={() => setIsEditMode(!isEditMode)}>
-            {isEditMode ? 'Back to Tree' : 'Edit'}
-          </button>
-        )}
-      </header>
-      <main>
-        {renderContent()}
-      </main>
+        <header className="App-header">
+            <div className="header-left">
+                {user && canEdit && (
+                <button className="edit-button" onClick={() => setIsEditMode(!isEditMode)}>
+                    {isEditMode ? 'Back to Tree' : 'Edit'}
+                </button>
+                )}
+            </div>
+            <h1>Vanshavali</h1>
+            <div className="header-right">
+                {user && (
+                <>
+                    <span className="user-name">{user.displayName}</span>
+                    <button onClick={handleLogout} className="btn-logout">Logout</button>
+                </>
+                )}
+            </div>
+        </header>
+        <main>
+            {renderContent()}
+        </main>
     </div>
   );
 };
