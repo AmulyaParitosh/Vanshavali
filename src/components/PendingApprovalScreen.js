@@ -1,13 +1,16 @@
-import React from 'react';
+import React from "react";
 
-const PendingApprovalScreen = () => {
+const PendingApprovalScreen = ({ onLogout }) => {
   return (
-    <div className="no-access-container">
-      <div className="no-access-content">
-        <h2>Request Sent</h2>
-        <p>Your request for access to Vanshavali has been sent to the administrators.</p>
-        <p>You will be able to access the family tree once your request is approved.</p>
-      </div>
+    <div className="pending-approval-screen">
+      <h2>Your request is pending approval.</h2>
+      <p>
+        An administrator will review your request soon. Thank you for your
+        patience.
+      </p>
+      <button onClick={onLogout} className="btn btn-secondary">
+        Logout
+      </button>
     </div>
   );
 };
