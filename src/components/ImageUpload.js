@@ -1,12 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { supabase } from '../supabaseClient'; // Assuming you have this file
 
-const ImageUpload = ({ imageUrl, onImageChange, onImageRemove }) => {
+const ImageUpload = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   // This function will be triggered when the user selects a file
   const handleFileChange = async (e) => {
+    if (!canEdit) return;
     const file = e.target.files[0];
     if (!file) return;
 
@@ -65,18 +66,20 @@ const ImageUpload = ({ imageUrl, onImageChange, onImageRemove }) => {
         onChange={handleFileChange}
         style={{ display: 'none' }}
         accept="image/*"
-        disabled={isUploading}
+        disabled={isUploading || !canEdit}
       />
-      <div className="image-actions">
-        <button type="button" className="btn btn-secondary" onClick={handleFileSelect} disabled={isUploading}>
-          {isUploading ? 'Uploading...' : 'Change / Upload'}
-        </button>
-        {imageUrl && (
-          <button type="button" className="btn btn-danger" onClick={onImageRemove} disabled={isUploading}>
-            Remove
-          </button>
-        )}
-      </div>
+      {canEdit && (
+          <div className="image-actions">
+            <button type="button" className="btn btn-secondary" onClick={handleFileSelect} disabled={isUploading || !canEdit}>
+            {isUploading ? 'Uploading...' : 'Change / Upload'}
+            </button>
+            {imageUrl && (
+            <button type="button" className="btn btn-danger" onClick={onImageRemove} disabled={isUploading || !canEdit}>
+                Remove
+            </button>
+            )}
+        </div>
+      )}
     </div>
   );
 };

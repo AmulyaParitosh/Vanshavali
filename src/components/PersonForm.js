@@ -4,7 +4,7 @@ import CustomFieldsEditor from './CustomFieldsEditor';
 import AliasesInput from './AliasesInput';
 import ImageUpload from './ImageUpload';
 
-const PersonForm = ({ person, onSave, onDelete }) => {
+const PersonForm = ({ person, onSave, onDelete, canEdit }) => {
   const [formData, setFormData] = useState(person);
 
   useEffect(() => {
@@ -22,13 +22,11 @@ const PersonForm = ({ person, onSave, onDelete }) => {
     setFormData({ ...formData, name: { ...formData.name, aliases } });
   };
   
-  // Updated to handle both the URL and the storage path
   const handleImageChange = (imageUrl, imagePath) => {
     setFormData({ ...formData, image_url: imageUrl, image_storage_path: imagePath });
   };
 
   const handleImageRemove = () => {
-    // In a real app, you would also delete the image from Supabase storage here
     setFormData({ ...formData, image_url: '', image_storage_path: '' });
   };
 
@@ -59,28 +57,28 @@ const PersonForm = ({ person, onSave, onDelete }) => {
 
   return (
     <div className="form-container">
-      <h2>{person.id ? 'Edit Person' : 'Add New Person'}</h2>
+      <h2>Person Details</h2>
       <form onSubmit={handleSave}>
           <div className="person-form-main-details">
               <div className="person-form-left-column">
                   <div className="form-group">
                       <label htmlFor="person-name">Official Name</label>
-                      <input type="text" id="person-name" value={formData.name?.official_name || ''} onChange={(e) => setFormData({ ...formData, name: { ...formData.name, official_name: e.target.value } })} required />
+                      <input type="text" id="person-name" value={formData.name?.official_name || ''} onChange={(e) => setFormData({ ...formData, name: { ...formData.name, official_name: e.target.value } })} required disabled={!canEdit} />
                   </div>
                   <div className="form-group">
                       <label htmlFor="person-sex">Sex</label>
-                      <select id="person-sex" name="sex" value={formData.sex || 'M'} onChange={handleChange}>
+                      <select id="person-sex" name="sex" value={formData.sex || 'M'} onChange={handleChange} disabled={!canEdit}>
                           <option value="M">Male</option>
                           <option value="F">Female</option>
                       </select>
                   </div>
                   <div className="form-group">
                       <label>Aliases</label>
-                      <AliasesInput aliases={formData.name?.aliases} onChange={handleAliasesChange} />
+                      <AliasesInput aliases={formData.name?.aliases} onChange={handleAliasesChange} canEdit={canEdit} />
                   </div>
                   <div className="form-group">
                       <label className="checkbox-label">
-                          <input type="checkbox" name="root" checked={formData.root || false} onChange={handleChange} />
+                          <input type="checkbox" name="root" checked={formData.root || false} onChange={handleChange} disabled={!canEdit} />
                           <span>Set as Tree Root</span>
                       </label>
                   </div>
@@ -90,24 +88,27 @@ const PersonForm = ({ person, onSave, onDelete }) => {
                     imageUrl={formData.image_url} 
                     onImageChange={handleImageChange} 
                     onImageRemove={handleImageRemove} 
+                    canEdit={canEdit}
                   />
               </div>
           </div>
 
         <h3 className="form-section-heading">Events</h3>
-        <EventsEditor events={formData.events || []} onChange={handleEventsChange} />
+        <EventsEditor events={formData.events || []} onChange={handleEventsChange} canEdit={canEdit} />
         
         <h3 className="form-section-heading">Custom Fields</h3>
-        <CustomFieldsEditor customFields={Object.entries(formData.custom_fields || {}).map(([key, value]) => ({ key, value }))} onChange={handleCustomFieldsChange} />
+        <CustomFieldsEditor customFields={Object.entries(formData.custom_fields || {}).map(([key, value]) => ({ key, value }))} onChange={handleCustomFieldsChange} canEdit={canEdit} />
         
-        <div className="form-actions">
-          <button type="submit" className="btn btn-primary">Save Person</button>
-          {person.id && (
-            <button type="button" className="btn btn-danger" onClick={handleDelete}>
-              Delete Person
-            </button>
-          )}
-        </div>
+        {canEdit && (
+            <div className="form-actions">
+                <button type="submit" className="btn btn-primary">Save Person</button>
+                {person.id && (
+                    <button type="button" className="btn btn-danger" onClick={handleDelete}>
+                    Delete Person
+                    </button>
+                )}
+            </div>
+        )}
       </form>
     </div>
   );

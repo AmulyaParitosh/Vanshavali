@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PersonForm from './PersonForm';
 
-const EditPeople = ({ treeData, onSave }) => {
+const EditPeople = ({ treeData, onSave, canEdit }) => {
   const [data, setData] = useState(treeData);
   const [selectedPerson, setSelectedPerson] = useState(null);
 
@@ -10,7 +10,7 @@ const EditPeople = ({ treeData, onSave }) => {
   }, [treeData]);
 
   if (!data) {
-    return <div className="loading-editor">Loading Editor...</div>;
+    return <div className="loading-editor">Loading...</div>;
   }
 
   const generateIdFromName = (name) => {
@@ -26,6 +26,7 @@ const EditPeople = ({ treeData, onSave }) => {
   };
 
   const handleSavePerson = (person) => {
+    if (!canEdit) return;
     let updatedPeople;
     if (person.id) {
       updatedPeople = data.people.map(p => p.id === person.id ? person : p);
@@ -40,6 +41,7 @@ const EditPeople = ({ treeData, onSave }) => {
   };
 
   const handleDeletePerson = (personId) => {
+    if (!canEdit) return;
     const updatedPeople = data.people.filter(p => p.id !== personId);
     const updatedFamilies = data.families
       .map(f => ({ ...f, children: f.children.filter(c => c !== personId) }))
@@ -52,6 +54,7 @@ const EditPeople = ({ treeData, onSave }) => {
   };
 
   const handleAddNewPerson = () => {
+    if (!canEdit) return;
     setSelectedPerson({ name: { official_name: '' }, sex: 'M', events: [], custom_fields: {} });
   };
 
@@ -73,19 +76,21 @@ const EditPeople = ({ treeData, onSave }) => {
         <div className="sidebar-content">
             {renderSidebarList()}
         </div>
-        <div className="sidebar-actions">
-            <button className="btn-primary btn-block" onClick={handleAddNewPerson}>Add New Person</button>
-        </div>
+        {canEdit && (
+          <div className="sidebar-actions">
+              <button className="btn-primary btn-block" onClick={handleAddNewPerson}>Add New Person</button>
+          </div>
+        )}
       </aside>
       <main className="editor-panel">
         {!selectedPerson && (
           <div className="welcome-message">
-            <h2>Select a person to edit</h2>
-            <p>You can add a new person using the button at the bottom of the sidebar.</p>
+            <h2>Select a person to view details</h2>
+            {canEdit && <p>You can add a new person using the button at the bottom of the sidebar.</p>}
           </div>
         )}
         {selectedPerson && (
-          <PersonForm person={selectedPerson} onSave={handleSavePerson} onDelete={handleDeletePerson} />
+          <PersonForm person={selectedPerson} onSave={handleSavePerson} onDelete={handleDeletePerson} canEdit={canEdit} />
         )}
       </main>
     </div>

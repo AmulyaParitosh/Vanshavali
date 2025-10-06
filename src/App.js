@@ -118,10 +118,10 @@ const App = () => {
     switch (activeTab) {
       case 'admin_dashboard':
         return isAdmin ? <AdminDashboard /> : <FamilyTree people={treeData.people || []} families={treeData.families || []} />;
-      case 'edit_people':
-        return canEdit ? <EditPeople treeData={treeData} onSave={handleSaveData} /> : <FamilyTree people={treeData.people || []} families={treeData.families || []} />;
-      case 'edit_family':
-        return canEdit ? <EditFamily treeData={treeData} onSave={handleSaveData} /> : <FamilyTree people={treeData.people || []} families={treeData.families || []} />;
+      case 'people':
+        return <EditPeople treeData={treeData} onSave={handleSaveData} canEdit={canEdit} />;
+      case 'family':
+        return <EditFamily treeData={treeData} onSave={handleSaveData} canEdit={canEdit} />;
       case 'tree':
       default:
         return <FamilyTree people={treeData.people || []} families={treeData.families || []} />;
@@ -138,16 +138,12 @@ const App = () => {
           <button className={`btn ${activeTab === 'tree' ? 'active' : ''}`} onClick={() => setActiveTab('tree')}>
             Tree
           </button>
-          {canEdit && (
-            <>
-              <button className={`btn ${activeTab === 'edit_people' ? 'active' : ''}`} onClick={() => setActiveTab('edit_people')}>
-                Edit People
-              </button>
-              <button className={`btn ${activeTab === 'edit_family' ? 'active' : ''}`} onClick={() => setActiveTab('edit_family')}>
-                Edit Family
-              </button>
-            </>
-          )}
+          <button className={`btn ${activeTab === 'people' ? 'active' : ''}`} onClick={() => setActiveTab('people')}>
+            People
+          </button>
+          <button className={`btn ${activeTab === 'family' ? 'active' : ''}`} onClick={() => setActiveTab('family')}>
+            Family
+          </button>
           {isAdmin && (
             <button className={`btn ${activeTab === 'admin_dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('admin_dashboard')}>
               Admin Dashboard

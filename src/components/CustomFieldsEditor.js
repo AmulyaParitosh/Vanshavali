@@ -1,6 +1,6 @@
 import React from 'react';
 
-const CustomFieldsEditor = ({ customFields, onChange }) => {
+const CustomFieldsEditor = ({ customFields, onChange, canEdit }) => {
   const handleFieldChange = (index, key, value) => {
     const newFields = [...customFields];
     newFields[index] = { key, value };
@@ -22,16 +22,16 @@ const CustomFieldsEditor = ({ customFields, onChange }) => {
         <div key={index} className="item">
           <div className="form-group">
             <label>Field Name</label>
-            <input type="text" value={field.key} onChange={(e) => handleFieldChange(index, e.target.value, field.value)} placeholder="e.g., occupation" />
+            <input type="text" value={field.key} onChange={(e) => handleFieldChange(index, e.target.value, field.value)} placeholder="e.g., occupation" disabled={!canEdit} />
           </div>
           <div className="form-group">
             <label>Field Value</label>
-            <input type="text" value={field.value} onChange={(e) => handleFieldChange(index, field.key, e.target.value)} />
+            <input type="text" value={field.value} onChange={(e) => handleFieldChange(index, field.key, e.target.value)} disabled={!canEdit} />
           </div>
-          <button type="button" className="btn btn-danger" onClick={() => removeField(index)}>Remove Field</button>
+          {canEdit && <button type="button" className="btn btn-danger" onClick={() => removeField(index)}>Remove Field</button>}
         </div>
       ))}
-      <button type="button" className="btn btn-secondary" onClick={addField}>Add Custom Field</button>
+      {canEdit && <button type="button" className="btn btn-secondary" onClick={addField}>Add Custom Field</button>}
     </div>
   );
 };

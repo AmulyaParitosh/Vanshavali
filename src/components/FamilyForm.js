@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
-const FamilyForm = ({ family, people, onSave, onDelete }) => {
+const FamilyForm = ({ family, people, onSave, onDelete, canEdit }) => {
   const [formData, setFormData] = useState(family);
   const [selectedChild, setSelectedChild] = useState('');
 
@@ -43,7 +43,7 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
   };
 
   const onDragEnd = (result) => {
-    if (!result.destination) {
+    if (!result.destination || !canEdit) {
       return;
     }
 
@@ -77,11 +77,11 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
 
   return (
     <div className="form-container">
-      <h2>{family.id ? 'Edit Family' : 'Add New Family'}</h2>
+      <h2>Family Details</h2>
       <form onSubmit={handleSave}>
         <div className="form-group">
           <label htmlFor="family-partner1">Partner 1 (Male)</label>
-          <select id="family-partner1" name="partner1" value={partner1Id} onChange={handlePartnerChange} required>
+          <select id="family-partner1" name="partner1" value={partner1Id} onChange={handlePartnerChange} required disabled={!canEdit}>
             <option value="">Select a person</option>
             {people.filter(p => p.sex === 'M').map(p => (
               <option key={p.id} value={p.id}>{p.name.official_name}</option>
@@ -90,7 +90,7 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
         </div>
         <div className="form-group">
           <label htmlFor="family-partner2">Partner 2 (Female)</label>
-          <select id="family-partner2" name="partner2" value={partner2Id} onChange={handlePartnerChange} required>
+          <select id="family-partner2" name="partner2" value={partner2Id} onChange={handlePartnerChange} required disabled={!canEdit}>
             <option value="">Select a person</option>
             {people.filter(p => p.sex === 'F').map(p => (
               <option key={p.id} value={p.id}>{p.name.official_name}</option>
@@ -100,7 +100,7 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
         
         <h3 className="form-section-heading">Children</h3>
         <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="children-list">
+            <Droppable droppableId="children-list" isDropDisabled={!canEdit}>
                 {(provided) => (
                     <ol
                         {...provided.droppableProps}
@@ -108,7 +108,7 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
                         className="children-list"
                     >
                         {(formData.children || []).map((childId, index) => (
-                            <Draggable key={childId} draggableId={childId} index={index}>
+                            <Draggable key={childId} draggableId={childId} index={index} isDragDisabled={!canEdit}>
                                 {(provided) => (
                                     <li
                                         ref={provided.innerRef}
@@ -117,13 +117,15 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
                                         className="child-item"
                                     >
                                         <span>{getPersonName(childId)}</span>
-                                        <button
-                                            type="button"
-                                            className="remove-child-btn"
-                                            onClick={() => handleRemoveChild(childId)}
-                                        >
-                                            &times;
-                                        </button>
+                                        {canEdit && (
+                                            <button
+                                                type="button"
+                                                className="remove-child-btn"
+                                                onClick={() => handleRemoveChild(childId)}
+                                            >
+                                                &times;
+                                            </button>
+                                        )}
                                     </li>
                                 )}
                             </Draggable>
@@ -133,24 +135,28 @@ const FamilyForm = ({ family, people, onSave, onDelete }) => {
                 )}
             </Droppable>
         </DragDropContext>
-        <div className="add-child-container">
-          <select value={selectedChild} onChange={(e) => setSelectedChild(e.target.value)}>
-              <option value="">Select a child to add</option>
-              {availableChildren.map(p => (
-                  <option key={p.id} value={p.id}>{p.name.official_name}</option>
-              ))}
-          </select>
-          <button type="button" className="btn btn-secondary" onClick={handleAddChild}>Add Child</button>
-        </div>
+        {canEdit && (
+            <div className="add-child-container">
+            <select value={selectedChild} onChange={(e) => setSelectedChild(e.target.value)} disabled={!canEdit}>
+                <option value="">Select a child to add</option>
+                {availableChildren.map(p => (
+                    <option key={p.id} value={p.id}>{p.name.official_name}</option>
+                ))}
+            </select>
+            <button type="button" className="btn btn-secondary" onClick={handleAddChild} disabled={!canEdit}>Add Child</button>
+            </div>
+        )}
 
-        <div className="form-actions">
-          <button type="submit" className="btn btn-primary">Save Family</button>
-          {family.id && (
-            <button type="button" className="btn btn-danger" onClick={handleDelete}>
-              Delete Family
-            </button>
-          )}
-        </div>
+        {canEdit && (
+            <div className="form-actions">
+            <button type="submit" className="btn btn-primary">Save Family</button>
+            {family.id && (
+                <button type="button" className="btn btn-danger" onClick={handleDelete}>
+                Delete Family
+                </button>
+            )}
+            </div>
+        )}
       </form>
     </div>
   );

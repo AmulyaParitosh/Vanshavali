@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const AliasesInput = ({ aliases, onChange }) => {
+const AliasesInput = ({ aliases, onChange, canEdit }) => {
   const [inputValue, setInputValue] = useState('');
 
   const handleInputChange = (e) => {
@@ -27,19 +27,24 @@ const AliasesInput = ({ aliases, onChange }) => {
         {(aliases || []).map((alias, index) => (
           <div key={index} className="alias-tag">
             {alias}
-            <button type="button" onClick={() => removeAlias(alias)} className="remove-tag-btn">
-              &times;
-            </button>
+            {canEdit && (
+                <button type="button" onClick={() => removeAlias(alias)} className="remove-tag-btn">
+                &times;
+                </button>
+            )}
           </div>
         ))}
-         <input
-            type="text"
-            value={inputValue}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Add alias and press Enter..."
-            className="alias-input-field"
-        />
+        {canEdit && (
+            <input
+                type="text"
+                value={inputValue}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Add alias and press Enter..."
+                className="alias-input-field"
+                disabled={!canEdit}
+            />
+        )}
       </div>
     </div>
   );

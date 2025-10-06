@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FamilyForm from './FamilyForm';
 
-const EditFamily = ({ treeData, onSave }) => {
+const EditFamily = ({ treeData, onSave, canEdit }) => {
   const [data, setData] = useState(treeData);
   const [selectedFamily, setSelectedFamily] = useState(null);
 
@@ -10,10 +10,11 @@ const EditFamily = ({ treeData, onSave }) => {
   }, [treeData]);
 
   if (!data) {
-    return <div className="loading-editor">Loading Editor...</div>;
+    return <div className="loading-editor">Loading...</div>;
   }
 
   const handleSaveFamily = (family) => {
+    if (!canEdit) return;
     let updatedFamilies;
     if (family.id) {
       updatedFamilies = data.families.map(f => f.id === family.id ? family : f);
@@ -33,6 +34,7 @@ const EditFamily = ({ treeData, onSave }) => {
   };
 
   const handleDeleteFamily = (familyId) => {
+    if (!canEdit) return;
     const updatedFamilies = data.families.filter(f => f.id !== familyId);
     const newData = { ...data, families: updatedFamilies };
     setData(newData);
@@ -46,6 +48,7 @@ const EditFamily = ({ treeData, onSave }) => {
   };
 
   const handleAddNewFamily = () => {
+    if (!canEdit) return;
     setSelectedFamily({ partners: ['', ''], children: [] });
   };
 
@@ -67,19 +70,21 @@ const EditFamily = ({ treeData, onSave }) => {
         <div className="sidebar-content">
             {renderSidebarList()}
         </div>
-        <div className="sidebar-actions">
-            <button className="btn-primary btn-block" onClick={handleAddNewFamily}>Add New Family</button>
-        </div>
+        {canEdit && (
+            <div className="sidebar-actions">
+                <button className="btn-primary btn-block" onClick={handleAddNewFamily}>Add New Family</button>
+            </div>
+        )}
       </aside>
       <main className="editor-panel">
         {!selectedFamily && (
           <div className="welcome-message">
-            <h2>Select a family to edit</h2>
-            <p>You can add a new family using the button at the bottom of the sidebar.</p>
+            <h2>Select a family to view details</h2>
+            {canEdit && <p>You can add a new family using the button at the bottom of the sidebar.</p>}
           </div>
         )}
         {selectedFamily && (
-          <FamilyForm family={selectedFamily} people={data.people} onSave={handleSaveFamily} onDelete={handleDeleteFamily} />
+          <FamilyForm family={selectedFamily} people={data.people} onSave={handleSaveFamily} onDelete={handleDeleteFamily} canEdit={canEdit} />
         )}
       </main>
     </div>
