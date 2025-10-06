@@ -78,7 +78,7 @@ const EditPeople = ({ treeData, onSave, canEdit }) => {
         </div>
         {canEdit && (
           <div className="sidebar-actions">
-              <button className="btn-primary btn-block" onClick={handleAddNewPerson}>Add New Person</button>
+              <button className="btn btn-primary btn-block" onClick={handleAddNewPerson}>Add New Person</button>
           </div>
         )}
       </aside>
