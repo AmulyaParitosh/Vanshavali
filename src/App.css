@@ -135,7 +135,8 @@ body {
     fill: var(--color-secondary);
 }
 
-.node text {
+.node text,
+.node-text-style {
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 16px;
