@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import './Forms.css';
 
 const FamilyForm = ({ family, people, onSave, onDelete }) => {
   const [formData, setFormData] = useState(family);

@@ -3,7 +3,6 @@ import EventsEditor from './EventsEditor';
 import CustomFieldsEditor from './CustomFieldsEditor';
 import AliasesInput from './AliasesInput';
 import ImageUpload from './ImageUpload';
-import './Forms.css';
 
 const PersonForm = ({ person, onSave, onDelete }) => {
   const [formData, setFormData] = useState(person);

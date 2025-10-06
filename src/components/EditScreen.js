@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PersonForm from './PersonForm';
 import FamilyForm from './FamilyForm';
-import './EditScreen.css';
 
 const EditScreen = ({ treeData, onSave, onExit }) => {
   const [data, setData] = useState(treeData);

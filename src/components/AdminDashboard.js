@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { database } from '../firebase';
 import { ref, onValue, update } from 'firebase/database';
-import './AdminDashboard.css';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);

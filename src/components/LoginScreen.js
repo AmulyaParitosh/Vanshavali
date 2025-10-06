@@ -1,5 +1,4 @@
 import React from 'react';
-import './LoginScreen.css';
 
 const LoginScreen = ({ onLoginRequest }) => {
   return (

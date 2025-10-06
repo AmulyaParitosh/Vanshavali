@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './Forms.css';
 
 const AliasesInput = ({ aliases, onChange }) => {
   const [inputValue, setInputValue] = useState('');
