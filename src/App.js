@@ -3,7 +3,8 @@ import { database, auth } from './firebase';
 import { ref, onValue, set, get } from 'firebase/database';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 import FamilyTree from './components/FamilyTree';
-import EditScreen from './components/EditScreen';
+import EditPeople from './components/EditPeople';
+import EditFamily from './components/EditFamily';
 import AdminDashboard from './components/AdminDashboard';
 import LoginScreen from './components/LoginScreen';
 import './App.css';
@@ -12,9 +13,9 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [treeData, setTreeData] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isDashboardMode, setIsDashboardMode] = useState(false);
+  const [activeTab, setActiveTab] = useState('tree');
   const [isLoading, setIsLoading] = useState(true);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -114,65 +115,64 @@ const App = () => {
     const isAdmin = userRole === 'admin';
     const canEdit = userRole === 'editor' || isAdmin;
 
-    if (isDashboardMode && isAdmin) {
-      return <AdminDashboard onExit={() => setIsDashboardMode(false)} />;
+    switch (activeTab) {
+      case 'admin_dashboard':
+        return isAdmin ? <AdminDashboard /> : <FamilyTree people={treeData.people || []} families={treeData.families || []} />;
+      case 'edit_people':
+        return canEdit ? <EditPeople treeData={treeData} onSave={handleSaveData} /> : <FamilyTree people={treeData.people || []} families={treeData.families || []} />;
+      case 'edit_family':
+        return canEdit ? <EditFamily treeData={treeData} onSave={handleSaveData} /> : <FamilyTree people={treeData.people || []} families={treeData.families || []} />;
+      case 'tree':
+      default:
+        return <FamilyTree people={treeData.people || []} families={treeData.families || []} />;
     }
-
-    if (isEditMode && canEdit) {
-      return (
-        <EditScreen 
-          treeData={treeData} 
-          onSave={handleSaveData} 
-          onExit={() => setIsEditMode(false)} 
-        />
-      );
-    }
-
-    return <FamilyTree people={treeData.people || []} families={treeData.families || []} />;
   };
 
   const isAdmin = userRole === 'admin';
   const canEdit = userRole === 'editor' || isAdmin;
 
   return (
-    <div className={`App ${isEditMode && canEdit ? 'edit-mode' : ''}`}>
-        <header className="App-header">
-            <div className="header-left">
-              {user && (isEditMode || isDashboardMode) ? (
-                <button className="btn back-button" onClick={() => {
-                  setIsEditMode(false);
-                  setIsDashboardMode(false);
-                }}>
-                  Back to Tree
-                </button>
-              ) : (
-                <>
-                  {user && canEdit && (
-                    <button className="btn" onClick={() => setIsEditMode(true)}>
-                      Edit
-                    </button>
-                  )}
-                  {user && isAdmin && (
-                    <button className="btn btn-secondary" onClick={() => setIsDashboardMode(true)}>
-                      Admin Dashboard
-                    </button>
-                  )}
-                </>
+    <div className={`App`}>
+      <header className="App-header">
+        <div className="header-left">
+          <button className={`btn ${activeTab === 'tree' ? 'active' : ''}`} onClick={() => setActiveTab('tree')}>
+            Tree
+          </button>
+          {canEdit && (
+            <>
+              <button className={`btn ${activeTab === 'edit_people' ? 'active' : ''}`} onClick={() => setActiveTab('edit_people')}>
+                Edit People
+              </button>
+              <button className={`btn ${activeTab === 'edit_family' ? 'active' : ''}`} onClick={() => setActiveTab('edit_family')}>
+                Edit Family
+              </button>
+            </>
+          )}
+          {isAdmin && (
+            <button className={`btn ${activeTab === 'admin_dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('admin_dashboard')}>
+              Admin Dashboard
+            </button>
+          )}
+        </div>
+        <h1>Vanshavali</h1>
+        <div className="header-right">
+          {user && (
+            <div className="user-menu">
+              <button className="btn user-menu-button" onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}>
+                {user.displayName}
+              </button>
+              {isUserMenuOpen && (
+                <div className="user-menu-dropdown">
+                  <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
+                </div>
               )}
             </div>
-            <h1>Vanshavali</h1>
-            <div className="header-right">
-                {user && (
-                <>
-                    <span className="user-name">{user.displayName}</span>
-                    <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
-                </>
-                )}
-            </div>
-        </header>
-        <main>
-            {renderContent()}
-        </main>
+          )}
+        </div>
+      </header>
+      <main>
+        {renderContent()}
+      </main>
     </div>
   );
 };
