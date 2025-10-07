@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { supabase } from '../lib/supabaseClient'; // Assuming you have this file
+import { supabase } from '../../lib/supabaseClient'; // Assuming you have this file
 
 const ImageUpload = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
   const [isUploading, setIsUploading] = useState(false);
