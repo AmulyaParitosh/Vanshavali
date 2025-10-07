@@ -1,13 +1,14 @@
-"use client";
+'use client';
 
-import React from "react";
-import { AppContext } from "../context/AppContext";
-import { useAuthAndData } from "../hooks/useAuthAndData";
+import React from 'react';
+import { AppContext } from '../context/AppContext';
+import { useAuthAndData } from '../hooks/useAuthAndData';
 
-import Header from "../components/Header";
-import LoginScreen from "../components/LoginScreen";
-import PendingApprovalScreen from "../components/PendingApprovalScreen";
-import AccessDeniedScreen from "../components/AccessDeniedScreen";
+import Header from '../components/Header';
+import LoginScreen from '../components/LoginScreen';
+import PendingApprovalScreen from '../components/PendingApprovalScreen';
+import AccessDeniedScreen from '../components/AccessDeniedScreen';
+import Loading from '../components/Loading';
 
 export default function AppProvider({ children }) {
   const {
@@ -21,16 +22,16 @@ export default function AppProvider({ children }) {
   } = useAuthAndData();
 
   const renderContent = () => {
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading) return <Loading />;
     if (!user) return <LoginScreen onLoginRequest={handleLogin} />;
-    if (userRole === "pending")
+    if (userRole === 'pending')
       return <PendingApprovalScreen onLogout={handleLogout} />;
-    if (userRole === "denied")
+    if (userRole === 'denied')
       return <AccessDeniedScreen onLogout={handleLogout} />;
 
-    const allowedRoles = ["viewer", "editor", "admin"];
+    const allowedRoles = ['viewer', 'editor', 'admin'];
     if (allowedRoles.includes(userRole) && !treeData) {
-      return <div>Loading family data...</div>;
+      return <Loading text="Loading family data..." />;
     }
 
     return children;
