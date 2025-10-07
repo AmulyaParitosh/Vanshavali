@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { database } from '../../lib/firebase';
+import { database } from '../lib/firebase';
 import { ref, onValue, update } from 'firebase/database';
 
 const AdminDashboard = () => {

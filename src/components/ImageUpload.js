@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { supabase } from '../../lib/supabaseClient'; // Assuming you have this file
+import React, { useState, useRef } from "react";
+import { supabase } from "../lib/supabaseClient"; // Assuming you have this file
 
 const ImageUpload = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -15,13 +15,13 @@ const ImageUpload = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
 
     // In a real app, you would get the user ID from your authentication system
     // For now, we'll use a placeholder or a static ID.
-    const userId = 'user_placeholder_id'; // Replace with actual user ID
+    const userId = "user_placeholder_id"; // Replace with actual user ID
     const filePath = `${userId}/${Date.now()}_${file.name}`;
 
     try {
       // Upload the file to the 'profile-pictures' bucket
       const { data, error } = await supabase.storage
-        .from('profile-pictures')
+        .from("profile-pictures")
         .upload(filePath, file);
 
       if (error) {
@@ -29,15 +29,14 @@ const ImageUpload = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
       }
 
       // Get the public URL of the uploaded file
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-pictures')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("profile-pictures").getPublicUrl(filePath);
 
       // Pass the new URL and the path to the parent component
       onImageChange(publicUrl, data.path);
-
     } catch (error) {
-      console.error('Error uploading file:', error);
+      console.error("Error uploading file:", error);
       alert(`Upload failed: ${error.message}`);
     } finally {
       setIsUploading(false);
@@ -64,20 +63,30 @@ const ImageUpload = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
         accept="image/*"
         disabled={isUploading || !canEdit}
       />
       {canEdit && (
-          <div className="image-actions">
-            <button type="button" className="btn btn-secondary" onClick={handleFileSelect} disabled={isUploading || !canEdit}>
-            {isUploading ? 'Uploading...' : 'Change / Upload'}
+        <div className="image-actions">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleFileSelect}
+            disabled={isUploading || !canEdit}
+          >
+            {isUploading ? "Uploading..." : "Change / Upload"}
+          </button>
+          {imageUrl && (
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={onImageRemove}
+              disabled={isUploading || !canEdit}
+            >
+              Remove
             </button>
-            {imageUrl && (
-            <button type="button" className="btn btn-danger" onClick={onImageRemove} disabled={isUploading || !canEdit}>
-                Remove
-            </button>
-            )}
+          )}
         </div>
       )}
     </div>
