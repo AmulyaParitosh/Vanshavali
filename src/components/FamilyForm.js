@@ -1,27 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import React, { useState, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 const FamilyForm = ({ family, people, onSave, onDelete, canEdit }) => {
   const [formData, setFormData] = useState(family);
-  const [selectedChild, setSelectedChild] = useState('');
+  const [selectedChild, setSelectedChild] = useState("");
 
   useEffect(() => {
     setFormData(family);
-    setSelectedChild('');
+    setSelectedChild("");
   }, [family]);
 
   if (!family) return null;
 
   const getPersonName = (personId) => {
-    const person = people.find(p => p.id === personId);
-    return person ? person.name.official_name : 'Unknown';
+    const person = people.find((p) => p.id === personId);
+    return person ? person.name.official_name : "Unknown";
   };
 
   const handlePartnerChange = (e) => {
     const { name, value } = e.target;
-    const currentPartners = formData.partners || ['', ''];
+    const currentPartners = formData.partners || ["", ""];
     let newPartners;
-    if (name === 'partner1') {
+    if (name === "partner1") {
       newPartners = [value, currentPartners[1]];
     } else {
       newPartners = [currentPartners[0], value];
@@ -33,12 +33,14 @@ const FamilyForm = ({ family, people, onSave, onDelete, canEdit }) => {
     if (selectedChild && !(formData.children || []).includes(selectedChild)) {
       const newChildren = [...(formData.children || []), selectedChild];
       setFormData({ ...formData, children: newChildren });
-      setSelectedChild('');
+      setSelectedChild("");
     }
   };
 
   const handleRemoveChild = (childIdToRemove) => {
-    const newChildren = (formData.children || []).filter(childId => childId !== childIdToRemove);
+    const newChildren = (formData.children || []).filter(
+      (childId) => childId !== childIdToRemove
+    );
     setFormData({ ...formData, children: newChildren });
   };
 
@@ -60,19 +62,24 @@ const FamilyForm = ({ family, people, onSave, onDelete, canEdit }) => {
   };
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this family? This will not delete the individuals but will remove their connections as a family unit.')) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this family? This will not delete the individuals but will remove their connections as a family unit."
+      )
+    ) {
       onDelete(family.id);
     }
   };
 
-  const partner1Id = formData.partners ? formData.partners[0] : '';
-  const partner2Id = formData.partners ? formData.partners[1] : '';
+  const partner1Id = formData.partners ? formData.partners[0] : "";
+  const partner2Id = formData.partners ? formData.partners[1] : "";
   const currentChildrenIds = formData.children || [];
 
-  const availableChildren = people.filter(p =>
-    p.id !== partner1Id &&
-    p.id !== partner2Id &&
-    !currentChildrenIds.includes(p.id)
+  const availableChildren = people.filter(
+    (p) =>
+      p.id !== partner1Id &&
+      p.id !== partner2Id &&
+      !currentChildrenIds.includes(p.id)
   );
 
   return (
@@ -81,81 +88,127 @@ const FamilyForm = ({ family, people, onSave, onDelete, canEdit }) => {
       <form onSubmit={handleSave}>
         <div className="form-group">
           <label htmlFor="family-partner1">Partner 1 (Male)</label>
-          <select id="family-partner1" name="partner1" value={partner1Id} onChange={handlePartnerChange} required disabled={!canEdit}>
+          <select
+            id="family-partner1"
+            name="partner1"
+            value={partner1Id}
+            onChange={handlePartnerChange}
+            required
+            disabled={!canEdit}
+          >
             <option value="">Select a person</option>
-            {people.filter(p => p.sex === 'M').map(p => (
-              <option key={p.id} value={p.id}>{p.name.official_name}</option>
-            ))}
+            {people
+              .filter((p) => p.sex === "M")
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name.official_name}
+                </option>
+              ))}
           </select>
         </div>
         <div className="form-group">
           <label htmlFor="family-partner2">Partner 2 (Female)</label>
-          <select id="family-partner2" name="partner2" value={partner2Id} onChange={handlePartnerChange} required disabled={!canEdit}>
+          <select
+            id="family-partner2"
+            name="partner2"
+            value={partner2Id}
+            onChange={handlePartnerChange}
+            required
+            disabled={!canEdit}
+          >
             <option value="">Select a person</option>
-            {people.filter(p => p.sex === 'F').map(p => (
-              <option key={p.id} value={p.id}>{p.name.official_name}</option>
-            ))}
+            {people
+              .filter((p) => p.sex === "F")
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name.official_name}
+                </option>
+              ))}
           </select>
         </div>
-        
+
         <h3 className="form-section-heading">Children</h3>
         <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="children-list" isDropDisabled={!canEdit}>
-                {(provided) => (
-                    <ol
-                        {...provided.droppableProps}
+          <Droppable droppableId="children-list" isDropDisabled={!canEdit}>
+            {(provided) => (
+              <ol
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="children-list"
+              >
+                {(formData.children || []).map((childId, index) => (
+                  <Draggable
+                    key={childId}
+                    draggableId={childId}
+                    index={index}
+                    isDragDisabled={!canEdit}
+                  >
+                    {(provided) => (
+                      <li
                         ref={provided.innerRef}
-                        className="children-list"
-                    >
-                        {(formData.children || []).map((childId, index) => (
-                            <Draggable key={childId} draggableId={childId} index={index} isDragDisabled={!canEdit}>
-                                {(provided) => (
-                                    <li
-                                        ref={provided.innerRef}
-                                        {...provided.draggableProps}
-                                        {...provided.dragHandleProps}
-                                        className="child-item"
-                                    >
-                                        <span>{getPersonName(childId)}</span>
-                                        {canEdit && (
-                                            <button
-                                                type="button"
-                                                className="remove-child-btn"
-                                                onClick={() => handleRemoveChild(childId)}
-                                            >
-                                                &times;
-                                            </button>
-                                        )}
-                                    </li>
-                                )}
-                            </Draggable>
-                        ))}
-                        {provided.placeholder}
-                    </ol>
-                )}
-            </Droppable>
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="child-item"
+                      >
+                        <span>{getPersonName(childId)}</span>
+                        {canEdit && (
+                          <button
+                            type="button"
+                            className="remove-child-btn"
+                            onClick={() => handleRemoveChild(childId)}
+                          >
+                            &times;
+                          </button>
+                        )}
+                      </li>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </ol>
+            )}
+          </Droppable>
         </DragDropContext>
         {canEdit && (
-            <div className="add-child-container">
-            <select value={selectedChild} onChange={(e) => setSelectedChild(e.target.value)} disabled={!canEdit}>
-                <option value="">Select a child to add</option>
-                {availableChildren.map(p => (
-                    <option key={p.id} value={p.id}>{p.name.official_name}</option>
-                ))}
+          <div className="add-child-container">
+            <select
+              value={selectedChild}
+              onChange={(e) => setSelectedChild(e.target.value)}
+              disabled={!canEdit}
+            >
+              <option value="">Select a child to add</option>
+              {availableChildren.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name.official_name}
+                </option>
+              ))}
             </select>
-            <button type="button" className="btn btn-secondary" onClick={handleAddChild} disabled={!canEdit}>Add Child</button>
-            </div>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleAddChild}
+              disabled={!canEdit}
+            >
+              Add Child
+            </button>
+          </div>
         )}
 
         {canEdit && (
-            <div className="form-actions">
-            <button type="submit" className="btn btn-primary">Save Family</button>
+          <div className="form-actions">
+            <button type="submit" className="btn btn-primary">
+              Save Family
+            </button>
             {family.id && (
-                <button type="button" className="btn btn-danger" onClick={handleDelete}>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleDelete}
+              >
                 Delete Family
-                </button>
+              </button>
             )}
-            </div>
+          </div>
         )}
       </form>
     </div>

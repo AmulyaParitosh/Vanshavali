@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const CustomFieldsEditor = ({ customFields, onChange, canEdit }) => {
   const handleFieldChange = (index, key, value) => {
@@ -8,7 +8,7 @@ const CustomFieldsEditor = ({ customFields, onChange, canEdit }) => {
   };
 
   const addField = () => {
-    onChange([...customFields, { key: '', value: '' }]);
+    onChange([...customFields, { key: "", value: "" }]);
   };
 
   const removeField = (index) => {
@@ -22,16 +22,43 @@ const CustomFieldsEditor = ({ customFields, onChange, canEdit }) => {
         <div key={index} className="item">
           <div className="form-group">
             <label>Field Name</label>
-            <input type="text" value={field.key} onChange={(e) => handleFieldChange(index, e.target.value, field.value)} placeholder="e.g., occupation" disabled={!canEdit} />
+            <input
+              type="text"
+              value={field.key}
+              onChange={(e) =>
+                handleFieldChange(index, e.target.value, field.value)
+              }
+              placeholder="e.g., occupation"
+              disabled={!canEdit}
+            />
           </div>
           <div className="form-group">
             <label>Field Value</label>
-            <input type="text" value={field.value} onChange={(e) => handleFieldChange(index, field.key, e.target.value)} disabled={!canEdit} />
+            <input
+              type="text"
+              value={field.value}
+              onChange={(e) =>
+                handleFieldChange(index, field.key, e.target.value)
+              }
+              disabled={!canEdit}
+            />
           </div>
-          {canEdit && <button type="button" className="btn btn-danger" onClick={() => removeField(index)}>Remove Field</button>}
+          {canEdit && (
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => removeField(index)}
+            >
+              Remove Field
+            </button>
+          )}
         </div>
       ))}
-      {canEdit && <button type="button" className="btn btn-secondary" onClick={addField}>Add Custom Field</button>}
+      {canEdit && (
+        <button type="button" className="btn btn-secondary" onClick={addField}>
+          Add Custom Field
+        </button>
+      )}
     </div>
   );
 };

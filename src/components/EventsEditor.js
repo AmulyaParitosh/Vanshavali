@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const EventsEditor = ({ events, onChange, canEdit }) => {
   const handleEventChange = (index, field, value) => {
@@ -8,7 +8,7 @@ const EventsEditor = ({ events, onChange, canEdit }) => {
   };
 
   const addEvent = () => {
-    onChange([...events, { type: '', date: '', place: '' }]);
+    onChange([...events, { type: "", date: "", place: "" }]);
   };
 
   const removeEvent = (index) => {
@@ -22,20 +22,51 @@ const EventsEditor = ({ events, onChange, canEdit }) => {
         <div key={index} className="item">
           <div className="form-group">
             <label>Event Type</label>
-            <input type="text" value={event.type} onChange={(e) => handleEventChange(index, 'type', e.target.value)} placeholder="e.g., Birth, Death" disabled={!canEdit} />
+            <input
+              type="text"
+              value={event.type}
+              onChange={(e) => handleEventChange(index, "type", e.target.value)}
+              placeholder="e.g., Birth, Death"
+              disabled={!canEdit}
+            />
           </div>
           <div className="form-group">
             <label>Date</label>
-            <input type="text" value={event.date} onChange={(e) => handleEventChange(index, 'date', e.target.value)} placeholder="YYYY-MM-DD" disabled={!canEdit} />
+            <input
+              type="text"
+              value={event.date}
+              onChange={(e) => handleEventChange(index, "date", e.target.value)}
+              placeholder="YYYY-MM-DD"
+              disabled={!canEdit}
+            />
           </div>
           <div className="form-group">
             <label>Place</label>
-            <input type="text" value={event.place} onChange={(e) => handleEventChange(index, 'place', e.target.value)} disabled={!canEdit} />
+            <input
+              type="text"
+              value={event.place}
+              onChange={(e) =>
+                handleEventChange(index, "place", e.target.value)
+              }
+              disabled={!canEdit}
+            />
           </div>
-          {canEdit && <button type="button" className="btn btn-danger" onClick={() => removeEvent(index)}>Remove Event</button>}
+          {canEdit && (
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => removeEvent(index)}
+            >
+              Remove Event
+            </button>
+          )}
         </div>
       ))}
-      {canEdit && <button type="button" className="btn btn-secondary" onClick={addEvent}>Add Event</button>}
+      {canEdit && (
+        <button type="button" className="btn btn-secondary" onClick={addEvent}>
+          Add Event
+        </button>
+      )}
     </div>
   );
 };
