@@ -176,7 +176,7 @@ body {
 
 /* --- Details Card Styles --- */
 .details-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--color-surface);
   border: 2px solid var(--color-primary);
   border-radius: 15px;
   padding: 20px;
@@ -187,16 +187,16 @@ body {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, transform 0.3s ease;
-  transform: translateY(10px);
+  transform: scale(0.9);
+  transform-origin: bottom center;
   pointer-events: none;
-  z-index: 10;
-  border-image: linear-gradient(to right, var(--color-primary), var(--color-secondary)) 1;
+  z-index: 1000;
 }
 
 .node:hover .details-card {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: scale(1);
 }
 
 .details-card h3 {
