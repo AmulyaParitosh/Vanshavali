@@ -7,6 +7,7 @@ import type { TreeData } from "../../context/AppContext";
 import type { Person } from "../../types/person";
 // @ts-ignore
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
+import TextListSidebar from "../../components/TextListSidebar";
 
 export default function FamilyPage() {
   const { treeData, user, onSave } = useAppContext();
@@ -65,39 +66,25 @@ export default function FamilyPage() {
     setSelectedFamily({ partners: ["", ""], children: [] });
   };
 
-  const renderSidebarList = () => {
-    return (
-      <ul className="data-list">
-        {data.families.map((f) => (
-          <li
-            key={f.id}
-            onClick={() => setSelectedFamily(f)}
-            className={
-              selectedFamily && selectedFamily.id === f.id ? "active" : ""
-            }
-          >
-            {getPersonName(f.partners[0] || "")} & {getPersonName(f.partners[1] || "")}
-          </li>
-        ))}
-      </ul>
-    );
-  };
+
 
   return (
     <div className="edit-screen">
-      <aside className="sidebar">
-        <div className="sidebar-content">{renderSidebarList()}</div>
-        {canEdit && (
-          <div className="sidebar-actions">
-            <button
-              className="btn btn-primary btn-block"
-              onClick={handleAddNewFamily}
-            >
-              Add New Family
-            </button>
-          </div>
-        )}
-      </aside>
+      <TextListSidebar
+        items={data.families}
+        renderItem={(f: Family) => `${getPersonName(f.partners[0] || "")} & ${getPersonName(f.partners[1] || "")}`}
+        filterItem={(f: Family, query: string) => {
+             const p1 = getPersonName(f.partners[0] || "").toLowerCase();
+             const p2 = getPersonName(f.partners[1] || "").toLowerCase();
+             const q = query.toLowerCase();
+             return p1.includes(q) || p2.includes(q);
+        }}
+        onSelect={setSelectedFamily}
+        selectedItem={selectedFamily}
+        onAdd={canEdit ? handleAddNewFamily : undefined}
+        addButtonLabel="Add New Family"
+        canEdit={canEdit}
+      />
       <main className="editor-panel">
         {!selectedFamily && (
           <div className="welcome-message">
@@ -276,7 +263,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
 
         <h3 className="form-section-heading">Children</h3>
         <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="children-list" isDropDisabled={!canEdit}>
+          <Droppable droppableId="children-list" isDropDisabled={!canEdit} isCombineEnabled={false} ignoreContainerClipping={false}>
             {(provided: any) => (
               <ol
                 {...provided.droppableProps}

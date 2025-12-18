@@ -11,6 +11,7 @@ import EventsEditor from "../../components/EventsEditor";
 import CustomFieldsEditor from "../../components/CustomFieldsEditor";
 import AliasesInput from "../../components/AliasesInput";
 import ImageUpload from "../../components/ImageUpload";
+import TextListSidebar from "../../components/TextListSidebar";
 
 export default function PeoplePage() {
   const { treeData, user, onSave } = useAppContext();
@@ -94,39 +95,21 @@ export default function PeoplePage() {
     });
   };
 
-  const renderSidebarList = () => {
-    return (
-      <ul className="data-list">
-        {data.people.map((p) => (
-          <li
-            key={p.id}
-            onClick={() => setSelectedPerson(p)}
-            className={
-              selectedPerson && selectedPerson.id === p.id ? "active" : ""
-            }
-          >
-            {p.name.official_name}
-          </li>
-        ))}
-      </ul>
-    );
-  };
+
 
   return (
     <div className="edit-screen">
-      <aside className="sidebar">
-        <div className="sidebar-content">{renderSidebarList()}</div>
-        {canEdit && (
-          <div className="sidebar-actions">
-            <button
-              className="btn btn-primary btn-block"
-              onClick={handleAddNewPerson}
-            >
-              Add New Person
-            </button>
-          </div>
-        )}
-      </aside>
+
+      <TextListSidebar
+        items={data.people}
+        renderItem={(p: Person) => p.name.official_name}
+        filterItem={(p: Person, query: string) => p.name.official_name.toLowerCase().includes(query.toLowerCase())}
+        onSelect={setSelectedPerson}
+        selectedItem={selectedPerson}
+        onAdd={canEdit ? handleAddNewPerson : undefined}
+        addButtonLabel="Add New Person"
+        canEdit={canEdit}
+      />
       <main className="editor-panel">
         {!selectedPerson && (
           <div className="welcome-message">
