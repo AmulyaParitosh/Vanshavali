@@ -45,7 +45,8 @@ body {
     background-color: var(--color-bg-transparent);
     backdrop-filter: blur(8px);
     border-bottom: 4px double var(--color-primary); /* Mithila Double Border */
-    z-index: 10;
+    position: relative;
+    z-index: 1100;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -884,7 +885,7 @@ body {
   padding: 10px;
   margin-top: 5px;
   width: 250px; /* Increased to fit new items */
-  z-index: 100;
+  z-index: 1101;
 }
 
 .user-menu-dropdown .btn {
