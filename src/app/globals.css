@@ -16,7 +16,13 @@
   --color-primary-light: #fbe9e7;
   --color-primary-dark: #bf360c;
   --color-text-light: #a1887f;
-
+  
+  /* --- UI Refinements --- */
+  --border-radius-sm: 12px;
+  --border-radius-md: 25px;
+  --border-radius-lg: 24px;
+  --shadow-strong: 0 10px 30px rgba(0, 0, 0, 0.15);
+  --color-bg-transparent: rgba(255, 255, 255, 0.9);
 }
 
 body {
@@ -35,7 +41,7 @@ body {
 .App-header {
     width: 100%;
     padding: 20px;
-    background-color: rgba(253, 242, 227, 0.8); /* Semi-transparent Parchment */
+    background-color: var(--color-bg-transparent); /* Unified Transparent Parchment */
     backdrop-filter: blur(5px);
     border-bottom: 2px solid var(--color-node-border);
     z-index: 10;
@@ -97,8 +103,8 @@ body {
 .login-content {
   background-color: var(--color-surface);
   padding: 40px 50px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px var(--color-shadow);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-strong);
   max-width: 500px;
 }
 
@@ -176,11 +182,11 @@ body {
 
 /* --- Details Card Styles --- */
 .details-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--color-bg-transparent);
   border: 2px solid var(--color-primary);
-  border-radius: 15px;
+  border-radius: var(--border-radius-lg);
   padding: 20px;
-  box-shadow: 0 6px 20px var(--color-shadow);
+  box-shadow: var(--shadow-strong);
   width: 300px;
   font-size: 15px;
   line-height: 1.7;
@@ -190,7 +196,7 @@ body {
   transform: translateY(10px);
   pointer-events: none;
   z-index: 10;
-  border-image: linear-gradient(to right, var(--color-primary), var(--color-secondary)) 1;
+  border-image: none;
 }
 
 .node:hover .details-card {
@@ -250,7 +256,7 @@ body {
 .btn {
   padding: 10px 20px;
   border: 2px solid var(--color-primary);
-  border-radius: 5px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
   font-size: 1em;
   font-weight: 600;
@@ -314,8 +320,8 @@ body {
   margin: 0 auto;
   background-color: var(--color-surface);
   padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px var(--color-shadow);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-strong);
 }
 
 .admin-header {
@@ -358,7 +364,7 @@ body {
     padding: 15px;
     background-color: var(--color-bg);
     border: 1px solid var(--color-node-border);
-    border-radius: 5px;
+    border-radius: var(--border-radius-sm);
 }
 
 .user-info {
@@ -375,7 +381,7 @@ body {
     color: var(--color-surface);
     border: none;
     padding: 5px 10px;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
 }
 
@@ -384,13 +390,13 @@ body {
     color: var(--color-surface);
     border: none;
     padding: 5px 10px;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
 }
 
 .role-select {
     padding: 8px;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
     border: 1px solid var(--color-node-border);
     background-color: var(--color-surface);
     font-size: 1em;
@@ -456,7 +462,7 @@ body {
 .data-list li {
   padding: 12px 15px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--border-radius-sm);
   margin-bottom: 5px;
   transition: background-color 0.2s, color 0.2s;
   color: var(--color-text);
@@ -503,8 +509,8 @@ body {
 .form-container {
   background-color: var(--color-surface);
   padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px var(--color-shadow);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-strong);
 }
 
 .form-container h2 {
@@ -542,7 +548,7 @@ body {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--color-node-border);
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   background-color: var(--color-surface);
   font-family: var(--font-body);
   font-size: 1em;
@@ -583,7 +589,7 @@ body {
   background-color: var(--color-bg);
   padding: 20px;
   border: 1px solid var(--color-node-border);
-  border-radius: 6px;
+  border-radius: var(--border-radius-sm);
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
@@ -618,7 +624,7 @@ body {
   background-color: var(--color-bg);
   padding: 12px 15px;
   border: 1px solid var(--color-node-border);
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   margin-bottom: 8px;
 }
 
@@ -654,7 +660,7 @@ body {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--color-node-border);
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   background-color: var(--color-surface);
   font-family: var(--font-body);
   font-size: 1em;
@@ -673,7 +679,7 @@ body {
     gap: 8px;
     padding: 10px;
     border: 1px solid var(--color-node-border);
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
     background-color: var(--color-surface);
     cursor: text;
 }
@@ -810,8 +816,8 @@ body {
   top: 100%;
   right: 0;
   background-color: var(--color-surface);
-  border-radius: 5px;
-  box-shadow: 0 2px 10px var(--color-shadow);
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow-strong);
   padding: 10px;
   margin-top: 5px;
   width: 250px; /* Increased to fit new items */
@@ -833,7 +839,7 @@ body {
     text-decoration: none;
     font-size: 0.9em;
     font-weight: 500;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
 }
 
 .menu-link:hover {
