@@ -475,6 +475,7 @@ body {
 
 .sidebar-actions {
   padding: 15px;
+  padding-bottom: 40px;
   border-top: 1px solid var(--color-node-border);
 }
 
