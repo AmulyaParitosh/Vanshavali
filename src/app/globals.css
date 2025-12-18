@@ -773,24 +773,34 @@ body {
 
 /* --- Navigation Bar --- */
 .App-header .btn {
-  border: none;
-  background-color: transparent;
+  border: 1px solid var(--color-node-border);
+  background-color: var(--color-surface);
   color: var(--color-text);
-  border-bottom: 3px solid transparent;
-  border-radius: 0;
+  text-decoration: none;
+  border-radius: var(--border-radius-sm);
   text-transform: uppercase;
   font-weight: 600;
-  padding: 10px 15px;
+  padding: 8px 16px;
+  box-shadow: 0 2px 4px var(--color-shadow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
 }
 
 .App-header .btn:hover {
   background-color: var(--color-primary-light);
+  border-color: var(--color-primary);
   color: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--color-shadow);
 }
 
 .App-header .btn.active {
-  color: var(--color-primary);
-  border-bottom: 3px solid var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  border-color: var(--color-primary);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
 /* --- User Menu --- */
@@ -799,11 +809,13 @@ body {
 }
 
 .user-menu-button {
-  background-color: transparent;
+  background-color: var(--color-surface);
   color: var(--color-text);
   font-weight: 600;
   text-transform: none;
-  border: 2px solid var(--color-node-border);
+  border: 1px solid var(--color-node-border);
+  border-radius: var(--border-radius-sm);
+  box-shadow: 0 2px 4px var(--color-shadow);
 }
 
 .user-menu-button:hover {

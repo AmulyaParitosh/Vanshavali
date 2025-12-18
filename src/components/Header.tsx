@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import type { User } from "firebase/auth";
 import { ref, onValue } from "firebase/database";
@@ -16,6 +17,7 @@ interface HeaderProps {
 }
 
 export default function Header({ user, userRole, onLogout }: HeaderProps) {
+  const pathname = usePathname();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const isAdmin = userRole === USER_ROLES.ADMIN;
@@ -33,21 +35,22 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
     }
   }, [isAdmin]);
 
+  const isActive = (path: string) => pathname === path;
+
   return (
     <header className="App-header">
       <div className="header-left">
         {showNav && (
           <>
-            <Link href="/" className="btn">
+            <Link href="/" className={`btn ${isActive("/") ? "active" : ""}`}>
               Tree
             </Link>
-            <Link href="/people" className="btn">
+            <Link href="/people" className={`btn ${isActive("/people") ? "active" : ""}`}>
               People
             </Link>
-            <Link href="/family" className="btn">
+            <Link href="/family" className={`btn ${isActive("/family") ? "active" : ""}`}>
               Family
             </Link>
-            {/* Admin link removed */}
           </>
         )}
       </div>
@@ -97,8 +100,8 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
                     setIsUserMenuOpen(false);
                     onLogout();
                   }} 
-                  className="btn user-menu-button"
-                  style={{ width: '100%', borderRadius: 0, border: 'none', borderTop: 'none', textAlign: 'left', padding: '10px 15px' }}
+                  className="btn user-menu-button logout-button"
+                  style={{ width: '100%', border: 'none', textAlign: 'left', padding: '10px 15px', borderRadius: 'inherit' }}
                 >
                   Logout
                 </button>

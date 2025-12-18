@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
+import { stringToColor } from "../utils/colorUtils";
 import type { GraphNode } from "../types/graph";
 import type { Person } from "../types/person";
 import { TREE_CONFIG } from "../constants";
@@ -17,9 +18,6 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null);
   const nodesRef = useRef<d3.HierarchyPointNode<GraphNode>[]>([]);
 
-  const getRandomPastelColor = () => {
-    return d3.hsl(Math.random() * 360, 0.7, 0.8).hex();
-  };
 
   function createDetailsHtml(person: Person) {
     let html = `<h3>${person.name.official_name}</h3>`;
@@ -126,7 +124,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                 "href",
                 d.data.husband.image_url ||
                 TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
-                    getRandomPastelColor().substring(1),
+                    stringToColor(d.data.husband.id || d.data.husband.name.official_name).substring(1),
                     d.data.husband.name.official_name.substring(0, 2)
                 )
             )
@@ -179,7 +177,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                 "href",
                 d.data.wife.image_url ||
                 TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
-                    getRandomPastelColor().substring(1),
+                    stringToColor(d.data.wife.id || d.data.wife.name.official_name).substring(1),
                     d.data.wife.name.official_name.substring(0, 2)
                 )
             )
@@ -231,7 +229,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           (d) =>
             d.data.image_url ||
             TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
-                getRandomPastelColor().substring(1),
+                stringToColor(d.data.id || d.data.name.official_name).substring(1),
                 d.data.name.official_name.substring(0, 2)
             )
         )
