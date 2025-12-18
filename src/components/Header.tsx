@@ -5,6 +5,8 @@ import Link from "next/link";
 
 import type { User } from "firebase/auth";
 
+import { APP_CONFIG, USER_ROLES } from "../constants";
+
 interface HeaderProps {
   user: User | null;
   userRole: string | null;
@@ -13,8 +15,8 @@ interface HeaderProps {
 
 export default function Header({ user, userRole, onLogout }: HeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const isAdmin = userRole === "admin";
-  const showNav = user && userRole && !["pending", "denied"].includes(userRole);
+  const isAdmin = userRole === USER_ROLES.ADMIN;
+  const showNav = user && userRole && ![USER_ROLES.PENDING, USER_ROLES.DENIED].includes(userRole);
 
   return (
     <header className="App-header">
@@ -38,7 +40,7 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
           </>
         )}
       </div>
-      <h1>Vanshavali</h1>
+      <h1>{APP_CONFIG.NAME}</h1>
       <div className="header-right">
         {user && (
           <div className="user-menu">

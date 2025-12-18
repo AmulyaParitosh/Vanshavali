@@ -6,6 +6,8 @@ import { GraphManager } from "../lib/graph/GraphManager";
 import { ConsistencyValidator } from "../lib/graph/ConsistencyValidator";
 import type { ConsistencyIssue } from "../types/graph";
 
+import { UI_CONFIG } from "../constants";
+
 export default function HomePage() {
   const { treeData } = useAppContext();
   const [graphManager, setGraphManager] = useState<GraphManager | null>(null);
@@ -38,16 +40,16 @@ export default function HomePage() {
              position: 'absolute', 
              top: 0, 
              right: 0, 
-             background: 'rgba(255, 0, 0, 0.1)', 
+             background: UI_CONFIG.COLORS.ERROR_BG_LIGHT, 
              padding: '10px', 
-             fontSize: '10px',
-             zIndex: 1000,
+             fontSize: UI_CONFIG.STYLES?.TEXT?.FONT_SIZE || '10px',
+             zIndex: UI_CONFIG.Z_INDEX.OVERLAY,
              pointerEvents: 'none'
          }}>
-             {validationIssues.length} Data Issues Detect (Check Console)
+             {validationIssues.length} {UI_CONFIG.MESSAGES.DATA_ISSUES_DETECTED}
          </div>
       )}
-      {hierarchy ? <Tree data={hierarchy} /> : "Building hierarchy..."}
+      {hierarchy ? <Tree data={hierarchy} /> : UI_CONFIG.MESSAGES.BUILDING_HIERARCHY}
     </div>
   );
 }
