@@ -1,7 +1,18 @@
 import React from "react";
 
-const CustomFieldsEditor = ({ customFields, onChange, canEdit }) => {
-  const handleFieldChange = (index, key, value) => {
+interface CustomField {
+  key: string;
+  value: string;
+}
+
+interface CustomFieldsEditorProps {
+  customFields: CustomField[];
+  onChange: (fields: CustomField[]) => void;
+  canEdit: boolean;
+}
+
+const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({ customFields, onChange, canEdit }) => {
+  const handleFieldChange = (index: number, key: string, value: string) => {
     const newFields = [...customFields];
     newFields[index] = { key, value };
     onChange(newFields);
@@ -11,7 +22,7 @@ const CustomFieldsEditor = ({ customFields, onChange, canEdit }) => {
     onChange([...customFields, { key: "", value: "" }]);
   };
 
-  const removeField = (index) => {
+  const removeField = (index: number) => {
     const newFields = customFields.filter((_, i) => i !== index);
     onChange(newFields);
   };

@@ -3,13 +3,15 @@ import React, { useState, useEffect } from "react";
 import FamilyForm from "../../components/FamilyForm";
 import { useAppContext } from '../../context/AppContext';
 import Loading from '../../components/Loading';
+import type { Family } from "../../types/family";
+import type { TreeData } from "../../context/AppContext";
 
 export default function Page() {
   const { treeData, user, onSave } = useAppContext();
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
 
-  const [data, setData] = useState(treeData);
-  const [selectedFamily, setSelectedFamily] = useState(null);
+  const [data, setData] = useState<TreeData | null>(treeData);
+  const [selectedFamily, setSelectedFamily] = useState<Family | null>(null);
 
   useEffect(() => {
     setData(treeData);
@@ -19,7 +21,7 @@ export default function Page() {
     return <Loading />;
   }
 
-  const handleSaveFamily = (family) => {
+  const handleSaveFamily = (family: Family) => {
     if (!canEdit) return;
     let updatedFamilies;
     if (family.id) {
@@ -41,7 +43,7 @@ export default function Page() {
     onSave(newData);
   };
 
-  const handleDeleteFamily = (familyId) => {
+  const handleDeleteFamily = (familyId: string) => {
     if (!canEdit) return;
     const updatedFamilies = data.families.filter((f) => f.id !== familyId);
     const newData = { ...data, families: updatedFamilies };
@@ -50,13 +52,14 @@ export default function Page() {
     setSelectedFamily(null);
   };
 
-  const getPersonName = (personId) => {
+  const getPersonName = (personId: string) => {
     const person = data.people.find((p) => p.id === personId);
     return person ? person.name.official_name : "?";
   };
 
   const handleAddNewFamily = () => {
     if (!canEdit) return;
+    // @ts-ignore
     setSelectedFamily({ partners: ["", ""], children: [] });
   };
 
@@ -71,7 +74,7 @@ export default function Page() {
               selectedFamily && selectedFamily.id === f.id ? "active" : ""
             }
           >
-            {getPersonName(f.partners[0])} & {getPersonName(f.partners[1])}
+            {getPersonName(f.partners[0] || "")} & {getPersonName(f.partners[1] || "")}
           </li>
         ))}
       </ul>

@@ -10,7 +10,11 @@ import PendingApprovalScreen from '../components/PendingApprovalScreen';
 import AccessDeniedScreen from '../components/AccessDeniedScreen';
 import Loading from '../components/Loading';
 
-export default function AppProvider({ children }) {
+interface AppProviderProps {
+  children: React.ReactNode;
+}
+
+export default function AppProvider({ children }: AppProviderProps) {
   const {
     user,
     userRole,
@@ -30,7 +34,7 @@ export default function AppProvider({ children }) {
       return <AccessDeniedScreen onLogout={handleLogout} />;
 
     const allowedRoles = ['viewer', 'editor', 'admin'];
-    if (allowedRoles.includes(userRole) && !treeData) {
+    if (allowedRoles && userRole && allowedRoles.includes(userRole) && !treeData) {
       return <Loading text="Loading family data..." />;
     }
 

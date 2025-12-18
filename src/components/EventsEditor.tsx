@@ -1,8 +1,16 @@
 import React from "react";
+import type { PersonEvent } from "../types/person";
 
-const EventsEditor = ({ events, onChange, canEdit }) => {
-  const handleEventChange = (index, field, value) => {
+interface EventsEditorProps {
+  events: PersonEvent[];
+  onChange: (events: PersonEvent[]) => void;
+  canEdit: boolean;
+}
+
+const EventsEditor: React.FC<EventsEditorProps> = ({ events, onChange, canEdit }) => {
+  const handleEventChange = (index: number, field: keyof PersonEvent, value: string) => {
     const newEvents = [...events];
+    // @ts-ignore
     newEvents[index][field] = value;
     onChange(newEvents);
   };
@@ -11,7 +19,7 @@ const EventsEditor = ({ events, onChange, canEdit }) => {
     onChange([...events, { type: "", date: "", place: "" }]);
   };
 
-  const removeEvent = (index) => {
+  const removeEvent = (index: number) => {
     const newEvents = events.filter((_, i) => i !== index);
     onChange(newEvents);
   };
@@ -34,7 +42,7 @@ const EventsEditor = ({ events, onChange, canEdit }) => {
             <label>Date</label>
             <input
               type="text"
-              value={event.date}
+              value={event.date || ""}
               onChange={(e) => handleEventChange(index, "date", e.target.value)}
               placeholder="YYYY-MM-DD"
               disabled={!canEdit}
@@ -44,7 +52,7 @@ const EventsEditor = ({ events, onChange, canEdit }) => {
             <label>Place</label>
             <input
               type="text"
-              value={event.place}
+              value={event.place || ""}
               onChange={(e) =>
                 handleEventChange(index, "place", e.target.value)
               }

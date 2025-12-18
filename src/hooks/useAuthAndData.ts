@@ -7,15 +7,23 @@ import {
   signInWithPopup,
   onAuthStateChanged,
   signOut,
+  type User
 } from "firebase/auth";
+import type { Person } from "../types/person";
+import type { Family } from "../types/family";
 
 const ALLOWED_ROLES = ["viewer", "editor", "admin"];
 
+interface TreeData {
+  people: Person[];
+  families: Family[];
+}
+
 export function useAuthAndData() {
-  const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState(null);
-  const [treeData, setTreeData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [treeData, setTreeData] = useState<TreeData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Effect for handling authentication state changes
   useEffect(() => {
@@ -55,7 +63,7 @@ export function useAuthAndData() {
       const unsubscribe = onValue(
         dbRef,
         (snapshot) => {
-          setTreeData(snapshot.val() || {});
+          setTreeData(snapshot.val() as TreeData || { people: [], families: [] });
           setIsLoading(false);
         },
         (error) => {
@@ -81,8 +89,8 @@ export function useAuthAndData() {
     signOut(auth).catch((error) => console.error("Sign out error:", error));
   };
 
-  const handleSaveData = (newData) => {
-    if (!["editor", "admin"].includes(userRole)) {
+  const handleSaveData = (newData: TreeData) => {
+    if (!userRole || !["editor", "admin"].includes(userRole)) {
       console.error("Permission Denied: You cannot save data.");
       return Promise.reject("Permission Denied");
     }

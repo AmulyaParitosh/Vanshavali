@@ -1,24 +1,33 @@
+import type { Person } from '../../types/person';
+import type { Family } from '../../types/family';
+import type { GraphNode, PathStep } from '../../types/graph';
+
 export class GraphManager {
-  constructor(people, families) {
+  private people: Person[];
+  private families: Family[];
+  private personMap: Map<string, Person>;
+  private familyMap: Map<string, Family>;
+
+  constructor(people: Person[], families: Family[]) {
     this.people = people || [];
     this.families = families || [];
     this.personMap = new Map(this.people.map(p => [p.id, p]));
     this.familyMap = new Map(this.families.map(f => [f.id, f]));
   }
 
-  getPerson(id) {
+  getPerson(id: string): Person | undefined {
     return this.personMap.get(id);
   }
 
-  getAllPeople() {
+  getAllPeople(): Person[] {
     return this.people;
   }
 
-  getAllFamilies() {
+  getAllFamilies(): Family[] {
     return this.families;
   }
 
-  getFamily(id) {
+  getFamily(id: string): Family | undefined {
     return this.familyMap.get(id);
   }
 
@@ -27,13 +36,13 @@ export class GraphManager {
    * @param {string} id - Person ID
    * @returns {Array<Person>}
    */
-  getAncestors(id) {
-    const ancestors = new Set();
+  getAncestors(id: string): Person[] {
+    const ancestors = new Set<string>();
     const queue = [id];
-    const visited = new Set();
+    const visited = new Set<string>();
 
     while (queue.length > 0) {
-      const currentId = queue.shift();
+      const currentId = queue.shift()!;
       if (visited.has(currentId)) continue;
       visited.add(currentId);
 
@@ -44,7 +53,7 @@ export class GraphManager {
 
       parentFamilies.forEach((family) => {
         if (family.partners) {
-          family.partners.forEach((parentId) => {
+          family.partners.forEach((parentId: string) => {
             if (!ancestors.has(parentId)) {
               ancestors.add(parentId);
               queue.push(parentId);
@@ -54,7 +63,7 @@ export class GraphManager {
       });
     }
 
-    return Array.from(ancestors).map((id) => this.getPerson(id)).filter(Boolean);
+    return Array.from(ancestors).map((id) => this.getPerson(id)).filter((p): p is Person => !!p);
   }
 
   /**
@@ -62,13 +71,13 @@ export class GraphManager {
    * @param {string} id - Person ID
    * @returns {Array<Person>}
    */
-  getDescendants(id) {
-    const descendants = new Set();
+  getDescendants(id: string): Person[] {
+    const descendants = new Set<string>();
     const queue = [id];
-    const visited = new Set();
+    const visited = new Set<string>();
 
     while (queue.length > 0) {
-      const currentId = queue.shift();
+      const currentId = queue.shift()!;
       if (visited.has(currentId)) continue;
       visited.add(currentId);
 
@@ -79,7 +88,7 @@ export class GraphManager {
 
       familiesAsPartner.forEach((family) => {
         if (family.children) {
-          family.children.forEach((childId) => {
+          family.children.forEach((childId: string) => {
             if (!descendants.has(childId)) {
               descendants.add(childId);
               queue.push(childId);
@@ -89,7 +98,7 @@ export class GraphManager {
       });
     }
 
-    return Array.from(descendants).map((id) => this.getPerson(id)).filter(Boolean);
+    return Array.from(descendants).map((id) => this.getPerson(id)).filter((p): p is Person => !!p);
   }
 
   /**
@@ -99,28 +108,32 @@ export class GraphManager {
    * @param {string} endId
    * @returns {Array<{personId: string, relation: string}>} Array describing the steps
    */
-  findPath(startId, endId) {
+  findPath(startId: string, endId: string): PathStep[] | null {
     if (startId === endId) return [{ personId: startId, relation: "Self" }];
 
     // Adjacency List Construction (Lazy or Cached could be better, but building here for simplicity)
-    const adj = new Map();
+    const adj = new Map<string, Array<{ target: string, relation: string }>>();
 
-    const addEdge = (u, v, relation) => {
+    const addEdge = (u: string, v: string, relation: string) => {
       if (!adj.has(u)) adj.set(u, []);
-      adj.get(u).push({ target: v, relation });
+      adj.get(u)!.push({ target: v, relation });
     };
 
     this.families.forEach((family) => {
       // 1. Spouses (Partner <-> Partner)
       if (family.partners && family.partners.length > 1) {
-        addEdge(family.partners[0], family.partners[1], "Spouse");
-        addEdge(family.partners[1], family.partners[0], "Spouse");
+        const p1 = family.partners[0];
+        const p2 = family.partners[1];
+        if (p1 && p2) {
+             addEdge(p1, p2, "Spouse");
+             addEdge(p2, p1, "Spouse");
+        }
       }
 
       // 2. Parent -> Child
       if (family.partners && family.children) {
-        family.partners.forEach((pId) => {
-          family.children.forEach((cId) => {
+        family.partners.forEach((pId: string) => {
+          family.children.forEach((cId: string) => {
             addEdge(pId, cId, "Child");
             addEdge(cId, pId, "Parent");
           });
@@ -131,20 +144,26 @@ export class GraphManager {
       if (family.children && family.children.length > 1) {
            for (let i = 0; i < family.children.length; i++) {
                for (let j = i + 1; j < family.children.length; j++) {
-                   addEdge(family.children[i], family.children[j], "Sibling");
-                   addEdge(family.children[j], family.children[i], "Sibling");
+                   const child1 = family.children[i];
+                   const child2 = family.children[j];
+                   if (child1 && child2) {
+                       addEdge(child1, child2, "Sibling");
+                       addEdge(child2, child1, "Sibling");
+                   }
                }
            }
       }
     });
 
     // BFS
-    const queue = [[{ personId: startId, relation: "Start" }]];
-    const visited = new Set([startId]);
+    const queue: PathStep[][] = [[{ personId: startId, relation: "Start" }]];
+    const visited = new Set<string>([startId]);
 
     while (queue.length > 0) {
       const path = queue.shift();
+      if (!path) continue;
       const lastStep = path[path.length - 1];
+      if (!lastStep) continue;
       const currentId = lastStep.personId;
 
       if (currentId === endId) {
@@ -168,24 +187,26 @@ export class GraphManager {
    * Builds the hierarchy object required by D3.js tree layout.
    * This logic replaces the inline buildHierarchy in FamilyTree.js
    */
-  buildHierarchy() {
+  buildHierarchy(): GraphNode | null {
     if (this.people.length === 0 || this.families.length === 0) return null;
 
-    const hierarchyMap = {};
+    const hierarchyMap: Record<string, GraphNode> = {};
 
     // 1. Create Partner Nodes for all families
     this.families.forEach((family) => {
-      const husband = this.getPerson(
-        family.partners.find((pId) => this.getPerson(pId)?.sex === "M")
-      );
-      const wife = this.getPerson(
-        family.partners.find((pId) => this.getPerson(pId)?.sex === "F")
-      );
+      const husbandId = family.partners.find((pId: string) => this.getPerson(pId)?.sex === "M");
+      const wifeId = family.partners.find((pId: string) => this.getPerson(pId)?.sex === "F");
+      
+      const husband = husbandId ? this.getPerson(husbandId) : undefined;
+      const wife = wifeId ? this.getPerson(wifeId) : undefined;
 
-      let partnerNode;
+      let partnerNode: GraphNode | undefined;
+      
       if (husband && wife) {
         partnerNode = {
           id: family.id,
+          name: { official_name: `${husband.name.official_name} & ${wife.name.official_name}` }, // Dummy name for group
+          sex: 'M', // Dummy sex
           isPartnerGroup: true,
           husband,
           wife,
@@ -194,7 +215,7 @@ export class GraphManager {
       } else {
         // Fallback for single parents
         const primaryParentId = family.partners[0];
-        const primaryParent = this.getPerson(primaryParentId);
+        const primaryParent = primaryParentId ? this.getPerson(primaryParentId) : undefined;
         if (primaryParent) {
             // Treat as a single person node, but maintain children array structure
             partnerNode = { ...primaryParent, children: [] }; 
@@ -211,7 +232,7 @@ export class GraphManager {
       const familyNode = hierarchyMap[family.id];
       if (familyNode) {
         const childrenIds = family.children || [];
-        childrenIds.forEach((childId) => {
+        childrenIds.forEach((childId: string) => {
           // Check if this child is a partner in another family (continues the tree)
           const childOwnFamily = this.families.find((f) =>
             f.partners.includes(childId)
@@ -219,12 +240,13 @@ export class GraphManager {
 
           if (childOwnFamily && hierarchyMap[childOwnFamily.id]) {
             // Link to the child's family node
-            familyNode.children.push(hierarchyMap[childOwnFamily.id]);
+            familyNode.children.push(hierarchyMap[childOwnFamily.id]!);
           } else {
             // Child is a leaf node
             const childPerson = this.getPerson(childId);
             if (childPerson) {
-              familyNode.children.push({ ...childPerson, children: [] });
+              const leafNode: GraphNode = { ...childPerson, children: [] };
+              familyNode.children.push(leafNode);
             }
           }
         });
@@ -239,10 +261,11 @@ export class GraphManager {
     
     // If root person belongs to a family as a partner, return that family node
     if (rootFamily && hierarchyMap[rootFamily.id]) {
-        return hierarchyMap[rootFamily.id];
+        return hierarchyMap[rootFamily.id]!;
     }
     
-    // Otherwise return just the person (e.g. tree with 1 person)
-    return { ...rootPerson, children: [] };
+    // Otherwise return just the person
+    const rootNode: GraphNode = { ...rootPerson, children: [] };
+    return rootNode;
   }
 }

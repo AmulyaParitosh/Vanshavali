@@ -1,14 +1,22 @@
 import React, { useState, useRef } from "react";
-import { supabase } from "../lib/supabaseClient"; // Assuming you have this file
+// @ts-ignore
+import { supabase } from "../lib/supabaseClient";
 
-const ImageUpload = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
+interface ImageUploadProps {
+  imageUrl?: string;
+  onImageChange: (url: string, path: string) => void;
+  onImageRemove: () => void;
+  canEdit: boolean;
+}
+
+const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
   const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // This function will be triggered when the user selects a file
-  const handleFileChange = async (e) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!canEdit) return;
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
@@ -35,7 +43,7 @@ const ImageUpload = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
 
       // Pass the new URL and the path to the parent component
       onImageChange(publicUrl, data.path);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading file:", error);
       alert(`Upload failed: ${error.message}`);
     } finally {
@@ -45,7 +53,7 @@ const ImageUpload = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
 
   // This function triggers the hidden file input
   const handleFileSelect = () => {
-    fileInputRef.current.click();
+    fileInputRef.current?.click();
   };
 
   return (

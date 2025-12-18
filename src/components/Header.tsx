@@ -3,10 +3,18 @@
 import React, { useState } from "react";
 import Link from "next/link";
 
-export default function Header({ user, userRole, onLogout }) {
+import type { User } from "firebase/auth";
+
+interface HeaderProps {
+  user: User | null;
+  userRole: string | null;
+  onLogout: () => void;
+}
+
+export default function Header({ user, userRole, onLogout }: HeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const isAdmin = userRole === "admin";
-  const showNav = user && !["pending", "denied"].includes(userRole);
+  const showNav = user && userRole && !["pending", "denied"].includes(userRole);
 
   return (
     <header className="App-header">

@@ -1,6 +1,10 @@
 import React from "react";
 
-const PendingApprovalScreen = ({ onLogout }) => {
+interface PendingApprovalScreenProps {
+  onLogout: () => void;
+}
+
+const PendingApprovalScreen: React.FC<PendingApprovalScreenProps> = ({ onLogout }) => {
   return (
     <div className="pending-approval-screen">
       <h2>Your request is pending approval.</h2>

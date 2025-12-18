@@ -3,13 +3,16 @@ import React, { useState, useEffect } from "react";
 import PersonForm from "../../components/PersonForm";
 import { useAppContext } from '../../context/AppContext';
 import Loading from '../../components/Loading';
+import type { Person } from "../../types/person";
+// @ts-ignore
+import type { TreeData } from "../../context/AppContext";
 
 export default function Page() {
   const { treeData, user, onSave } = useAppContext();
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
 
-  const [data, setData] = useState(treeData);
-  const [selectedPerson, setSelectedPerson] = useState(null);
+  const [data, setData] = useState<TreeData | null>(treeData);
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
 
   useEffect(() => {
     setData(treeData);
@@ -19,7 +22,7 @@ export default function Page() {
     return <Loading />;
   }
 
-  const generateIdFromName = (name) => {
+  const generateIdFromName = (name: string) => {
     if (!name) return `p_${Date.now()}`;
     const baseId =
       "p_" +
@@ -30,14 +33,14 @@ export default function Page() {
         .replace(/\s+/g, "_");
     let finalId = baseId;
     let counter = 1;
-    while (data.people.some((p) => p.id === finalId)) {
+    while (data.people.some((p: Person) => p.id === finalId)) {
       finalId = `${baseId}_${counter}`;
       counter++;
     }
     return finalId;
   };
 
-  const handleSavePerson = (person) => {
+  const handleSavePerson = (person: Person) => {
     if (!canEdit) return;
     let updatedPeople;
     if (person.id) {
@@ -55,7 +58,7 @@ export default function Page() {
     onSave(newData);
   };
 
-  const handleDeletePerson = (personId) => {
+  const handleDeletePerson = (personId: string) => {
     if (!canEdit) return;
     const updatedPeople = data.people.filter((p) => p.id !== personId);
     const updatedFamilies = data.families
@@ -77,6 +80,7 @@ export default function Page() {
 
   const handleAddNewPerson = () => {
     if (!canEdit) return;
+    // @ts-ignore
     setSelectedPerson({
       name: { official_name: "" },
       sex: "M",

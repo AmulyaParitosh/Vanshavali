@@ -1,18 +1,21 @@
+import { GraphManager } from './GraphManager';
+import type { ConsistencyIssue } from '../../types/graph';
+
 export class ConsistencyValidator {
   /**
    * Run all validation checks.
    * @param {GraphManager} graphManager
-   * @returns {Array<{type: 'error'|'warning', message: string, entityId?: string}>}
+   * @returns {Array<ConsistencyIssue>}
    */
-  static validate(graphManager) {
-    const issues = [];
+  static validate(graphManager: GraphManager): ConsistencyIssue[] {
+    const issues: ConsistencyIssue[] = [];
     const people = graphManager.getAllPeople();
     const families = graphManager.getAllFamilies();
 
     // 1. Check for missing family members (Phantom IDs)
     families.forEach((family) => {
       if (family.partners) {
-        family.partners.forEach((partnerId) => {
+        family.partners.forEach((partnerId: string) => {
           if (!graphManager.getPerson(partnerId)) {
             issues.push({
               type: "error",
@@ -23,7 +26,7 @@ export class ConsistencyValidator {
         });
       }
       if (family.children) {
-        family.children.forEach((childId) => {
+        family.children.forEach((childId: string) => {
           if (!graphManager.getPerson(childId)) {
             issues.push({
               type: "error",
@@ -51,7 +54,7 @@ export class ConsistencyValidator {
         const partners = family.partners || [];
         const children = family.children || [];
         
-        const intersection = partners.filter(p => children.includes(p));
+        const intersection = partners.filter((p: string) => children.includes(p));
         if (intersection.length > 0) {
             issues.push({
                 type: "error",

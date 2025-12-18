@@ -2,10 +2,18 @@ import React from "react";
 import Tree from "./Tree";
 import { GraphManager } from "../lib/graph/GraphManager";
 import { ConsistencyValidator } from "../lib/graph/ConsistencyValidator";
+import type { Person } from "../types/person";
+import type { Family } from "../types/family";
+import type { ConsistencyIssue } from "../types/graph";
 
-const FamilyTree = ({ people, families }) => {
-  const [graphManager, setGraphManager] = React.useState(null);
-  const [validationIssues, setValidationIssues] = React.useState([]);
+interface FamilyTreeProps {
+  people: Person[];
+  families: Family[];
+}
+
+const FamilyTree: React.FC<FamilyTreeProps> = ({ people, families }) => {
+  const [graphManager, setGraphManager] = React.useState<GraphManager | null>(null);
+  const [validationIssues, setValidationIssues] = React.useState<ConsistencyIssue[]>([]);
 
   React.useEffect(() => {
     if (people && families) {

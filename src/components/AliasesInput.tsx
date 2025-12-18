@@ -1,13 +1,19 @@
 import React, { useState } from "react";
 
-const AliasesInput = ({ aliases, onChange, canEdit }) => {
+interface AliasesInputProps {
+  aliases: string[];
+  onChange: (aliases: string[]) => void;
+  canEdit: boolean;
+}
+
+const AliasesInput: React.FC<AliasesInputProps> = ({ aliases, onChange, canEdit }) => {
   const [inputValue, setInputValue] = useState("");
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && inputValue.trim()) {
       e.preventDefault();
       const newAliases = [...(aliases || []), inputValue.trim()];
@@ -16,7 +22,7 @@ const AliasesInput = ({ aliases, onChange, canEdit }) => {
     }
   };
 
-  const removeAlias = (aliasToRemove) => {
+  const removeAlias = (aliasToRemove: string) => {
     const newAliases = aliases.filter((alias) => alias !== aliasToRemove);
     onChange(newAliases);
   };

@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { database } from "../lib/firebase";
 import { ref, onValue, update } from "firebase/database";
+import type { User } from "firebase/auth";
 
-const AdminDashboard = () => {
-  const [users, setUsers] = useState([]);
+interface AdminUser {
+  uid: string;
+  role: string;
+  name?: string;
+  email?: string;
+  [key: string]: any;
+}
+
+interface AdminDashboardProps {
+  user: (User & { role: string | null }) | null;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = () => {
+  const [users, setUsers] = useState<AdminUser[]>([]);
 
   useEffect(() => {
     const usersRef = ref(database, "users/");
@@ -19,7 +32,7 @@ const AdminDashboard = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleRoleChange = (uid, newRole) => {
+  const handleRoleChange = (uid: string, newRole: string) => {
     const userRef = ref(database, `users/${uid}`);
     update(userRef, { role: newRole });
   };

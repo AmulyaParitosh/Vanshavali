@@ -1,6 +1,10 @@
 import React from "react";
 
-const LoginScreen = ({ onLoginRequest }) => {
+interface LoginScreenProps {
+  onLoginRequest: () => void;
+}
+
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginRequest }) => {
   return (
     <div className="login-screen">
       <div className="login-content">

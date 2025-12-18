@@ -1,6 +1,10 @@
 import React from "react";
 
-const AccessDeniedScreen = ({ onLogout }) => {
+interface AccessDeniedScreenProps {
+  onLogout: () => void;
+}
+
+const AccessDeniedScreen: React.FC<AccessDeniedScreenProps> = ({ onLogout }) => {
   return (
     <div className="access-denied-screen">
       <h2>Access Denied</h2>

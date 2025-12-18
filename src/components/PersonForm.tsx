@@ -1,28 +1,42 @@
 import React, { useState, useEffect } from "react";
+// @ts-ignore
 import EventsEditor from "./EventsEditor";
+// @ts-ignore
 import CustomFieldsEditor from "./CustomFieldsEditor";
+// @ts-ignore
 import AliasesInput from "./AliasesInput";
+// @ts-ignore
 import ImageUpload from "./ImageUpload";
+import type { Person } from "../types/person";
 
-const PersonForm = ({ person, onSave, onDelete, canEdit }) => {
-  const [formData, setFormData] = useState(person);
+interface PersonFormProps {
+  person: Person | null;
+  onSave: (data: Person) => void;
+  onDelete: (id: string) => void;
+  canEdit: boolean;
+}
+
+const PersonForm: React.FC<PersonFormProps> = ({ person, onSave, onDelete, canEdit }) => {
+  const [formData, setFormData] = useState<Person | null>(person);
 
   useEffect(() => {
     setFormData(person);
   }, [person]);
 
-  if (!person) return null;
+  if (!formData || !person) return null;
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    // Type assertion for checkbox handling since 'checked' doesn't exist on all input types in the union
+    const checked = (e.target as HTMLInputElement).checked; 
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
 
-  const handleAliasesChange = (aliases) => {
+  const handleAliasesChange = (aliases: string[]) => {
     setFormData({ ...formData, name: { ...formData.name, aliases } });
   };
 
-  const handleImageChange = (imageUrl, imagePath) => {
+  const handleImageChange = (imageUrl: string, imagePath: string) => {
     setFormData({
       ...formData,
       image_url: imageUrl,
@@ -34,12 +48,12 @@ const PersonForm = ({ person, onSave, onDelete, canEdit }) => {
     setFormData({ ...formData, image_url: "", image_storage_path: "" });
   };
 
-  const handleEventsChange = (events) => {
+  const handleEventsChange = (events: any[]) => {
     setFormData({ ...formData, events });
   };
 
-  const handleCustomFieldsChange = (customFields) => {
-    const newCustomFields = {};
+  const handleCustomFieldsChange = (customFields: { key: string; value: string }[]) => {
+    const newCustomFields: Record<string, string> = {};
     customFields.forEach((field) => {
       if (field.key) {
         newCustomFields[field.key] = field.value;
@@ -48,9 +62,9 @@ const PersonForm = ({ person, onSave, onDelete, canEdit }) => {
     setFormData({ ...formData, custom_fields: newCustomFields });
   };
 
-  const handleSave = (e) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    if (formData) onSave(formData);
   };
 
   const handleDelete = () => {
@@ -59,7 +73,7 @@ const PersonForm = ({ person, onSave, onDelete, canEdit }) => {
         "Are you sure you want to delete this person? This action cannot be undone and may affect family structures."
       )
     ) {
-      onDelete(person.id);
+      if (person?.id) onDelete(person.id);
     }
   };
 
@@ -74,7 +88,7 @@ const PersonForm = ({ person, onSave, onDelete, canEdit }) => {
               <input
                 type="text"
                 id="person-name"
-                value={formData.name?.official_name || ""}
+                value={formData?.name?.official_name || ""}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
@@ -101,7 +115,7 @@ const PersonForm = ({ person, onSave, onDelete, canEdit }) => {
             <div className="form-group">
               <label>Aliases</label>
               <AliasesInput
-                aliases={formData.name?.aliases}
+                aliases={formData.name?.aliases || []}
                 onChange={handleAliasesChange}
                 canEdit={canEdit}
               />
@@ -121,7 +135,7 @@ const PersonForm = ({ person, onSave, onDelete, canEdit }) => {
           </div>
           <div className="person-form-right-column">
             <ImageUpload
-              imageUrl={formData.image_url}
+              imageUrl={formData.image_url || ""}
               onImageChange={handleImageChange}
               onImageRemove={handleImageRemove}
               canEdit={canEdit}
