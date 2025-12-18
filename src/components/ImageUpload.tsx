@@ -1,15 +1,16 @@
 import React, { useState, useRef } from "react";
-// @ts-ignore
-import { supabase } from "../lib/supabaseClient";
+import { storage } from "../lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 interface ImageUploadProps {
   imageUrl?: string;
   onImageChange: (url: string, path: string) => void;
   onImageRemove: () => void;
   canEdit: boolean;
+  storagePath?: string | undefined;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onImageRemove, canEdit }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onImageRemove, canEdit, storagePath }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -21,28 +22,25 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
 
     setIsUploading(true);
 
-    // In a real app, you would get the user ID from your authentication system
-    // For now, we'll use a placeholder or a static ID.
-    const userId = "user_placeholder_id"; // Replace with actual user ID
-    const filePath = `${userId}/${Date.now()}_${file.name}`;
+    let finalStoragePath = storagePath;
+    if (!finalStoragePath) {
+        // Fallback for backward compatibility or when no specific path is provided
+        const userId = "user_placeholder_id"; 
+        finalStoragePath = `images/${userId}`;
+    }
+
+    // Create a storage reference from our storage service
+    const storageRef = ref(storage, `${finalStoragePath}/${Date.now()}_${file.name}`);
 
     try {
-      // Upload the file to the 'profile-pictures' bucket
-      const { data, error } = await supabase.storage
-        .from("profile-pictures")
-        .upload(filePath, file);
-
-      if (error) {
-        throw error;
-      }
+      // Upload the file to Firebase Storage
+      const snapshot = await uploadBytes(storageRef, file);
 
       // Get the public URL of the uploaded file
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("profile-pictures").getPublicUrl(filePath);
+      const publicUrl = await getDownloadURL(snapshot.ref);
 
       // Pass the new URL and the path to the parent component
-      onImageChange(publicUrl, data.path);
+      onImageChange(publicUrl, snapshot.ref.fullPath);
     } catch (error: any) {
       console.error("Error uploading file:", error);
       alert(`Upload failed: ${error.message}`);

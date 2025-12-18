@@ -17,7 +17,7 @@ A dynamic and interactive family tree application designed to bring your ancestr
 ## Tech Stack
 
 *   **Framework:** [Next.js](https://nextjs.org/) (React)
-*   **Database & Auth:** [Supabase](https://supabase.io/)
+*   **Database & Auth:** Custom Auth / Firebase Storage
 *   **Styling:** CSS Modules & a custom design system
 *   **Deployment:** Vercel
 
@@ -27,7 +27,7 @@ A dynamic and interactive family tree application designed to bring your ancestr
 
 *   Node.js (v16 or later)
 *   npm or yarn
-*   A Supabase account
+
 
 ### Installation
 
@@ -44,19 +44,12 @@ A dynamic and interactive family tree application designed to bring your ancestr
     npm install
     ```
 
-3.  **Set up your Supabase project:**
 
-    *   Create a new project on [Supabase](https://supabase.io/).
-    *   In the SQL Editor, run the schema script provided in `supabase/schema.sql` to create the necessary tables.
-    *   Go to **Project Settings -> API** and get your **Project URL** and **anon public key**.
-
-4.  **Configure environment variables:**
 
     Create a `.env.local` file in the root of the project and add your Supabase credentials:
 
     ```
-    NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
     ```
 
 5.  **Run the development server:**
@@ -76,7 +69,7 @@ This Next.js application can be easily deployed to platforms like [Vercel](https
 1.  Push your code to a Git repository (GitHub, GitLab, Bitbucket).
 2.  Import the repository into your Vercel dashboard.
 3.  Vercel will automatically detect that this is a Next.js project and configure the build settings.
-4.  Add your Supabase environment variables in the Vercel project settings.
+
 5.  Deploy!
 
 ## Contributing

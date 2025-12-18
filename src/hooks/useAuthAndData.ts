@@ -30,22 +30,32 @@ export function useAuthAndData() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setIsLoading(true);
       if (currentUser) {
-        const userRef = ref(database, `users/${currentUser.uid}`);
-        const snapshot = await get(userRef);
-        let userData;
-        if (snapshot.exists()) {
-          userData = snapshot.val();
-        } else {
-          // Create new user with 'pending' role
-          userData = {
-            email: currentUser.email,
-            name: currentUser.displayName,
-            role: "pending",
-          };
-          await set(userRef, userData);
+        try {
+          const userRef = ref(database, `users/${currentUser.uid}`);
+          const snapshot = await get(userRef);
+          let userData;
+          if (snapshot.exists()) {
+            userData = snapshot.val();
+          } else {
+            // Create new user with 'pending' role
+            userData = {
+              email: currentUser.email,
+              name: currentUser.displayName,
+              role: "pending",
+            };
+            await set(userRef, userData);
+          }
+          setUser(currentUser);
+          setUserRole(userData.role);
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          // Fallback: set user but maybe no role, or handle as error?
+          // If we can't read user role, better to logout or show error.
+          // For now, let's treat as pending or viewer? No, let's set user and null role.
+          setUser(currentUser);
+          setUserRole(null); 
+          setIsLoading(false); // Stop loading even on error
         }
-        setUser(currentUser);
-        setUserRole(userData.role);
       } else {
         setUser(null);
         setUserRole(null);
@@ -59,19 +69,54 @@ export function useAuthAndData() {
   // Effect for fetching data when user role is authorized
   useEffect(() => {
     if (userRole && ALLOWED_ROLES.includes(userRole)) {
-      const dbRef = ref(database, "/");
-      const unsubscribe = onValue(
-        dbRef,
-        (snapshot) => {
-          setTreeData(snapshot.val() as TreeData || { people: [], families: [] });
-          setIsLoading(false);
-        },
-        (error) => {
-          console.error("Firebase read failed:", error);
+      // Fetch people and families separately to avoid permission issues on root "/"
+      const peopleRef = ref(database, "people");
+      const familiesRef = ref(database, "families");
+
+      let peopleData: Person[] = [];
+      let familiesData: Family[] = [];
+      let peopleLoaded = false;
+      let familiesLoaded = false;
+
+      const checkLoading = () => {
+        if (peopleLoaded && familiesLoaded) {
+          setTreeData({ people: peopleData, families: familiesData });
           setIsLoading(false);
         }
+      };
+
+      const unsubPeople = onValue(
+        peopleRef,
+        (snapshot) => {
+          peopleData = snapshot.val() || [];
+          peopleLoaded = true;
+          checkLoading();
+        },
+        (error) => {
+          console.error("Firebase read failed (people):", error);
+          peopleLoaded = true; // Mark as loaded (failed) to stop spinner
+          checkLoading();
+        }
       );
-      return () => unsubscribe();
+
+      const unsubFamilies = onValue(
+        familiesRef,
+        (snapshot) => {
+          familiesData = snapshot.val() || [];
+          familiesLoaded = true;
+          checkLoading();
+        },
+        (error) => {
+          console.error("Firebase read failed (families):", error);
+          familiesLoaded = true; // Mark as loaded
+          checkLoading();
+        }
+      );
+
+      return () => {
+        unsubPeople();
+        unsubFamilies();
+      };
     } else if (userRole) {
       // If user has a role but it's not allowed, stop loading
       setIsLoading(false);
@@ -94,8 +139,20 @@ export function useAuthAndData() {
       console.error("Permission Denied: You cannot save data.");
       return Promise.reject("Permission Denied");
     }
-    const dbRef = ref(database, "/");
-    return set(dbRef, newData).catch((error) => {
+    // Update people and families separately
+    const updates: Record<string, any> = {};
+    updates['/people'] = newData.people;
+    updates['/families'] = newData.families;
+    
+    // We use root update to ensure atomicity if possible, but if root write is denied...
+    // We should try 'update(ref(database), updates)' which writes to children paths.
+    // If root write is blocked, this MIGHT fail if it's considered a write to root.
+    // SAFE ALTERNATIVE: set separately? No, atomicity is important.
+    // Standard Firebase 'update' at root works if you have write access to children paths!
+    
+    return import("firebase/database").then(({ update, ref }) => {
+        return update(ref(database), updates);
+    }).catch((error) => {
       console.error("Firebase write failed:", error);
       throw error;
     });
