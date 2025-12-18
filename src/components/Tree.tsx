@@ -103,11 +103,12 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             .append("g")
             .attr("class", "node")
             .attr("transform", `translate(${-partnerOffset}, 0)`);
-            husbandNode
+            const isLineage = d.data.lineageMemberId === d.data.husband.id;
+             husbandNode
             .append("circle")
             .attr("r", nodeRadius)
-            .style("stroke", "var(--color-node-border)")
-            .style("stroke-width", "3px")
+            .style("stroke", isLineage ? "var(--color-primary)" : "var(--color-node-border)")
+            .style("stroke-width", isLineage ? "5px" : "3px")
             .style("fill", "white");
             husbandNode
             .append("image")
@@ -151,11 +152,12 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             .append("g")
             .attr("class", "node")
             .attr("transform", `translate(${partnerOffset}, 0)`);
+            const isLineage = d.data.lineageMemberId === d.data.wife.id;
             wifeNode
             .append("circle")
             .attr("r", nodeRadius)
-            .style("stroke", "var(--color-node-border)")
-            .style("stroke-width", "3px")
+            .style("stroke", isLineage ? "var(--color-primary)" : "var(--color-node-border)")
+            .style("stroke-width", isLineage ? "5px" : "3px")
             .style("fill", "white");
             wifeNode
             .append("image")
@@ -197,8 +199,14 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       singleNodes
         .append("circle")
         .attr("r", nodeRadius)
-        .style("stroke", "var(--color-node-border)")
-        .style("stroke-width", "3px")
+        .style("stroke", (d) =>
+          d.data.lineageMemberId === d.data.id
+            ? "var(--color-primary)"
+            : "var(--color-node-border)"
+        )
+        .style("stroke-width", (d) =>
+          d.data.lineageMemberId === d.data.id ? "5px" : "3px"
+        )
         .style("fill", "white");
       singleNodes
         .append("image")

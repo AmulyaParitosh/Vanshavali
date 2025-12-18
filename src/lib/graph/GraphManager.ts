@@ -240,12 +240,14 @@ export class GraphManager {
 
           if (childOwnFamily && hierarchyMap[childOwnFamily.id]) {
             // Link to the child's family node
-            familyNode.children.push(hierarchyMap[childOwnFamily.id]!);
+            const childNode = hierarchyMap[childOwnFamily.id]!;
+            childNode.lineageMemberId = childId;
+            familyNode.children.push(childNode);
           } else {
             // Child is a leaf node
             const childPerson = this.getPerson(childId);
             if (childPerson) {
-              const leafNode: GraphNode = { ...childPerson, children: [] };
+              const leafNode: GraphNode = { ...childPerson, children: [], lineageMemberId: childPerson.id };
               familyNode.children.push(leafNode);
             }
           }
@@ -261,11 +263,13 @@ export class GraphManager {
     
     // If root person belongs to a family as a partner, return that family node
     if (rootFamily && hierarchyMap[rootFamily.id]) {
-        return hierarchyMap[rootFamily.id]!;
+        const rootNode = hierarchyMap[rootFamily.id]!;
+        rootNode.lineageMemberId = rootPerson.id;
+        return rootNode;
     }
     
     // Otherwise return just the person
-    const rootNode: GraphNode = { ...rootPerson, children: [] };
+    const rootNode: GraphNode = { ...rootPerson, children: [], lineageMemberId: rootPerson.id };
     return rootNode;
   }
 }

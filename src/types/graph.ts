@@ -5,6 +5,7 @@ export interface GraphNode extends Person {
   husband?: Person;
   wife?: Person;
   children: GraphNode[];
+  lineageMemberId?: string;
 }
 
 export interface ConsistencyIssue {
