@@ -1,77 +1,45 @@
 import React from "react";
 import Tree from "./Tree";
+import { GraphManager } from "../lib/graph/GraphManager";
+import { ConsistencyValidator } from "../lib/graph/ConsistencyValidator";
 
 const FamilyTree = ({ people, families }) => {
-  // Helper to find a person by their ID
-  const findPerson = (id) => people.find((p) => p.id === id);
+  const [graphManager, setGraphManager] = React.useState(null);
+  const [validationIssues, setValidationIssues] = React.useState([]);
 
-  const buildHierarchy = () => {
-    if (!people || !families) return null;
-
-    const familyMap = {};
-    families.forEach((family) => {
-      // Create a combined node for partners
-      const husband = findPerson(
-        family.partners.find((pId) => findPerson(pId)?.sex === "M")
-      );
-      const wife = findPerson(
-        family.partners.find((pId) => findPerson(pId)?.sex === "F")
-      );
-
-      let partnerNode;
-      if (husband && wife) {
-        partnerNode = {
-          id: family.id,
-          isPartnerGroup: true,
-          husband,
-          wife,
-          children: [],
-        };
-      } else {
-        // Handle single parents or families without clear M/F partners
-        const primaryParent = findPerson(family.partners[0]);
-        partnerNode = { ...primaryParent, children: [] }; // Treat as a single person node
+  React.useEffect(() => {
+    if (people && families) {
+      const gm = new GraphManager(people, families);
+      setGraphManager(gm);
+      
+      const issues = ConsistencyValidator.validate(gm);
+      if (issues.length > 0) {
+        console.warn("Graph Consistency Issues:", issues);
+        setValidationIssues(issues);
       }
-      familyMap[family.id] = partnerNode;
-    });
+    }
+  }, [people, families]);
 
-    // Link children to their families
-    families.forEach((family) => {
-      const familyNode = familyMap[family.id];
-      if (familyNode) {
-        const children = family.children || [];
-        children.forEach((childId) => {
-          // Check if this child is a parent in another family
-          const childFamily = families.find((f) =>
-            f.partners.includes(childId)
-          );
-          if (childFamily) {
-            familyNode.children.push(familyMap[childFamily.id]);
-          } else {
-            // Child is a leaf node (for now)
-            const childPerson = findPerson(childId);
-            if (childPerson) {
-              familyNode.children.push({ ...childPerson, children: [] });
-            }
-          }
-        });
-      }
-    });
-
-    // Find the root of the tree
-    const rootPerson = people.find((p) => p.root === true);
-    if (!rootPerson) return null;
-
-    const rootFamily = families.find((f) => f.partners.includes(rootPerson.id));
-    return rootFamily
-      ? familyMap[rootFamily.id]
-      : { ...rootPerson, children: [] };
-  };
-
-  const hierarchy = buildHierarchy();
+  const hierarchy = React.useMemo(() => {
+    return graphManager ? graphManager.buildHierarchy() : null;
+  }, [graphManager]);
 
   return (
     <div id="tree-container">
+      {validationIssues.length > 0 && (
+         <div style={{
+             position: 'absolute', 
+             top: 0, 
+             right: 0, 
+             background: 'rgba(255, 0, 0, 0.1)', 
+             padding: '10px', 
+             fontSize: '10px',
+             zIndex: 1000,
+             pointerEvents: 'none'
+         }}>
+             {validationIssues.length} Data Issues Detect (Check Console)
+         </div>
+      )}
       {hierarchy ? <Tree data={hierarchy} /> : "Building hierarchy..."}
     </div>
   );
