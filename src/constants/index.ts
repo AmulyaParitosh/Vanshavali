@@ -19,16 +19,17 @@ export const TREE_CONFIG = {
   },
   STYLES: {
     STROKE_WIDTH: {
-      LINEAGE: "5px",
-      DEFAULT: "3px",
+      LINEAGE: "6px",
+      DEFAULT: "4px",
     },
     COLORS: {
       PRIMARY: "var(--color-primary)",
-      NODE_BORDER: "var(--color-node-border)",
-      FILL: "white",
+      NODE_BORDER: "var(--color-primary-dark)",
+      SPOUSE_BORDER: "var(--color-accent)",
+      FILL: "var(--color-bg)",
     },
     TEXT: {
-      FONT_SIZE: "10px",
+      FONT_SIZE: "12px",
     }
   },
   PLACEHOLDER_IMAGE_URL: (color: string, text: string) => 

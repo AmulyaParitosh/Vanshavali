@@ -61,6 +61,18 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       svg.selectAll("*").remove();
       const g = svg.append("g");
 
+      // Traditional Tree Trunk Background Motif
+      g.append("path")
+        .attr("d", "M-20,600 Q0,300 20,600 Z M-10,300 Q0,0 10,300 Z")
+        .attr("fill", "var(--color-primary)")
+        .attr("fill-opacity", "0.03")
+        .attr("transform", "translate(0, 100)");
+
+      // Decorative Corners (Mithila Patterns)
+      const corners = [
+        "M0,50 L50,0 M10,50 L50,10 M20,50 L50,20", // Top Left
+      ];
+      
       const zoom = d3
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.1, 2])
@@ -72,9 +84,10 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       zoomRef.current = zoom;
       gRef.current = g;
 
-      g.append("g")
-        .attr("class", "links")
-        .selectAll("path")
+      const linkGroup = g.append("g")
+        .attr("class", "links");
+
+      const links = linkGroup.selectAll("path")
         .data(root.links())
         .join("path")
         .attr("class", "link")
@@ -85,6 +98,25 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             .x((d) => d.x)
             .y((d) => d.y)
         );
+
+      // Add leafy motifs along the paths
+      links.each(function() {
+        const path = this as SVGPathElement;
+        const length = path.getTotalLength();
+        const numLeaves = Math.max(2, Math.floor(length / 40)); // A leaf every 40px
+        const leavesGroup = linkGroup.append("g").attr("class", "leaves");
+
+        for (let i = 1; i < numLeaves; i++) {
+          const point = path.getPointAtLength((i / numLeaves) * length);
+          const tangent = path.getPointAtLength(Math.min(length, (i / numLeaves) * length + 1));
+          const angle = Math.atan2(tangent.y - point.y, tangent.x - point.x) * (180 / Math.PI);
+
+          leavesGroup.append("path")
+            .attr("class", "connector-leaf")
+            .attr("d", "M0,0 Q5,-5 10,0 Q5,5 0,0") // Simple leaf shape
+            .attr("transform", `translate(${point.x},${point.y}) rotate(${angle}) ${i % 2 === 0 ? "scale(1,-1)" : ""}`);
+        }
+      });
 
       const node = g
         .append("g")
@@ -115,7 +147,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
              husbandNode
             .append("circle")
             .attr("r", NODE_RADIUS)
-            .style("stroke", isLineage ? STYLES.COLORS.PRIMARY : STYLES.COLORS.NODE_BORDER)
+            .style("stroke", isLineage ? STYLES.COLORS.PRIMARY : STYLES.COLORS.SPOUSE_BORDER)
             .style("stroke-width", isLineage ? STYLES.STROKE_WIDTH.LINEAGE : STYLES.STROKE_WIDTH.DEFAULT)
             .style("fill", STYLES.COLORS.FILL);
             husbandNode
@@ -168,7 +200,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             wifeNode
             .append("circle")
             .attr("r", NODE_RADIUS)
-            .style("stroke", isLineage ? STYLES.COLORS.PRIMARY : STYLES.COLORS.NODE_BORDER)
+            .style("stroke", isLineage ? STYLES.COLORS.PRIMARY : STYLES.COLORS.SPOUSE_BORDER)
             .style("stroke-width", isLineage ? STYLES.STROKE_WIDTH.LINEAGE : STYLES.STROKE_WIDTH.DEFAULT)
             .style("fill", STYLES.COLORS.FILL);
             wifeNode
@@ -216,7 +248,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
         .style("stroke", (d) =>
           d.data.lineageMemberId === d.data.id
             ? STYLES.COLORS.PRIMARY
-            : STYLES.COLORS.NODE_BORDER
+            : STYLES.COLORS.SPOUSE_BORDER
         )
         .style("stroke-width", (d) =>
           d.data.lineageMemberId === d.data.id ? STYLES.STROKE_WIDTH.LINEAGE : STYLES.STROKE_WIDTH.DEFAULT
