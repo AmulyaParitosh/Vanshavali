@@ -76,10 +76,17 @@ import { useToast } from "../../components/ToastSystem";
         items={data.families}
         renderItem={(f: Family) => `${getPersonName(f.partners[0] || "")} & ${getPersonName(f.partners[1] || "")}`}
         filterItem={(f: Family, query: string) => {
-             const p1 = getPersonName(f.partners[0] || "").toLowerCase();
-             const p2 = getPersonName(f.partners[1] || "").toLowerCase();
              const q = query.toLowerCase();
-             return p1.includes(q) || p2.includes(q);
+             const p1 = data.people.find(p => p.id === f.partners[0]);
+             const p2 = data.people.find(p => p.id === f.partners[1]);
+             
+             const p1NameMatch = p1?.name.official_name.toLowerCase().includes(q);
+             const p1AliasMatch = p1?.name.aliases?.some(alias => alias.toLowerCase().includes(q));
+             
+             const p2NameMatch = p2?.name.official_name.toLowerCase().includes(q);
+             const p2AliasMatch = p2?.name.aliases?.some(alias => alias.toLowerCase().includes(q));
+
+             return !!(p1NameMatch || p1AliasMatch || p2NameMatch || p2AliasMatch);
         }}
         onSelect={setSelectedFamily}
         selectedItem={selectedFamily}

@@ -3,6 +3,8 @@ import * as d3 from "d3";
 import type { GraphNode } from "../types/graph";
 import type { Person } from "../types/person";
 import { TREE_CONFIG } from "../constants";
+import TreeSearch from "./TreeSearch";
+import { useAppContext } from "../context/AppContext";
 
 interface TreeProps {
   data: GraphNode | null;
@@ -10,6 +12,10 @@ interface TreeProps {
 
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const { treeData } = useAppContext();
+  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null);
+  const nodesRef = useRef<d3.HierarchyPointNode<GraphNode>[]>([]);
 
   const getRandomPastelColor = () => {
     return d3.hsl(Math.random() * 360, 0.7, 0.8).hex();
@@ -65,6 +71,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
         });
 
       svg.call(zoom);
+      zoomRef.current = zoom;
+      gRef.current = g;
 
       g.append("g")
         .attr("class", "links")
@@ -87,7 +95,12 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
         .data(descendants)
         .join("g")
         .attr("transform", (d) => `translate(${d.x},${d.y})`)
-        .attr("key", (d) => d.data.id);
+        .attr("key", (d) => d.data.id)
+        .on("mouseenter", function() {
+          d3.select(this).raise();
+        });
+
+      nodesRef.current = descendants;
 
       // Partner group nodes
       const partnerGroups = node.filter((d) => !!d.data.isPartnerGroup);
@@ -133,7 +146,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             // -NODE_RADIUS - 335 - 20
             .attr("x", -NODE_RADIUS - 335 - 20)
             .attr("y", -50)
-            .style("overflow", "visible");
+            .style("overflow", "visible")
+            .style("pointer-events", "none");
             husbandFo
             .append("xhtml:div")
             .attr("class", "details-card")
@@ -180,7 +194,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             .attr("height", DETAILS_CARD.HEIGHT)
             .attr("x", NODE_RADIUS + 10)
             .attr("y", -50)
-            .style("overflow", "visible");
+            .style("overflow", "visible")
+            .style("pointer-events", "none");
             wifeFo
             .append("xhtml:div")
             .attr("class", "details-card")
@@ -236,7 +251,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
         .attr("height", DETAILS_CARD.HEIGHT)
         .attr("x", NODE_RADIUS + 10)
         .attr("y", -50)
-        .style("overflow", "visible");
+        .style("overflow", "visible")
+        .style("pointer-events", "none");
       singleFo
         .append("xhtml:div")
         .attr("class", "details-card")
@@ -248,7 +264,58 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     }
   }, [data]);
 
-  return <svg ref={svgRef}></svg>;
+  const handleSelectPerson = (person: Person) => {
+    if (!svgRef.current || !zoomRef.current || !gRef.current || !nodesRef.current.length) return;
+
+    // Find the node that contains this person
+    const targetNode = nodesRef.current.find(d => {
+      if (d.data.isPartnerGroup) {
+        return d.data.husband?.id === person.id || d.data.wife?.id === person.id;
+      }
+      return d.data.id === person.id;
+    });
+
+    if (targetNode) {
+      const svg = d3.select(svgRef.current);
+      const width = svgRef.current.getBoundingClientRect().width;
+      const height = svgRef.current.getBoundingClientRect().height;
+
+      // Calculate offset if it's a partner in a partner group
+      let xOffset = 0;
+      if (targetNode.data.isPartnerGroup) {
+        if (targetNode.data.husband?.id === person.id) {
+          xOffset = -TREE_CONFIG.PARTNER_OFFSET;
+        } else if (targetNode.data.wife?.id === person.id) {
+          xOffset = TREE_CONFIG.PARTNER_OFFSET;
+        }
+      }
+
+      const x = targetNode.x + xOffset;
+      const y = targetNode.y;
+
+      const transform = d3.zoomIdentity
+        .translate(width / 2, height / 2)
+        .scale(1.2) // Zoom in a bit on the person
+        .translate(-x, -y);
+
+      svg.transition()
+        .duration(750)
+        .call(zoomRef.current.transform, transform);
+      
+      // Optionally highlight the node briefly (standard d3 way)
+      // We could add a temporary class or style but let's keep it simple first
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <TreeSearch 
+        people={treeData?.people || []} 
+        onSelectPerson={handleSelectPerson} 
+      />
+      <svg ref={svgRef} style={{ width: '100%', height: '100%', display: 'block' }}></svg>
+    </div>
+  );
 };
 
 export default Tree;

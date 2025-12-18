@@ -103,7 +103,12 @@ export default function PeoplePage() {
       <TextListSidebar
         items={data.people}
         renderItem={(p: Person) => p.name.official_name}
-        filterItem={(p: Person, query: string) => p.name.official_name.toLowerCase().includes(query.toLowerCase())}
+        filterItem={(p: Person, query: string) => {
+          const q = query.toLowerCase();
+          const nameMatch = p.name.official_name.toLowerCase().includes(q);
+          const aliasMatch = p.name.aliases?.some(alias => alias.toLowerCase().includes(q));
+          return nameMatch || !!aliasMatch;
+        }}
         onSelect={setSelectedPerson}
         selectedItem={selectedPerson}
         onAdd={canEdit ? handleAddNewPerson : undefined}
