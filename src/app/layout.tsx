@@ -1,5 +1,6 @@
 import AppProvider from '../providers/AppProvider';
 import './globals.css';
+import { ToastSystem } from '../components/ToastSystem';
 
 export const metadata = {
   title: 'Vanshavali',
@@ -12,7 +13,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <AppProvider>{children}</AppProvider>
+        <AppProvider>
+          <ToastSystem />
+          {children}
+        </AppProvider>
       </body>
     </html>
   );

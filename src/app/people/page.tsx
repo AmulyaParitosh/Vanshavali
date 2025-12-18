@@ -139,6 +139,10 @@ export default function PeoplePage() {
 // Local Component: PersonForm
 // ----------------------------------------------------------------------
 
+import { useToast } from "../../components/ToastSystem";
+
+// ... existing imports ...
+
 interface PersonFormProps {
   person: Person | null;
   onSave: (data: Person) => void;
@@ -148,12 +152,15 @@ interface PersonFormProps {
 
 const PersonForm: React.FC<PersonFormProps> = ({ person, onSave, onDelete, canEdit }) => {
   const [formData, setFormData] = useState<Person | null>(person);
+  const toast = useToast();
 
   useEffect(() => {
     setFormData(person);
   }, [person]);
 
   if (!formData || !person) return null;
+  
+  // ... existing handlers ...
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -194,22 +201,31 @@ const PersonForm: React.FC<PersonFormProps> = ({ person, onSave, onDelete, canEd
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData) onSave(formData);
+    if (formData) {
+        onSave(formData);
+        toast.success("Person saved successfully!");
+    }
   };
 
   const handleDelete = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this person? This action cannot be undone and may affect family structures."
-      )
-    ) {
-      if (person?.id) onDelete(person.id);
-    }
+    toast.confirm(
+        "Are you sure you want to delete this person? This action cannot be undone.",
+        () => {
+            if (person?.id) {
+                onDelete(person.id);
+                toast.success("Person deleted.");
+            }
+        }
+    );
   };
 
   return (
     <div className="form-container">
       <h2>Person Details</h2>
+      
+      {/* Demo Section for Verification */}
+
+
       <form onSubmit={handleSave}>
         <div className="person-form-main-details">
           <div className="person-form-left-column">

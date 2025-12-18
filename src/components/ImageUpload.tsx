@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { storage } from "../lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import toast from 'react-hot-toast';
 
 interface ImageUploadProps {
   imageUrl?: string;
@@ -21,6 +22,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
     if (!file) return;
 
     setIsUploading(true);
+    const toastId = toast.loading("Uploading image...");
 
     let finalStoragePath = storagePath;
     if (!finalStoragePath) {
@@ -41,9 +43,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
 
       // Pass the new URL and the path to the parent component
       onImageChange(publicUrl, snapshot.ref.fullPath);
+      toast.success("Image uploaded successfully!", { id: toastId });
     } catch (error: any) {
       console.error("Error uploading file:", error);
-      alert(`Upload failed: ${error.message}`);
+      toast.error(`Upload failed: ${error.message}`, { id: toastId });
     } finally {
       setIsUploading(false);
     }

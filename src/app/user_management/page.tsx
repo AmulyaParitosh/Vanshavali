@@ -13,10 +13,13 @@ interface AdminUser {
   [key: string]: any;
 }
 
+import { useToast } from "../../components/ToastSystem";
+
 export default function UserManagementPage() {
   const { user } = useAppContext();
   const router = useRouter();
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const toast = useToast();
 
   useEffect(() => {
     if (user && user.role !== 'admin') {
@@ -40,7 +43,12 @@ export default function UserManagementPage() {
 
   const handleRoleChange = (uid: string, newRole: string) => {
     const userRef = ref(database, `users/${uid}`);
-    update(userRef, { role: newRole });
+    update(userRef, { role: newRole })
+        .then(() => toast.success(`User role updated to ${newRole}`))
+        .catch((err) => {
+            toast.error("Failed to update role");
+            console.error(err);
+        });
   };
 
   const managedUsers = users.filter((u) => u.role !== "pending");

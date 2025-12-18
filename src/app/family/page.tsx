@@ -8,43 +8,45 @@ import type { Person } from "../../types/person";
 // @ts-ignore
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import TextListSidebar from "../../components/TextListSidebar";
-
-export default function FamilyPage() {
-  const { treeData, user, onSave } = useAppContext();
-  const canEdit = user?.role === 'admin' || user?.role === 'editor';
-
-  const [data, setData] = useState<TreeData | null>(treeData);
-  const [selectedFamily, setSelectedFamily] = useState<Family | null>(null);
-
-  useEffect(() => {
-    setData(treeData);
-  }, [treeData]);
-
-  if (!data) {
-    return <Loading />;
-  }
-
-  const handleSaveFamily = (family: Family) => {
-    if (!canEdit) return;
-    let updatedFamilies;
-    if (family.id) {
-      updatedFamilies = data.families.map((f) =>
-        f.id === family.id ? family : f
-      );
-    } else {
-      const newFamilyId = `${family.partners[0]}_${family.partners[1]}_family`;
-      if (data.families.some((f) => f.id === newFamilyId)) {
-        alert("A family with these partners already exists.");
-        return;
-      }
-      const newFamily = { ...family, id: newFamilyId };
-      updatedFamilies = [...data.families, newFamily];
-      setSelectedFamily(newFamily);
+import { useToast } from "../../components/ToastSystem";
+  
+  export default function FamilyPage() {
+    const { treeData, user, onSave } = useAppContext();
+    const canEdit = user?.role === 'admin' || user?.role === 'editor';
+    const toast = useToast();
+  
+    const [data, setData] = useState<TreeData | null>(treeData);
+    const [selectedFamily, setSelectedFamily] = useState<Family | null>(null);
+  
+    useEffect(() => {
+      setData(treeData);
+    }, [treeData]);
+  
+    if (!data) {
+      return <Loading />;
     }
-    const newData = { ...data, families: updatedFamilies };
-    setData(newData);
-    onSave(newData);
-  };
+  
+    const handleSaveFamily = (family: Family) => {
+      if (!canEdit) return;
+      let updatedFamilies;
+      if (family.id) {
+        updatedFamilies = data.families.map((f) =>
+          f.id === family.id ? family : f
+        );
+      } else {
+        const newFamilyId = `${family.partners[0]}_${family.partners[1]}_family`;
+        if (data.families.some((f) => f.id === newFamilyId)) {
+          toast.error("A family with these partners already exists.");
+          return;
+        }
+        const newFamily = { ...family, id: newFamilyId };
+        updatedFamilies = [...data.families, newFamily];
+        setSelectedFamily(newFamily);
+      }
+      const newData = { ...data, families: updatedFamilies };
+      setData(newData);
+      onSave(newData);
+    };
 
   const handleDeleteFamily = (familyId: string) => {
     if (!canEdit) return;
@@ -115,6 +117,8 @@ export default function FamilyPage() {
 // Local Component: FamilyForm
 // ----------------------------------------------------------------------
 
+
+
 interface FamilyFormProps {
   family: Family | null;
   people: Person[];
@@ -126,6 +130,7 @@ interface FamilyFormProps {
 const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelete, canEdit }) => {
   const [formData, setFormData] = useState<Family | null>(family);
   const [selectedChild, setSelectedChild] = useState<string>("");
+  const toast = useToast();
 
   useEffect(() => {
     setFormData(family);
@@ -160,6 +165,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
       const newChildren = [...(formData.children || []), selectedChild];
       setFormData({ ...formData, children: newChildren });
       setSelectedChild("");
+      toast.success("Child added to list (unsaved)");
     }
   };
 
@@ -170,6 +176,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
       (childId: string) => childId !== childIdToRemove
     );
     setFormData({ ...formData, children: newChildren });
+    toast.success("Child removed from list (unsaved)");
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -189,17 +196,22 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData) onSave(formData);
+    if (formData) {
+        onSave(formData);
+        toast.success("Family saved successfully");
+    }
   };
 
   const handleDelete = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this family? This will not delete the individuals but will remove their connections as a family unit."
-      )
-    ) {
-      if (family.id) onDelete(family.id);
-    }
+    toast.confirm(
+        "Are you sure you want to delete this family? This will not delete the individuals but will remove their connections as a family unit.",
+        () => {
+             if (family.id) {
+                 onDelete(family.id);
+                 toast.success("Family deleted");
+             }
+        }
+    );
   };
 
   // @ts-ignore
