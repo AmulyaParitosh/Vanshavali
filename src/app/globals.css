@@ -373,11 +373,19 @@ body {
 .btn-approve {
     background-color: var(--color-accent);
     color: var(--color-surface);
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 .btn-deny {
     background-color: var(--color-primary);
     color: var(--color-surface);
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 .role-select {
@@ -805,7 +813,7 @@ body {
   box-shadow: 0 2px 10px var(--color-shadow);
   padding: 10px;
   margin-top: 5px;
-  width: 150px;
+  width: 250px; /* Increased to fit new items */
   z-index: 100;
 }
 
@@ -814,6 +822,40 @@ body {
     text-align: left;
     padding: 10px 15px;
 }
+
+.menu-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+.menu-link:hover {
+    background-color: var(--color-bg);
+    color: var(--color-primary);
+}
+
+.notification-badge {
+    background-color: #f44336; /* Red */
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 8px;
+    font-weight: bold;
+}
+
+.menu-divider {
+    height: 1px;
+    background-color: var(--color-node-border);
+    margin: 5px 0;
+}
+
 
 /* --- Loading Component --- */
 .loading-container {

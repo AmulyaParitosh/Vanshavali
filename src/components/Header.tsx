@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
 import type { User } from "firebase/auth";
+import { ref, onValue } from "firebase/database";
+import { database } from "../lib/firebase";
 
 import { APP_CONFIG, USER_ROLES } from "../constants";
 
@@ -15,8 +17,21 @@ interface HeaderProps {
 
 export default function Header({ user, userRole, onLogout }: HeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const isAdmin = userRole === USER_ROLES.ADMIN;
   const showNav = user && userRole && ![USER_ROLES.PENDING, USER_ROLES.DENIED].includes(userRole);
+
+  useEffect(() => {
+    if (isAdmin) {
+      const usersRef = ref(database, "users/");
+      const unsubscribe = onValue(usersRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        const count = Object.values(data).filter((u: any) => u.role === 'pending').length;
+        setPendingCount(count);
+      });
+      return () => unsubscribe();
+    }
+  }, [isAdmin]);
 
   return (
     <header className="App-header">
@@ -32,11 +47,7 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
             <Link href="/family" className="btn">
               Family
             </Link>
-            {isAdmin && (
-              <Link href="/admin" className="btn">
-                Admin
-              </Link>
-            )}
+            {/* Admin link removed */}
           </>
         )}
       </div>
@@ -49,10 +60,46 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             >
               {user.displayName}
+              {isAdmin && pendingCount > 0 && (
+                <span className="notification-badge">
+                  {pendingCount}
+                </span>
+              )}
             </button>
             {isUserMenuOpen && (
               <div className="user-menu-dropdown">
-                <button onClick={onLogout} className="btn btn-secondary">
+                {isAdmin && (
+                  <>
+                    <Link 
+                      href="/access_requests" 
+                      className="menu-link"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Access Requests
+                      {pendingCount > 0 && (
+                        <span className="notification-badge">
+                          {pendingCount}
+                        </span>
+                      )}
+                    </Link>
+                    <Link 
+                      href="/user_management" 
+                      className="menu-link"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      User Management
+                    </Link>
+                    <div className="menu-divider"></div>
+                  </>
+                )}
+                <button 
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    onLogout();
+                  }} 
+                  className="btn user-menu-button"
+                  style={{ width: '100%', borderRadius: 0, border: 'none', borderTop: 'none', textAlign: 'left', padding: '10px 15px' }}
+                >
                   Logout
                 </button>
               </div>
