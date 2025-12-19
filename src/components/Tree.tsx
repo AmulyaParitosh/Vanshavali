@@ -177,7 +177,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                 husbandNode.append("circle")
                     .attr("r", NODE_RADIUS)
                     .style("fill", "none")
-                    .style("stroke", hasParent ? "#1E90FF" : "var(--color-accent)") // Blue vs Green
+                    .style("stroke", hasParent ? "var(--color-primary)" : "var(--color-secondary)") // Primary vs Secondary
                     .style("stroke-width", "4px");
                 const husbandFo = husbandNode
                 .append("foreignObject")
@@ -207,12 +207,29 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                     if(id) setLockedNodeId(prev => prev === id ? null : id);
                 });
 
-                 group
+                const husbandText = group
                 .append("text")
                 .attr("class", "node-text-style")
                 .attr("text-anchor", "middle")
-                .attr("y", NODE_RADIUS + 25)
-                .text(d.data.husband.name.official_name);
+                .attr("x", 0)
+                .attr("y", NODE_RADIUS + 50)
+                .text(d.data.husband.name.official_name)
+                .style("font-weight", "600")
+                .style("fill", "#333");
+
+                husbandText.each(function() {
+                    const bbox = this.getBBox();
+                    const paddingX = 10;
+                    const paddingY = 4;
+                    group.insert("rect", "text")
+                         .attr("x", bbox.x - paddingX)
+                         .attr("y", bbox.y - paddingY)
+                         .attr("width", bbox.width + paddingX * 2)
+                         .attr("height", bbox.height + paddingY * 2)
+                         .attr("rx", 10)
+                         .attr("ry", 10)
+                         .attr("fill", "rgba(255, 255, 255, 0.9)");
+                });
             }
         };
 
@@ -259,7 +276,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                  wifeNode.append("circle")
                      .attr("r", NODE_RADIUS)
                      .style("fill", "none")
-                     .style("stroke", hasParent ? "#1E90FF" : "var(--color-accent)") // Blue vs Green
+                     .style("stroke", hasParent ? "var(--color-primary)" : "var(--color-secondary)") // Primary vs Secondary
                      .style("stroke-width", "4px");
                  const wifeFo = wifeNode
                  .append("foreignObject")
@@ -289,12 +306,29 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                      if(id) setLockedNodeId(prev => prev === id ? null : id);
                  });
 
-                 group
-                 .append("text")
-                 .attr("class", "node-text-style")
-                 .attr("text-anchor", "middle")
-                 .attr("y", NODE_RADIUS + 45) // Original was +45
-                 .text(d.data.wife.name.official_name);
+                   const wifeText = group
+                  .append("text")
+                  .attr("class", "node-text-style")
+                  .attr("text-anchor", "middle")
+                  .attr("x", 0)
+                  .attr("y", NODE_RADIUS + 72)
+                  .text(d.data.wife.name.official_name)
+                  .style("font-weight", "600")
+                  .style("fill", "#333");
+
+                  wifeText.each(function() {
+                    const bbox = this.getBBox();
+                    const paddingX = 10;
+                    const paddingY = 4;
+                    group.insert("rect", "text")
+                         .attr("x", bbox.x - paddingX)
+                         .attr("y", bbox.y - paddingY)
+                         .attr("width", bbox.width + paddingX * 2)
+                         .attr("height", bbox.height + paddingY * 2)
+                         .attr("rx", 10)
+                         .attr("ry", 10)
+                         .attr("fill", "rgba(255, 255, 255, 0.9)");
+                  });
              }
          };
 
@@ -358,14 +392,30 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
          nodeGroup.append("circle")
             .attr("r", NODE_RADIUS)
             .style("fill", "none")
-            .style("stroke", hasParent ? "#1E90FF" : "var(--color-accent)") // Blue vs Green
+            .style("stroke", hasParent ? "var(--color-primary)" : "var(--color-secondary)") // Primary vs Secondary
             .style("stroke-width", "4px");
       });
-      singleNodes
+       const singleText = singleNodes
         .append("text")
         .attr("text-anchor", "middle")
-        .attr("y", NODE_RADIUS + 25)
-        .text((d) => d.data.name.official_name);
+        .attr("y", NODE_RADIUS + 50)
+        .text((d) => d.data.name.official_name)
+        .style("font-weight", "600")
+        .style("fill", "#333");
+       
+       singleText.each(function(d) {
+           const bbox = this.getBBox();
+           const paddingX = 10;
+           const paddingY = 4;
+           d3.select(this.parentNode as any).insert("rect", "text")
+                .attr("x", bbox.x - paddingX)
+                .attr("y", bbox.y - paddingY)
+                .attr("width", bbox.width + paddingX * 2)
+                .attr("height", bbox.height + paddingY * 2)
+                .attr("rx", 10)
+                .attr("ry", 10)
+                .attr("fill", "rgba(255, 255, 255, 0.9)");
+       });
       
       // Bridge Rect
       singleNodes.append("rect")

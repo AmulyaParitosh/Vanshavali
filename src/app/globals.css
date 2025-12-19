@@ -26,6 +26,7 @@
   --border-radius-lg: 32px;
   --shadow-strong: 0 12px 36px rgba(178, 34, 34, 0.12);
   --color-bg-transparent: rgba(253, 245, 230, 0.95);
+  --color-link-stroke: #221005; /* Very dark brown (almost black) */
 }
 
 body {
@@ -215,7 +216,7 @@ main {
 .link,
 .partner-link {
   fill: none;
-  stroke: var(--color-node-border);
+  stroke: var(--color-link-stroke);
   stroke-opacity: 0.8;
   stroke-width: 3px;
 }
