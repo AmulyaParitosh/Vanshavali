@@ -38,7 +38,7 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ people, onSelectPerson }) => {
       <div style={{
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
         backdropFilter: 'blur(4px)',
-        borderRadius: '8px',
+        borderRadius: 'var(--border-radius-lg)',
         padding: '8px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
         border: '1px solid #e0e0e0',
@@ -56,7 +56,7 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ people, onSelectPerson }) => {
       {isOpen && filteredPeople.length > 0 && (
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '8px',
+          borderRadius: 'var(--border-radius-md)',
           boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
           border: '1px solid #e0e0e0',
           overflow: 'hidden',
@@ -89,7 +89,7 @@ const TreeSearch: React.FC<TreeSearchProps> = ({ people, onSelectPerson }) => {
       {isOpen && searchTerm.trim() && filteredPeople.length === 0 && (
         <div style={{
           backgroundColor: 'white',
-          borderRadius: '8px',
+          borderRadius: 'var(--border-radius-md)',
           padding: '12px',
           boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
           border: '1px solid #e0e0e0',

@@ -26,7 +26,7 @@ const toastContainerStyle: React.CSSProperties = {
     color: 'var(--color-text)',
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     border: '2px solid var(--color-primary)',
-    borderRadius: '8px',
+    borderRadius: 'var(--border-radius-lg)',
     boxShadow: '0 4px 12px var(--color-shadow)',
     display: 'flex',
     alignItems: 'center',

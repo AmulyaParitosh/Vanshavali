@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-interface UnifiedSearchProps {
+interface UnifiedSearchProps extends React.InputHTMLAttributes<HTMLInputElement> {
   placeholder?: string;
   onSearch: (query: string) => void;
   initialValue?: string;
@@ -11,7 +11,8 @@ const UnifiedSearch: React.FC<UnifiedSearchProps> = ({
   placeholder = "Search...", 
   onSearch, 
   initialValue = "",
-  className = ""
+  className = "",
+  ...props
 }) => {
   const [query, setQuery] = useState(initialValue);
 
@@ -38,9 +39,10 @@ const UnifiedSearch: React.FC<UnifiedSearchProps> = ({
         placeholder={placeholder}
         value={query}
         onChange={handleChange}
+        {...props}
       />
       {query ? (
-        <button className="clear-search-btn" onClick={handleClear} type="button">
+        <button className="btn-icon-remove small clear-search-btn" onClick={handleClear} type="button">
           ×
         </button>
       ) : (

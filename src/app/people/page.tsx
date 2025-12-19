@@ -225,6 +225,17 @@ const PersonForm: React.FC<PersonFormProps> = ({ person, onSave, onDelete, canEd
     setFormData({ ...formData, custom_fields: newCustomFields });
   };
 
+  const handleAddCustomField = () => {
+      const newKey = `new_field_${Date.now()}`;
+      setFormData({ 
+          ...formData, 
+          custom_fields: { 
+              ...(formData.custom_fields || {}), 
+              [newKey]: "" 
+          } 
+      });
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData) {
@@ -246,53 +257,39 @@ const PersonForm: React.FC<PersonFormProps> = ({ person, onSave, onDelete, canEd
   };
 
   return (
-    <div className="form-container">
-      <h2>{formData?.name?.official_name || "New Person"}</h2>
-      
-      {/* Demo Section for Verification */}
-
-
-      <form onSubmit={handleSave}>
-        <div className="person-form-main-details">
-          <div className="person-form-left-column">
-            <div className="form-group">
-              <label htmlFor="person-name">Official Name</label>
-              <input
-                type="text"
-                id="person-name"
-                value={formData?.name?.official_name || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    name: { ...formData.name, official_name: e.target.value },
-                  })
-                }
-                required
-                disabled={!canEdit}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="person-sex">Sex</label>
-              <select
-                id="person-sex"
-                name="sex"
-                value={formData.sex || "M"}
-                onChange={handleChange}
-                disabled={!canEdit}
-              >
-                <option value="M">Male</option>
-                <option value="F">Female</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Aliases</label>
-              <AliasesInput
-                aliases={formData.name?.aliases || []}
-                onChange={handleAliasesChange}
-                canEdit={canEdit}
-              />
-            </div>
-            <div className="form-group">
+    <div className="form-container" style={{ backgroundColor: 'transparent', boxShadow: 'none', padding: 0 }}>
+      {/* Profile Header */}
+      <div className="section-card profile-header">
+        <div className="profile-image-section">
+           <ImageUpload
+              imageUrl={formData.image_url || ""}
+              onImageChange={handleImageChange}
+              onImageRemove={handleImageRemove}
+              canEdit={canEdit}
+              storagePath={person?.id ? `images/people/${person.id}` : undefined}
+            />
+        </div>
+        <div className="profile-header-info">
+             <div className="form-group" style={{ marginBottom: 0 }}>
+               <label htmlFor="person-name" style={{ fontSize: '0.9em', color: 'var(--color-text-light)' }}>Official Name</label>
+               <input
+                 type="text"
+                 id="person-name"
+                 value={formData?.name?.official_name || ""}
+                 onChange={(e) =>
+                   setFormData({
+                     ...formData,
+                     name: { ...formData.name, official_name: e.target.value },
+                   })
+                 }
+                 required
+                 disabled={!canEdit}
+                 style={{ fontSize: '1.5em', fontWeight: 600, padding: '10px 0', border: 'none', borderBottom: '2px solid rgba(0,0,0,0.1)', borderRadius: 0, background: 'transparent', width: '100%' }}
+                 placeholder="Enter Name"
+               />
+             </div>
+             
+             <div className="form-group" style={{ marginTop: '15px' }}>
               <label className="checkbox-label">
                 <input
                   type="checkbox"
@@ -304,48 +301,103 @@ const PersonForm: React.FC<PersonFormProps> = ({ person, onSave, onDelete, canEd
                 <span>Set as Tree Root</span>
               </label>
             </div>
-          </div>
-          <div className="person-form-right-column">
-            <ImageUpload
-              imageUrl={formData.image_url || ""}
-              onImageChange={handleImageChange}
-              onImageRemove={handleImageRemove}
-              canEdit={canEdit}
-              storagePath={person?.id ? `images/people/${person.id}` : undefined}
-            />
+        </div>
+      </div>
+
+      <form onSubmit={handleSave}>
+        {/* Identity Section */}
+        <div className="section-card">
+          <h3>Identity</h3>
+          <div className="form-row">
+            <div className="form-col">
+                <div className="form-group">
+                <label htmlFor="person-sex">Sex</label>
+                <select
+                    id="person-sex"
+                    name="sex"
+                    value={formData.sex || "M"}
+                    onChange={handleChange}
+                    disabled={!canEdit}
+                >
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                </select>
+                </div>
+            </div>
+            <div className="form-col">
+                <div className="form-group">
+                <label>Aliases</label>
+                <AliasesInput
+                    aliases={formData.name?.aliases || []}
+                    onChange={handleAliasesChange}
+                    canEdit={canEdit}
+                />
+                </div>
+            </div>
           </div>
         </div>
 
-        <h3 className="form-section-heading">Events</h3>
-        <EventsEditor
-          events={formData.events || []}
-          onChange={handleEventsChange}
-          canEdit={canEdit}
-        />
+        {/* Events Section */}
+        <div className="section-card">
+          <div className="section-header-row">
+            <h3>Life Events</h3>
+            {canEdit && (
+              <button
+                type="button"
+                className="btn-icon-add"
+                onClick={() => setFormData({ ...formData, events: [...(formData.events || []), { type: "", date: "", place: "" }] })}
+                title="Add Event"
+              >
+                +
+              </button>
+            )}
+          </div>
+          <EventsEditor
+            events={formData.events || []}
+            onChange={handleEventsChange}
+            canEdit={canEdit}
+          />
+        </div>
 
-        <h3 className="form-section-heading">Custom Fields</h3>
-        <CustomFieldsEditor
-          customFields={Object.entries(formData.custom_fields || {}).map(
-            ([key, value]) => ({ key, value })
-          )}
-          onChange={handleCustomFieldsChange}
-          canEdit={canEdit}
-        />
+        {/* Custom Fields Section */}
+        <div className="section-card">
+          <div className="section-header-row">
+            <h3>Additional Information</h3>
+            {canEdit && (
+              <button
+                type="button"
+                className="btn-icon-add"
+                onClick={handleAddCustomField}
+                title="Add Field"
+              >
+                +
+              </button>
+            )}
+          </div>
+          <CustomFieldsEditor
+            customFields={Object.entries(formData.custom_fields || {}).map(
+              ([key, value]) => ({ key, value })
+            )}
+            onChange={handleCustomFieldsChange}
+            canEdit={canEdit}
+          />
+        </div>
 
         {canEdit && (
           <div className="form-actions">
-            <button type="submit" className="btn btn-primary">
-              Save Person
-            </button>
             {person.id && (
               <button
                 type="button"
                 className="btn btn-danger"
                 onClick={handleDelete}
+                style={{ marginRight: 'auto' }}
               >
                 Delete Person
               </button>
             )}
+            <button type="submit" className="btn btn-primary">
+              Save Changes
+            </button>
           </div>
         )}
       </form>

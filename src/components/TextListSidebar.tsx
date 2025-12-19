@@ -28,7 +28,7 @@ export default function TextListSidebar<T>({
 
   return (
     <aside className="sidebar">
-       <div className="sidebar-search" style={{ padding: '15px 15px 0' }}>
+       <div className="sidebar-search">
             <UnifiedSearch 
               onSearch={setSearchQuery} 
               placeholder="Search..." 

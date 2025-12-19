@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { storage } from "../lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import toast from 'react-hot-toast';
+import { useToast } from "./ToastSystem";
 
 interface ImageUploadProps {
   imageUrl?: string;
@@ -14,6 +14,7 @@ interface ImageUploadProps {
 const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onImageRemove, canEdit, storagePath }) => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const toast = useToast();
 
   // This function will be triggered when the user selects a file
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,10 +44,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
 
       // Pass the new URL and the path to the parent component
       onImageChange(publicUrl, snapshot.ref.fullPath);
-      toast.success("Image uploaded successfully!", { id: toastId });
+      toast.success("Image uploaded successfully!"); // Toast system doesn't support updating loading toasts yet, simple success message
+      toast.dismiss(toastId);
     } catch (error: any) {
       console.error("Error uploading file:", error);
-      toast.error(`Upload failed: ${error.message}`, { id: toastId });
+      toast.dismiss(toastId);
+      toast.error(`Upload failed: ${error.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -55,6 +58,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
   // This function triggers the hidden file input
   const handleFileSelect = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleRemove = () => {
+      toast.confirm(
+          "Are you sure you want to remove this image?",
+          () => {
+             onImageRemove();
+             toast.success("Image removed.");
+          }
+      );
   };
 
   return (
@@ -67,6 +80,31 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
             <span>No Image</span>
           </div>
         )}
+        
+        {canEdit && (
+          <div className="overlay-actions">
+            <button
+              type="button"
+              className="btn-icon-overlay upload-btn"
+              onClick={handleFileSelect}
+              disabled={isUploading}
+              title={isUploading ? "Uploading..." : "Upload Image"}
+            >
+              ✎
+            </button>
+            {imageUrl && (
+              <button
+                type="button"
+                className="btn-icon-overlay remove-btn"
+                onClick={handleRemove}
+                disabled={isUploading}
+                title="Remove Image"
+              >
+                &times;
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <input
         type="file"
@@ -76,28 +114,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
         accept="image/*"
         disabled={isUploading || !canEdit}
       />
-      {canEdit && (
-        <div className="image-actions">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={handleFileSelect}
-            disabled={isUploading || !canEdit}
-          >
-            {isUploading ? "Uploading..." : "Change / Upload"}
-          </button>
-          {imageUrl && (
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={onImageRemove}
-              disabled={isUploading || !canEdit}
-            >
-              Remove
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 };

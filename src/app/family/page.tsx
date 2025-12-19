@@ -142,11 +142,13 @@ interface FamilyFormProps {
 const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelete, canEdit }) => {
   const [formData, setFormData] = useState<Family | null>(family);
   const [selectedChild, setSelectedChild] = useState<string>("");
+  const [showAddChild, setShowAddChild] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
     setFormData(family);
     setSelectedChild("");
+    setShowAddChild(false);
   }, [family]);
 
   if (!formData || !family) return null;
@@ -165,14 +167,19 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
     }
   };
 
-  const handleAddChild = () => {
-    if (!formData) return;
-    if (selectedChild && !(formData.children || []).includes(selectedChild)) {
-      const newChildren = [...(formData.children || []), selectedChild];
-      setFormData({ ...formData, children: newChildren });
-      setSelectedChild("");
-      toast.success("Child added (unsaved)");
+  const handleAddChild = (personId: string) => {
+    if (!formData || !personId) return;
+    
+    // Check if child is already in the list
+    if (formData.children?.includes(personId)) {
+        toast.error("This person is already a child in this family.");
+        return;
     }
+
+    const currentChildren = formData?.children || [];
+    setFormData({ ...formData, children: [...currentChildren, personId] });
+    setShowAddChild(false); // Close the inline add row
+    toast.success("Child added to list");
   };
 
   const handleRemoveChild = (childIdToRemove: string) => {
@@ -190,13 +197,17 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
     if (direction === 'up') {
         if (index === 0) return;
         const temp = items[index - 1];
-        items[index - 1] = items[index];
-        items[index] = temp;
+        if (typeof temp === 'string' && typeof items[index] === 'string') {
+             items[index - 1] = items[index] as string;
+             items[index] = temp;
+        }
     } else {
         if (index === items.length - 1) return;
         const temp = items[index + 1];
-        items[index + 1] = items[index];
-        items[index] = temp;
+        if (typeof temp === 'string' && typeof items[index] === 'string') {
+             items[index + 1] = items[index] as string;
+             items[index] = temp;
+        }
     }
     setFormData({ ...formData, children: items });
   };
@@ -233,109 +244,147 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
   );
 
   return (
-    <div className="form-container">
-      <h2>{getPersonName(husbandId || "") || "Husband"} & {getPersonName(wifeId || "") || "Wife"}</h2>
+    <div className="form-container" style={{ backgroundColor: 'transparent', boxShadow: 'none', padding: 0 }}>
+      <div className="section-card" style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '4px double var(--color-primary)' }}>
+         <h2 style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-primary)', fontSize: '2em', margin: 0 }}>
+            Family Unit
+         </h2>
+      </div>
+
       <form onSubmit={handleSave}>
-        <div className="form-group">
-          <label htmlFor="family-husband">Husband (Male)</label>
-          <PersonSearch
-            people={people}
-            selectedPersonId={husbandId}
-            onSelect={(id) => handlePartnerChange("husband", id)}
-            placeholder="Search for husband..."
-            filterSex="M"
-            disabled={!canEdit}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="family-wife">Wife (Female)</label>
-          <PersonSearch
-            people={people}
-            selectedPersonId={wifeId}
-            onSelect={(id) => handlePartnerChange("wife", id)}
-            placeholder="Search for wife..."
-            filterSex="F"
-            disabled={!canEdit}
-          />
+        {/* Parents Section - Side by Side */}
+        <div className="section-card">
+          <h3>Parents</h3>
+          <div className="form-row">
+            <div className="form-col">
+                <div className="form-group">
+                <label htmlFor="family-husband">Husband (Male)</label>
+                <PersonSearch
+                    people={people}
+                    selectedPersonId={husbandId}
+                    onSelect={(id) => handlePartnerChange("husband", id)}
+                    placeholder="Search for husband..."
+                    filterSex="M"
+                    disabled={!canEdit}
+                />
+                </div>
+            </div>
+            <div className="form-col">
+                <div className="form-group">
+                <label htmlFor="family-wife">Wife (Female)</label>
+                <PersonSearch
+                    people={people}
+                    selectedPersonId={wifeId}
+                    onSelect={(id) => handlePartnerChange("wife", id)}
+                    placeholder="Search for wife..."
+                    filterSex="F"
+                    disabled={!canEdit}
+                />
+                </div>
+            </div>
+          </div>
         </div>
 
-        <h3 className="form-section-heading">Children</h3>
-        <h3 className="form-section-heading">Children</h3>
-        <ul className="children-list">
-            {(formData.children || []).map((childId: string, index: number) => (
-                <li key={childId} className="child-item">
-                    {canEdit && (
-                        <div className="order-controls">
-                            <button 
-                                type="button" 
-                                className="order-btn up" 
-                                onClick={() => handleMoveChild(index, 'up')}
-                                disabled={index === 0}
-                                title="Move Up"
-                            >
-                                &#9650;
-                            </button>
-                            <button 
-                                type="button" 
-                                className="order-btn down" 
-                                onClick={() => handleMoveChild(index, 'down')}
-                                disabled={index === (formData.children?.length || 0) - 1}
-                                title="Move Down"
-                            >
-                                &#9660;
-                            </button>
-                        </div>
-                    )}
-                    <div className="child-content">
-                        <span>{getPersonName(childId)}</span>
+        {/* Children Section */}
+        <div className="section-card">
+            <div className="section-header-row">
+                <h3>Children</h3>
+                 {canEdit && (
+                  <button
+                    type="button"
+                    className="btn-icon-add"
+                    onClick={() => setShowAddChild(!showAddChild)}
+                    title={showAddChild ? "Cancel Adding" : "Add Child"}
+                    style={showAddChild ? { backgroundColor: '#777', transform: 'rotate(45deg)' } : {}}
+                  >
+                    +
+                  </button>
+                )}
+            </div>
+            <ul className="children-list">
+                {(formData.children || []).map((childId: string, index: number) => (
+                    <li key={childId} className="child-item">
                         {canEdit && (
-                            <button
-                                type="button"
-                                className="remove-child-btn"
-                                onClick={() => handleRemoveChild(childId)}
-                            >
-                                &times;
-                            </button>
+                            <div className="order-controls">
+                                <button 
+                                    type="button" 
+                                    className="order-btn up" 
+                                    onClick={() => handleMoveChild(index, 'up')}
+                                    disabled={index === 0}
+                                    title="Move Up"
+                                >
+                                    &#9650;
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="order-btn down" 
+                                    onClick={() => handleMoveChild(index, 'down')}
+                                    disabled={index === (formData.children?.length || 0) - 1}
+                                    title="Move Down"
+                                >
+                                    &#9660;
+                                </button>
+                            </div>
                         )}
-                    </div>
-                </li>
-            ))}
-        </ul>
-        {canEdit && (
-          <div className="add-child-container">
-            <PersonSearch
-              people={people}
-              selectedPersonId={selectedChild}
-              onSelect={setSelectedChild}
-              placeholder="Search for a child to add..."
-              disabled={!canEdit}
-              excludeIds={[husbandId, wifeId, ...currentChildrenIds]}
-            />
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleAddChild}
-              disabled={!canEdit}
-            >
-              Add Child
-            </button>
-          </div>
-        )}
+                        <div className="child-content">
+                            <span>{getPersonName(childId)}</span>
+                            {canEdit && (
+                                <button
+                                    type="button"
+                                    className="btn-icon-remove small"
+                                    onClick={() => handleRemoveChild(childId)}
+                                >
+                                    &times;
+                                </button>
+                            )}
+                        </div>
+                    </li>
+                ))}
+                
+                {/* Inline Add Child Row */}
+                {canEdit && showAddChild && (
+                    <li className="child-item new-child-input" style={{ border: '2px dashed var(--color-primary)', backgroundColor: 'transparent', padding: '10px' }}>
+                        <div style={{ width: '100%' }}>
+                             <PersonSearch
+                                people={people}
+                                selectedPersonId=""
+                                onSelect={(id) => {
+                                    handleAddChild(id);
+                                }}
+                                placeholder="Search to add a child..."
+                                disabled={!canEdit}
+                                excludeIds={[husbandId, wifeId, ...currentChildrenIds]}
+                                autoFocus={true}
+                            />
+                        </div>
+                         <button
+                            type="button"
+                            className="btn-icon-remove"
+                            onClick={() => setShowAddChild(false)}
+                            title="Cancel"
+                        >
+                            &times;
+                        </button>
+                    </li>
+                )}
+            </ul>
+        </div>
 
         {canEdit && (
           <div className="form-actions">
-            <button type="submit" className="btn btn-primary">
-              Save Family
-            </button>
-            {family.id && (
+             {family.id && (
               <button
                 type="button"
                 className="btn btn-danger"
                 onClick={handleDelete}
+                style={{ marginRight: 'auto' }}
               >
                 Delete Family
               </button>
             )}
+            <button type="submit" className="btn btn-primary">
+              Save Family
+            </button>
           </div>
         )}
       </form>

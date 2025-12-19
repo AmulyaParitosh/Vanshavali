@@ -62,19 +62,15 @@ const EventsEditor: React.FC<EventsEditorProps> = ({ events, onChange, canEdit }
           {canEdit && (
             <button
               type="button"
-              className="btn btn-danger"
+              className="btn-icon-remove small"
               onClick={() => removeEvent(index)}
+              title="Remove Event"
             >
-              Remove Event
+              &times;
             </button>
           )}
         </div>
       ))}
-      {canEdit && (
-        <button type="button" className="btn btn-secondary" onClick={addEvent}>
-          Add Event
-        </button>
-      )}
     </div>
   );
 };

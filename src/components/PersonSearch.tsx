@@ -11,6 +11,7 @@ interface PersonSearchProps {
   filterSex?: 'M' | 'F';
   disabled?: boolean;
   excludeIds?: string[];
+  autoFocus?: boolean;
 }
 
 const PersonSearch: React.FC<PersonSearchProps> = ({ 
@@ -20,7 +21,8 @@ const PersonSearch: React.FC<PersonSearchProps> = ({
   placeholder = "Search for a person...",
   filterSex,
   disabled = false,
-  excludeIds = []
+  excludeIds = [],
+  autoFocus
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -70,7 +72,7 @@ const PersonSearch: React.FC<PersonSearchProps> = ({
   }, []);
 
   return (
-    <div ref={containerRef} className="person-search-container" style={{ position: 'relative', width: '100%' }}>
+    <div ref={containerRef} className="person-search-container">
       <UnifiedSearch
         onSearch={(q) => {
           setSearchTerm(q);
@@ -79,23 +81,11 @@ const PersonSearch: React.FC<PersonSearchProps> = ({
         placeholder={placeholder}
         initialValue={searchTerm}
         className={disabled ? 'disabled' : ''}
+        autoFocus={autoFocus}
       />
       
       {isOpen && (
-        <div className="search-dropdown" style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
-          backgroundColor: 'var(--color-surface)',
-          borderRadius: 'var(--border-radius-sm)',
-          boxShadow: 'var(--shadow-strong)',
-          border: '1px solid var(--color-node-border)',
-          zIndex: 100,
-          marginTop: '4px',
-          maxHeight: '300px',
-          overflowY: 'auto'
-        }}>
+        <div className="search-dropdown">
           {filteredPeople.length > 0 ? (
             filteredPeople.map(person => (
               <div
@@ -105,30 +95,13 @@ const PersonSearch: React.FC<PersonSearchProps> = ({
                   setIsOpen(false);
                   setSearchTerm(person.name.official_name);
                 }}
-                className="search-dropdown-item"
-                style={{
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                  borderBottom: '1px solid #f0f0f0',
-                  transition: 'background 0.2s',
-                  backgroundColor: person.id === selectedPersonId ? 'var(--color-primary-light)' : 'transparent'
-                }}
-                onMouseEnter={(e) => {
-                    if (person.id !== selectedPersonId) {
-                        e.currentTarget.style.backgroundColor = '#f5f7fa';
-                    }
-                }}
-                onMouseLeave={(e) => {
-                    if (person.id !== selectedPersonId) {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                    }
-                }}
+                className={`search-dropdown-item ${person.id === selectedPersonId ? 'selected' : ''}`}
               >
                 <SearchItem type="person" item={person} />
               </div>
             ))
           ) : (
-            <div style={{ padding: '12px', textAlign: 'center', color: '#666' }}>
+            <div className="search-no-results">
               No results found
             </div>
           )}

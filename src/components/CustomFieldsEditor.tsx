@@ -57,19 +57,15 @@ const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({ customFields, o
           {canEdit && (
             <button
               type="button"
-              className="btn btn-danger"
+              className="btn-icon-remove small"
               onClick={() => removeField(index)}
+              title="Remove Field"
             >
-              Remove Field
+              &times;
             </button>
           )}
         </div>
       ))}
-      {canEdit && (
-        <button type="button" className="btn btn-secondary" onClick={addField}>
-          Add Custom Field
-        </button>
-      )}
     </div>
   );
 };

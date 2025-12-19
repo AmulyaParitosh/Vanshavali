@@ -44,7 +44,8 @@ export default function HomePage() {
              padding: '10px', 
              fontSize: UI_CONFIG.STYLES?.TEXT?.FONT_SIZE || '10px',
              zIndex: UI_CONFIG.Z_INDEX.OVERLAY,
-             pointerEvents: 'none'
+             pointerEvents: 'none',
+             borderRadius: 'var(--border-radius-sm)',
          }}>
              {validationIssues.length} {UI_CONFIG.MESSAGES.DATA_ISSUES_DETECTED}
          </div>

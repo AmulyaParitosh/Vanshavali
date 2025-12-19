@@ -46,7 +46,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     const canEdit = user?.role === 'admin' || user?.role === 'editor';
     if (canEdit) {
         html += `<div class="card-actions" style="margin-top: 15px; text-align: right; border-top: 1px solid #eee; padding-top: 10px;">
-          <a href="/people?id=${person.id}" class="btn-edit-card" style="display: inline-block; padding: 6px 12px; background: var(--color-primary); color: white; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: 600;">EDIT INFO</a>
+          <a href="/people?id=${person.id}" class="btn-edit-card" style="display: inline-block; padding: 6px 12px; background: var(--color-primary); color: white; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: 600;">EDIT INFO</a>
         </div>`;
     }
     return html;
