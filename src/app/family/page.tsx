@@ -237,7 +237,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
 
   return (
     <div className="form-container">
-      <h2>Family Details</h2>
+      <h2>{getPersonName(partner1Id || "") || "Partner 1"} & {getPersonName(partner2Id || "") || "Partner 2"}</h2>
       <form onSubmit={handleSave}>
         <div className="form-group">
           <label htmlFor="family-partner1">Partner 1 (Male)</label>
