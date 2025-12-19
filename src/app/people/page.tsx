@@ -72,7 +72,7 @@ export default function PeoplePage() {
         ...f,
         children: (f.children || []).filter((c) => c !== personId),
       }))
-      .filter((f) => f.partners[0] !== personId && f.partners[1] !== personId);
+      .filter((f) => f.husband !== personId && f.wife !== personId);
 
     const newData = {
       ...data,

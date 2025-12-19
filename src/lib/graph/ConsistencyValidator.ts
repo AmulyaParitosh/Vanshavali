@@ -14,16 +14,23 @@ export class ConsistencyValidator {
 
     // 1. Check for missing family members (Phantom IDs)
     families.forEach((family) => {
-      if (family.partners) {
-        family.partners.forEach((partnerId: string) => {
-          if (!graphManager.getPerson(partnerId)) {
-            issues.push({
-              type: "error",
-              message: `Family ${family.id} references missing partner: ${partnerId}`,
-              entityId: family.id,
-            });
-          }
-        });
+      if (family.husband) {
+        if (!graphManager.getPerson(family.husband)) {
+          issues.push({
+            type: "error",
+            message: `Family ${family.id} references missing husband: ${family.husband}`,
+            entityId: family.id,
+          });
+        }
+      }
+      if (family.wife) {
+        if (!graphManager.getPerson(family.wife)) {
+          issues.push({
+            type: "error",
+            message: `Family ${family.id} references missing wife: ${family.wife}`,
+            entityId: family.id,
+          });
+        }
       }
       if (family.children) {
         family.children.forEach((childId: string) => {
@@ -51,7 +58,9 @@ export class ConsistencyValidator {
 
     // 3. Simple Circular Reference Check (Parent is their own Child)
     families.forEach((family) => {
-        const partners = family.partners || [];
+        const partners: string[] = [];
+        if (family.husband) partners.push(family.husband);
+        if (family.wife) partners.push(family.wife);
         const children = family.children || [];
         
         const intersection = partners.filter((p: string) => children.includes(p));
