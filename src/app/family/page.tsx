@@ -9,6 +9,7 @@ import type { Person } from "../../types/person";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import TextListSidebar from "../../components/TextListSidebar";
 import { useToast } from "../../components/ToastSystem";
+import SearchItem from "../../components/SearchItem";
   
   export default function FamilyPage() {
     const { treeData, user, onSave } = useAppContext();
@@ -34,7 +35,7 @@ import { useToast } from "../../components/ToastSystem";
           f.id === family.id ? family : f
         );
       } else {
-        const newFamilyId = `${family.partners[0]}_${family.partners[1]}_family`;
+        const newFamilyId = `family_${family.husband || 'none'}_${family.wife || 'none'}_${Date.now()}`;
         if (data.families.some((f) => f.id === newFamilyId)) {
           toast.error("A family with these partners already exists.");
           return;
@@ -64,8 +65,7 @@ import { useToast } from "../../components/ToastSystem";
 
   const handleAddNewFamily = () => {
     if (!canEdit) return;
-    // @ts-ignore
-    setSelectedFamily({ partners: ["", ""], children: [] });
+    setSelectedFamily({ id: "", husband: "", wife: "", children: [] });
   };
 
 
@@ -74,11 +74,16 @@ import { useToast } from "../../components/ToastSystem";
     <div className="edit-screen">
       <TextListSidebar
         items={data.families}
-        renderItem={(f: Family) => `${getPersonName(f.partners[0] || "")} & ${getPersonName(f.partners[1] || "")}`}
+        renderItem={(f: Family) => (
+          <SearchItem type="family" item={f} people={data.people} />
+        )}
         filterItem={(f: Family, query: string) => {
              const q = query.toLowerCase();
-             const p1 = data.people.find(p => p.id === f.partners[0]);
-             const p2 = data.people.find(p => p.id === f.partners[1]);
+             const hId = f.husband || f.partners?.[0];
+             const wId = f.wife || f.partners?.[1];
+
+             const p1 = data.people.find(p => p.id === hId);
+             const p2 = data.people.find(p => p.id === wId);
              
              const p1NameMatch = p1?.name.official_name.toLowerCase().includes(q);
              const p1AliasMatch = p1?.name.aliases?.some(alias => alias.toLowerCase().includes(q));
@@ -154,36 +159,30 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
   const handlePartnerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (!formData) return;
     const { name, value } = e.target;
-    // @ts-ignore
-    const currentPartners = formData.partners || ["", ""];
-    let newPartners: [string, string];
-    if (name === "partner1") {
-      newPartners = [value, currentPartners[1] || ""];
+    if (name === "husband") {
+      setFormData({ ...formData, husband: value });
     } else {
-      newPartners = [currentPartners[0] || "", value];
+      setFormData({ ...formData, wife: value });
     }
-    setFormData({ ...formData, partners: newPartners });
   };
 
   const handleAddChild = () => {
     if (!formData) return;
     if (selectedChild && !(formData.children || []).includes(selectedChild)) {
-      // @ts-ignore
       const newChildren = [...(formData.children || []), selectedChild];
       setFormData({ ...formData, children: newChildren });
       setSelectedChild("");
-      toast.success("Child added to list (unsaved)");
+      toast.success("Child added (unsaved)");
     }
   };
 
   const handleRemoveChild = (childIdToRemove: string) => {
     if (!formData) return;
-    // @ts-ignore
     const newChildren = (formData.children || []).filter(
       (childId: string) => childId !== childIdToRemove
     );
     setFormData({ ...formData, children: newChildren });
-    toast.success("Child removed from list (unsaved)");
+    toast.success("Child removed (unsaved)");
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -191,7 +190,6 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
       return;
     }
 
-    // @ts-ignore
     const items = Array.from(formData.children || []);
     const [reorderedItem] = items.splice(result.source.index, 1);
     
@@ -221,30 +219,27 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
     );
   };
 
-  // @ts-ignore
-  const partner1Id = formData.partners ? formData.partners[0] : "";
-  // @ts-ignore
-  const partner2Id = formData.partners ? formData.partners[1] : "";
-  // @ts-ignore
+  const husbandId = formData.husband || (formData.partners ? formData.partners[0] : "");
+  const wifeId = formData.wife || (formData.partners ? formData.partners[1] : "");
   const currentChildrenIds = formData.children || [];
 
   const availableChildren = people.filter(
     (p) =>
-      p.id !== partner1Id &&
-      p.id !== partner2Id &&
+      p.id !== husbandId &&
+      p.id !== wifeId &&
       !currentChildrenIds.includes(p.id)
   );
 
   return (
     <div className="form-container">
-      <h2>{getPersonName(partner1Id || "") || "Partner 1"} & {getPersonName(partner2Id || "") || "Partner 2"}</h2>
+      <h2>{getPersonName(husbandId || "") || "Husband"} & {getPersonName(wifeId || "") || "Wife"}</h2>
       <form onSubmit={handleSave}>
         <div className="form-group">
-          <label htmlFor="family-partner1">Partner 1 (Male)</label>
+          <label htmlFor="family-husband">Husband (Male)</label>
           <select
-            id="family-partner1"
-            name="partner1"
-            value={partner1Id}
+            id="family-husband"
+            name="husband"
+            value={husbandId}
             onChange={handlePartnerChange}
             required
             disabled={!canEdit}
@@ -260,11 +255,11 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
           </select>
         </div>
         <div className="form-group">
-          <label htmlFor="family-partner2">Partner 2 (Female)</label>
+          <label htmlFor="family-wife">Wife (Female)</label>
           <select
-            id="family-partner2"
-            name="partner2"
-            value={partner2Id}
+            id="family-wife"
+            name="wife"
+            value={wifeId}
             onChange={handlePartnerChange}
             required
             disabled={!canEdit}

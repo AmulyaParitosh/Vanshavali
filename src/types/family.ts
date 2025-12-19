@@ -1,5 +1,7 @@
 export interface Family {
   id: string;
-  partners: string[]; // Array of Person IDs
+  husband?: string; // Person ID (Male)
+  wife?: string;    // Person ID (Female)
   children: string[]; // Array of Person IDs
+  partners?: string[]; // Deprecated: use husband/wife instead
 }

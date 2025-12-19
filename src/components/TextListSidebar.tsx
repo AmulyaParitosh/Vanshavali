@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UnifiedSearch from './UnifiedSearch';
 
 interface TextListSidebarProps<T> {
   items: T[];
@@ -27,22 +28,10 @@ export default function TextListSidebar<T>({
 
   return (
     <aside className="sidebar">
-       <div className="sidebar-search">
-            <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-            style={{
-                width: '100%',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px',
-                color: '#333'
-            }}
+       <div className="sidebar-search" style={{ padding: '15px 15px 0' }}>
+            <UnifiedSearch 
+              onSearch={setSearchQuery} 
+              placeholder="Search..." 
             />
         </div>
       <div className="sidebar-content">

@@ -12,6 +12,8 @@ import CustomFieldsEditor from "../../components/CustomFieldsEditor";
 import AliasesInput from "../../components/AliasesInput";
 import ImageUpload from "../../components/ImageUpload";
 import TextListSidebar from "../../components/TextListSidebar";
+import SearchItem from "../../components/SearchItem";
+import PersonForm from "../../components/PersonForm"; // Import PersonForm
 
 export default function PeoplePage() {
   const { treeData, user, onSave } = useAppContext();
@@ -72,7 +74,8 @@ export default function PeoplePage() {
         ...f,
         children: (f.children || []).filter((c) => c !== personId),
       }))
-      .filter((f) => f.partners[0] !== personId && f.partners[1] !== personId);
+      .filter((f) => f.husband !== personId && f.wife !== personId && !(f.partners && f.partners.includes(personId)));
+
 
     const newData = {
       ...data,
@@ -102,7 +105,9 @@ export default function PeoplePage() {
 
       <TextListSidebar
         items={data.people}
-        renderItem={(p: Person) => p.name.official_name}
+        renderItem={(p: Person) => (
+          <SearchItem type="person" item={p} />
+        )}
         filterItem={(p: Person, query: string) => {
           const q = query.toLowerCase();
           const nameMatch = p.name.official_name.toLowerCase().includes(q);

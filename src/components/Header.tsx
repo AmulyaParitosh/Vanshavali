@@ -51,6 +51,9 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
             <Link href="/family" className={`btn ${isActive("/family") ? "active" : ""}`}>
               Family
             </Link>
+            <Link href="/about" className={`btn ${isActive("/about") ? "active" : ""}`}>
+              About
+            </Link>
           </>
         )}
       </div>
@@ -91,6 +94,13 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       User Management
+                    </Link>
+                    <Link 
+                      href="/suggestions" 
+                      className="menu-link"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Feature Requests
                     </Link>
                     <div className="menu-divider"></div>
                   </>
