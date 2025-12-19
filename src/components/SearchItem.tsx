@@ -68,9 +68,6 @@ const SearchItem: React.FC<SearchItemProps> = ({ type, item, people = [], onClic
           <span className="search-item-name">
             {husband?.name.official_name || '?'} & {wife?.name.official_name || '?'}
           </span>
-          <span className="search-item-subtext">
-            Family Unit
-          </span>
         </div>
       </div>
     );

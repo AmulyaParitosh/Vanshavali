@@ -1022,7 +1022,7 @@ body {
 }
 
 .search-item-family-images .search-item-image.wife {
-  right: 0;
+  left: 20px; /* Fixed 20px overlap offset */
   z-index: 1;
   border-color: var(--color-secondary);
 }

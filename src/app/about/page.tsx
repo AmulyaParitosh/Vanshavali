@@ -102,7 +102,7 @@ export default function AboutPage() {
 
       <style jsx>{`
         .about-page-container {
-          padding: 40px 20px;
+          padding: 30px;
           height: calc(100vh - 90px);
           display: flex;
           justify-content: center;
@@ -112,7 +112,7 @@ export default function AboutPage() {
         }
         .about-content {
           background: var(--color-bg);
-          padding: 60px;
+          padding: 30px;
           border-radius: var(--border-radius-lg);
           width: 100%;
           max-width: 900px;
@@ -120,13 +120,29 @@ export default function AboutPage() {
           box-shadow: var(--shadow-strong);
           background-color: var(--color-surface);
         }
+        .about-header {
+          border-bottom: 2px solid var(--color-primary);
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
         .about-header h2 {
+          margin: 0;
           font-family: var(--font-heading);
+          font-size: 2.5em;
           color: var(--color-primary);
           text-align: center;
-          font-size: 3.5em;
-          margin-bottom: 40px;
-          text-shadow: 1px 1px 0 var(--color-bg), 2px 2px 0 var(--color-secondary);
+          position: relative;
+          padding-bottom: 10px;
+        }
+        .about-header h2::after {
+          content: "";
+          position: absolute;
+          bottom: 0;
+          left: 30%;
+          right: 30%;
+          height: 2px;
+          background: var(--color-primary);
+          box-shadow: 0 4px 0 var(--color-secondary);
         }
         .about-section {
           margin-bottom: 40px;
