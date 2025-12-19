@@ -103,7 +103,8 @@ export default function AboutPage() {
       <style jsx>{`
         .about-page-container {
           padding: 30px;
-          height: calc(100vh - 90px);
+          height: 100%;
+          width: 100%;
           display: flex;
           justify-content: center;
           align-items: flex-start;

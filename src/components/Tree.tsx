@@ -140,11 +140,20 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             .attr("class", "node")
             .attr("transform", `translate(${-PARTNER_OFFSET}, 0)`);
             const isLineage = d.data.lineageMemberId === d.data.husband.id;
-             husbandNode
+            const hasParent = isLineage && d.depth > 0;
+
+            // Border Image
+            husbandNode.append("image")
+                .attr("href", "/node_border.png")
+                .attr("x", -NODE_RADIUS * 1.3)
+                .attr("y", -NODE_RADIUS * 1.3)
+                .attr("width", NODE_RADIUS * 2.6)
+                .attr("height", NODE_RADIUS * 2.6);
+
+            husbandNode
             .append("circle")
             .attr("r", NODE_RADIUS)
-            .style("stroke", isLineage ? STYLES.COLORS.PRIMARY : STYLES.COLORS.SPOUSE_BORDER)
-            .style("stroke-width", isLineage ? STYLES.STROKE_WIDTH.LINEAGE : STYLES.STROKE_WIDTH.DEFAULT)
+            .style("stroke", "none")
             .style("fill", STYLES.COLORS.FILL);
             husbandNode
             .append("image")
@@ -160,7 +169,14 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             .attr("y", -NODE_RADIUS)
             .attr("width", NODE_RADIUS * 2)
             .attr("height", NODE_RADIUS * 2)
-            .attr("clip-path", `circle(${NODE_RADIUS - 2}px at center)`);
+            .attr("clip-path", `circle(${NODE_RADIUS}px at center)`);
+            
+            // Profile Border Ring (Overlay)
+            husbandNode.append("circle")
+                .attr("r", NODE_RADIUS)
+                .style("fill", "none")
+                .style("stroke", hasParent ? "#1E90FF" : "var(--color-accent)") // Blue vs Green
+                .style("stroke-width", "4px");
             const husbandFo = husbandNode
             .append("foreignObject")
             .attr("width", DETAILS_CARD.WIDTH)
@@ -209,11 +225,20 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             .attr("class", "node")
             .attr("transform", `translate(${PARTNER_OFFSET}, 0)`);
             const isLineage = d.data.lineageMemberId === d.data.wife.id;
+            const hasParent = isLineage && d.depth > 0;
+
+            // Border Image
+            wifeNode.append("image")
+                .attr("href", "/node_border.png")
+                .attr("x", -NODE_RADIUS * 1.3)
+                .attr("y", -NODE_RADIUS * 1.3)
+                .attr("width", NODE_RADIUS * 2.6)
+                .attr("height", NODE_RADIUS * 2.6);
+
             wifeNode
             .append("circle")
             .attr("r", NODE_RADIUS)
-            .style("stroke", isLineage ? STYLES.COLORS.PRIMARY : STYLES.COLORS.SPOUSE_BORDER)
-            .style("stroke-width", isLineage ? STYLES.STROKE_WIDTH.LINEAGE : STYLES.STROKE_WIDTH.DEFAULT)
+            .style("stroke", "none")
             .style("fill", STYLES.COLORS.FILL);
             wifeNode
             .append("image")
@@ -229,7 +254,14 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             .attr("y", -NODE_RADIUS)
             .attr("width", NODE_RADIUS * 2)
             .attr("height", NODE_RADIUS * 2)
-            .attr("clip-path", `circle(${NODE_RADIUS - 2}px at center)`);
+            .attr("clip-path", `circle(${NODE_RADIUS}px at center)`);
+
+            // Profile Border Ring (Overlay)
+            wifeNode.append("circle")
+                .attr("r", NODE_RADIUS)
+                .style("fill", "none")
+                .style("stroke", hasParent ? "#1E90FF" : "var(--color-accent)") // Blue vs Green
+                .style("stroke-width", "4px");
             const wifeFo = wifeNode
             .append("foreignObject")
             .attr("width", DETAILS_CARD.WIDTH)
@@ -276,34 +308,46 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           setLockedNodeId(prev => prev === d.data.id ? null : d.data.id);
       });
 
-      singleNodes
-        .append("circle")
-        .attr("r", NODE_RADIUS)
-        .style("stroke", (d) =>
-          d.data.lineageMemberId === d.data.id
-            ? STYLES.COLORS.PRIMARY
-            : STYLES.COLORS.SPOUSE_BORDER
-        )
-        .style("stroke-width", (d) =>
-          d.data.lineageMemberId === d.data.id ? STYLES.STROKE_WIDTH.LINEAGE : STYLES.STROKE_WIDTH.DEFAULT
-        )
-        .style("fill", STYLES.COLORS.FILL);
-      singleNodes
-        .append("image")
-        .attr(
-          "href",
-          (d) =>
+      singleNodes.each(function(d) {
+         const nodeGroup = d3.select(this);
+         const isLineage = d.data.lineageMemberId === d.data.id;
+         const hasParent = isLineage && d.depth > 0;
+         
+         // Border Image
+         nodeGroup.append("image")
+            .attr("href", "/node_border.png")
+            .attr("x", -NODE_RADIUS * 1.3)
+            .attr("y", -NODE_RADIUS * 1.3)
+            .attr("width", NODE_RADIUS * 2.6)
+            .attr("height", NODE_RADIUS * 2.6);
+            
+         nodeGroup.append("circle")
+            .attr("r", NODE_RADIUS)
+            .style("stroke", "none")
+            .style("fill", STYLES.COLORS.FILL);
+
+         nodeGroup.append("image")
+            .attr(
+            "href",
             d.data.image_url ||
             TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
                 stringToColor(d.data.id || d.data.name.official_name).substring(1),
                 d.data.name.official_name.substring(0, 2)
             )
-        )
-        .attr("x", -NODE_RADIUS)
-        .attr("y", -NODE_RADIUS)
-        .attr("width", NODE_RADIUS * 2)
-        .attr("height", NODE_RADIUS * 2)
-        .attr("clip-path", `circle(${NODE_RADIUS - 2}px at center)`);
+            )
+            .attr("x", -NODE_RADIUS)
+            .attr("y", -NODE_RADIUS)
+            .attr("width", NODE_RADIUS * 2)
+            .attr("height", NODE_RADIUS * 2)
+            .attr("clip-path", `circle(${NODE_RADIUS}px at center)`);
+
+         // Profile Border Ring (Overlay)
+         nodeGroup.append("circle")
+            .attr("r", NODE_RADIUS)
+            .style("fill", "none")
+            .style("stroke", hasParent ? "#1E90FF" : "var(--color-accent)") // Blue vs Green
+            .style("stroke-width", "4px");
+      });
       singleNodes
         .append("text")
         .attr("text-anchor", "middle")
