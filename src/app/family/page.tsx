@@ -10,6 +10,8 @@ import TextListSidebar from "../../components/TextListSidebar";
 import { useToast } from "../../components/ToastSystem";
 import SearchItem from "../../components/SearchItem";
 import PersonSearch from "../../components/PersonSearch";
+import { stringToColor } from "../../utils/colorUtils";
+import { TREE_CONFIG } from "../../constants";
   
   export default function FamilyPage() {
     const { treeData, user, onSave } = useAppContext();
@@ -145,6 +147,13 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
   const [showAddChild, setShowAddChild] = useState(false);
   const toast = useToast();
 
+  const getPlaceholderUrl = (person: Person) => {
+    return TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
+      stringToColor(person.id || person.name.official_name).substring(1),
+      person.name.official_name.substring(0, 2)
+    );
+  };
+
   useEffect(() => {
     setFormData(family);
     setSelectedChild("");
@@ -245,11 +254,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
 
   return (
     <div className="form-container" style={{ backgroundColor: 'transparent', boxShadow: 'none', padding: 0 }}>
-      <div className="section-card" style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '4px double var(--color-primary)' }}>
-         <h2 style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-primary)', fontSize: '2em', margin: 0 }}>
-            Family Unit
-         </h2>
-      </div>
+
 
       <form onSubmit={handleSave}>
         {/* Parents Section - Side by Side */}
@@ -257,6 +262,18 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
           <h3>Parents</h3>
           <div className="form-row">
             <div className="form-col">
+                {(() => {
+                   const husband = people.find(p => p.id === husbandId);
+                   return (
+                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                       <img
+                         src={husband?.image_url || (husband ? getPlaceholderUrl(husband) : TREE_CONFIG.PLACEHOLDER_IMAGE_URL('cccccc', 'H'))}
+                         alt={husband?.name.official_name || "Husband"}
+                         style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--color-primary)' }}
+                       />
+                     </div>
+                   );
+                })()}
                 <div className="form-group">
                 <label htmlFor="family-husband">Husband (Male)</label>
                 <PersonSearch
@@ -270,6 +287,18 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                 </div>
             </div>
             <div className="form-col">
+                {(() => {
+                   const wife = people.find(p => p.id === wifeId);
+                   return (
+                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                       <img
+                         src={wife?.image_url || (wife ? getPlaceholderUrl(wife) : TREE_CONFIG.PLACEHOLDER_IMAGE_URL('cccccc', 'W'))}
+                         alt={wife?.name.official_name || "Wife"}
+                         style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--color-primary)' }}
+                       />
+                     </div>
+                   );
+                })()}
                 <div className="form-group">
                 <label htmlFor="family-wife">Wife (Female)</label>
                 <PersonSearch
@@ -326,7 +355,17 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                                 </button>
                             </div>
                         )}
-                        <div className="child-content">
+                        <div className="child-content" style={{ display: 'flex', alignItems: 'center' }}>
+                            {(() => {
+                                const child = people.find(p => p.id === childId);
+                                return (
+                                    <img
+                                        src={child?.image_url || (child ? getPlaceholderUrl(child) : TREE_CONFIG.PLACEHOLDER_IMAGE_URL('cccccc', 'C'))}
+                                        alt={child?.name.official_name || "Child"}
+                                        style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover', marginRight: '10px' }}
+                                    />
+                                );
+                            })()}
                             <span>{getPersonName(childId)}</span>
                             {canEdit && (
                                 <button
