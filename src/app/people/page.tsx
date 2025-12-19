@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
 import { useAppContext } from '../../context/AppContext';
 import Loading from '../../components/Loading';
 import type { Person } from "../../types/person";
@@ -13,14 +14,29 @@ import AliasesInput from "../../components/AliasesInput";
 import ImageUpload from "../../components/ImageUpload";
 import TextListSidebar from "../../components/TextListSidebar";
 import SearchItem from "../../components/SearchItem";
-import PersonForm from "../../components/PersonForm"; // Import PersonForm
+// Local PersonForm used below
 
 export default function PeoplePage() {
   const { treeData, user, onSave } = useAppContext();
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
 
+  const searchParams = useSearchParams();
+  const initId = searchParams.get('id');
+
   const [data, setData] = useState<TreeData | null>(treeData);
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(() => {
+    if (initId && treeData) {
+      return treeData.people.find((p) => p.id === initId) || null;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (initId && treeData && !selectedPerson) {
+         const person = treeData.people.find((p) => p.id === initId);
+         if (person) setSelectedPerson(person);
+    }
+  }, [initId, treeData]);
 
   useEffect(() => {
     setData(treeData);

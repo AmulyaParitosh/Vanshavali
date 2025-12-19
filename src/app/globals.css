@@ -207,9 +207,10 @@ body {
   line-height: 1.6;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); REMOVED for instant hide behavior on base class */
+  transition: opacity 0s, visibility 0s, transform 0s; 
   transform: translateY(15px) scale(0.95);
-  pointer-events: none;
+  pointer-events: auto; /* Allow interaction with the card (e.g. edit button) */
   z-index: 100;
   position: relative;
 }
@@ -223,10 +224,12 @@ body {
   opacity: 0.5;
 }
 
-.node:hover .details-card {
+.node:hover .details-card,
+.node.locked .details-card {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Smooth enter */
 }
 
 .details-card h3 {
@@ -669,17 +672,72 @@ body {
   list-style: none;
   padding: 0;
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column; /* Force vertical stacking */
+  width: 100%;
 }
 
 .child-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   background-color: var(--color-bg);
-  padding: 12px 15px;
   border: 1px solid var(--color-node-border);
   border-radius: var(--border-radius-sm);
   margin-bottom: 8px;
+  overflow: hidden; /* Ensures content fits within rounded corners */
+  width: 100%; /* Ensure full width */
+  box-sizing: border-box; 
+  position: relative;
+  transition: box-shadow 0.2s ease; /* Removed transform transition */
+}
+
+.order-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  align-self: stretch;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-right: 1px solid var(--color-node-border);
+  padding: 2px 0;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.order-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-light);
+  font-size: 0.7em;
+  padding: 2px 5px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+
+.order-btn:hover:not(:disabled) {
+  opacity: 1;
+  color: var(--color-primary);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.order-btn:disabled {
+  opacity: 0.1; /* Almost invisible when disabled */
+  cursor: default;
+}
+
+.child-content {
+  flex-grow: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
 }
 
 .child-item span {

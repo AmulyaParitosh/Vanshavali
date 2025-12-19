@@ -5,8 +5,7 @@ import Loading from '../../components/Loading';
 import type { Family } from "../../types/family";
 import type { TreeData } from "../../context/AppContext";
 import type { Person } from "../../types/person";
-// @ts-ignore
-import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
+
 import TextListSidebar from "../../components/TextListSidebar";
 import { useToast } from "../../components/ToastSystem";
 import SearchItem from "../../components/SearchItem";
@@ -185,18 +184,21 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
     toast.success("Child removed (unsaved)");
   };
 
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination || !canEdit || !formData) {
-      return;
+  const handleMoveChild = (index: number, direction: 'up' | 'down') => {
+    if (!formData || !formData.children) return;
+    const items = [...formData.children];
+    if (direction === 'up') {
+        if (index === 0) return;
+        const temp = items[index - 1];
+        items[index - 1] = items[index];
+        items[index] = temp;
+    } else {
+        if (index === items.length - 1) return;
+        const temp = items[index + 1];
+        items[index + 1] = items[index];
+        items[index] = temp;
     }
-
-    const items = Array.from(formData.children || []);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    
-    if (reorderedItem) {
-        items.splice(result.destination.index, 0, reorderedItem);
-        setFormData({ ...formData, children: items as string[] });
-    }
+    setFormData({ ...formData, children: items });
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -258,47 +260,47 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
         </div>
 
         <h3 className="form-section-heading">Children</h3>
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="children-list" isDropDisabled={!canEdit} isCombineEnabled={false} ignoreContainerClipping={false}>
-            {(provided: any) => (
-              <ol
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="children-list"
-              >
-                {(formData.children || []).map((childId: string, index: number) => (
-                  <Draggable
-                    key={childId}
-                    draggableId={childId}
-                    index={index}
-                    isDragDisabled={!canEdit}
-                  >
-                    {(provided: any) => (
-                      <li
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="child-item"
-                      >
+        <h3 className="form-section-heading">Children</h3>
+        <ul className="children-list">
+            {(formData.children || []).map((childId: string, index: number) => (
+                <li key={childId} className="child-item">
+                    {canEdit && (
+                        <div className="order-controls">
+                            <button 
+                                type="button" 
+                                className="order-btn up" 
+                                onClick={() => handleMoveChild(index, 'up')}
+                                disabled={index === 0}
+                                title="Move Up"
+                            >
+                                &#9650;
+                            </button>
+                            <button 
+                                type="button" 
+                                className="order-btn down" 
+                                onClick={() => handleMoveChild(index, 'down')}
+                                disabled={index === (formData.children?.length || 0) - 1}
+                                title="Move Down"
+                            >
+                                &#9660;
+                            </button>
+                        </div>
+                    )}
+                    <div className="child-content">
                         <span>{getPersonName(childId)}</span>
                         {canEdit && (
-                          <button
-                            type="button"
-                            className="remove-child-btn"
-                            onClick={() => handleRemoveChild(childId)}
-                          >
-                            &times;
-                          </button>
+                            <button
+                                type="button"
+                                className="remove-child-btn"
+                                onClick={() => handleRemoveChild(childId)}
+                            >
+                                &times;
+                            </button>
                         )}
-                      </li>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </ol>
-            )}
-          </Droppable>
-        </DragDropContext>
+                    </div>
+                </li>
+            ))}
+        </ul>
         {canEdit && (
           <div className="add-child-container">
             <PersonSearch

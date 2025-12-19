@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { stringToColor } from "../utils/colorUtils";
 import type { GraphNode } from "../types/graph";
@@ -13,7 +13,8 @@ interface TreeProps {
 
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { treeData } = useAppContext();
+  const { treeData, user } = useAppContext();
+  const [lockedNodeId, setLockedNodeId] = useState<string | null>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null);
   const nodesRef = useRef<d3.HierarchyPointNode<GraphNode>[]>([]);
@@ -40,6 +41,13 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           key.charAt(0).toUpperCase() + key.slice(1)
         }:</strong> ${value}</div>`;
       }
+    }
+
+    const canEdit = user?.role === 'admin' || user?.role === 'editor';
+    if (canEdit) {
+        html += `<div class="card-actions" style="margin-top: 15px; text-align: right; border-top: 1px solid #eee; padding-top: 10px;">
+          <a href="/people?id=${person.id}" class="btn-edit-card" style="display: inline-block; padding: 6px 12px; background: var(--color-primary); color: white; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: 600;">EDIT INFO</a>
+        </div>`;
     }
     return html;
   }
@@ -170,6 +178,22 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             .append("xhtml:div")
             .attr("class", "details-card")
             .html(createDetailsHtml(d.data.husband));
+
+            // Bridge Rect
+            husbandNode.append("rect")
+                .attr("x", -NODE_RADIUS - 335 - 20 + DETAILS_CARD.WIDTH)
+                .attr("y", -50)
+                .attr("width", (-NODE_RADIUS) - (-NODE_RADIUS - 335 - 20 + DETAILS_CARD.WIDTH)) // from card end to node start
+                .attr("height", DETAILS_CARD.HEIGHT)
+                .attr("fill", "transparent");
+
+            husbandNode.attr("data-id", d.data.husband.id);
+            husbandNode.on("click", (e) => {
+                e.stopPropagation();
+                const id = d.data.husband?.id;
+                if(id) setLockedNodeId(prev => prev === id ? null : id);
+            });
+
              group
             .append("text")
             .attr("class", "node-text-style")
@@ -218,6 +242,22 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             .append("xhtml:div")
             .attr("class", "details-card")
             .html(createDetailsHtml(d.data.wife));
+            
+            // Bridge Rect
+            wifeNode.append("rect")
+                .attr("x", NODE_RADIUS)
+                .attr("y", -50)
+                .attr("width", 10)
+                .attr("height", DETAILS_CARD.HEIGHT)
+                .attr("fill", "transparent");
+
+            wifeNode.attr("data-id", d.data.wife.id);
+            wifeNode.on("click", (e) => {
+                e.stopPropagation();
+                const id = d.data.wife?.id;
+                if(id) setLockedNodeId(prev => prev === id ? null : id);
+            });
+
             group
             .append("text")
             .attr("class", "node-text-style")
@@ -230,6 +270,12 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       // Single person nodes
       const singleNodes = node.filter((d) => !d.data.isPartnerGroup);
       singleNodes.attr("class", "node"); // BUG FIX: Add .node class for hover
+      singleNodes.attr("data-id", (d) => d.data.id);
+      singleNodes.on("click", (event, d) => {
+          event.stopPropagation();
+          setLockedNodeId(prev => prev === d.data.id ? null : d.data.id);
+      });
+
       singleNodes
         .append("circle")
         .attr("r", NODE_RADIUS)
@@ -263,6 +309,15 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
         .attr("text-anchor", "middle")
         .attr("y", NODE_RADIUS + 25)
         .text((d) => d.data.name.official_name);
+      
+      // Bridge Rect
+      singleNodes.append("rect")
+        .attr("x", NODE_RADIUS)
+        .attr("y", -50)
+        .attr("width", 10)
+        .attr("height", DETAILS_CARD.HEIGHT)
+        .attr("fill", "transparent");
+
       const singleFo = singleNodes
         .append("foreignObject")
         .attr("width", DETAILS_CARD.WIDTH)
@@ -280,7 +335,18 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       const initialY = NODE_HEIGHT / 2;
       svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY));
     }
-  }, [data]);
+  }, [data, user]); // Depend on user for createDetailsHtml
+
+  useEffect(() => {
+      // Update locked state on nodes
+      if (svgRef.current) {
+          d3.select(svgRef.current).selectAll(".node").each(function() {
+             const node = d3.select(this);
+             const id = node.attr("data-id");
+             node.classed("locked", id === lockedNodeId);
+          });
+      }
+  }, [lockedNodeId, data]);
 
   const handleSelectPerson = (person: Person) => {
     if (!svgRef.current || !zoomRef.current || !gRef.current || !nodesRef.current.length) return;
