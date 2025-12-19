@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface UnifiedSearchProps {
   placeholder?: string;
@@ -14,6 +14,10 @@ const UnifiedSearch: React.FC<UnifiedSearchProps> = ({
   className = ""
 }) => {
   const [query, setQuery] = useState(initialValue);
+
+  useEffect(() => {
+    setQuery(initialValue);
+  }, [initialValue]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;

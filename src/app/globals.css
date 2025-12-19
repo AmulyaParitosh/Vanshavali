@@ -1002,10 +1002,11 @@ body {
 /* Family Overlapping Images */
 .search-item-family-images {
   position: relative;
-  width: 64px;
+  width: 72px; /* Increased width to accommodate less overlap */
   height: 44px;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .search-item-family-images .search-item-image {
@@ -1022,7 +1023,7 @@ body {
 }
 
 .search-item-family-images .search-item-image.wife {
-  left: 20px; /* Fixed 20px overlap offset */
+  left: 32px; /* Reduced overlap (was 20px) */
   z-index: 1;
   border-color: var(--color-secondary);
 }
@@ -1032,6 +1033,9 @@ body {
   flex-direction: column;
   min-width: 0;
   gap: 2px;
+  align-items: flex-start; /* Ensure text starts from the left */
+  text-align: left; /* Ensure text alignment is left */
+  flex-grow: 1;
 }
 
 .search-item-name {
@@ -1041,6 +1045,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%; /* ensure full width for ellipsis */
 }
 
 .data-list li.active .search-item-name {

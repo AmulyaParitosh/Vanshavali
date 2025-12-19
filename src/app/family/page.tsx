@@ -10,6 +10,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautif
 import TextListSidebar from "../../components/TextListSidebar";
 import { useToast } from "../../components/ToastSystem";
 import SearchItem from "../../components/SearchItem";
+import PersonSearch from "../../components/PersonSearch";
   
   export default function FamilyPage() {
     const { treeData, user, onSave } = useAppContext();
@@ -156,9 +157,8 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
     return person ? person.name.official_name : "Unknown";
   };
 
-  const handlePartnerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handlePartnerChange = (name: string, value: string) => {
     if (!formData) return;
-    const { name, value } = e.target;
     if (name === "husband") {
       setFormData({ ...formData, husband: value });
     } else {
@@ -219,8 +219,8 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
     );
   };
 
-  const husbandId = formData.husband || (formData.partners ? formData.partners[0] : "");
-  const wifeId = formData.wife || (formData.partners ? formData.partners[1] : "");
+  const husbandId = formData.husband || formData.partners?.[0] || "";
+  const wifeId = formData.wife || formData.partners?.[1] || "";
   const currentChildrenIds = formData.children || [];
 
   const availableChildren = people.filter(
@@ -236,43 +236,25 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
       <form onSubmit={handleSave}>
         <div className="form-group">
           <label htmlFor="family-husband">Husband (Male)</label>
-          <select
-            id="family-husband"
-            name="husband"
-            value={husbandId}
-            onChange={handlePartnerChange}
-            required
+          <PersonSearch
+            people={people}
+            selectedPersonId={husbandId}
+            onSelect={(id) => handlePartnerChange("husband", id)}
+            placeholder="Search for husband..."
+            filterSex="M"
             disabled={!canEdit}
-          >
-            <option value="">Select a person</option>
-            {people
-              .filter((p) => p.sex === "M")
-              .map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name.official_name}
-                </option>
-              ))}
-          </select>
+          />
         </div>
         <div className="form-group">
           <label htmlFor="family-wife">Wife (Female)</label>
-          <select
-            id="family-wife"
-            name="wife"
-            value={wifeId}
-            onChange={handlePartnerChange}
-            required
+          <PersonSearch
+            people={people}
+            selectedPersonId={wifeId}
+            onSelect={(id) => handlePartnerChange("wife", id)}
+            placeholder="Search for wife..."
+            filterSex="F"
             disabled={!canEdit}
-          >
-            <option value="">Select a person</option>
-            {people
-              .filter((p) => p.sex === "F")
-              .map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name.official_name}
-                </option>
-              ))}
-          </select>
+          />
         </div>
 
         <h3 className="form-section-heading">Children</h3>
@@ -319,18 +301,14 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
         </DragDropContext>
         {canEdit && (
           <div className="add-child-container">
-            <select
-              value={selectedChild}
-              onChange={(e) => setSelectedChild(e.target.value)}
+            <PersonSearch
+              people={people}
+              selectedPersonId={selectedChild}
+              onSelect={setSelectedChild}
+              placeholder="Search for a child to add..."
               disabled={!canEdit}
-            >
-              <option value="">Select a child to add</option>
-              {availableChildren.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name.official_name}
-                </option>
-              ))}
-            </select>
+              excludeIds={[husbandId, wifeId, ...currentChildrenIds]}
+            />
             <button
               type="button"
               className="btn btn-secondary"
