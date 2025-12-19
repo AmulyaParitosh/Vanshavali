@@ -132,171 +132,184 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       const partnerGroups = node.filter((d) => !!d.data.isPartnerGroup);
       partnerGroups.each(function (d) {
         const group = d3.select(this);
+        const isWifeLineage = d.data.lineageMemberId === d.data.wife?.id;
 
-        // Husband Node
-        if (d.data.husband) {
-             const husbandNode = group
-            .append("g")
-            .attr("class", "node")
-            .attr("transform", `translate(${-PARTNER_OFFSET}, 0)`);
-            const isLineage = d.data.lineageMemberId === d.data.husband.id;
-            const hasParent = isLineage && d.depth > 0;
+        const renderHusband = () => {
+             // Husband Node
+             if (d.data.husband) {
+                 const husbandNode = group
+                .append("g")
+                .attr("class", "node")
+                .attr("transform", `translate(${-PARTNER_OFFSET}, 0)`);
+                const isLineage = d.data.lineageMemberId === d.data.husband.id;
+                const hasParent = isLineage && d.depth > 0;
 
-            // Border Image
-            husbandNode.append("image")
-                .attr("href", "/node_border.png")
-                .attr("x", -NODE_RADIUS * 1.3)
-                .attr("y", -NODE_RADIUS * 1.3)
-                .attr("width", NODE_RADIUS * 2.6)
-                .attr("height", NODE_RADIUS * 2.6);
+                // Border Image
+                husbandNode.append("image")
+                    .attr("href", "/node_border.png")
+                    .attr("x", -NODE_RADIUS * 1.3)
+                    .attr("y", -NODE_RADIUS * 1.3)
+                    .attr("width", NODE_RADIUS * 2.6)
+                    .attr("height", NODE_RADIUS * 2.6);
 
-            husbandNode
-            .append("circle")
-            .attr("r", NODE_RADIUS)
-            .style("stroke", "none")
-            .style("fill", STYLES.COLORS.FILL);
-            husbandNode
-            .append("image")
-            .attr(
-                "href",
-                d.data.husband.image_url ||
-                TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
-                    stringToColor(d.data.husband.id || d.data.husband.name.official_name).substring(1),
-                    d.data.husband.name.official_name.substring(0, 2)
-                )
-            )
-            .attr("x", -NODE_RADIUS)
-            .attr("y", -NODE_RADIUS)
-            .attr("width", NODE_RADIUS * 2)
-            .attr("height", NODE_RADIUS * 2)
-            .attr("clip-path", `circle(${NODE_RADIUS}px at center)`);
-            
-            // Profile Border Ring (Overlay)
-            husbandNode.append("circle")
+                husbandNode
+                .append("circle")
                 .attr("r", NODE_RADIUS)
-                .style("fill", "none")
-                .style("stroke", hasParent ? "#1E90FF" : "var(--color-accent)") // Blue vs Green
-                .style("stroke-width", "4px");
-            const husbandFo = husbandNode
-            .append("foreignObject")
-            .attr("width", DETAILS_CARD.WIDTH)
-            .attr("height", DETAILS_CARD.HEIGHT)
-            .attr("x", -NODE_RADIUS - DETAILS_CARD.WIDTH - 20 - 35) // Approximate calculation from original: -50 - 335 - 20 = -405. Details card width is 280. 335 seems large? Original was 280 width. Let's use logic: -r - 20 - width
-            // Original: .attr("x", -nodeRadius - 335 - 20) with width 280.
-            // 335 - 280 = 55 extra padding?
-            // Let's stick to literal replacement or close to it.
-            // -NODE_RADIUS - 335 - 20
-            .attr("x", -NODE_RADIUS - 335 - 20)
-            .attr("y", -50)
-            .style("overflow", "visible")
-            .style("pointer-events", "none");
-            husbandFo
-            .append("xhtml:div")
-            .attr("class", "details-card")
-            .html(createDetailsHtml(d.data.husband));
-
-            // Bridge Rect
-            husbandNode.append("rect")
-                .attr("x", -NODE_RADIUS - 335 - 20 + DETAILS_CARD.WIDTH)
-                .attr("y", -50)
-                .attr("width", (-NODE_RADIUS) - (-NODE_RADIUS - 335 - 20 + DETAILS_CARD.WIDTH)) // from card end to node start
-                .attr("height", DETAILS_CARD.HEIGHT)
-                .attr("fill", "transparent");
-
-            husbandNode.attr("data-id", d.data.husband.id);
-            husbandNode.on("click", (e) => {
-                e.stopPropagation();
-                const id = d.data.husband?.id;
-                if(id) setLockedNodeId(prev => prev === id ? null : id);
-            });
-
-             group
-            .append("text")
-            .attr("class", "node-text-style")
-            .attr("text-anchor", "middle")
-            .attr("y", NODE_RADIUS + 25)
-            .text(d.data.husband.name.official_name);
-        }
-
-        // Wife Node
-        if (d.data.wife) {
-            const wifeNode = group
-            .append("g")
-            .attr("class", "node")
-            .attr("transform", `translate(${PARTNER_OFFSET}, 0)`);
-            const isLineage = d.data.lineageMemberId === d.data.wife.id;
-            const hasParent = isLineage && d.depth > 0;
-
-            // Border Image
-            wifeNode.append("image")
-                .attr("href", "/node_border.png")
-                .attr("x", -NODE_RADIUS * 1.3)
-                .attr("y", -NODE_RADIUS * 1.3)
-                .attr("width", NODE_RADIUS * 2.6)
-                .attr("height", NODE_RADIUS * 2.6);
-
-            wifeNode
-            .append("circle")
-            .attr("r", NODE_RADIUS)
-            .style("stroke", "none")
-            .style("fill", STYLES.COLORS.FILL);
-            wifeNode
-            .append("image")
-            .attr(
-                "href",
-                d.data.wife.image_url ||
-                TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
-                    stringToColor(d.data.wife.id || d.data.wife.name.official_name).substring(1),
-                    d.data.wife.name.official_name.substring(0, 2)
+                .style("stroke", "none")
+                .style("fill", STYLES.COLORS.FILL);
+                husbandNode
+                .append("image")
+                .attr(
+                    "href",
+                    d.data.husband.image_url ||
+                    TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
+                        stringToColor(d.data.husband.id || d.data.husband.name.official_name).substring(1),
+                        d.data.husband.name.official_name.substring(0, 2)
+                    )
                 )
-            )
-            .attr("x", -NODE_RADIUS)
-            .attr("y", -NODE_RADIUS)
-            .attr("width", NODE_RADIUS * 2)
-            .attr("height", NODE_RADIUS * 2)
-            .attr("clip-path", `circle(${NODE_RADIUS}px at center)`);
-
-            // Profile Border Ring (Overlay)
-            wifeNode.append("circle")
-                .attr("r", NODE_RADIUS)
-                .style("fill", "none")
-                .style("stroke", hasParent ? "#1E90FF" : "var(--color-accent)") // Blue vs Green
-                .style("stroke-width", "4px");
-            const wifeFo = wifeNode
-            .append("foreignObject")
-            .attr("width", DETAILS_CARD.WIDTH)
-            .attr("height", DETAILS_CARD.HEIGHT)
-            .attr("x", NODE_RADIUS + 10)
-            .attr("y", -50)
-            .style("overflow", "visible")
-            .style("pointer-events", "none");
-            wifeFo
-            .append("xhtml:div")
-            .attr("class", "details-card")
-            .html(createDetailsHtml(d.data.wife));
-            
-            // Bridge Rect
-            wifeNode.append("rect")
-                .attr("x", NODE_RADIUS)
-                .attr("y", -50)
-                .attr("width", 10)
+                .attr("x", -NODE_RADIUS)
+                .attr("y", -NODE_RADIUS)
+                .attr("width", NODE_RADIUS * 2)
+                .attr("height", NODE_RADIUS * 2)
+                .attr("clip-path", `circle(${NODE_RADIUS}px at center)`);
+                
+                // Profile Border Ring (Overlay)
+                husbandNode.append("circle")
+                    .attr("r", NODE_RADIUS)
+                    .style("fill", "none")
+                    .style("stroke", hasParent ? "#1E90FF" : "var(--color-accent)") // Blue vs Green
+                    .style("stroke-width", "4px");
+                const husbandFo = husbandNode
+                .append("foreignObject")
+                .attr("width", DETAILS_CARD.WIDTH)
                 .attr("height", DETAILS_CARD.HEIGHT)
-                .attr("fill", "transparent");
+                .attr("x", -NODE_RADIUS - 335 - 20)
+                .attr("y", -50)
+                .style("overflow", "visible")
+                .style("pointer-events", "none");
+                husbandFo
+                .append("xhtml:div")
+                .attr("class", "details-card")
+                .html(createDetailsHtml(d.data.husband));
 
-            wifeNode.attr("data-id", d.data.wife.id);
-            wifeNode.on("click", (e) => {
-                e.stopPropagation();
-                const id = d.data.wife?.id;
-                if(id) setLockedNodeId(prev => prev === id ? null : id);
-            });
+                // Bridge Rect
+                husbandNode.append("rect")
+                    .attr("x", -NODE_RADIUS - 335 - 20 + DETAILS_CARD.WIDTH)
+                    .attr("y", -50)
+                    .attr("width", (-NODE_RADIUS) - (-NODE_RADIUS - 335 - 20 + DETAILS_CARD.WIDTH)) // from card end to node start
+                    .attr("height", DETAILS_CARD.HEIGHT)
+                    .attr("fill", "transparent");
 
-            group
-            .append("text")
-            .attr("class", "node-text-style")
-            .attr("text-anchor", "middle")
-            .attr("y", NODE_RADIUS + 45) // Original was +45
-            .text(d.data.wife.name.official_name);
-        }
+                husbandNode.attr("data-id", d.data.husband.id);
+                husbandNode.on("click", (e) => {
+                    e.stopPropagation();
+                    const id = d.data.husband?.id;
+                    if(id) setLockedNodeId(prev => prev === id ? null : id);
+                });
+
+                 group
+                .append("text")
+                .attr("class", "node-text-style")
+                .attr("text-anchor", "middle")
+                .attr("y", NODE_RADIUS + 25)
+                .text(d.data.husband.name.official_name);
+            }
+        };
+
+        const renderWife = () => {
+             // Wife Node
+             if (d.data.wife) {
+                 const wifeNode = group
+                 .append("g")
+                 .attr("class", "node")
+                 .attr("transform", `translate(${PARTNER_OFFSET}, 0)`);
+                 const isLineage = d.data.lineageMemberId === d.data.wife.id;
+                 const hasParent = isLineage && d.depth > 0;
+
+                 // Border Image
+                 wifeNode.append("image")
+                     .attr("href", "/node_border.png")
+                     .attr("x", -NODE_RADIUS * 1.3)
+                     .attr("y", -NODE_RADIUS * 1.3)
+                     .attr("width", NODE_RADIUS * 2.6)
+                     .attr("height", NODE_RADIUS * 2.6);
+
+                 wifeNode
+                 .append("circle")
+                 .attr("r", NODE_RADIUS)
+                 .style("stroke", "none")
+                 .style("fill", STYLES.COLORS.FILL);
+                 wifeNode
+                 .append("image")
+                 .attr(
+                     "href",
+                     d.data.wife.image_url ||
+                     TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
+                         stringToColor(d.data.wife.id || d.data.wife.name.official_name).substring(1),
+                         d.data.wife.name.official_name.substring(0, 2)
+                     )
+                 )
+                 .attr("x", -NODE_RADIUS)
+                 .attr("y", -NODE_RADIUS)
+                 .attr("width", NODE_RADIUS * 2)
+                 .attr("height", NODE_RADIUS * 2)
+                 .attr("clip-path", `circle(${NODE_RADIUS}px at center)`);
+
+                 // Profile Border Ring (Overlay)
+                 wifeNode.append("circle")
+                     .attr("r", NODE_RADIUS)
+                     .style("fill", "none")
+                     .style("stroke", hasParent ? "#1E90FF" : "var(--color-accent)") // Blue vs Green
+                     .style("stroke-width", "4px");
+                 const wifeFo = wifeNode
+                 .append("foreignObject")
+                 .attr("width", DETAILS_CARD.WIDTH)
+                 .attr("height", DETAILS_CARD.HEIGHT)
+                 .attr("x", NODE_RADIUS + 10)
+                 .attr("y", -50)
+                 .style("overflow", "visible")
+                 .style("pointer-events", "none");
+                 wifeFo
+                 .append("xhtml:div")
+                 .attr("class", "details-card")
+                 .html(createDetailsHtml(d.data.wife));
+                 
+                 // Bridge Rect
+                 wifeNode.append("rect")
+                     .attr("x", NODE_RADIUS)
+                     .attr("y", -50)
+                     .attr("width", 10)
+                     .attr("height", DETAILS_CARD.HEIGHT)
+                     .attr("fill", "transparent");
+
+                 wifeNode.attr("data-id", d.data.wife.id);
+                 wifeNode.on("click", (e) => {
+                     e.stopPropagation();
+                     const id = d.data.wife?.id;
+                     if(id) setLockedNodeId(prev => prev === id ? null : id);
+                 });
+
+                 group
+                 .append("text")
+                 .attr("class", "node-text-style")
+                 .attr("text-anchor", "middle")
+                 .attr("y", NODE_RADIUS + 45) // Original was +45
+                 .text(d.data.wife.name.official_name);
+             }
+         };
+
+         // If Wife is lineage (has parent), she should be ON TOP.
+         // In SVG, the last appended element is on top.
+         // So if isWifeLineage is TRUE, we render Husband FIRST, then Wife.
+         // If isWifeLineage is FALSE (Husband is lineage), we render Wife FIRST, then Husband.
+         
+         if (isWifeLineage) {
+             renderHusband();
+             renderWife();
+         } else {
+             renderWife();
+             renderHusband();
+         }
       });
 
       // Single person nodes
@@ -420,6 +433,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
       const x = targetNode.x + xOffset;
       const y = targetNode.y;
+
 
       const transform = d3.zoomIdentity
         .translate(width / 2, height / 2)
