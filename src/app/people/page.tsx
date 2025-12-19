@@ -228,7 +228,7 @@ const PersonForm: React.FC<PersonFormProps> = ({ person, onSave, onDelete, canEd
     <div className="form-container">
       <h2>{formData?.name?.official_name || "New Person"}</h2>
       
-      {/* Demo Section for Verification */
+      {/* Demo Section for Verification */}
 
 
       <form onSubmit={handleSave}>
