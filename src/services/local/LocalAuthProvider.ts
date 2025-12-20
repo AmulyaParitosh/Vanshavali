@@ -35,6 +35,7 @@ export class LocalAuthProvider implements AuthProvider {
           uid: uid,
           email: userProfile.email || `${uid}@local.test`,
           displayName: userProfile.name || `Local User (${uid})`,
+          photoURL: userProfile.photoURL || null,
         };
       } else {
         // Fallback if UID not in local users.json
@@ -42,6 +43,7 @@ export class LocalAuthProvider implements AuthProvider {
           uid: uid,
           email: `${uid}@local.test`,
           displayName: `Mock User (${uid})`,
+          photoURL: null,
         };
       }
     } catch (error) {
@@ -51,6 +53,7 @@ export class LocalAuthProvider implements AuthProvider {
         uid: uid,
         email: `${uid}@local.test`,
         displayName: `Mock User (${uid})`,
+        photoURL: null,
       };
     }
 
