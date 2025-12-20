@@ -131,9 +131,9 @@ export default function ProfilePage() {
 
       <style jsx>{`
         .profile-page-container {
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 30px 20px;
+          /* max-width: 800px; REMOVED */
+          /* margin: 0 auto; REMOVED */
+          padding: 40px;
           height: 100%;
           overflow-y: auto;
           box-sizing: border-box;

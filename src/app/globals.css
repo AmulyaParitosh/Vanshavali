@@ -1538,7 +1538,7 @@ main {
 }
 
 .sidebar.user-sidebar-override {
-  width: 250px;
+  /* width: 250px; REMOVED to match default sidebar width (300px) */
   /* background & border handled by .sidebar */
   padding: 1.5rem;
   box-sizing: border-box;
