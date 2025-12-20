@@ -13,6 +13,7 @@ interface AppContextType {
   treeData: TreeData | null;
   user: (AuthUser & { role: string | null }) | null;
   onSave: (data: TreeData) => Promise<void>;
+  refreshUser: () => Promise<void>;
   dataProvider: DataProvider;
   authProvider: AuthProvider;
   storageProvider: StorageProvider;

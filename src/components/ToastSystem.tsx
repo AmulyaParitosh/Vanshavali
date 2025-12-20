@@ -101,9 +101,17 @@ const ConfirmToast = ({ t, options }: { t: Toast; options: ConfirmToastOptions }
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
                 <button
                     className="btn btn-primary"
-                    onClick={() => {
-                        options.onConfirm();
-                        toast.dismiss(t.id);
+                    onClick={async () => {
+                        try {
+                            await options.onConfirm();
+                            toast.dismiss(t.id);
+                        } catch (error) {
+                            console.error("Confirmation action failed:", error);
+                            // Error is expected to be handled by the caller or displayed via toast.error
+                            // We don't dismiss the toast here if it fails, or we do? 
+                            // Usually we dismiss it because the action was TRIED.
+                            toast.dismiss(t.id);
+                        }
                     }}
                     style={{ padding: '8px 16px', fontSize: '0.9em' }}
                 >
@@ -155,7 +163,7 @@ export const useToast = () => {
         loading: (msg: string) => toast.loading(msg),
         dismiss: (toastId?: string) => toast.dismiss(toastId),
         
-        confirm: (message: string, onConfirm: () => void, onCancel?: () => void) => {
+        confirm: (message: string, onConfirm: () => void | Promise<void>, onCancel?: () => void) => {
             toast.custom(
                 (t) => <ConfirmToast t={t} options={{ message, onConfirm, ...(onCancel && { onCancel }) }} />,
                 { duration: Infinity, id: 'confirm-toast' } // Infinity so it doesn't auto-close

@@ -70,6 +70,14 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
             </button>
             {isUserMenuOpen && (
               <div className="user-menu-dropdown">
+                <Link 
+                  href="/profile" 
+                  className="menu-link"
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  My Profile
+                </Link>
+                <div className="menu-divider"></div>
                 {isAdmin && (
                   <>
                     <Link 

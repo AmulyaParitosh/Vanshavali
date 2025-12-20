@@ -19,4 +19,5 @@ export interface Person {
   root?: boolean;
   image_url?: string;
   image_storage_path?: string;
+  userId?: string;
 }

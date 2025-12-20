@@ -4,6 +4,8 @@ import { LOCAL_DATA_CONFIG, USER_ROLES, SUGGESTION_STATUS } from "../../constant
 
 export class LocalDataProvider implements DataProvider {
   private lastDataString: string = "";
+  private treeSubscribers: Set<(data: TreeData) => void> = new Set();
+  private pollingInterval: NodeJS.Timeout | null = null;
 
   private async fetchDb(collection: string) {
     const res = await fetch(`/api/local/db?collection=${collection}`);
@@ -19,6 +21,23 @@ export class LocalDataProvider implements DataProvider {
     return res.json();
   }
 
+  private async triggerRefresh() {
+    try {
+      const people = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.PEOPLE);
+      const families = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.FAMILIES);
+      
+      const newData = { people: people || [], families: families || [] };
+      const newDataString = JSON.stringify(newData);
+
+      if (newDataString !== this.lastDataString) {
+        this.lastDataString = newDataString;
+        this.treeSubscribers.forEach(callback => callback(newData));
+      }
+    } catch (error) {
+      console.error("LocalDataProvider: Error refreshing tree data", error);
+    }
+  }
+
   async getUserProfile(uid: string): Promise<UserProfile | null> {
     const users = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.USERS);
     return users[uid] || null;
@@ -31,31 +50,29 @@ export class LocalDataProvider implements DataProvider {
   }
 
   subscribeToTreeData(callback: (data: TreeData) => void): () => void {
-    const fetchAll = async () => {
-      try {
-        const people = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.PEOPLE);
-        const families = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.FAMILIES);
-        
-        const newData = { people: people || [], families: families || [] };
-        const newDataString = JSON.stringify(newData);
-
-        if (newDataString !== this.lastDataString) {
-          this.lastDataString = newDataString;
-          callback(newData);
-        }
-      } catch (error) {
-        console.error("LocalDataProvider: Error polling tree data", error);
+    this.treeSubscribers.add(callback);
+    
+    // Initial fetch
+    this.triggerRefresh();
+    
+    if (!this.pollingInterval) {
+      this.pollingInterval = setInterval(() => this.triggerRefresh(), LOCAL_DATA_CONFIG.POLLING_INTERVAL);
+    }
+    
+    return () => {
+      this.treeSubscribers.delete(callback);
+      if (this.treeSubscribers.size === 0 && this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
       }
     };
-    fetchAll();
-    
-    const interval = setInterval(fetchAll, LOCAL_DATA_CONFIG.POLLING_INTERVAL); 
-    return () => clearInterval(interval);
   }
 
   async saveTreeData(data: TreeData): Promise<void> {
     await this.saveDb(LOCAL_DATA_CONFIG.COLLECTIONS.PEOPLE, data.people);
     await this.saveDb(LOCAL_DATA_CONFIG.COLLECTIONS.FAMILIES, data.families);
+    // Trigger immediate refresh after save
+    this.triggerRefresh();
   }
 
   async getAllUsers(): Promise<AdminUser[]> {
@@ -116,5 +133,22 @@ export class LocalDataProvider implements DataProvider {
       timestamp: Date.now(),
     };
     await this.saveDb('suggestions', suggestions);
+  }
+
+  async linkUserToPerson(personId: string, uid: string): Promise<void> {
+    const people = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.PEOPLE);
+    const personIndex = people.findIndex((p: any) => p.id === personId);
+    
+    if (personIndex !== -1) {
+      if (people[personIndex].userId) {
+        throw new Error("This person is already linked to a user.");
+      }
+      people[personIndex].userId = uid;
+      await this.saveDb(LOCAL_DATA_CONFIG.COLLECTIONS.PEOPLE, people);
+      // Trigger immediate refresh after link
+      this.triggerRefresh();
+    } else {
+      throw new Error("Person not found.");
+    }
   }
 }

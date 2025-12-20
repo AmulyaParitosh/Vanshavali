@@ -85,6 +85,19 @@ export function useAuthAndData() {
     });
   };
 
+  const refreshUser = async () => {
+    if (!user) return;
+    try {
+      const userData = await dataProvider.getUserProfile(user.uid);
+      if (userData) {
+        setUser(user);
+        setUserRole(userData.role);
+      }
+    } catch (error) {
+      console.error("Error refreshing user profile:", error);
+    }
+  };
+
   return {
     user,
     userRole,
@@ -93,6 +106,7 @@ export function useAuthAndData() {
     handleLogin,
     handleLogout,
     onSave: handleSaveData,
+    refreshUser,
     auth: authProvider,
     data: dataProvider,
     storage: storageProvider,

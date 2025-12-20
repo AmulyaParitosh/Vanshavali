@@ -37,7 +37,24 @@ const SearchItem: React.FC<SearchItemProps> = ({ type, item, people = [], onClic
               AKA: {person.name.aliases.join(', ')}
             </span>
           )}
+          {person.userId && (
+            <span className="linked-badge">Linked</span>
+          )}
         </div>
+        <style jsx>{`
+          .linked-badge {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 1px 6px;
+            background: #f3f4f6;
+            color: #6b7280;
+            border-radius: 4px;
+            font-size: 0.7em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+          }
+        `}</style>
       </div>
     );
   }

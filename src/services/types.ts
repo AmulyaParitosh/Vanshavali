@@ -42,6 +42,7 @@ export interface DataProvider {
   subscribeToSuggestions(callback: (suggestions: Suggestion[]) => void): () => void;
   updateSuggestionStatus(id: string, status: SuggestionStatus): Promise<void>;
   addSuggestion(suggestion: Omit<Suggestion, 'id' | 'timestamp'>): Promise<void>;
+  linkUserToPerson(personId: string, uid: string): Promise<void>;
 }
 
 export interface StorageProvider {

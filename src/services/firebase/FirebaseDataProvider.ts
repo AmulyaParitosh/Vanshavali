@@ -127,4 +127,37 @@ export class FirebaseDataProvider implements DataProvider {
       timestamp: serverTimestamp(),
     });
   }
+
+  async linkUserToPerson(personId: string, uid: string): Promise<void> {
+    const peopleRef = ref(this.db, "people");
+    const snapshot = await get(peopleRef);
+    const people = snapshot.val() || [];
+    
+    if (Array.isArray(people)) {
+      const personIndex = people.findIndex((p: any) => p.id === personId);
+      if (personIndex !== -1) {
+        if (people[personIndex].userId) {
+          throw new Error("This person is already linked to a user.");
+        }
+        const updates: Record<string, any> = {};
+        updates[`people/${personIndex}/userId`] = uid;
+        await update(ref(this.db), updates);
+      } else {
+        throw new Error("Person not found.");
+      }
+    } else {
+      // Handle object-based people collection if applicable
+      const personRef = ref(this.db, `people/${personId}`);
+      const personSnap = await get(personRef);
+      if (personSnap.exists()) {
+        const personData = personSnap.val();
+        if (personData.userId) {
+          throw new Error("This person is already linked to a user.");
+        }
+        await update(personRef, { userId: uid });
+      } else {
+        throw new Error("Person not found.");
+      }
+    }
+  }
 }

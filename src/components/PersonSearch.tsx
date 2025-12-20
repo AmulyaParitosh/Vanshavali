@@ -12,6 +12,7 @@ interface PersonSearchProps {
   disabled?: boolean;
   excludeIds?: string[];
   autoFocus?: boolean;
+  hideLinked?: boolean;
 }
 
 const PersonSearch: React.FC<PersonSearchProps> = ({ 
@@ -22,7 +23,8 @@ const PersonSearch: React.FC<PersonSearchProps> = ({
   filterSex,
   disabled = false,
   excludeIds = [],
-  autoFocus
+  autoFocus,
+  hideLinked = false
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -50,6 +52,7 @@ const PersonSearch: React.FC<PersonSearchProps> = ({
     return people.filter(person => {
       if (filterSex && person.sex !== filterSex) return false;
       if (excludeIds.includes(person.id)) return false;
+      if (hideLinked && person.userId) return false;
       
       if (!term) return true; // Show all if no term but open
 
