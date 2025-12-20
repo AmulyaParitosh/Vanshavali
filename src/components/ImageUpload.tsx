@@ -1,7 +1,6 @@
-import React, { useState, useRef } from "react";
-import { storage } from "../lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import React, { useState, useRef, useMemo } from "react";
 import { useToast } from "./ToastSystem";
+import { ProviderFactory } from "../services/ProviderFactory";
 
 interface ImageUploadProps {
   imageUrl?: string;
@@ -12,6 +11,7 @@ interface ImageUploadProps {
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onImageRemove, canEdit, storagePath }) => {
+  const { storage: storageProvider } = useMemo(() => ProviderFactory.getProviders(), []);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
@@ -32,19 +32,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
         finalStoragePath = `images/${userId}`;
     }
 
-    // Create a storage reference from our storage service
-    const storageRef = ref(storage, `${finalStoragePath}/${Date.now()}_${file.name}`);
-
     try {
-      // Upload the file to Firebase Storage
-      const snapshot = await uploadBytes(storageRef, file);
-
-      // Get the public URL of the uploaded file
-      const publicUrl = await getDownloadURL(snapshot.ref);
+      // Upload the file using StorageProvider
+      const { url, fullPath } = await storageProvider.uploadImage(file, `${finalStoragePath}/${Date.now()}_${file.name}`);
 
       // Pass the new URL and the path to the parent component
-      onImageChange(publicUrl, snapshot.ref.fullPath);
-      toast.success("Image uploaded successfully!"); // Toast system doesn't support updating loading toasts yet, simple success message
+      onImageChange(url, fullPath);
+      toast.success("Image uploaded successfully!");
       toast.dismiss(toastId);
     } catch (error: any) {
       console.error("Error uploading file:", error);
