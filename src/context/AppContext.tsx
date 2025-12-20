@@ -2,7 +2,7 @@
 import { createContext, useContext } from "react";
 import type { Person } from "../types/person";
 import type { Family } from "../types/family";
-import type { User } from "firebase/auth";
+import type { AuthUser, DataProvider, AuthProvider, StorageProvider } from "../services/types";
 
 export interface TreeData {
   people: Person[];
@@ -11,8 +11,11 @@ export interface TreeData {
 
 interface AppContextType {
   treeData: TreeData | null;
-  user: (User & { role: string | null }) | null;
+  user: (AuthUser & { role: string | null }) | null;
   onSave: (data: TreeData) => Promise<void>;
+  dataProvider: DataProvider;
+  authProvider: AuthProvider;
+  storageProvider: StorageProvider;
 }
 
 export const AppContext = createContext<AppContextType | null>(null);

@@ -1,17 +1,14 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { type User } from "firebase/auth";
-import type { Person } from "../types/person";
-import type { Family } from "../types/family";
 import { ProviderFactory } from "../services/ProviderFactory";
-import type { TreeData } from "../services/types";
+import type { TreeData, AuthUser } from "../services/types";
 
 const ALLOWED_ROLES = ["viewer", "editor", "admin"];
 
 export function useAuthAndData() {
-  const { auth: authProvider, data: dataProvider } = useMemo(() => ProviderFactory.getProviders(), []);
+  const { auth: authProvider, data: dataProvider, storage: storageProvider } = useMemo(() => ProviderFactory.getProviders(), []);
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [treeData, setTreeData] = useState<TreeData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -96,5 +93,8 @@ export function useAuthAndData() {
     handleLogin,
     handleLogout,
     onSave: handleSaveData,
+    auth: authProvider,
+    data: dataProvider,
+    storage: storageProvider,
   };
 }

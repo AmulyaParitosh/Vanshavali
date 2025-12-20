@@ -8,13 +8,23 @@ import {
   onAuthStateChanged, 
   signOut 
 } from "firebase/auth";
-import type { AuthProvider } from "../types";
+import type { AuthProvider, AuthUser } from "../types";
 
 export class FirebaseAuthProvider implements AuthProvider {
   constructor(private auth: Auth) {}
 
-  onAuthStateChanged(callback: (user: User | null) => void): () => void {
-    return onAuthStateChanged(this.auth, callback);
+  onAuthStateChanged(callback: (user: AuthUser | null) => void): () => void {
+    return onAuthStateChanged(this.auth, (firebaseUser) => {
+      if (firebaseUser) {
+        callback({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+        });
+      } else {
+        callback(null);
+      }
+    });
   }
 
   async signInWithGoogle(): Promise<void> {

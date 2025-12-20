@@ -66,6 +66,9 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
         .attr("height", "100%")
         .style("cursor", "grab");
 
+      // Capture current transform before clearing
+      const currentTransform = d3.zoomTransform(svgRef.current);
+
       svg.selectAll("*").remove();
       const g = svg.append("g");
 
@@ -438,9 +441,14 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
         .attr("class", "details-card")
         .html((d) => createDetailsHtml(d.data));
 
-      const initialX = svg.node()!.getBoundingClientRect().width / 2 - (root.x || 0);
-      const initialY = NODE_HEIGHT / 2;
-      svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY));
+      // Apply previous transform or initial center
+      if (currentTransform && (currentTransform.k !== 1 || currentTransform.x !== 0 || currentTransform.y !== 0)) {
+        svg.call(zoom.transform, currentTransform);
+      } else {
+        const initialX = svg.node()!.getBoundingClientRect().width / 2 - (root.x || 0);
+        const initialY = NODE_HEIGHT / 2;
+        svg.call(zoom.transform, d3.zoomIdentity.translate(initialX, initialY));
+      }
     }
   }, [data, user]); // Depend on user for createDetailsHtml
 

@@ -23,6 +23,9 @@ export default function AppProvider({ children }: AppProviderProps) {
     handleLogin,
     handleLogout,
     onSave,
+    data: dataProvider,
+    auth: authProvider,
+    storage: storageProvider,
   } = useAuthAndData();
 
   const renderContent = () => {
@@ -45,6 +48,9 @@ export default function AppProvider({ children }: AppProviderProps) {
     treeData,
     user: user ? { ...user, role: userRole } : null,
     onSave,
+    dataProvider,
+    authProvider,
+    storageProvider,
   };
 
   return (

@@ -1,6 +1,6 @@
-import type { User } from "firebase/auth";
 import type { Person } from "../types/person";
 import type { Family } from "../types/family";
+import type { Suggestion, SuggestionStatus } from "../types/suggestion";
 
 export interface TreeData {
   people: Person[];
@@ -13,8 +13,18 @@ export interface UserProfile {
   role: string;
 }
 
+export interface AdminUser extends UserProfile {
+  uid: string;
+}
+
+export interface AuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+}
+
 export interface AuthProvider {
-  onAuthStateChanged(callback: (user: User | null) => void): () => void;
+  onAuthStateChanged(callback: (user: AuthUser | null) => void): () => void;
   signInWithGoogle(): Promise<void>;
   signOut(): Promise<void>;
 }
@@ -24,6 +34,14 @@ export interface DataProvider {
   createUserProfile(uid: string, profile: UserProfile): Promise<void>;
   subscribeToTreeData(callback: (data: TreeData) => void): () => void;
   saveTreeData(data: TreeData): Promise<void>;
+  
+  // Admin & Suggestions methods
+  getAllUsers(): Promise<AdminUser[]>;
+  updateUserRole(uid: string, role: string): Promise<void>;
+  subscribeToPendingCount(callback: (count: number) => void): () => void;
+  subscribeToSuggestions(callback: (suggestions: Suggestion[]) => void): () => void;
+  updateSuggestionStatus(id: string, status: SuggestionStatus): Promise<void>;
+  addSuggestion(suggestion: Omit<Suggestion, 'id' | 'timestamp'>): Promise<void>;
 }
 
 export interface StorageProvider {

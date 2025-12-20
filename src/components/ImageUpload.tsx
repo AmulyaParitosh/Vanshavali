@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo } from "react";
 import { useToast } from "./ToastSystem";
-import { ProviderFactory } from "../services/ProviderFactory";
+import { useAppContext } from "../context/AppContext";
 
 interface ImageUploadProps {
   imageUrl?: string;
@@ -11,7 +11,7 @@ interface ImageUploadProps {
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onImageRemove, canEdit, storagePath }) => {
-  const { storage: storageProvider } = useMemo(() => ProviderFactory.getProviders(), []);
+  const { storageProvider } = useAppContext();
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();

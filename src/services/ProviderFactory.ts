@@ -2,6 +2,9 @@ import { auth, database, storage } from "../lib/firebase";
 import { FirebaseAuthProvider } from "./firebase/FirebaseAuthProvider";
 import { FirebaseDataProvider } from "./firebase/FirebaseDataProvider";
 import { FirebaseStorageProvider } from "./firebase/FirebaseStorageProvider";
+import { LocalAuthProvider } from "./local/LocalAuthProvider";
+import { LocalDataProvider } from "./local/LocalDataProvider";
+import { LocalStorageProvider } from "./local/LocalStorageProvider";
 import type { ProviderConfig } from "./types";
 
 export class ProviderFactory {
@@ -15,7 +18,7 @@ export class ProviderFactory {
     // Currently local and production use Firebase, but we can easily swap them here
     switch (env) {
       case 'local':
-        this.instance = this.createFirebaseConfig();
+        this.instance = this.createLocalConfig();
         break;
       case 'production':
       default:
@@ -31,6 +34,14 @@ export class ProviderFactory {
       auth: new FirebaseAuthProvider(auth),
       data: new FirebaseDataProvider(database),
       storage: new FirebaseStorageProvider(storage),
+    };
+  }
+
+  private static createLocalConfig(): ProviderConfig {
+    return {
+      auth: new LocalAuthProvider(),
+      data: new LocalDataProvider(),
+      storage: new LocalStorageProvider(),
     };
   }
 }

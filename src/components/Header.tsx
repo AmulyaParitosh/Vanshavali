@@ -4,19 +4,18 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import type { User } from "firebase/auth";
-import { ref, onValue } from "firebase/database";
-import { database } from "../lib/firebase";
-
+import { useAppContext } from "../context/AppContext";
+import type { AuthUser } from "../services/types";
 import { APP_CONFIG, USER_ROLES } from "../constants";
 
 interface HeaderProps {
-  user: User | null;
+  user: AuthUser | null;
   userRole: string | null;
   onLogout: () => void;
 }
 
 export default function Header({ user, userRole, onLogout }: HeaderProps) {
+  const { dataProvider } = useAppContext();
   const pathname = usePathname();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -25,10 +24,7 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
 
   useEffect(() => {
     if (isAdmin) {
-      const usersRef = ref(database, "users/");
-      const unsubscribe = onValue(usersRef, (snapshot) => {
-        const data = snapshot.val() || {};
-        const count = Object.values(data).filter((u: any) => u.role === 'pending').length;
+      const unsubscribe = dataProvider.subscribeToPendingCount((count) => {
         setPendingCount(count);
       });
       return () => unsubscribe();

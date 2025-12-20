@@ -2,13 +2,13 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { database } from "../../lib/firebase";
-import { ref, push, serverTimestamp } from "firebase/database";
 import { useToast } from "../../components/ToastSystem";
 import { useAppContext } from "../../context/AppContext";
+import { SUGGESTION_STATUS } from "../../constants";
+import type { SuggestionStatus } from "../../types/suggestion";
 
 export default function AboutPage() {
-  const { user } = useAppContext();
+  const { user, dataProvider } = useAppContext();
   const [suggestion, setSuggestion] = useState("");
   const [isSending, setIsSending] = useState(false);
   const toast = useToast();
@@ -19,14 +19,12 @@ export default function AboutPage() {
 
     setIsSending(true);
     try {
-      const suggestionsRef = ref(database, "suggestions");
-      await push(suggestionsRef, {
+      await dataProvider.addSuggestion({
         userId: user?.uid || "anonymous",
         userName: user?.displayName || "Anonymous",
         userEmail: user?.email || "anonymous",
         message: suggestion,
-        status: "unread",
-        timestamp: serverTimestamp(),
+        status: SUGGESTION_STATUS.UNREAD as SuggestionStatus,
       });
       toast.success("Thank you for your suggestion!");
       setSuggestion("");

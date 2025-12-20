@@ -1,59 +1,55 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import { database } from "../../lib/firebase";
-import { ref, onValue, update } from "firebase/database";
 import { useAppContext } from '../../context/AppContext';
-
-interface AdminUser {
-  uid: string;
-  role: string;
-  name?: string;
-  email?: string;
-  [key: string]: any;
-}
+import type { AdminUser } from "../../services/types";
+import { USER_ROLES } from "../../constants";
 
 import { useToast } from "../../components/ToastSystem";
 
 export default function UserManagementPage() {
-  const { user } = useAppContext();
+  const { user, dataProvider } = useAppContext();
   const router = useRouter();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const toast = useToast();
 
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && user.role !== USER_ROLES.ADMIN) {
       router.push('/');
     }
   }, [user, router]);
 
   useEffect(() => {
-    const usersRef = ref(database, "users/");
-    const unsubscribe = onValue(usersRef, (snapshot) => {
-      const usersData = snapshot.val() || {};
-      const usersList = Object.keys(usersData).map((uid) => ({
-        uid,
-        ...usersData[uid],
-      })) as AdminUser[];
-      setUsers(usersList);
-    });
+    const fetchUsers = async () => {
+        try {
+            const usersList = await dataProvider.getAllUsers();
+            setUsers(usersList);
+        } catch (error) {
+            console.error("Error fetching users:", error);
+            toast.error("Failed to load users");
+        }
+    };
+    fetchUsers();
+    
+    // Note: In a real app we might want to subscribe to updates, 
+    // but for now let's just fetch once or implement a specific subscription.
+  }, [dataProvider]);
 
-    return () => unsubscribe();
-  }, []);
-
-  const handleRoleChange = (uid: string, newRole: string) => {
-    const userRef = ref(database, `users/${uid}`);
-    update(userRef, { role: newRole })
-        .then(() => toast.success(`User role updated to ${newRole}`))
-        .catch((err) => {
-            toast.error("Failed to update role");
-            console.error(err);
-        });
+  const handleRoleChange = async (uid: string, newRole: string) => {
+    try {
+        await dataProvider.updateUserRole(uid, newRole);
+        toast.success(`User role updated to ${newRole}`);
+        // Locally update the state for immediate feedback
+        setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
+    } catch (err) {
+        toast.error("Failed to update role");
+        console.error(err);
+    }
   };
 
-  const managedUsers = users.filter((u) => u.role !== "pending");
+  const managedUsers = users.filter((u) => u.role !== USER_ROLES.PENDING);
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== USER_ROLES.ADMIN) {
       return null; 
   }
 

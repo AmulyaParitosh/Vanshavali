@@ -1,10 +1,9 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import { database } from "../../lib/firebase";
-import { ref, onValue, update } from "firebase/database";
 import { useAppContext } from '../../context/AppContext';
 import { useToast } from "../../components/ToastSystem";
+import { USER_ROLES } from "../../constants";
 import type { Suggestion, SuggestionStatus } from "../../types/suggestion";
 
 const STATUS_CONFIG: Record<SuggestionStatus, { label: string; color: string; bgColor: string }> = {
@@ -15,7 +14,7 @@ const STATUS_CONFIG: Record<SuggestionStatus, { label: string; color: string; bg
 };
 
 export default function SuggestionsPage() {
-  const { user } = useAppContext();
+  const { user, dataProvider } = useAppContext();
   const router = useRouter();
   const toast = useToast();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -28,26 +27,16 @@ export default function SuggestionsPage() {
   }, [user, router]);
 
   useEffect(() => {
-    const suggestionsRef = ref(database, "suggestions/");
-    const unsubscribe = onValue(suggestionsRef, (snapshot) => {
-      const suggestionsData = snapshot.val() || {};
-      const suggestionsList = Object.keys(suggestionsData).map((id) => ({
-        id,
-        ...suggestionsData[id],
-        // Default to unread if status is missing (for legacy data)
-        status: suggestionsData[id].status || 'unread' 
-      })) as Suggestion[];
-      // Sort by timestamp descending
-      setSuggestions(suggestionsList.sort((a, b) => b.timestamp - a.timestamp));
+    const unsubscribe = dataProvider.subscribeToSuggestions((suggestionsList) => {
+      setSuggestions(suggestionsList);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [dataProvider]);
 
   const handleStatusChange = async (id: string, newStatus: SuggestionStatus) => {
     try {
-      const suggestionRef = ref(database, `suggestions/${id}`);
-      await update(suggestionRef, { status: newStatus });
+      await dataProvider.updateSuggestionStatus(id, newStatus);
       toast.success(`Status updated to ${newStatus}`);
     } catch (error) {
       console.error("Error updating status:", error);
@@ -59,7 +48,7 @@ export default function SuggestionsPage() {
     ? suggestions 
     : suggestions.filter(s => s.status === filter);
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== USER_ROLES.ADMIN) {
       return null; 
   }
 

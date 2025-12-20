@@ -6,6 +6,15 @@ export const USER_ROLES = {
   ADMIN: "admin",
   PENDING: "pending",
   DENIED: "denied",
+  VIEWER: "viewer",
+  EDITOR: "editor",
+};
+
+export const SUGGESTION_STATUS = {
+  UNREAD: "unread",
+  READ: "read",
+  ARCHIVED: "archived",
+  PRIORITIZED: "prioritized",
 };
 
 export const TREE_CONFIG = {
@@ -52,4 +61,19 @@ export const UI_CONFIG = {
         FONT_SIZE: '10px'
     }
   }
+};
+
+export const LOCAL_DATA_CONFIG = {
+  DB_DIR: ".local_data/db",
+  STORAGE_DIR: ".local_data/storage",
+  COLLECTIONS: {
+    PEOPLE: "people",
+    FAMILIES: "families",
+    USERS: "users",
+    SUGGESTIONS: "suggestions",
+  },
+  MOCK_USER: {
+    UID: process.env.NEXT_PUBLIC_LOCAL_USER_UID || "local-admin-uid",
+  },
+  POLLING_INTERVAL: 5000,
 };

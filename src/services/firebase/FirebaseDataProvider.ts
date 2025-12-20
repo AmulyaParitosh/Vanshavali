@@ -6,9 +6,12 @@ import {
   get, 
   set, 
   onValue, 
-  update 
+  update, 
+  push,
+  serverTimestamp
 } from "firebase/database";
-import type { DataProvider, TreeData, UserProfile } from "../types";
+import type { DataProvider, TreeData, UserProfile, AdminUser } from "../types";
+import type { Suggestion, SuggestionStatus } from "../../types/suggestion";
 
 export class FirebaseDataProvider implements DataProvider {
   constructor(private db: Database) {}
@@ -73,5 +76,55 @@ export class FirebaseDataProvider implements DataProvider {
     updates['/people'] = data.people;
     updates['/families'] = data.families;
     await update(ref(this.db), updates);
+  }
+
+  async getAllUsers(): Promise<AdminUser[]> {
+    const usersRef = ref(this.db, "users/");
+    const snapshot = await get(usersRef);
+    const usersData = snapshot.val() || {};
+    return Object.keys(usersData).map((uid) => ({
+      uid,
+      ...usersData[uid],
+    })) as AdminUser[];
+  }
+
+  async updateUserRole(uid: string, role: string): Promise<void> {
+    const userRef = ref(this.db, `users/${uid}`);
+    await update(userRef, { role });
+  }
+
+  subscribeToPendingCount(callback: (count: number) => void): () => void {
+    const usersRef = ref(this.db, "users/");
+    return onValue(usersRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const count = Object.values(data).filter((u: any) => u.role === 'pending').length;
+      callback(count);
+    });
+  }
+
+  subscribeToSuggestions(callback: (suggestions: Suggestion[]) => void): () => void {
+    const suggestionsRef = ref(this.db, "suggestions/");
+    return onValue(suggestionsRef, (snapshot) => {
+      const suggestionsData = snapshot.val() || {};
+      const suggestionsList = Object.keys(suggestionsData).map((id) => ({
+        id,
+        ...suggestionsData[id],
+        status: suggestionsData[id].status || 'unread' 
+      })) as Suggestion[];
+      callback(suggestionsList.sort((a, b) => b.timestamp - a.timestamp));
+    });
+  }
+
+  async updateSuggestionStatus(id: string, status: SuggestionStatus): Promise<void> {
+    const suggestionRef = ref(this.db, `suggestions/${id}`);
+    await update(suggestionRef, { status });
+  }
+
+  async addSuggestion(suggestion: Omit<Suggestion, 'id' | 'timestamp'>): Promise<void> {
+    const suggestionsRef = ref(this.db, "suggestions");
+    await push(suggestionsRef, {
+      ...suggestion,
+      timestamp: serverTimestamp(),
+    });
   }
 }
