@@ -6,7 +6,9 @@ export const metadata = {
   title: 'Vanshavali',
   description: 'Family Tree Application',
   icons: {
-    icon: '/favicon.png',
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
   },
 };
 
