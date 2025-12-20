@@ -5,6 +5,9 @@ import { ToastSystem } from '../components/ToastSystem';
 export const metadata = {
   title: 'Vanshavali',
   description: 'Family Tree Application',
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 import React from 'react';
