@@ -44,16 +44,6 @@ Vanshavali is a dynamic and interactive family tree application designed to brin
 3.  **Environment Setup:**
     Create a `.env` file in the root directory and add your Firebase credentials and app configuration:
     ```env
-    # Firebase Configuration
-    NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-    NEXT_PUBLIC_FIREBASE_DATABASE_URL=your_database_url
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-    NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-
-    # App Configuration
     NEXT_PUBLIC_APP_ENV=production # Use 'local' for mock data
     NEXT_PUBLIC_LOCAL_USER_UID=local-admin-uid # Force a specific user in local mode
     ```
