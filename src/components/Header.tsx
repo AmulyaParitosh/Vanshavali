@@ -36,25 +36,27 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
 
   return (
     <header className="App-header">
-      <div className="header-left">
-        {showNav && (
-          <>
-            <Link href="/" className={`btn ${isActive("/") ? "active" : ""}`}>
-              Tree
-            </Link>
-            <Link href="/people" className={`btn ${isActive("/people") ? "active" : ""}`}>
-              People
-            </Link>
-            <Link href="/family" className={`btn ${isActive("/family") ? "active" : ""}`}>
-              Family
-            </Link>
-            <Link href="/about" className={`btn ${isActive("/about") ? "active" : ""}`}>
-              About
-            </Link>
-          </>
-        )}
+      <div className="header-left-section">
+        <h1>{APP_CONFIG.NAME}</h1>
+        <div className="header-nav">
+          {showNav && (
+            <>
+              <Link href="/" className={`nav-link ${isActive("/") ? "active" : ""}`}>
+                Tree
+              </Link>
+              <Link href="/people" className={`nav-link ${isActive("/people") ? "active" : ""}`}>
+                People
+              </Link>
+              <Link href="/family" className={`nav-link ${isActive("/family") ? "active" : ""}`}>
+                Family
+              </Link>
+              <Link href="/about" className={`nav-link ${isActive("/about") ? "active" : ""}`}>
+                About
+              </Link>
+            </>
+          )}
+        </div>
       </div>
-      <h1>{APP_CONFIG.NAME}</h1>
       <div className="header-right">
         {user && (
           <Link href="/user/profile" className="user-menu-link">

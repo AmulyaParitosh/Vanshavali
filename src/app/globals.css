@@ -104,29 +104,60 @@ main {
   font-family: var(--font-heading);
   color: #ffffff; /* Light Foreground */
   margin: 0;
-  font-size: 3.2em; /* Slightly larger due to dark bg visual weight */
+  font-size: 2.5em; /* Adjusted size */
   font-weight: 400;
-  text-align: center;
-  flex-grow: 1;
+  text-align: left; /* Left align */
+  flex-grow: 0; /* Removing grow */
   /* Dark shadow for lift */
   text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5);
   letter-spacing: 1px;
 }
 
-.header-left,
-.header-right {
-    flex: 1;
+.header-left-section {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 40px; /* Space between title and nav */
+    flex: 1;
 }
 
-.header-left {
-    justify-content: flex-start;
+.header-nav {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+    margin-top: 8px; /* Slight adjustment to align with title baseline visually */
 }
+
+.nav-link {
+    font-family: var(--font-body);
+    font-size: 1.1em;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    padding-bottom: 3px;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-link:hover {
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.nav-link.active {
+    color: #ffffff;
+    border-bottom-color: var(--color-secondary);
+    font-weight: 600;
+}
+
 
 .header-right {
+    flex: 0 0 auto;
+    display: flex;
     justify-content: flex-end;
+    align-items: center;
+    gap: 15px;
 }
 
 .user-name {
