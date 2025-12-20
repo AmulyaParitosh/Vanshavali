@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAppContext } from "../../context/AppContext";
-import PersonForm from "../../components/PersonForm";
-import PersonSearch from "../../components/PersonSearch";
-import Loading from "../../components/Loading";
-import { useToast } from "../../components/ToastSystem";
-import type { Person } from "../../types/person";
+import { useAppContext } from "../../../context/AppContext";
+import PersonForm from "../../../components/PersonForm";
+import PersonSearch from "../../../components/PersonSearch";
+import Loading from "../../../components/Loading";
+import { useToast } from "../../../components/ToastSystem";
+import type { Person } from "../../../types/person";
 
 export default function ProfilePage() {
   const { user, treeData, dataProvider, onSave, refreshUser } = useAppContext();

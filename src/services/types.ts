@@ -11,6 +11,7 @@ export interface UserProfile {
   email: string | null;
   name: string | null;
   role: string;
+  personId?: string;
 }
 
 export interface AdminUser extends UserProfile {
@@ -21,6 +22,7 @@ export interface AuthUser {
   uid: string;
   email: string | null;
   displayName: string | null;
+  photoURL: string | null;
 }
 
 export interface AuthProvider {

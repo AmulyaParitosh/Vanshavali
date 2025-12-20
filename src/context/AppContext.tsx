@@ -12,8 +12,10 @@ export interface TreeData {
 interface AppContextType {
   treeData: TreeData | null;
   user: (AuthUser & { role: string | null }) | null;
+  personId: string | null;
   onSave: (data: TreeData) => Promise<void>;
   refreshUser: () => Promise<void>;
+  handleLogout: () => void;
   dataProvider: DataProvider;
   authProvider: AuthProvider;
   storageProvider: StorageProvider;

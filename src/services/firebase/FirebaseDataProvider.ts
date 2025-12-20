@@ -142,8 +142,6 @@ export class FirebaseDataProvider implements DataProvider {
         const updates: Record<string, any> = {};
         updates[`people/${personIndex}/userId`] = uid;
         await update(ref(this.db), updates);
-      } else {
-        throw new Error("Person not found.");
       }
     } else {
       // Handle object-based people collection if applicable
@@ -159,5 +157,9 @@ export class FirebaseDataProvider implements DataProvider {
         throw new Error("Person not found.");
       }
     }
+
+    // Update user profile with personId for fast lookup
+    const userRef = ref(this.db, `users/${uid}`);
+    await update(userRef, { personId });
   }
 }

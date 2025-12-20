@@ -20,6 +20,7 @@ export class FirebaseAuthProvider implements AuthProvider {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
         });
       } else {
         callback(null);

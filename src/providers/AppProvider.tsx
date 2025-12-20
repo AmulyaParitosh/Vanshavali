@@ -18,6 +18,7 @@ export default function AppProvider({ children }: AppProviderProps) {
   const {
     user,
     userRole,
+    personId,
     treeData,
     isLoading,
     handleLogin,
@@ -48,8 +49,10 @@ export default function AppProvider({ children }: AppProviderProps) {
   const contextValue = {
     treeData,
     user: user ? { ...user, role: userRole } : null,
+    personId,
     onSave,
     refreshUser,
+    handleLogout,
     dataProvider,
     authProvider,
     storageProvider,

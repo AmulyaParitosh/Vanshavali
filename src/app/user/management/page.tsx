@@ -1,11 +1,11 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import { useAppContext } from '../../context/AppContext';
-import type { AdminUser } from "../../services/types";
-import { USER_ROLES } from "../../constants";
+import { useAppContext } from '../../../context/AppContext';
+import type { AdminUser } from "../../../services/types";
+import { USER_ROLES } from "../../../constants";
 
-import { useToast } from "../../components/ToastSystem";
+import { useToast } from "../../../components/ToastSystem";
 
 export default function UserManagementPage() {
   const { user, dataProvider } = useAppContext();

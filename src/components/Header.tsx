@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAppContext } from "../context/AppContext";
 import type { AuthUser } from "../services/types";
 import { APP_CONFIG, USER_ROLES } from "../constants";
+import { stringToColor } from "../utils/colorUtils";
 
 interface HeaderProps {
   user: AuthUser | null;
@@ -56,72 +57,15 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
       <h1>{APP_CONFIG.NAME}</h1>
       <div className="header-right">
         {user && (
-          <div className="user-menu">
-            <button
-              className="btn user-menu-button"
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            >
-              {user.displayName}
-              {isAdmin && pendingCount > 0 && (
-                <span className="notification-badge">
-                  {pendingCount}
-                </span>
+          <Link href="/user/profile" className="user-menu-link">
+             {user.photoURL ? (
+                <img src={user.photoURL} alt={user.displayName || "User"} className="header-user-avatar" />
+              ) : (
+                <div className="header-user-placeholder" style={{ backgroundColor: stringToColor(user.email || user.displayName || "User") }}>
+                  {user.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
+                </div>
               )}
-            </button>
-            {isUserMenuOpen && (
-              <div className="user-menu-dropdown">
-                <Link 
-                  href="/profile" 
-                  className="menu-link"
-                  onClick={() => setIsUserMenuOpen(false)}
-                >
-                  My Profile
-                </Link>
-                <div className="menu-divider"></div>
-                {isAdmin && (
-                  <>
-                    <Link 
-                      href="/access_requests" 
-                      className="menu-link"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      Access Requests
-                      {pendingCount > 0 && (
-                        <span className="notification-badge">
-                          {pendingCount}
-                        </span>
-                      )}
-                    </Link>
-                    <Link 
-                      href="/user_management" 
-                      className="menu-link"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      User Management
-                    </Link>
-                    <Link 
-                      href="/suggestions" 
-                      className="menu-link"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      Feature Requests
-                    </Link>
-                    <div className="menu-divider"></div>
-                  </>
-                )}
-                <button 
-                  onClick={() => {
-                    setIsUserMenuOpen(false);
-                    onLogout();
-                  }} 
-                  className="btn user-menu-button logout-button"
-                  style={{ width: '100%', border: 'none', textAlign: 'left', padding: '10px 15px', borderRadius: 'inherit' }}
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
+          </Link>
         )}
       </div>
     </header>

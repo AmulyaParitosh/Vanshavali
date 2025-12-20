@@ -1,10 +1,10 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
-import { useAppContext } from '../../context/AppContext';
-import { useToast } from "../../components/ToastSystem";
-import { USER_ROLES } from "../../constants";
-import type { Suggestion, SuggestionStatus } from "../../types/suggestion";
+import { useAppContext } from '../../../context/AppContext';
+import { useToast } from "../../../components/ToastSystem";
+import { USER_ROLES } from "../../../constants";
+import type { Suggestion, SuggestionStatus } from "../../../types/suggestion";
 
 const STATUS_CONFIG: Record<SuggestionStatus, { label: string; color: string; bgColor: string }> = {
   unread: { label: 'Unread', color: '#b22222', bgColor: '#fff5f5' },

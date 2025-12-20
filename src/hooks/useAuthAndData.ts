@@ -10,6 +10,7 @@ export function useAuthAndData() {
 
   const [user, setUser] = useState<AuthUser | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [personId, setPersonId] = useState<string | null>(null);
   const [treeData, setTreeData] = useState<TreeData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -32,15 +33,18 @@ export function useAuthAndData() {
           }
           setUser(currentUser);
           setUserRole(userData.role);
+          setPersonId(userData.personId || null);
         } catch (error) {
           console.error("Error fetching user profile:", error);
           setUser(currentUser);
-          setUserRole(null); 
+          setUserRole(null);
+          setPersonId(null); 
           setIsLoading(false); 
         }
       } else {
         setUser(null);
         setUserRole(null);
+        setPersonId(null);
         setTreeData(null);
         setIsLoading(false);
       }
@@ -92,6 +96,7 @@ export function useAuthAndData() {
       if (userData) {
         setUser(user);
         setUserRole(userData.role);
+        setPersonId(userData.personId || null);
       }
     } catch (error) {
       console.error("Error refreshing user profile:", error);
@@ -101,6 +106,7 @@ export function useAuthAndData() {
   return {
     user,
     userRole,
+    personId,
     treeData,
     isLoading,
     handleLogin,

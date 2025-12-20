@@ -1498,3 +1498,119 @@ main {
   color: var(--color-text-light);
   font-size: 0.9em;
 }
+
+/* User Layout & Sidebar */
+.user-layout {
+  display: flex;
+  min-height: calc(100vh - 60px); /* Adjust based on header height */
+  background-color: var(--background);
+}
+
+.sidebar.user-sidebar-override {
+  width: 250px;
+  /* background & border handled by .sidebar */
+  padding: 1.5rem;
+  box-sizing: border-box;
+  height: calc(100vh - 60px); /* Match header height */
+  position: sticky;
+  top: 60px; /* Attach directly below header */
+  overflow: visible; /* Let sidebar-content handle scroll */
+}
+
+/* Override padding for content inside user sidebar if needed */
+.sidebar.user-sidebar-override .sidebar-content {
+    padding: 0; 
+}
+
+.sidebar-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; 
+  margin-bottom: 1rem;
+}
+
+.user-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.sidebar-link {
+  display: block;
+  padding: 12px 15px; /* Match .data-list li */
+  border-radius: var(--border-radius-sm);
+  color: var(--color-text); /* Match .data-list li */
+  font-weight: 500; /* Match .data-list li */
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-bottom: 5px; /* Match .data-list li */
+}
+
+.sidebar-link:hover {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.sidebar-link.active {
+  background-color: var(--color-primary); /* Match .data-list li.active */
+  color: var(--color-surface); /* Match .data-list li.active */
+  font-weight: 600;
+}
+
+.sidebar-divider {
+  margin: 1.5rem 0 0.5rem; /* Increase top margin for better separation */
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-light);
+  letter-spacing: 0.05em;
+  padding-left: 15px; /* Match link padding-left */
+  font-weight: 600;
+}
+
+.sidebar-footer {
+  padding-top: 1.5rem;
+  padding-bottom: 2rem; /* Significant bottom padding to avoid touching screen edge */
+  border-top: 1px solid rgba(0,0,0,0.1);
+  flex-shrink: 0; /* Keep footer visible */
+  margin-bottom: 0; 
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* Header Avatar */
+.header-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-surface);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.header-user-avatar:hover {
+  transform: scale(1.05);
+  border-color: var(--color-primary);
+}
+
+.header-user-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+}

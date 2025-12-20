@@ -8,10 +8,27 @@ import type { ConsistencyIssue } from "../types/graph";
 
 import { UI_CONFIG } from "../constants";
 
+import { useRouter } from 'next/navigation';
+
 export default function HomePage() {
-  const { treeData } = useAppContext();
+  const { treeData, personId } = useAppContext();
+  const router = useRouter();
   const [graphManager, setGraphManager] = useState<GraphManager | null>(null);
   const [validationIssues, setValidationIssues] = useState<ConsistencyIssue[]>([]);
+
+  useEffect(() => {
+    // If user is not linked to a person, redirect to profile
+    if (personId === null && treeData) {
+       // Only redirect if treeData is loaded to ensure we don't redirect prematurely
+       // Actually personId comes from user profile which loads before treeData usually.
+       // But wait, personId can be null if not set.
+       // If undefined, it might mean loading?
+       // user object has personId? 
+       // In AppContext, personId is string | null.
+       // The requirement: "only do this if the user is not linked to. a person, else directly open the default page that is tree."
+       router.push('/user/profile');
+    }
+  }, [personId, router, treeData]);
 
   const people = treeData?.people || [];
   const families = treeData?.families || [];
