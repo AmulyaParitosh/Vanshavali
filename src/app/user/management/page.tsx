@@ -43,6 +43,7 @@ export default function UserManagementPage() {
     fetchUsers();
     
     // Subscribe to tree data to get person information for aliases
+    // This enables searching by person's display name and aliases
     const unsubscribe = dataProvider.subscribeToTreeData((data) => {
       setPeople(data.people);
     });
@@ -79,8 +80,8 @@ export default function UserManagementPage() {
       
       // Search by person's display name and aliases if linked
       const personData = getPersonData(u.uid);
-      if (personData) {
-        if (personData.name.official_name.toLowerCase().includes(query)) return true;
+      if (personData && personData.name) {
+        if (personData.name.official_name?.toLowerCase().includes(query)) return true;
         if (personData.name.aliases?.some(alias => alias.toLowerCase().includes(query))) return true;
       }
       
