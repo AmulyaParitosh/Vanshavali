@@ -11,6 +11,8 @@ const UserSidebar: React.FC = () => {
   const { user, handleLogout } = useAppContext();
   const userRole = user?.role;
   const isAdmin = userRole === USER_ROLES.ADMIN;
+  const isEditor = userRole === USER_ROLES.EDITOR;
+  const canManageAccessRequests = isAdmin || isEditor;
 
   if (!user) return null;
 
@@ -33,12 +35,17 @@ const UserSidebar: React.FC = () => {
             My Profile
           </Link>
 
-          {isAdmin && (
+          {canManageAccessRequests && (
             <>
               <span className="sidebar-divider">Administration</span>
               <Link href="/user/access_requests" className="sidebar-link">
                 Access Requests
               </Link>
+            </>
+          )}
+
+          {isAdmin && (
+            <>
               <Link href="/user/management" className="sidebar-link">
                 User Management
               </Link>

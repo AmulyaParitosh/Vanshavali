@@ -14,7 +14,7 @@ export default function AccessRequestsPage() {
   const toast = useToast();
 
   useEffect(() => {
-    if (user && user.role !== USER_ROLES.ADMIN) {
+    if (user && user.role !== USER_ROLES.ADMIN && user.role !== USER_ROLES.EDITOR) {
       router.push('/');
     }
   }, [user, router]);
@@ -50,7 +50,7 @@ export default function AccessRequestsPage() {
 
   const pendingUsers = users.filter((u) => u.role === USER_ROLES.PENDING);
 
-  if (!user || user.role !== USER_ROLES.ADMIN) {
+  if (!user || (user.role !== USER_ROLES.ADMIN && user.role !== USER_ROLES.EDITOR)) {
       // Return null or loading spinner instead of unstyled div
       return null; 
   }
