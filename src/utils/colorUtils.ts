@@ -18,6 +18,7 @@ export function stringToColor(str: string): string {
 
 /**
  * Extracts initials from a name by taking the first character of each word.
+ * Skips common titles like Mr., Mrs., Ms., Dr., etc.
  * For example: "Ms. Abc Xyz" -> "A X"
  */
 export function getNameInitials(name: string): string {
@@ -25,8 +26,16 @@ export function getNameInitials(name: string): string {
     return '';
   }
   
-  // Split by whitespace and filter out empty strings
-  const words = name.trim().split(/\s+/).filter(word => word.length > 0);
+  // Common titles to skip
+  const titlesToSkip = ['mr', 'mrs', 'ms', 'miss', 'dr', 'prof', 'sir', 'lady', 'lord'];
+  
+  // Split by whitespace and filter out empty strings and common titles
+  const words = name.trim().split(/\s+/)
+    .filter(word => word.length > 0)
+    .filter(word => {
+      const cleanWord = word.toLowerCase().replace(/\./g, '');
+      return !titlesToSkip.includes(cleanWord);
+    });
   
   // Get first character of each word (up to 2 words for brevity)
   const initials = words
