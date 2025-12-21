@@ -16,6 +16,43 @@ export function stringToColor(str: string): string {
   return hslToHex(h, s, l);
 }
 
+/**
+ * Extracts initials from a name by taking the first character of each word.
+ * Skips common titles like Mr., Mrs., Ms., Dr., etc.
+ * For example: "Ms. Abc Xyz" -> "A X"
+ * Returns initials with spaces for better readability in placeholder images.
+ */
+export function getNameInitials(name: string): string {
+  if (!name || name.trim().length === 0) {
+    return '?'; // Fallback for empty names
+  }
+  
+  // Common titles to skip
+  const titlesToSkip = ['mr', 'mrs', 'ms', 'miss', 'dr', 'prof', 'sir', 'lady', 'lord'];
+  
+  // Split by whitespace and filter out empty strings and common titles
+  const words = name.trim().split(/\s+/)
+    .filter(word => word.length > 0)
+    .filter(word => {
+      const cleanWord = word.toLowerCase().replace(/\./g, '');
+      return !titlesToSkip.includes(cleanWord);
+    });
+  
+  // If no valid words after filtering, use first character of original name
+  if (words.length === 0) {
+    return name.trim().charAt(0).toUpperCase();
+  }
+  
+  // Get first character of each word (up to 2 words for brevity)
+  // Spaces will be automatically URL-encoded when used in URLs
+  const initials = words
+    .slice(0, 2)
+    .map(word => word.charAt(0).toUpperCase())
+    .join(' ');
+  
+  return initials;
+}
+
 function hslToHex(h: number, s: number, l: number): string {
   l /= 100;
   const a = s * Math.min(l, 1 - l) / 100;

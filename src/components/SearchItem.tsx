@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Person } from '../types/person';
 import type { Family } from '../types/family';
-import { stringToColor } from '../utils/colorUtils';
+import { stringToColor, getNameInitials } from '../utils/colorUtils';
 import { TREE_CONFIG } from '../constants';
 
 interface SearchItemProps {
@@ -15,7 +15,7 @@ const SearchItem: React.FC<SearchItemProps> = ({ type, item, people = [], onClic
   const getPlaceholderUrl = (person: Person) => {
     return TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
       stringToColor(person.id || person.name.official_name).substring(1),
-      person.name.official_name.substring(0, 2)
+      getNameInitials(person.name.official_name)
     );
   };
 

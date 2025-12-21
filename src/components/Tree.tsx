@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { stringToColor } from "../utils/colorUtils";
+import { stringToColor, getNameInitials } from "../utils/colorUtils";
 import type { GraphNode } from "../types/graph";
 import type { Person } from "../types/person";
 import { TREE_CONFIG } from "../constants";
@@ -167,7 +167,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                     d.data.husband.image_url ||
                     TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
                         stringToColor(d.data.husband.id || d.data.husband.name.official_name).substring(1),
-                        d.data.husband.name.official_name.substring(0, 2)
+                        getNameInitials(d.data.husband.name.official_name)
                     )
                 )
                 .attr("x", -NODE_RADIUS)
@@ -266,7 +266,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                      d.data.wife.image_url ||
                      TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
                          stringToColor(d.data.wife.id || d.data.wife.name.official_name).substring(1),
-                         d.data.wife.name.official_name.substring(0, 2)
+                         getNameInitials(d.data.wife.name.official_name)
                      )
                  )
                  .attr("x", -NODE_RADIUS)
@@ -382,7 +382,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             d.data.image_url ||
             TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
                 stringToColor(d.data.id || d.data.name.official_name).substring(1),
-                d.data.name.official_name.substring(0, 2)
+                getNameInitials(d.data.name.official_name)
             )
             )
             .attr("x", -NODE_RADIUS)

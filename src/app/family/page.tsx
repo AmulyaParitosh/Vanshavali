@@ -10,7 +10,7 @@ import TextListSidebar from "../../components/TextListSidebar";
 import { useToast } from "../../components/ToastSystem";
 import SearchItem from "../../components/SearchItem";
 import PersonSearch from "../../components/PersonSearch";
-import { stringToColor } from "../../utils/colorUtils";
+import { stringToColor, getNameInitials } from "../../utils/colorUtils";
 import { TREE_CONFIG } from "../../constants";
   
   export default function FamilyPage() {
@@ -150,7 +150,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
   const getPlaceholderUrl = (person: Person) => {
     return TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
       stringToColor(person.id || person.name.official_name).substring(1),
-      person.name.official_name.substring(0, 2)
+      getNameInitials(person.name.official_name)
     );
   };
 
