@@ -21,16 +21,18 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const isAdmin = userRole === USER_ROLES.ADMIN;
+  const isEditor = userRole === USER_ROLES.EDITOR;
+  const canManageAccessRequests = isAdmin || isEditor;
   const showNav = user && userRole && ![USER_ROLES.PENDING, USER_ROLES.DENIED].includes(userRole);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (canManageAccessRequests) {
       const unsubscribe = dataProvider.subscribeToPendingCount((count) => {
         setPendingCount(count);
       });
       return () => unsubscribe();
     }
-  }, [isAdmin]);
+  }, [canManageAccessRequests]);
 
   const isActive = (path: string) => pathname === path;
 
