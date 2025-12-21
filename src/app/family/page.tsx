@@ -330,7 +330,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                   </button>
                 )}
             </div>
-            <div className="info-note">
+            <div className="info-note" role="note" aria-label="Information about children ordering">
                 The order of children determines their age in the family tree. The first child in the list is the eldest and appears on the left in the tree, while the last child is the youngest and appears on the right.
             </div>
             <ul className="children-list">
