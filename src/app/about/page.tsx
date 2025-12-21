@@ -67,7 +67,7 @@ export default function AboutPage() {
               </div>
               <div className="developer-details">
                 <p className="developer-name">Amulya Paritosh</p>
-                <p className="developer-role">Full Stack Developer | Mithila Art Enthusiast</p>
+                <p className="developer-role">Full Stack Engineer</p>
                 <div className="developer-connections">
                   <a href="https://github.com/amulyaparitosh" target="_blank" rel="noopener noreferrer">GitHub</a>
                   <a href="https://linkedin.com/in/amulyaparitosh" target="_blank" rel="noopener noreferrer">LinkedIn</a>

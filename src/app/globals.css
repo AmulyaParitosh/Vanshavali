@@ -104,7 +104,7 @@ main {
   font-family: var(--font-heading);
   color: #ffffff; /* Light Foreground */
   margin: 0;
-  font-size: 2.5em; /* Adjusted size */
+  font-size: 3em; /* Adjusted size */
   font-weight: 400;
   text-align: left; /* Left align */
   flex-grow: 0; /* Removing grow */
@@ -1618,8 +1618,8 @@ main {
 
 /* Header Avatar */
 .header-user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--color-surface);
@@ -1633,8 +1633,8 @@ main {
 }
 
 .header-user-placeholder {
-  width: 36px;
-  height: 36px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   border: 2px solid var(--color-surface);
   display: flex;
