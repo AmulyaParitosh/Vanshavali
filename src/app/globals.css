@@ -207,11 +207,36 @@ main {
 
 
 /* --- SVG and Tree Styles --- */
-/* --- SVG and Tree Styles --- */
 #tree-container {
   width: 100%;
   height: 100%; /* Fill main container */
   cursor: grab;
+}
+
+.tree-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.tree-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+}
+
+.node-label {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .node circle {

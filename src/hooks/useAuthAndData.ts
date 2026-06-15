@@ -1,110 +1,74 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import { ProviderFactory } from "../services/ProviderFactory";
-import type { TreeData, AuthUser } from "../services/types";
-import { USER_ROLES } from "../constants";
+import { useCallback } from "react";
+import type { TreeData } from "../services/types";
 import { canEdit, canViewTree } from "../lib/access";
+import { useProviders } from "./useProviders";
+import { useAuthUser } from "./useAuthUser";
+import { useUserProfile } from "./useUserProfile";
+import { useTreeSubscription } from "./useTreeSubscription";
 
+/**
+ * The top-level app data hook. Composes four single-responsibility hooks:
+ *
+ *   useProviders         → backend implementations (auth / data / storage)
+ *   useAuthUser          → current AuthUser, isLoaded
+ *   useUserProfile       → role, personId, refresh
+ *   useTreeSubscription  → live tree data
+ *
+ * Exposes a flat shape for backward compatibility with `AppProvider`. New code
+ * should prefer composing the smaller hooks directly when it only needs part of
+ * this surface.
+ */
 export function useAuthAndData() {
+  const { auth: authProvider, data: dataProvider, storage: storageProvider } =
+    useProviders();
+
+  const { user, isLoaded: authLoaded } = useAuthUser(authProvider);
   const {
-    auth: authProvider,
-    data: dataProvider,
-    storage: storageProvider,
-  } = useMemo(() => ProviderFactory.getProviders(), []);
+    role: userRole,
+    personId,
+    isLoaded: profileLoaded,
+    refresh: refreshUser,
+  } = useUserProfile(user, dataProvider);
+  const { treeData, isLoaded: treeLoaded } = useTreeSubscription(
+    userRole,
+    dataProvider
+  );
 
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [personId, setPersonId] = useState<string | null>(null);
-  const [treeData, setTreeData] = useState<TreeData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Loading is "any required check still pending":
+  //   - auth state not yet decided, OR
+  //   - signed in but profile not yet fetched, OR
+  //   - signed in with a tree-viewing role but data not yet delivered.
+  const isLoading =
+    !authLoaded ||
+    (!!user && !profileLoaded) ||
+    (!!user && canViewTree(userRole) && !treeLoaded);
 
-  // Handle authentication state changes.
-  useEffect(() => {
-    const unsubscribe = authProvider.onAuthStateChanged(async (currentUser) => {
-      setIsLoading(true);
-      if (currentUser) {
-        try {
-          let userData = await dataProvider.getUserProfile(currentUser.uid);
-
-          if (!userData) {
-            userData = {
-              email: currentUser.email,
-              name: currentUser.displayName,
-              role: USER_ROLES.PENDING,
-            };
-            await dataProvider.createUserProfile(currentUser.uid, userData);
-          }
-          setUser(currentUser);
-          setUserRole(userData.role);
-          setPersonId(userData.personId || null);
-          if (!canViewTree(userData.role)) setIsLoading(false);
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-          setUser(currentUser);
-          setUserRole(null);
-          setPersonId(null);
-          setIsLoading(false);
-        }
-      } else {
-        setUser(null);
-        setUserRole(null);
-        setPersonId(null);
-        setTreeData(null);
-        setIsLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, [authProvider, dataProvider]);
-
-  // Fetch tree data once the user has a tree-viewing role.
-  useEffect(() => {
-    if (canViewTree(userRole)) {
-      const unsubscribe = dataProvider.subscribeToTreeData((data) => {
-        setTreeData(data);
-        setIsLoading(false);
-      });
-      return () => unsubscribe();
-    }
-    setTreeData(null);
-    return undefined;
-  }, [userRole, dataProvider]);
-
-  const handleLogin = () => {
+  const handleLogin = useCallback(() => {
     authProvider
       .signInWithGoogle()
       .catch((error) => console.error("Auth error:", error));
-  };
+  }, [authProvider]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     authProvider
       .signOut()
       .catch((error) => console.error("Sign out error:", error));
-  };
+  }, [authProvider]);
 
-  const handleSaveData = (newData: TreeData) => {
-    if (!canEdit(userRole)) {
-      console.error("Permission Denied: You cannot save data.");
-      return Promise.reject(new Error("Permission Denied"));
-    }
-    return dataProvider.saveTreeData(newData).catch((error) => {
-      console.error("Save Data failed:", error);
-      throw error;
-    });
-  };
-
-  const refreshUser = async () => {
-    if (!user) return;
-    try {
-      const userData = await dataProvider.getUserProfile(user.uid);
-      if (userData) {
-        setUser(user);
-        setUserRole(userData.role);
-        setPersonId(userData.personId || null);
+  const handleSaveData = useCallback(
+    (newData: TreeData): Promise<void> => {
+      if (!canEdit(userRole)) {
+        console.error("Permission Denied: You cannot save data.");
+        return Promise.reject(new Error("Permission Denied"));
       }
-    } catch (error) {
-      console.error("Error refreshing user profile:", error);
-    }
-  };
+      return dataProvider.saveTreeData(newData).catch((error) => {
+        console.error("Save Data failed:", error);
+        throw error;
+      });
+    },
+    [userRole, dataProvider]
+  );
 
   return {
     user,
