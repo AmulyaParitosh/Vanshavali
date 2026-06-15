@@ -1,16 +1,24 @@
 import type { AuthProvider, AuthUser } from "../types";
 import { LOCAL_DATA_CONFIG } from "../../constants";
 
+/**
+ * File-backed mock auth for local dev. All sign-in flavors collapse to the
+ * same `MOCK_USER.UID` — the local-mode workflow is to switch users by
+ * changing `NEXT_PUBLIC_LOCAL_USER_UID`, not by sign-in form input.
+ */
 export class LocalAuthProvider implements AuthProvider {
   private currentUser: AuthUser | null = null;
   private listeners: ((user: AuthUser | null) => void)[] = [];
 
   constructor() {
-    // Check if we have a saved user in localStorage for persistence across reloads
     const savedUser =
       typeof window !== "undefined" ? localStorage.getItem("local_auth_user") : null;
     if (savedUser) {
-      this.currentUser = JSON.parse(savedUser);
+      try {
+        this.currentUser = JSON.parse(savedUser);
+      } catch {
+        this.currentUser = null;
+      }
     }
   }
 
@@ -23,51 +31,62 @@ export class LocalAuthProvider implements AuthProvider {
   }
 
   async signInWithGoogle(): Promise<void> {
-    const uid = LOCAL_DATA_CONFIG.MOCK_USER.UID;
+    await this.signInAsMockUser();
+  }
 
-    try {
-      // Fetch users from local DB to get email and name
-      const res = await fetch(`/api/local/db?collection=${LOCAL_DATA_CONFIG.COLLECTIONS.USERS}`);
-      const usersData = await res.json();
-      const userProfile = usersData[uid];
+  async signInWithEmail(email: string, _password: string): Promise<void> {
+    // Local mode ignores the password and resolves to the mock UID; the email
+    // is recorded so the profile read shows the value the dev entered.
+    await this.signInAsMockUser({ email });
+  }
 
-      if (userProfile) {
-        this.currentUser = {
-          uid: uid,
-          email: userProfile.email || `${uid}@local.test`,
-          displayName: userProfile.name || `Local User (${uid})`,
-          photoURL: userProfile.photoURL || null,
-        };
-      } else {
-        // Fallback if UID not in local users.json
-        this.currentUser = {
-          uid: uid,
-          email: `${uid}@local.test`,
-          displayName: `Mock User (${uid})`,
-          photoURL: null,
-        };
-      }
-    } catch (error) {
-      console.error("Local Auth Error: Failed to resolve user profile", error);
-      // Final fallback
-      this.currentUser = {
-        uid: uid,
-        email: `${uid}@local.test`,
-        displayName: `Mock User (${uid})`,
-        photoURL: null,
-      };
-    }
+  async signUpWithEmail(email: string, _password: string, displayName?: string): Promise<void> {
+    await this.signInAsMockUser({ email, ...(displayName ? { displayName } : {}) });
+  }
 
-    if (typeof window !== "undefined") {
-      localStorage.setItem("local_auth_user", JSON.stringify(this.currentUser));
-    }
-    this.notifyListeners();
+  async sendPasswordReset(_email: string): Promise<void> {
+    // No-op in local mode — there are no real accounts.
   }
 
   async signOut(): Promise<void> {
     this.currentUser = null;
     if (typeof window !== "undefined") {
       localStorage.removeItem("local_auth_user");
+    }
+    this.notifyListeners();
+  }
+
+  private async signInAsMockUser(overrides?: { email?: string; displayName?: string }) {
+    const uid = LOCAL_DATA_CONFIG.MOCK_USER.UID;
+
+    try {
+      const res = await fetch(
+        `/api/local/db?collection=${LOCAL_DATA_CONFIG.GLOBAL_COLLECTIONS.USERS}`
+      );
+      const usersData = (await res.json()) as Record<
+        string,
+        { email?: string; name?: string; photoURL?: string }
+      >;
+      const userProfile = usersData[uid];
+
+      this.currentUser = {
+        uid,
+        email: overrides?.email || userProfile?.email || `${uid}@local.test`,
+        displayName: overrides?.displayName || userProfile?.name || `Mock User (${uid})`,
+        photoURL: userProfile?.photoURL || null,
+      };
+    } catch (error) {
+      console.error("Local Auth Error: Failed to resolve user profile", error);
+      this.currentUser = {
+        uid,
+        email: overrides?.email || `${uid}@local.test`,
+        displayName: overrides?.displayName || `Mock User (${uid})`,
+        photoURL: null,
+      };
+    }
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("local_auth_user", JSON.stringify(this.currentUser));
     }
     this.notifyListeners();
   }

@@ -20,10 +20,10 @@ interface TreeProps {
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
-  const { treeData, user } = useAppContext();
+  const { treeData, membership } = useAppContext();
   const [lockedPersonId, setLockedPersonId] = useState<string | null>(null);
 
-  const canEdit = canEditRole(user?.role);
+  const canEdit = canEditRole(membership?.role);
   const layout = useTreeLayout(data);
 
   const { panTo } = useTreeZoom({

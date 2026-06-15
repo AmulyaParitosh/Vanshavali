@@ -2,7 +2,14 @@
 import { createContext, useContext } from "react";
 import type { Person } from "../types/person";
 import type { Family } from "../types/family";
-import type { AuthUser, DataProvider, AuthProvider, StorageProvider } from "../services/types";
+import type { MyTrees, TreeMembership } from "../types/tree";
+import type {
+  AuthProvider,
+  AuthUser,
+  DataProvider,
+  StorageProvider,
+  UserProfile,
+} from "../services/types";
 
 export interface TreeData {
   people: Person[];
@@ -10,11 +17,15 @@ export interface TreeData {
 }
 
 interface AppContextType {
+  user: AuthUser | null;
+  profile: UserProfile | null;
+  myTrees: MyTrees | null;
+  currentTreeId: string | null;
+  setCurrentTreeId: (id: string | null) => void;
+  membership: TreeMembership | null;
   treeData: TreeData | null;
-  user: (AuthUser & { role: string | null }) | null;
-  personId: string | null;
   onSave: (data: TreeData) => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   handleLogout: () => void;
   dataProvider: DataProvider;
   authProvider: AuthProvider;

@@ -1,21 +1,29 @@
 import type { Person } from "../types/person";
 import type { Family } from "../types/family";
 import type { Suggestion, SuggestionStatus } from "../types/suggestion";
+import type {
+  TreeMeta,
+  TreeMembership,
+  TreeInvite,
+  TreeRole,
+  InvitableTreeRole,
+  MyTrees,
+} from "../types/tree";
 
 export interface TreeData {
   people: Person[];
   families: Family[];
 }
 
+/**
+ * Global user profile — name, email, photo. Roles live on TreeMembership
+ * (per-tree), not here. Pre-multi-tenancy this carried a global role and a
+ * personId; both are gone.
+ */
 export interface UserProfile {
   email: string | null;
   name: string | null;
-  role: string;
-  personId?: string;
-}
-
-export interface AdminUser extends UserProfile {
-  uid: string;
+  photoURL?: string | null;
 }
 
 export interface AuthUser {
@@ -28,41 +36,62 @@ export interface AuthUser {
 export interface AuthProvider {
   onAuthStateChanged(callback: (user: AuthUser | null) => void): () => void;
   signInWithGoogle(): Promise<void>;
+  signInWithEmail(email: string, password: string): Promise<void>;
+  signUpWithEmail(email: string, password: string, displayName?: string): Promise<void>;
+  sendPasswordReset(email: string): Promise<void>;
   signOut(): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
-// DataProvider — split per ISP into focused sub-interfaces so consumers can
-// narrow their dependency footprint. Implementations (Firebase, local) satisfy
-// the combined `DataProvider` type below.
+// DataProvider split per ISP. The combined DataProvider extends all of them
+// and is what concrete implementations satisfy. Consumers should type their
+// dependency on the narrowest interface they need.
 // ---------------------------------------------------------------------------
 
-/** Identity / profile operations scoped to a single user (uid). */
+/** Identity / profile operations scoped to a uid. */
 export interface UserProvider {
   getUserProfile(uid: string): Promise<UserProfile | null>;
   createUserProfile(uid: string, profile: UserProfile): Promise<void>;
 }
 
-/** Tree data read/write plus the person↔user linkage. */
+/** Tree lifecycle — creation, deletion, metadata, and the user→tree relation. */
+export interface TreeMetaProvider {
+  createTree(ownerUid: string, name: string): Promise<TreeMeta>;
+  deleteTree(treeId: string): Promise<void>;
+  getTreeMeta(treeId: string): Promise<TreeMeta | null>;
+  listMyTrees(uid: string): Promise<MyTrees>;
+  subscribeToMyTrees(uid: string, callback: (trees: MyTrees) => void): () => void;
+}
+
+/** Tree-scoped people + families. */
 export interface TreeDataProvider {
-  subscribeToTreeData(callback: (data: TreeData) => void): () => void;
-  saveTreeData(data: TreeData): Promise<void>;
-  linkUserToPerson(personId: string, uid: string): Promise<void>;
+  subscribeToTreeData(treeId: string, callback: (data: TreeData) => void): () => void;
+  saveTreeData(treeId: string, data: TreeData): Promise<void>;
+  linkUserToPerson(treeId: string, personId: string, uid: string): Promise<void>;
 }
 
-/**
- * Global admin operations — user listing, role assignment, pending-approval
- * count. These go away once the multi-tenancy migration replaces the global
- * role system with per-tree memberships; for now they're isolated here so the
- * legacy admin pages have a clear dependency.
- */
-export interface AdminProvider {
-  getAllUsers(): Promise<AdminUser[]>;
-  updateUserRole(uid: string, role: string): Promise<void>;
-  subscribeToPendingCount(callback: (count: number) => void): () => void;
+/** Per-tree memberships. */
+export interface MembershipProvider {
+  getMembership(treeId: string, uid: string): Promise<TreeMembership | null>;
+  subscribeToMembership(
+    treeId: string,
+    uid: string,
+    callback: (membership: TreeMembership | null) => void
+  ): () => void;
+  subscribeToMembers(treeId: string, callback: (members: TreeMembership[]) => void): () => void;
+  updateMemberRole(treeId: string, uid: string, role: TreeRole): Promise<void>;
+  removeMember(treeId: string, uid: string): Promise<void>;
 }
 
-/** Site-level feedback inbox (independent of tree data). */
+/** Invitations to a tree. */
+export interface InvitationProvider {
+  createInvite(treeId: string, email: string, role: InvitableTreeRole): Promise<TreeInvite>;
+  acceptInvite(inviteId: string, uid: string): Promise<TreeMembership>;
+  revokeInvite(treeId: string, inviteId: string): Promise<void>;
+  subscribeToInvites(treeId: string, callback: (invites: TreeInvite[]) => void): () => void;
+}
+
+/** Site-level feedback inbox (not tree-scoped). */
 export interface SuggestionProvider {
   subscribeToSuggestions(callback: (suggestions: Suggestion[]) => void): () => void;
   updateSuggestionStatus(id: string, status: SuggestionStatus): Promise<void>;
@@ -70,12 +99,18 @@ export interface SuggestionProvider {
 }
 
 /**
- * Combined contract that the Firebase / local / future Supabase implementations
- * all satisfy. Prefer typing dependencies against the narrower sub-interfaces
- * (UserProvider, TreeDataProvider, etc.) when you don't need the full surface.
+ * Combined contract that the local / Supabase implementations both satisfy.
+ * Prefer typing dependencies against the narrower sub-interfaces above when
+ * the caller only needs part of the surface.
  */
 export interface DataProvider
-  extends UserProvider, TreeDataProvider, AdminProvider, SuggestionProvider {}
+  extends
+    UserProvider,
+    TreeMetaProvider,
+    TreeDataProvider,
+    MembershipProvider,
+    InvitationProvider,
+    SuggestionProvider {}
 
 export interface StorageProvider {
   uploadImage(file: File, path: string): Promise<{ url: string; fullPath: string }>;

@@ -1,38 +1,29 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { useAppContext } from "../context/AppContext";
 import type { AuthUser } from "../services/types";
-import { APP_CONFIG, USER_ROLES } from "../constants";
+import type { TreeMembership } from "../types/tree";
+import { APP_CONFIG } from "../constants";
+import { canViewTree } from "../lib/access";
 import { stringToColor } from "../utils/colorUtils";
 
 interface HeaderProps {
   user: AuthUser | null;
-  userRole: string | null;
+  membership: TreeMembership | null;
   onLogout: () => void;
 }
 
-export default function Header({ user, userRole, onLogout }: HeaderProps) {
-  const { dataProvider } = useAppContext();
+/**
+ * App header — title, nav, user avatar. Nav links only render when the user
+ * is a member of the active tree (i.e. they can actually see / edit something).
+ * Phase 9 will replace the static nav with a tree-switcher + scoped routes.
+ */
+export default function Header({ user, membership }: HeaderProps) {
   const pathname = usePathname();
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
-  const isAdmin = userRole === USER_ROLES.ADMIN;
-  const gateRoles: readonly string[] = [USER_ROLES.PENDING, USER_ROLES.DENIED];
-  const showNav = !!user && !!userRole && !gateRoles.includes(userRole);
-
-  useEffect(() => {
-    if (isAdmin) {
-      const unsubscribe = dataProvider.subscribeToPendingCount((count) => {
-        setPendingCount(count);
-      });
-      return () => unsubscribe();
-    }
-    return undefined;
-  }, [isAdmin, dataProvider]);
+  const showNav = !!user && canViewTree(membership?.role);
 
   const isActive = (path: string) => pathname === path;
 
@@ -61,7 +52,7 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
       </div>
       <div className="header-right">
         {user && (
-          <Link href="/user/profile" className="user-menu-link">
+          <Link href="/user/profile" className="user-menu-link" aria-label="Profile">
             {user.photoURL ? (
               <img
                 src={user.photoURL}
@@ -71,7 +62,9 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
             ) : (
               <div
                 className="header-user-placeholder"
-                style={{ backgroundColor: stringToColor(user.email || user.displayName || "User") }}
+                style={{
+                  backgroundColor: stringToColor(user.email || user.displayName || "User"),
+                }}
               >
                 {user.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
               </div>

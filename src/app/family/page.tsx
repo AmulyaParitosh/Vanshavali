@@ -16,8 +16,8 @@ import { inferHusbandWife } from "../../lib/family";
 import { TREE_CONFIG } from "../../constants";
 
 export default function FamilyPage() {
-  const { treeData, user, onSave } = useAppContext();
-  const canEdit = canEditRole(user?.role);
+  const { treeData, membership, onSave } = useAppContext();
+  const canEdit = canEditRole(membership?.role);
   const toast = useToast();
 
   const [data, setData] = useState<TreeData | null>(treeData);
@@ -31,9 +31,11 @@ export default function FamilyPage() {
     return <Loading />;
   }
 
-  const handleSaveFamily = (family: Family) => {
+  const handleSaveFamily = async (family: Family) => {
     if (!canEdit) return;
-    let updatedFamilies;
+    const previousData = data;
+    let updatedFamilies: Family[];
+    let savedFamily = family;
     if (family.id) {
       updatedFamilies = data.families.map((f) => (f.id === family.id ? family : f));
     } else {
@@ -42,22 +44,39 @@ export default function FamilyPage() {
         toast.error("A family with these partners already exists.");
         return;
       }
-      const newFamily = { ...family, id: newFamilyId };
-      updatedFamilies = [...data.families, newFamily];
-      setSelectedFamily(newFamily);
+      savedFamily = { ...family, id: newFamilyId };
+      updatedFamilies = [...data.families, savedFamily];
+      setSelectedFamily(savedFamily);
     }
     const newData = { ...data, families: updatedFamilies };
     setData(newData);
-    onSave(newData);
+    try {
+      await onSave(newData);
+      toast.success("Family saved");
+    } catch (error: unknown) {
+      // Roll the local state back so the UI matches the server again.
+      setData(previousData);
+      if (!family.id) setSelectedFamily(null);
+      const message = error instanceof Error ? error.message : "Save failed";
+      toast.error(message);
+    }
   };
 
-  const handleDeleteFamily = (familyId: string) => {
+  const handleDeleteFamily = async (familyId: string) => {
     if (!canEdit) return;
+    const previousData = data;
     const updatedFamilies = data.families.filter((f) => f.id !== familyId);
     const newData = { ...data, families: updatedFamilies };
     setData(newData);
-    onSave(newData);
     setSelectedFamily(null);
+    try {
+      await onSave(newData);
+      toast.success("Family deleted");
+    } catch (error: unknown) {
+      setData(previousData);
+      const message = error instanceof Error ? error.message : "Delete failed";
+      toast.error(message);
+    }
   };
 
   const getPersonName = (personId: string) => {

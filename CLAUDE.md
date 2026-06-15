@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Direction (June 2026)
 
-This project is being **migrated to multi-tenancy and off Firebase entirely** for public release. See `docs/ARCHITECTURE.md` for the target architecture, data model, and phased migration plan. See `docs/DESIGN-LANGUAGE.md` for the visual identity. See `CONTRIBUTING.md` for dev workflow.
+This project is being **migrated to multi-tenancy and off Firebase entirely** for public release. See `docs/ARCHITECTURE.md` for the target architecture, data model, and phased migration plan. See `docs/DESIGN-LANGUAGE.md` for the visual identity. See `docs/BACKLOG.md` for deferred design / refactor work that's been scoped but not picked up. See `CONTRIBUTING.md` for dev workflow.
 
 Locked-in decisions (do not re-litigate without a strong reason):
 
@@ -39,52 +39,58 @@ The TypeScript config is strict (`strict`, `noUncheckedIndexedAccess`, `exactOpt
 
 Copy `.env.sample` → `.env` (gitignored) and fill values. Key vars:
 
-- `NEXT_PUBLIC_APP_ENV` — `local` (file-backed, default for dev), `supabase`, or `firebase` (legacy).
+- `NEXT_PUBLIC_APP_ENV` — `local` (file-backed, default for dev) or `supabase`. Firebase support was removed in Phase 8.
 - `NEXT_PUBLIC_LOCAL_USER_UID` — mock UID used in local mode.
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase client config.
 - `SUPABASE_SERVICE_ROLE_KEY` — server-only; for routes that bypass RLS.
 - `DATABASE_URL` — Postgres connection string used by Drizzle Kit migrations.
 - `RESEND_API_KEY` / `RESEND_FROM_EMAIL` — transactional email (lands in Phase 10).
+- `NEXT_PUBLIC_SITE_ADMIN_UIDS` — comma-separated allowlist for the global suggestions inbox.
 
-If `NEXT_PUBLIC_APP_ENV` is unset, the factory defaults to `supabase` when Supabase env vars are present, else `firebase`.
+If `NEXT_PUBLIC_APP_ENV` is unset, the factory defaults to `supabase` when Supabase env vars are present, else `local`.
 
 ## Architecture
 
 ### Provider abstraction (the central pattern)
 
-All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts`. `DataProvider` is split per ISP into four sub-interfaces (`UserProvider`, `TreeDataProvider`, `AdminProvider`, `SuggestionProvider`) — consumers should type their dependencies against the narrowest one they need. Three implementations exist:
+All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts`. `DataProvider` is split per ISP into focused sub-interfaces — `UserProvider`, `TreeMetaProvider`, `TreeDataProvider`, `MembershipProvider`, `InvitationProvider`, `SuggestionProvider`. Consumers should type their dependencies against the narrowest one they need. Two implementations:
 
-- `src/services/firebase/` — Firebase Realtime Database, Firebase Auth (Google), Firebase Storage. Legacy; being removed.
-- `src/services/local/` — file-backed providers hitting Next.js API routes under `src/app/api/local/` (which read/write `.local_data/db/*.json` and `.local_data/storage/`). Retained as the dev/test double.
-- `src/services/supabase/` — Phase 1 scaffold; methods throw `NotImplementedError` until Phase 5/6/7 land the real implementations.
+- `src/services/local/` — file-backed providers hitting Next.js API routes under `src/app/api/local/`. The local DB layout is `.local_data/db/{global}.json` for global collections (users, trees, suggestions) and `.local_data/db/trees/{treeId}/{collection}.json` for per-tree data (people, families, members, invites). Retained as the dev/test double.
+- `src/services/supabase/` — Phase 1 scaffold; methods throw `NotImplementedError` until Phase 5/6/7 land the real implementations against `db/schema.ts`.
 
-`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) chooses one set based on `NEXT_PUBLIC_APP_ENV` and memoizes it. **Any new backend operation must be added to the interface and implemented in _both_ the active (supabase) and local providers** — otherwise local mode silently breaks.
+`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) chooses one set based on `NEXT_PUBLIC_APP_ENV` and memoizes it. **Any new backend operation must be added to the interface and implemented in _both_ the local and Supabase providers** — otherwise one mode silently breaks.
 
-Subscriptions: Firebase uses `onValue` listeners; local providers simulate realtime with `setInterval` polling (`LOCAL_DATA_CONFIG.POLLING_INTERVAL = 5000ms`) and only invoke callbacks when serialized data changes.
+Local-mode subscriptions are 5s-polled (`LOCAL_DATA_CONFIG.POLLING_INTERVAL`) and dedupe via JSON string comparison so the callback only fires when content actually changes. Supabase will use Realtime channels.
 
-### App bootstrap and auth gating
+### App bootstrap, tenancy, and auth gating
 
-`src/app/layout.tsx` wraps everything in `AppProvider` (`src/providers/AppProvider.tsx`), which calls `useAuthAndData()` (`src/hooks/useAuthAndData.ts`). That hook composes four single-responsibility hooks:
+`src/app/layout.tsx` wraps everything in `AppProvider` (`src/providers/AppProvider.tsx`), which calls `useAuthAndData()`. That hook composes:
 
 - `useProviders()` — memoized `{ auth, data, storage }` from the factory.
 - `useAuthUser(authProvider)` — subscribes to auth state; returns `{ user, isLoaded }`.
-- `useUserProfile(user, userProvider)` — fetches/creates profile, auto-creates with `role: "pending"` on first sign-in; returns `{ role, personId, isLoaded, refresh }`.
-- `useTreeSubscription(role, treeProvider)` — subscribes to tree data when `canViewTree(role)`; returns `{ treeData, isLoaded }`.
+- `useUserProfile(user, userProvider)` — fetches / creates the user's global profile (just name/email/photo — roles live on memberships).
+- `useMyTrees(uid, provider)` — subscribes to the user's list of owned + invited trees.
+- `useTreeMembership(treeId, uid, provider)` — subscribes to the user's role + linked person in the active tree.
+- `useTreeSubscription(treeId, provider)` — subscribes to people / families of the active tree.
 
-`AppProvider` renders one of `Loading`, `LoginScreen`, `PendingApprovalScreen`, `AccessDeniedScreen`, or `children` based on role. Inner pages use `useAppContext()` (`src/context/AppContext.tsx`) for `treeData`, `dataProvider`, `onSave`, etc. — the context value is memoized so consumers don't cascade-rerender.
+First-sign-in auto-provisions a tree for the user as owner, seeded with one root Person representing them. `currentTreeId` defaults to the user's first owned tree; Phase 9 makes it sourceable from the URL.
 
-Role gating uses the predicates in `src/lib/access.ts`: `canViewTree(role)` (viewer/editor/admin) and `canEdit(role)` (editor/admin). Don't inline role string comparisons; use the helpers.
+`AppProvider` renders one of `Loading`, `LoginScreen`, or `children`. The pending/denied screens are gone — under multi-tenancy a new user goes straight to their own tree, and access to other trees is gated per-membership.
+
+Role gating uses the predicates in `src/lib/access.ts`: `canViewTree(role)`, `canEdit(role)`, `isOwner(role)`, `canInvite(role)`. Don't inline role string comparisons; use the helpers. Roles are `owner | editor | viewer` (defined in `TREE_ROLES`).
 
 ### Data model
 
-Two top-level collections drive the tree:
+Domain types in `src/types/`:
 
-- `Person` (`src/types/person.ts`) — `id`, `name.official_name`, `sex: 'M'|'F'`, optional `events`, `custom_fields`, `image_url`, `userId` (link to auth user), `root: true` on exactly one person.
-- `Family` (`src/types/family.ts`) — `husband?`, `wife?`, `children: string[]`, plus a legacy `partners?: string[]` used as a fallback.
+- `Person` — `id`, `name.official_name`, `sex: 'M'|'F'`, optional `events`, `custom_fields`, `image_url`, `userId` (link to the auth user that represents this person _in this tree_), `root: true` on exactly one person _per tree_.
+- `Family` — `husband?`, `wife?`, `children: string[]`. The legacy `partners?: string[]` field is removed at the schema level but still tolerated in pure-domain code via the `familyPartners(family)` helper — use the helper.
+- `Tree`, `TreeMeta`, `TreeMembership`, `TreeInvite` types in `src/types/tree.ts`.
 
-Schema is in transition. The legacy `partners?: string[]` field is read with a fallback via the `familyPartners(family)` helper in `src/lib/family.ts` — use that helper, don't reinvent the idiom. The new Postgres schema (`db/schema.ts`) drops `partners[]` entirely; it survives only in legacy Firebase data which we're archiving.
+Per-tree uniqueness:
 
-Per-user linkage lives on `Person.userId` (canonical). Under multi-tenancy this narrows to per-tree semantic (one auth user can be linked to one person _per tree_; the same uid can appear in multiple trees).
+- One root Person per tree (enforced by `ConsistencyValidator` and a partial unique index in Postgres).
+- One linked Person per (tree, uid) pair — i.e. a single auth user maps to at most one Person within a tree, but can be linked across multiple trees.
 
 ### Database (multi-tenant target)
 
@@ -108,23 +114,24 @@ The D3 visualization is decomposed in `src/components/tree/`: `useTreeLayout` (p
 
 ### Routing
 
-App router under `src/app/`:
+App router under `src/app/`. All non-`/api` routes currently operate on `currentTreeId` from `AppContext`; Phase 9 introduces `/tree/[id]/*` route scoping.
 
-- `/` — landing / login (rendered by `AppProvider` based on auth state)
-- `/family` — main tree view
+- `/` — tree visualization (gated by membership in the active tree)
+- `/family` — family editor
 - `/people` — searchable list of people
 - `/about` — static info page
-- `/user/profile`, `/user/access_requests`, `/user/management`, `/user/suggestions` — user/admin areas
-- `/api/local/db`, `/api/local/storage` — local-mode backends (file I/O against `.local_data/`)
-- `/api/send-access-request.ts` — nodemailer-based notification
+- `/user/profile` — global user profile (name/email/photo) + per-tree linked-person editor
+- `/user/suggestions` — site-level feedback inbox; gated by the `NEXT_PUBLIC_SITE_ADMIN_UIDS` allowlist
+- `/api/local/db` — local-mode database; supports `?collection=...` for global, `?collection=...&tree=...` for tree-scoped, and `DELETE ?tree=...` for tree deletion
+- `/api/local/storage` — local-mode file storage
 
 ## Conventions
 
 - Strict TypeScript everywhere. Imports must use `import type` for type-only imports (`verbatimModuleSyntax` is on).
 - `'use client'` is required at the top of any component that uses hooks or browser APIs.
-- Constants and string literals for roles, suggestion statuses, and local-mode config live in `src/constants/index.ts` — reuse `USER_ROLES`, `SUGGESTION_STATUS`, `LOCAL_DATA_CONFIG.COLLECTIONS` instead of inlining strings.
-- Styling: a single global stylesheet at `src/app/globals.css` with CSS custom properties (`--color-primary`, etc.); no CSS-in-JS or modules.
+- Constants and string literals for roles, suggestion statuses, and local-mode config live in `src/constants/index.ts` — reuse `TREE_ROLES`, `SUGGESTION_STATUS`, `LOCAL_DATA_CONFIG.GLOBAL_COLLECTIONS` / `TREE_COLLECTIONS` instead of inlining strings.
+- Styling: single global stylesheet at `src/app/globals.css` with the token system documented in `docs/DESIGN-LANGUAGE.md`; no CSS-in-JS or modules in new code.
 
 ## Deployment
 
-Pushes to `main` trigger an automatic deploy via Firebase App Hosting's GitHub integration. There is no separate CI configuration in the repo.
+Hosting is parked (Firebase App Hosting was the legacy target; not used anymore). Phase 15 picks a host before public launch — viable options include Vercel, Cloudflare Pages, Netlify, Railway, Fly.io, self-host.

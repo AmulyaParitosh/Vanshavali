@@ -2,17 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AuthProvider, AuthUser } from "../types";
 
 /**
- * Supabase Auth implementation of AuthProvider.
- *
- * STATUS: Phase 1 scaffold. Methods will be filled in during Phase 6 (auth
- * migration). For now they throw `NotImplementedError` so any accidental use
- * fails loudly instead of silently sending users to Firebase.
- *
- * Supabase Auth supports Google OAuth and email/password out of the box —
- * matches the decision recorded in CLAUDE.md §Direction.
+ * Supabase Auth implementation. STATUS: Phase 1 scaffold. Methods will be
+ * filled in during Phase 6 (auth migration). Signatures match the multi-method
+ * AuthProvider interface (Google OAuth + email/password + password reset),
+ * which is the v1 commitment.
  */
 export class SupabaseAuthProvider implements AuthProvider {
-  // Held for the Phase 6 implementation; unused until methods are filled in.
   protected readonly client: SupabaseClient;
   constructor(client: SupabaseClient) {
     this.client = client;
@@ -26,11 +21,21 @@ export class SupabaseAuthProvider implements AuthProvider {
     throw notImplemented("signInWithGoogle");
   }
 
+  signInWithEmail(_email: string, _password: string): Promise<void> {
+    throw notImplemented("signInWithEmail");
+  }
+
+  signUpWithEmail(_email: string, _password: string, _displayName?: string): Promise<void> {
+    throw notImplemented("signUpWithEmail");
+  }
+
+  sendPasswordReset(_email: string): Promise<void> {
+    throw notImplemented("sendPasswordReset");
+  }
+
   signOut(): Promise<void> {
     throw notImplemented("signOut");
   }
-
-  // Phase 6 will add: signInWithEmail, signUpWithEmail, sendPasswordReset.
 }
 
 function notImplemented(method: string): Error {

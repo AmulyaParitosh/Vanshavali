@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { canEdit, canViewTree, isAdmin } from "./access";
-import { USER_ROLES } from "../constants";
+import { canEdit, canInvite, canViewTree, isOwner, isMember } from "./access";
+import { TREE_ROLES } from "../constants";
 
 describe("canViewTree", () => {
-  it.each([USER_ROLES.VIEWER, USER_ROLES.EDITOR, USER_ROLES.ADMIN])(
+  it.each([TREE_ROLES.VIEWER, TREE_ROLES.EDITOR, TREE_ROLES.OWNER])(
     "%s can view the tree",
     (role) => {
       expect(canViewTree(role)).toBe(true);
     }
   );
 
-  it.each([USER_ROLES.PENDING, USER_ROLES.DENIED, null, undefined, "", "unknown"])(
+  it.each([null, undefined, "", "unknown", "pending", "denied"])(
     "%s cannot view the tree",
     (role) => {
       expect(canViewTree(role)).toBe(false);
@@ -19,24 +19,33 @@ describe("canViewTree", () => {
 });
 
 describe("canEdit", () => {
-  it.each([USER_ROLES.EDITOR, USER_ROLES.ADMIN])("%s can edit", (role) => {
+  it.each([TREE_ROLES.EDITOR, TREE_ROLES.OWNER])("%s can edit", (role) => {
     expect(canEdit(role)).toBe(true);
   });
 
-  it.each([USER_ROLES.VIEWER, USER_ROLES.PENDING, USER_ROLES.DENIED, null, undefined, "", "owner"])(
-    "%s cannot edit",
-    (role) => {
-      expect(canEdit(role)).toBe(false);
-    }
-  );
+  it.each([TREE_ROLES.VIEWER, null, undefined, "", "admin"])("%s cannot edit", (role) => {
+    expect(canEdit(role)).toBe(false);
+  });
 });
 
-describe("isAdmin", () => {
-  it("admin is admin", () => {
-    expect(isAdmin(USER_ROLES.ADMIN)).toBe(true);
+describe("isOwner / canInvite", () => {
+  it("owner is owner and can invite", () => {
+    expect(isOwner(TREE_ROLES.OWNER)).toBe(true);
+    expect(canInvite(TREE_ROLES.OWNER)).toBe(true);
   });
 
-  it.each([USER_ROLES.EDITOR, USER_ROLES.VIEWER, null, undefined])("%s is not admin", (role) => {
-    expect(isAdmin(role)).toBe(false);
+  it.each([TREE_ROLES.EDITOR, TREE_ROLES.VIEWER, null, undefined])("%s is not owner", (role) => {
+    expect(isOwner(role)).toBe(false);
+    expect(canInvite(role)).toBe(false);
+  });
+});
+
+describe("isMember", () => {
+  it.each([TREE_ROLES.OWNER, TREE_ROLES.EDITOR, TREE_ROLES.VIEWER])("%s is a member", (role) => {
+    expect(isMember(role)).toBe(true);
+  });
+
+  it.each([null, undefined])("%s is not a member", (role) => {
+    expect(isMember(role)).toBe(false);
   });
 });

@@ -6,10 +6,7 @@ import { useAuthAndData } from "../hooks/useAuthAndData";
 
 import Header from "../components/Header";
 import LoginScreen from "../components/LoginScreen";
-import PendingApprovalScreen from "../components/PendingApprovalScreen";
-import AccessDeniedScreen from "../components/AccessDeniedScreen";
 import Loading from "../components/Loading";
-import { USER_ROLES } from "../constants";
 import { canViewTree } from "../lib/access";
 
 interface AppProviderProps {
@@ -19,14 +16,17 @@ interface AppProviderProps {
 export default function AppProvider({ children }: AppProviderProps) {
   const {
     user,
-    userRole,
-    personId,
+    profile,
+    myTrees,
+    currentTreeId,
+    setCurrentTreeId,
+    membership,
     treeData,
     isLoading,
     handleLogin,
     handleLogout,
     onSave,
-    refreshUser,
+    refreshProfile,
     data: dataProvider,
     auth: authProvider,
     storage: storageProvider,
@@ -35,38 +35,43 @@ export default function AppProvider({ children }: AppProviderProps) {
   const renderContent = () => {
     if (isLoading) return <Loading />;
     if (!user) return <LoginScreen onLoginRequest={handleLogin} />;
-    if (userRole === USER_ROLES.PENDING) return <PendingApprovalScreen onLogout={handleLogout} />;
-    if (userRole === USER_ROLES.DENIED) return <AccessDeniedScreen onLogout={handleLogout} />;
-
-    if (canViewTree(userRole) && !treeData) {
+    // User exists, profile + my-trees loaded; auto-provision effect should have
+    // selected a tree by now. If we still don't have one, fall back to spinner —
+    // the tree picker (Phase 9) will render here when there are multiple trees.
+    if (!currentTreeId || !membership) return <Loading text="Setting up your tree..." />;
+    if (canViewTree(membership.role) && !treeData) {
       return <Loading text="Loading family data..." />;
     }
-
     return children;
   };
 
-  // Memoize context value so consumers don't cascade-rerender on every
-  // AppProvider render. Audit perf finding: prior version rebuilt this object
-  // every render, invalidating every memoized consumer.
+  // Memoize so consumers don't cascade-rerender every render.
   const contextValue = useMemo(
     () => ({
+      user,
+      profile,
+      myTrees,
+      currentTreeId,
+      setCurrentTreeId,
+      membership,
       treeData,
-      user: user ? { ...user, role: userRole } : null,
-      personId,
       onSave,
-      refreshUser,
+      refreshProfile,
       handleLogout,
       dataProvider,
       authProvider,
       storageProvider,
     }),
     [
-      treeData,
       user,
-      userRole,
-      personId,
+      profile,
+      myTrees,
+      currentTreeId,
+      setCurrentTreeId,
+      membership,
+      treeData,
       onSave,
-      refreshUser,
+      refreshProfile,
       handleLogout,
       dataProvider,
       authProvider,
@@ -77,7 +82,7 @@ export default function AppProvider({ children }: AppProviderProps) {
   return (
     <AppContext.Provider value={contextValue}>
       <div className="App">
-        <Header user={user} userRole={userRole} onLogout={handleLogout} />
+        <Header user={user} membership={membership} onLogout={handleLogout} />
         <main>{renderContent()}</main>
       </div>
     </AppContext.Provider>

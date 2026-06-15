@@ -9,12 +9,14 @@ import type { TreeData } from "../../context/AppContext";
 import PersonForm from "../../components/PersonForm";
 import TextListSidebar from "../../components/TextListSidebar";
 import SearchItem from "../../components/SearchItem";
+import { useToast } from "../../components/ToastSystem";
 import { canEdit as canEditRole } from "../../lib/access";
 import { familyPartners } from "../../lib/family";
 
 export default function PeoplePage() {
-  const { treeData, user, onSave } = useAppContext();
-  const canEdit = canEditRole(user?.role);
+  const { treeData, membership, onSave } = useAppContext();
+  const canEdit = canEditRole(membership?.role);
+  const toast = useToast();
 
   const searchParams = useSearchParams();
   const initId = searchParams.get("id");
@@ -60,10 +62,12 @@ export default function PeoplePage() {
     return finalId;
   };
 
-  const handleSavePerson = (person: DraftPerson) => {
+  const handleSavePerson = async (person: DraftPerson) => {
     if (!canEdit) return;
+    const previousData = data;
     let updatedPeople: Person[];
     let savedPerson: Person;
+    const isNew = !person.id;
     if (person.id) {
       savedPerson = person as Person;
       updatedPeople = data.people.map((p) => (p.id === savedPerson.id ? savedPerson : p));
@@ -77,11 +81,20 @@ export default function PeoplePage() {
     }
     const newData = { ...data, people: updatedPeople };
     setData(newData);
-    onSave(newData);
+    try {
+      await onSave(newData);
+      toast.success("Person saved");
+    } catch (error: unknown) {
+      setData(previousData);
+      if (isNew) setSelectedPerson(null);
+      const message = error instanceof Error ? error.message : "Save failed";
+      toast.error(message);
+    }
   };
 
-  const handleDeletePerson = (personId: string) => {
+  const handleDeletePerson = async (personId: string) => {
     if (!canEdit) return;
+    const previousData = data;
     const updatedPeople = data.people.filter((p) => p.id !== personId);
     const updatedFamilies = data.families
       .map((f) => ({
@@ -96,8 +109,15 @@ export default function PeoplePage() {
       families: updatedFamilies,
     };
     setData(newData);
-    onSave(newData);
     setSelectedPerson(null);
+    try {
+      await onSave(newData);
+      toast.success("Person deleted");
+    } catch (error: unknown) {
+      setData(previousData);
+      const message = error instanceof Error ? error.message : "Delete failed";
+      toast.error(message);
+    }
   };
 
   const handleAddNewPerson = () => {

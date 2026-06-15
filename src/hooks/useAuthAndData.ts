@@ -1,77 +1,162 @@
 "use client";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import type { TreeData } from "../services/types";
+import type { TreeMembership } from "../types/tree";
 import { canEdit, canViewTree } from "../lib/access";
 import { useProviders } from "./useProviders";
 import { useAuthUser } from "./useAuthUser";
 import { useUserProfile } from "./useUserProfile";
+import { useMyTrees } from "./useMyTrees";
+import { useTreeMembership } from "./useTreeMembership";
 import { useTreeSubscription } from "./useTreeSubscription";
 
 /**
- * The top-level app data hook. Composes four single-responsibility hooks:
+ * Top-level app data hook. Composes the multi-tenant pieces:
  *
- *   useProviders         → backend implementations (auth / data / storage)
- *   useAuthUser          → current AuthUser, isLoaded
- *   useUserProfile       → role, personId, refresh
- *   useTreeSubscription  → live tree data
+ *   useProviders         → backend implementations
+ *   useAuthUser          → AuthUser
+ *   useUserProfile       → name / email / photo (no role anymore)
+ *   useMyTrees           → owned + invited trees
+ *   useTreeMembership    → role + personId for the active tree
+ *   useTreeSubscription  → live people / families for the active tree
  *
- * Exposes a flat shape for backward compatibility with `AppProvider`. New code
- * should prefer composing the smaller hooks directly when it only needs part of
- * this surface.
+ * Auto-creates a first tree on sign-in when the user has none. Selects the
+ * user's first owned tree as the active tree until the UI lets them choose.
  */
 export function useAuthAndData() {
   const { auth: authProvider, data: dataProvider, storage: storageProvider } = useProviders();
 
   const { user, isLoaded: authLoaded } = useAuthUser(authProvider);
   const {
-    role: userRole,
-    personId,
+    profile,
     isLoaded: profileLoaded,
-    refresh: refreshUser,
+    refresh: refreshProfile,
   } = useUserProfile(user, dataProvider);
-  const { treeData, isLoaded: treeLoaded } = useTreeSubscription(userRole, dataProvider);
+  const { myTrees, isLoaded: myTreesLoaded } = useMyTrees(user?.uid ?? null, dataProvider);
 
-  // Loading is "any required check still pending":
-  //   - auth state not yet decided, OR
-  //   - signed in but profile not yet fetched, OR
-  //   - signed in with a tree-viewing role but data not yet delivered.
+  const [currentTreeId, setCurrentTreeId] = useState<string | null>(null);
+  const [isProvisioningTree, setIsProvisioningTree] = useState(false);
+
+  // Auto-select the user's first owned tree as the active one. Once Phase 9
+  // lands real routing, currentTreeId will come from the URL instead.
+  useEffect(() => {
+    if (!myTreesLoaded || !myTrees) return;
+    if (!currentTreeId && myTrees.owned.length > 0) {
+      setCurrentTreeId(myTrees.owned[0]!.id);
+    } else if (currentTreeId && myTrees.owned.every((t) => t.id !== currentTreeId)) {
+      // Active tree is no longer accessible (deleted, role revoked). Pick another.
+      setCurrentTreeId(myTrees.owned[0]?.id ?? null);
+    }
+  }, [myTrees, myTreesLoaded, currentTreeId]);
+
+  // First-sign-in: if the user has zero owned trees AND zero memberships,
+  // provision a tree with themselves as owner + root person.
+  useEffect(() => {
+    if (!user || !profile || !myTreesLoaded || !myTrees) return;
+    if (myTrees.owned.length > 0 || myTrees.member.length > 0) return;
+    if (isProvisioningTree) return;
+
+    let cancelled = false;
+    setIsProvisioningTree(true);
+    (async () => {
+      try {
+        const meta = await dataProvider.createTree(user.uid, `${profile.name || "My"} family tree`);
+        if (cancelled) return;
+
+        // Seed a single root person representing the user themselves.
+        const rootPerson = {
+          id: `p_${user.uid}`,
+          name: { official_name: profile.name || "Me" },
+          sex: "M" as const,
+          events: [],
+          custom_fields: {},
+          root: true,
+          userId: user.uid,
+        };
+        await dataProvider.saveTreeData(meta.id, {
+          people: [rootPerson],
+          families: [],
+        });
+        if (cancelled) return;
+        setCurrentTreeId(meta.id);
+      } catch (error) {
+        console.error("Auto-provision tree failed:", error);
+        toast.error("Couldn't create your tree. Try refreshing.");
+      } finally {
+        if (!cancelled) setIsProvisioningTree(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, profile, myTrees, myTreesLoaded, isProvisioningTree, dataProvider]);
+
+  const { membership, isLoaded: membershipLoaded } = useTreeMembership(
+    currentTreeId,
+    user?.uid ?? null,
+    dataProvider
+  );
+  const { treeData, isLoaded: treeLoaded } = useTreeSubscription(
+    canViewTree(membership?.role) ? currentTreeId : null,
+    dataProvider
+  );
+
   const isLoading =
-    !authLoaded || (!!user && !profileLoaded) || (!!user && canViewTree(userRole) && !treeLoaded);
+    !authLoaded ||
+    (!!user && !profileLoaded) ||
+    (!!user && !myTreesLoaded) ||
+    (!!user && isProvisioningTree) ||
+    (!!user && !!currentTreeId && !membershipLoaded) ||
+    (!!user && !!currentTreeId && canViewTree(membership?.role) && !treeLoaded);
 
   const handleLogin = useCallback(() => {
-    authProvider.signInWithGoogle().catch((error) => console.error("Auth error:", error));
+    authProvider.signInWithGoogle().catch((error: unknown) => {
+      console.error("Auth error:", error);
+      const message = error instanceof Error ? error.message : "Sign-in failed";
+      toast.error(message);
+    });
   }, [authProvider]);
 
   const handleLogout = useCallback(() => {
-    authProvider.signOut().catch((error) => console.error("Sign out error:", error));
+    authProvider.signOut().catch((error: unknown) => {
+      console.error("Sign out error:", error);
+      const message = error instanceof Error ? error.message : "Sign-out failed";
+      toast.error(message);
+    });
   }, [authProvider]);
 
   const handleSaveData = useCallback(
     (newData: TreeData): Promise<void> => {
-      if (!canEdit(userRole)) {
-        console.error("Permission Denied: You cannot save data.");
+      if (!currentTreeId) {
+        return Promise.reject(new Error("No active tree."));
+      }
+      if (!canEdit(membership?.role)) {
         return Promise.reject(new Error("Permission Denied"));
       }
-      return dataProvider.saveTreeData(newData).catch((error) => {
-        console.error("Save Data failed:", error);
-        throw error;
-      });
+      return dataProvider.saveTreeData(currentTreeId, newData);
     },
-    [userRole, dataProvider]
+    [currentTreeId, membership?.role, dataProvider]
   );
 
   return {
     user,
-    userRole,
-    personId,
+    profile,
+    myTrees,
+    currentTreeId,
+    setCurrentTreeId,
+    membership,
     treeData,
     isLoading,
     handleLogin,
     handleLogout,
     onSave: handleSaveData,
-    refreshUser,
+    refreshProfile,
     auth: authProvider,
     data: dataProvider,
     storage: storageProvider,
   };
 }
+
+// Re-export the membership type so consumers don't have to dig into types/tree.
+export type { TreeMembership };

@@ -1,54 +1,35 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useAppContext } from "../context/AppContext";
 import Tree from "../components/Tree";
 import { GraphManager } from "../lib/graph/GraphManager";
 import { ConsistencyValidator } from "../lib/graph/ConsistencyValidator";
-import type { ConsistencyIssue } from "../types/graph";
 
 import { UI_CONFIG } from "../constants";
-
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function HomePage() {
-  const { treeData, personId } = useAppContext();
+  const { treeData, membership } = useAppContext();
   const router = useRouter();
-  const [graphManager, setGraphManager] = useState<GraphManager | null>(null);
-  const [validationIssues, setValidationIssues] = useState<ConsistencyIssue[]>([]);
 
+  // If the active member has no linked person yet, send them to profile.
+  // Triggered only once tree data + membership are both loaded.
   useEffect(() => {
-    // If user is not linked to a person, redirect to profile
-    if (personId === null && treeData) {
-      // Only redirect if treeData is loaded to ensure we don't redirect prematurely
-      // Actually personId comes from user profile which loads before treeData usually.
-      // But wait, personId can be null if not set.
-      // If undefined, it might mean loading?
-      // user object has personId?
-      // In AppContext, personId is string | null.
-      // The requirement: "only do this if the user is not linked to. a person, else directly open the default page that is tree."
+    if (treeData && membership && !membership.personId) {
       router.push("/user/profile");
     }
-  }, [personId, router, treeData]);
+  }, [treeData, membership, router]);
 
   const people = treeData?.people || [];
   const families = treeData?.families || [];
 
-  useEffect(() => {
-    if (people && families) {
-      const gm = new GraphManager(people, families);
-      setGraphManager(gm);
-
-      const issues = ConsistencyValidator.validate(gm);
-      if (issues.length > 0) {
-        console.warn("Graph Consistency Issues:", issues);
-        setValidationIssues(issues);
-      }
-    }
-  }, [people, families]);
-
-  const hierarchy = useMemo(() => {
-    return graphManager ? graphManager.buildHierarchy() : null;
-  }, [graphManager]);
+  const graphManager = useMemo(() => new GraphManager(people, families), [people, families]);
+  const validationIssues = useMemo(
+    () => ConsistencyValidator.validate(graphManager),
+    [graphManager]
+  );
+  const hierarchy = useMemo(() => graphManager.buildHierarchy(), [graphManager]);
 
   return (
     <div id="tree-container">
@@ -63,7 +44,7 @@ export default function HomePage() {
             fontSize: UI_CONFIG.STYLES?.TEXT?.FONT_SIZE || "10px",
             zIndex: UI_CONFIG.Z_INDEX.OVERLAY,
             pointerEvents: "none",
-            borderRadius: "var(--border-radius-sm)",
+            borderRadius: "var(--radius-md)",
           }}
         >
           {validationIssues.length} {UI_CONFIG.MESSAGES.DATA_ISSUES_DETECTED}

@@ -3,8 +3,22 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "../../../context/AppContext";
 import { useToast } from "../../../components/ToastSystem";
-import { USER_ROLES } from "../../../constants";
 import type { Suggestion, SuggestionStatus } from "../../../types/suggestion";
+
+/**
+ * Site-level feedback inbox. Pre-multi-tenancy this was gated by the global
+ * `admin` role. Post-Phase-8 the global admin is gone; this page is currently
+ * accessible to any signed-in user and shows their own suggestions. Phase 15
+ * will gate it again behind an env-var allowlisted "site admin" uid.
+ */
+const SITE_ADMIN_UIDS: string[] = (process.env.NEXT_PUBLIC_SITE_ADMIN_UIDS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function isSiteAdmin(uid: string | undefined): boolean {
+  return !!uid && SITE_ADMIN_UIDS.includes(uid);
+}
 
 const STATUS_CONFIG: Record<SuggestionStatus, { label: string; color: string; bgColor: string }> = {
   unread: {
@@ -33,7 +47,7 @@ export default function SuggestionsPage() {
   const [filter, setFilter] = useState<SuggestionStatus | "all">("all");
 
   useEffect(() => {
-    if (user && user.role !== USER_ROLES.ADMIN) {
+    if (user && !isSiteAdmin(user.uid)) {
       router.push("/");
     }
   }, [user, router]);
@@ -59,7 +73,7 @@ export default function SuggestionsPage() {
   const filteredSuggestions =
     filter === "all" ? suggestions : suggestions.filter((s) => s.status === filter);
 
-  if (!user || user.role !== USER_ROLES.ADMIN) {
+  if (!user || !isSiteAdmin(user.uid)) {
     return null;
   }
 

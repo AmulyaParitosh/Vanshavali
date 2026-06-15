@@ -1,38 +1,29 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import type { AuthUser, UserProvider, UserProfile } from "../services/types";
-import { USER_ROLES } from "../constants";
+import type { AuthUser, UserProfile, UserProvider } from "../services/types";
 
 export interface UseUserProfileResult {
-  role: string | null;
-  personId: string | null;
-  /** True once the profile fetch/create cycle has completed for the current user. */
+  profile: UserProfile | null;
+  /** True once the profile fetch / create cycle has completed for the current user. */
   isLoaded: boolean;
-  /** Re-fetches the profile (e.g. after role change or person-link). */
   refresh: () => Promise<void>;
 }
 
 /**
- * Loads the user's profile from the DataProvider. If no profile exists for a
- * just-signed-in user, creates one with the `pending` role and uses the auth
- * email/name as defaults.
- *
- * Tracks `isLoaded` separately from `role`/`personId` being non-null so callers
- * can distinguish "we haven't fetched yet" from "we fetched and the value is
- * null" — the latter is a valid state (e.g. no person linked yet).
+ * Loads the user's profile from the DataProvider. On first sign-in (no profile
+ * yet), creates one with the auth name + email + photo. Roles and tree-linkage
+ * live elsewhere (TreeMembership), not here.
  */
 export function useUserProfile(
   user: AuthUser | null,
   userProvider: UserProvider
 ): UseUserProfileResult {
-  const [role, setRole] = useState<string | null>(null);
-  const [personId, setPersonId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (!user) {
-      setRole(null);
-      setPersonId(null);
+      setProfile(null);
       setIsLoaded(true);
       return;
     }
@@ -42,27 +33,22 @@ export function useUserProfile(
 
     (async () => {
       try {
-        let profile = await userProvider.getUserProfile(user.uid);
+        let existing = await userProvider.getUserProfile(user.uid);
         if (cancelled) return;
 
-        if (!profile) {
-          profile = {
+        if (!existing) {
+          existing = {
             email: user.email,
             name: user.displayName,
-            role: USER_ROLES.PENDING,
+            photoURL: user.photoURL,
           };
-          await userProvider.createUserProfile(user.uid, profile);
+          await userProvider.createUserProfile(user.uid, existing);
           if (cancelled) return;
         }
-
-        setRole(profile.role);
-        setPersonId(profile.personId || null);
+        setProfile(existing);
       } catch (error) {
         console.error("Error fetching user profile:", error);
-        if (!cancelled) {
-          setRole(null);
-          setPersonId(null);
-        }
+        if (!cancelled) setProfile(null);
       } finally {
         if (!cancelled) setIsLoaded(true);
       }
@@ -76,15 +62,12 @@ export function useUserProfile(
   const refresh = useCallback(async () => {
     if (!user) return;
     try {
-      const profile = await userProvider.getUserProfile(user.uid);
-      if (profile) {
-        setRole(profile.role);
-        setPersonId(profile.personId || null);
-      }
+      const updated = await userProvider.getUserProfile(user.uid);
+      if (updated) setProfile(updated);
     } catch (error) {
       console.error("Error refreshing user profile:", error);
     }
   }, [user, userProvider]);
 
-  return { role, personId, isLoaded, refresh };
+  return { profile, isLoaded, refresh };
 }

@@ -8,7 +8,16 @@ import { useToast } from "../../../components/ToastSystem";
 import type { Person, DraftPerson } from "../../../types/person";
 
 export default function ProfilePage() {
-  const { user, treeData, dataProvider, onSave, refreshUser } = useAppContext();
+  const {
+    user,
+    profile,
+    membership,
+    currentTreeId,
+    treeData,
+    dataProvider,
+    onSave,
+    refreshProfile,
+  } = useAppContext();
   const [isLinking, setIsLinking] = useState(false);
   const toast = useToast();
 
@@ -21,23 +30,26 @@ export default function ProfilePage() {
   }
 
   const linkedPerson = treeData?.people.find((p) => p.userId === user.uid) || null;
-  const isUserLinked = !!linkedPerson;
 
   const handleLinkPerson = async (personId: string) => {
+    if (!currentTreeId) {
+      toast.error("No active tree.");
+      return;
+    }
     const person = treeData?.people.find((p) => p.id === personId);
     const personName = person?.name.official_name || "selected person";
 
     toast.confirm(
-      `Are you sure you want to link your account to ${personName}? This action is PERMANENT and cannot be changed once set.`,
+      `Link your account to ${personName}? This is permanent and cannot be changed.`,
       async () => {
         try {
-          await dataProvider.linkUserToPerson(personId, user.uid);
-          toast.success(`Successfully linked to ${personName}`);
+          await dataProvider.linkUserToPerson(currentTreeId, personId, user.uid);
+          toast.success(`Linked to ${personName}`);
           setIsLinking(false);
-          await refreshUser();
+          await refreshProfile();
         } catch (error: unknown) {
           console.error("Error linking person:", error);
-          const message = error instanceof Error ? error.message : "Failed to link person";
+          const message = error instanceof Error ? error.message : "Link failed";
           toast.error(message);
         }
       }
@@ -73,10 +85,8 @@ export default function ProfilePage() {
     try {
       const newData = { ...treeData, people: [...treeData.people, newPerson] };
       await onSave(newData);
-      // Toast only after save succeeded — audit fix #2: prior code toasted
-      // success even when onSave rejected, misleading the user.
       toast.success("Created and linked to a new profile");
-      await refreshUser();
+      await refreshProfile();
     } catch (error: unknown) {
       console.error("Error creating profile:", error);
       const message = error instanceof Error ? error.message : "Failed to create profile";
@@ -100,20 +110,22 @@ export default function ProfilePage() {
     }
   };
 
+  const roleLabel = membership?.role ?? "no role";
+
   return (
     <div className="profile-page-container">
       <div className="section-card">
         <h2>My Account</h2>
         <div className="account-info">
           <p>
-            <strong>Name:</strong> {user.displayName}
+            <strong>Name:</strong> {profile?.name ?? user.displayName}
           </p>
           <p>
-            <strong>Email:</strong> {user.email}
+            <strong>Email:</strong> {profile?.email ?? user.email}
           </p>
           <p>
-            <strong>Role:</strong>{" "}
-            <span className={`role-badge role-${user.role}`}>{user.role}</span>
+            <strong>Role in this tree:</strong>{" "}
+            <span className={`role-badge role-${roleLabel}`}>{roleLabel}</span>
           </p>
         </div>
       </div>
@@ -162,16 +174,14 @@ export default function ProfilePage() {
 
       <style jsx>{`
         .profile-page-container {
-          /* max-width: 800px; REMOVED */
-          /* margin: 0 auto; REMOVED */
-          padding: 40px;
+          padding: var(--space-10);
           height: 100%;
           overflow-y: auto;
           box-sizing: border-box;
           flex: 1;
         }
         .account-info p {
-          margin: 10px 0;
+          margin: var(--space-2) 0;
         }
         .role-badge {
           display: inline-block;
@@ -181,7 +191,7 @@ export default function ProfilePage() {
           text-transform: capitalize;
           font-weight: 600;
         }
-        .role-admin {
+        .role-owner {
           background: var(--color-primary-50);
           color: var(--color-primary-700);
         }
@@ -193,23 +203,23 @@ export default function ProfilePage() {
           background: #e8f5ec;
           color: #1f6a3e;
         }
-        .role-pending {
+        .role-no.role {
           background: var(--color-neutral-100);
           color: var(--color-neutral-700);
         }
 
         .linking-section {
           text-align: center;
-          padding: 40px;
+          padding: var(--space-10);
         }
         .link-actions {
           display: flex;
-          gap: 15px;
+          gap: var(--space-4);
           justify-content: center;
-          margin-top: 25px;
+          margin-top: var(--space-6);
         }
         .search-box-container {
-          margin: 20px 0;
+          margin: var(--space-5) 0;
           text-align: left;
         }
       `}</style>
