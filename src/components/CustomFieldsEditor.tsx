@@ -59,7 +59,8 @@ const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
               type="button"
               className="btn-icon-remove small"
               onClick={() => removeField(index)}
-              title="Remove Field"
+              aria-label="Remove field"
+              title="Remove field"
             >
               &times;
             </button>

@@ -89,7 +89,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               className="btn-icon-overlay upload-btn"
               onClick={handleFileSelect}
               disabled={isUploading}
-              title={isUploading ? "Uploading..." : "Upload Image"}
+              aria-label={isUploading ? "Uploading image" : "Upload image"}
+              title={isUploading ? "Uploading..." : "Upload image"}
             >
               ✎
             </button>
@@ -99,7 +100,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 className="btn-icon-overlay remove-btn"
                 onClick={handleRemove}
                 disabled={isUploading}
-                title="Remove Image"
+                aria-label="Remove image"
+                title="Remove image"
               >
                 &times;
               </button>

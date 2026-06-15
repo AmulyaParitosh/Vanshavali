@@ -59,7 +59,8 @@ const EventsEditor: React.FC<EventsEditorProps> = ({ events, onChange, canEdit }
               type="button"
               className="btn-icon-remove small"
               onClick={() => removeEvent(index)}
-              title="Remove Event"
+              aria-label="Remove event"
+              title="Remove event"
             >
               &times;
             </button>

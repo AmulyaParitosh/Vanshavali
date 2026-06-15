@@ -33,8 +33,9 @@ describe("familyPartners", () => {
     expect(familyPartners(family({ partners: ["a", "b"] }))).toEqual(["a", "b"]);
   });
 
-  it("skips undefined entries", () => {
-    expect(familyPartners(family({ husband: undefined, wife: "w" }))).toEqual(["w"]);
+  it("skips entries that are absent from the family", () => {
+    // husband omitted entirely (the common shape for single-mother families).
+    expect(familyPartners(family({ wife: "w" }))).toEqual(["w"]);
   });
 
   it("returns an empty array for a family with no members", () => {

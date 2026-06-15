@@ -45,10 +45,12 @@ const AliasesInput: React.FC<AliasesInputProps> = ({ aliases, onChange, canEdit 
             <button
               type="button"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent container click
+                e.stopPropagation();
                 removeAlias(alias);
               }}
               className="btn-icon-remove small"
+              aria-label={`Remove alias ${alias}`}
+              title={`Remove alias ${alias}`}
             >
               &times;
             </button>

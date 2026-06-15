@@ -34,9 +34,10 @@ const UnifiedSearch: React.FC<UnifiedSearchProps> = ({
   return (
     <div className={`search-input-container ${className}`}>
       <input
-        type="text"
+        type="search"
         className="unified-search-input"
         placeholder={placeholder}
+        aria-label={placeholder}
         value={query}
         onChange={handleChange}
         {...props}
@@ -46,6 +47,8 @@ const UnifiedSearch: React.FC<UnifiedSearchProps> = ({
           className="btn-icon-remove small clear-search-btn"
           onClick={handleClear}
           type="button"
+          aria-label="Clear search"
+          title="Clear search"
         >
           ×
         </button>

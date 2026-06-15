@@ -213,7 +213,8 @@ const PersonForm: React.FC<PersonFormProps> = ({
                     events: [...(formData.events || []), { type: "", date: "", place: "" }],
                   })
                 }
-                title="Add Event"
+                aria-label="Add life event"
+                title="Add event"
               >
                 +
               </button>
@@ -235,7 +236,8 @@ const PersonForm: React.FC<PersonFormProps> = ({
                 type="button"
                 className="btn-icon-add"
                 onClick={handleAddCustomField}
-                title="Add Field"
+                aria-label="Add custom field"
+                title="Add field"
               >
                 +
               </button>

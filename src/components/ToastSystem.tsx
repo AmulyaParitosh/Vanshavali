@@ -49,8 +49,15 @@ const confirmContainerStyle: React.CSSProperties = {
 // --- Custom Components ---
 
 const CustomToast = ({ t }: { t: Toast }) => {
+  // role="alert" + assertive announces immediately for errors; "status" +
+  // polite waits for the user to finish whatever they're doing for everything
+  // else. Following ARIA Authoring Practices.
+  const isError = t.type === "error";
   return (
     <div
+      role={isError ? "alert" : "status"}
+      aria-live={isError ? "assertive" : "polite"}
+      aria-atomic="true"
       style={{
         ...toastContainerStyle,
         opacity: t.visible ? 1 : 0,
@@ -58,21 +65,32 @@ const CustomToast = ({ t }: { t: Toast }) => {
         transition: "all 0.3s ease",
       }}
     >
-      {/* Icon based on type */}
+      {/* Icon based on type — aria-hidden so screen readers don't announce
+       * "check mark" before the message text. */}
       {t.type === "success" && (
-        <span style={{ color: "var(--color-accent)", fontSize: "1.5em" }}>✔</span>
+        <span aria-hidden="true" style={{ color: "var(--color-success)", fontSize: "1.5em" }}>
+          ✔
+        </span>
       )}
-      {t.type === "error" && <span style={{ color: "#d32f2f", fontSize: "1.5em" }}>✖</span>}
+      {t.type === "error" && (
+        <span aria-hidden="true" style={{ color: "var(--color-danger)", fontSize: "1.5em" }}>
+          ✖
+        </span>
+      )}
       {t.type === "loading" && (
-        <span style={{ color: "var(--color-secondary)", fontSize: "1.5em" }}>⏳</span>
+        <span aria-hidden="true" style={{ color: "var(--color-warning)", fontSize: "1.5em" }}>
+          ⏳
+        </span>
       )}
 
       <div style={{ flex: 1 }}>{resolveValue(t.message, t)}</div>
 
-      {/* Close Button (optional, but good for UX) */}
+      {/* Close Button */}
       {t.type !== "loading" && (
         <button
           onClick={() => toast.dismiss(t.id)}
+          aria-label="Dismiss notification"
+          title="Dismiss"
           style={{
             background: "none",
             border: "none",

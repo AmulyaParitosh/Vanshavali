@@ -32,13 +32,13 @@ const SearchItem: React.FC<SearchItemProps> = (props) => {
         <style jsx>{`
           .linked-badge {
             display: inline-block;
-            margin-top: 4px;
-            padding: 1px 6px;
-            background: #f3f4f6;
-            color: #6b7280;
-            border-radius: 4px;
-            font-size: 0.7em;
-            font-weight: 500;
+            margin-top: var(--space-1);
+            padding: 1px var(--space-2);
+            background: var(--color-neutral-100);
+            color: var(--color-neutral-600);
+            border-radius: var(--radius-xs);
+            font-size: var(--font-size-xs);
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
           }

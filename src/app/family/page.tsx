@@ -327,8 +327,16 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                 type="button"
                 className="btn-icon-add"
                 onClick={() => setShowAddChild(!showAddChild)}
-                title={showAddChild ? "Cancel Adding" : "Add Child"}
-                style={showAddChild ? { backgroundColor: "#777", transform: "rotate(45deg)" } : {}}
+                aria-label={showAddChild ? "Cancel adding child" : "Add child"}
+                title={showAddChild ? "Cancel adding" : "Add child"}
+                style={
+                  showAddChild
+                    ? {
+                        backgroundColor: "var(--color-neutral-500)",
+                        transform: "rotate(45deg)",
+                      }
+                    : {}
+                }
               >
                 +
               </button>
@@ -344,7 +352,8 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                       className="order-btn up"
                       onClick={() => handleMoveChild(index, "up")}
                       disabled={index === 0}
-                      title="Move Up"
+                      aria-label="Move child up"
+                      title="Move up"
                     >
                       &#9650;
                     </button>
@@ -353,7 +362,8 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                       className="order-btn down"
                       onClick={() => handleMoveChild(index, "down")}
                       disabled={index === (formData.children?.length || 0) - 1}
-                      title="Move Down"
+                      aria-label="Move child down"
+                      title="Move down"
                     >
                       &#9660;
                     </button>
@@ -387,6 +397,8 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                       type="button"
                       className="btn-icon-remove small"
                       onClick={() => handleRemoveChild(childId)}
+                      aria-label="Remove child"
+                      title="Remove child"
                     >
                       &times;
                     </button>
@@ -422,6 +434,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                   type="button"
                   className="btn-icon-remove"
                   onClick={() => setShowAddChild(false)}
+                  aria-label="Cancel adding child"
                   title="Cancel"
                 >
                   &times;

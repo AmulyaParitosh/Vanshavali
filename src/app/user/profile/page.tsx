@@ -175,26 +175,27 @@ export default function ProfilePage() {
         }
         .role-badge {
           display: inline-block;
-          padding: 2px 8px;
-          border-radius: 4px;
-          font-size: 0.85em;
+          padding: var(--space-1) var(--space-2);
+          border-radius: var(--radius-xs);
+          font-size: var(--font-size-sm);
           text-transform: capitalize;
+          font-weight: 600;
         }
         .role-admin {
-          background: #fee2e2;
-          color: #991b1b;
+          background: var(--color-primary-50);
+          color: var(--color-primary-700);
         }
         .role-editor {
-          background: #fef3c7;
-          color: #92400e;
+          background: #fff5e0;
+          color: #7a4400;
         }
         .role-viewer {
-          background: #dcfce7;
-          color: #166534;
+          background: #e8f5ec;
+          color: #1f6a3e;
         }
         .role-pending {
-          background: #f3f4f6;
-          color: #374151;
+          background: var(--color-neutral-100);
+          color: var(--color-neutral-700);
         }
 
         .linking-section {

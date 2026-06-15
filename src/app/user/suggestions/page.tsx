@@ -7,10 +7,22 @@ import { USER_ROLES } from "../../../constants";
 import type { Suggestion, SuggestionStatus } from "../../../types/suggestion";
 
 const STATUS_CONFIG: Record<SuggestionStatus, { label: string; color: string; bgColor: string }> = {
-  unread: { label: "Unread", color: "#b22222", bgColor: "#fff5f5" },
-  read: { label: "Read", color: "#2e8b57", bgColor: "#f0f9f4" },
-  prioritized: { label: "Prioritized", color: "#ff8c00", bgColor: "#fffaf0" },
-  archived: { label: "Archived", color: "#666", bgColor: "#f5f5f5" },
+  unread: {
+    label: "Unread",
+    color: "var(--color-primary-500)",
+    bgColor: "var(--color-primary-50)",
+  },
+  read: { label: "Read", color: "var(--color-accent-500)", bgColor: "#e8f5ec" },
+  prioritized: {
+    label: "Prioritized",
+    color: "var(--color-secondary-500)",
+    bgColor: "#fff5e0",
+  },
+  archived: {
+    label: "Archived",
+    color: "var(--color-neutral-600)",
+    bgColor: "var(--color-neutral-100)",
+  },
 };
 
 export default function SuggestionsPage() {
