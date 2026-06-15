@@ -3,23 +3,24 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from 'next/navigation';
 import { useAppContext } from '../../context/AppContext';
 import Loading from '../../components/Loading';
-import type { Person } from "../../types/person";
-// @ts-ignore
+import type { Person, DraftPerson } from "../../types/person";
 import type { TreeData } from "../../context/AppContext";
 
 import PersonForm from "../../components/PersonForm";
 import TextListSidebar from "../../components/TextListSidebar";
 import SearchItem from "../../components/SearchItem";
+import { canEdit as canEditRole } from "../../lib/access";
+import { familyPartners } from "../../lib/family";
 
 export default function PeoplePage() {
   const { treeData, user, onSave } = useAppContext();
-  const canEdit = user?.role === 'admin' || user?.role === 'editor';
+  const canEdit = canEditRole(user?.role);
 
   const searchParams = useSearchParams();
   const initId = searchParams.get('id');
 
   const [data, setData] = useState<TreeData | null>(treeData);
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(() => {
+  const [selectedPerson, setSelectedPerson] = useState<DraftPerson | null>(() => {
     if (initId && treeData) {
       return treeData.people.find((p) => p.id === initId) || null;
     }
@@ -28,10 +29,10 @@ export default function PeoplePage() {
 
   useEffect(() => {
     if (initId && treeData && !selectedPerson) {
-         const person = treeData.people.find((p) => p.id === initId);
-         if (person) setSelectedPerson(person);
+      const person = treeData.people.find((p) => p.id === initId);
+      if (person) setSelectedPerson(person);
     }
-  }, [initId, treeData]);
+  }, [initId, treeData, selectedPerson]);
 
   useEffect(() => {
     setData(treeData);
@@ -59,18 +60,22 @@ export default function PeoplePage() {
     return finalId;
   };
 
-  const handleSavePerson = (person: Person) => {
+  const handleSavePerson = (person: DraftPerson) => {
     if (!canEdit) return;
-    let updatedPeople;
+    let updatedPeople: Person[];
+    let savedPerson: Person;
     if (person.id) {
-      updatedPeople = data.people.map((p) => (p.id === person.id ? person : p));
+      savedPerson = person as Person;
+      updatedPeople = data.people.map((p) =>
+        p.id === savedPerson.id ? savedPerson : p
+      );
     } else {
-      const newPerson = {
+      savedPerson = {
         ...person,
         id: generateIdFromName(person.name.official_name),
       };
-      updatedPeople = [...data.people, newPerson];
-      setSelectedPerson(newPerson);
+      updatedPeople = [...data.people, savedPerson];
+      setSelectedPerson(savedPerson);
     }
     const newData = { ...data, people: updatedPeople };
     setData(newData);
@@ -85,8 +90,7 @@ export default function PeoplePage() {
         ...f,
         children: (f.children || []).filter((c) => c !== personId),
       }))
-      .filter((f) => f.husband !== personId && f.wife !== personId && !(f.partners && f.partners.includes(personId)));
-
+      .filter((f) => !familyPartners(f).includes(personId));
 
     const newData = {
       ...data,
@@ -100,7 +104,6 @@ export default function PeoplePage() {
 
   const handleAddNewPerson = () => {
     if (!canEdit) return;
-    // @ts-ignore
     setSelectedPerson({
       name: { official_name: "" },
       sex: "M",
@@ -112,19 +115,25 @@ export default function PeoplePage() {
   return (
     <div className="edit-screen">
 
-      <TextListSidebar
+      <TextListSidebar<Person>
         items={data.people}
-        renderItem={(p: Person) => (
+        renderItem={(p) => (
           <SearchItem type="person" item={p} />
         )}
-        filterItem={(p: Person, query: string) => {
+        filterItem={(p, query) => {
           const q = query.toLowerCase();
           const nameMatch = p.name.official_name.toLowerCase().includes(q);
-          const aliasMatch = p.name.aliases?.some(alias => alias.toLowerCase().includes(q));
+          const aliasMatch = p.name.aliases?.some((alias) =>
+            alias.toLowerCase().includes(q)
+          );
           return nameMatch || !!aliasMatch;
         }}
         onSelect={setSelectedPerson}
-        selectedItem={selectedPerson}
+        selectedItem={
+          selectedPerson && selectedPerson.id
+            ? (selectedPerson as Person)
+            : null
+        }
         onAdd={canEdit ? handleAddNewPerson : undefined}
         addButtonLabel="Add New Person"
         canEdit={canEdit}

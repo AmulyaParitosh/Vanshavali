@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Direction (June 2026)
+
+This project is being **migrated to multi-tenancy and off Firebase entirely** for public release. See `docs/ARCHITECTURE.md` for the target architecture, data model, and phased migration plan. See `docs/DESIGN-LANGUAGE.md` for the visual identity. See `CONTRIBUTING.md` for dev workflow.
+
+Locked-in decisions (do not re-litigate without a strong reason):
+
+- **Backend**: Supabase (Postgres + Auth + Storage + Realtime). No Firebase / GCP anywhere.
+- **Auth providers**: Google + email/password.
+- **Tenancy**: Tree owners + invites. Per-tree roles: `owner` / `editor` / `viewer`. Global admin role is gone.
+- **Existing Firebase data**: archived, not migrated. Clean slate on launch.
+- **Invitations**: email-based, auto-link on signup.
+- **Tree visualization**: React + D3 hybrid — D3 for layout math only, nodes as React components inside `<foreignObject>` (closes the current XSS surface).
+- **Visual identity**: Madhubani / Mithila heritage as **surface accents** (banner, decorative borders, key surfaces). Generic UI stays clean and accessible.
+- **Quality tooling**: ESLint, Prettier, Vitest + React Testing Library. No Playwright in v1.
+- **Hosting**: parked — decide before launch.
+
+**While the migration is in progress**, the current code still uses Firebase. Do not write new Firebase code; write against the upcoming Supabase provider implementations (or refactor in pure-domain code that's backend-agnostic). The provider abstraction (`AuthProvider`, `DataProvider`, `StorageProvider`) survives the migration.
+
 ## Commands
 
 - `npm run dev` — start Next.js dev server at `http://localhost:3000`

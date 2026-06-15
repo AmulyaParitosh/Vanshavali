@@ -21,7 +21,8 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const isAdmin = userRole === USER_ROLES.ADMIN;
-  const showNav = user && userRole && ![USER_ROLES.PENDING, USER_ROLES.DENIED].includes(userRole);
+  const gateRoles: readonly string[] = [USER_ROLES.PENDING, USER_ROLES.DENIED];
+  const showNav = !!user && !!userRole && !gateRoles.includes(userRole);
 
   useEffect(() => {
     if (isAdmin) {
@@ -30,7 +31,8 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
       });
       return () => unsubscribe();
     }
-  }, [isAdmin]);
+    return undefined;
+  }, [isAdmin, dataProvider]);
 
   const isActive = (path: string) => pathname === path;
 

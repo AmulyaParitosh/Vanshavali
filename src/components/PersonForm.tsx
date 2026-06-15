@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import type { Person } from "../types/person";
+import type { Person, DraftPerson, PersonEvent } from "../types/person";
 import { useToast } from "./ToastSystem";
 import ImageUpload from "./ImageUpload";
 import AliasesInput from "./AliasesInput";
@@ -9,21 +9,21 @@ import EventsEditor from "./EventsEditor";
 import CustomFieldsEditor from "./CustomFieldsEditor";
 
 interface PersonFormProps {
-  person: Person | null;
-  onSave: (data: Person) => void;
+  person: DraftPerson | null;
+  onSave: (data: DraftPerson) => void;
   onDelete?: (id: string) => void;
   canEdit: boolean;
   isProfile?: boolean;
 }
 
-const PersonForm: React.FC<PersonFormProps> = ({ 
-  person, 
-  onSave, 
-  onDelete, 
+const PersonForm: React.FC<PersonFormProps> = ({
+  person,
+  onSave,
+  onDelete,
   canEdit,
-  isProfile = false
+  isProfile = false,
 }) => {
-  const [formData, setFormData] = useState<Person | null>(person);
+  const [formData, setFormData] = useState<DraftPerson | null>(person);
   const toast = useToast();
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
     setFormData({ ...formData, image_url: "", image_storage_path: "" });
   };
 
-  const handleEventsChange = (events: any[]) => {
+  const handleEventsChange = (events: PersonEvent[]) => {
     setFormData({ ...formData, events });
   };
 
@@ -89,12 +89,13 @@ const PersonForm: React.FC<PersonFormProps> = ({
 
   const handleDelete = () => {
     if (!onDelete || !person.id) return;
+    const personId = person.id;
     toast.confirm(
-        "Are you sure you want to delete this person? This action cannot be undone.",
-        () => {
-            onDelete(person.id);
-            toast.success("Person deleted.");
-        }
+      "Are you sure you want to delete this person? This action cannot be undone.",
+      () => {
+        onDelete(personId);
+        toast.success("Person deleted.");
+      }
     );
   };
 

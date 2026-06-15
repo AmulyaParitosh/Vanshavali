@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAppContext } from "../../../context/AppContext";
 import PersonForm from "../../../components/PersonForm";
 import PersonSearch from "../../../components/PersonSearch";
-import Loading from "../../../components/Loading";
 import { useToast } from "../../../components/ToastSystem";
-import type { Person } from "../../../types/person";
+import type { Person, DraftPerson } from "../../../types/person";
 
 export default function ProfilePage() {
   const { user, treeData, dataProvider, onSave, refreshUser } = useAppContext();
@@ -25,8 +24,8 @@ export default function ProfilePage() {
   const isUserLinked = !!linkedPerson;
 
   const handleLinkPerson = async (personId: string) => {
-    const person = treeData?.people.find(p => p.id === personId);
-    const personName = person?.name.official_name || 'selected person';
+    const person = treeData?.people.find((p) => p.id === personId);
+    const personName = person?.name.official_name || "selected person";
 
     toast.confirm(
       `Are you sure you want to link your account to ${personName}? This action is PERMANENT and cannot be changed once set.`,
@@ -35,46 +34,69 @@ export default function ProfilePage() {
           await dataProvider.linkUserToPerson(personId, user.uid);
           toast.success(`Successfully linked to ${personName}`);
           setIsLinking(false);
-          // Force refresh of user data to show linked identity
           await refreshUser();
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("Error linking person:", error);
-          toast.error(error.message || "Failed to link person");
+          const message = error instanceof Error ? error.message : "Failed to link person";
+          toast.error(message);
         }
       }
     );
   };
 
+  const generateProfilePersonId = (): string => {
+    const baseId = `p_${user.uid}`;
+    if (!treeData) return baseId;
+    let candidate = baseId;
+    let counter = 1;
+    while (treeData.people.some((p) => p.id === candidate)) {
+      candidate = `${baseId}_${counter++}`;
+    }
+    return candidate;
+  };
+
   const handleCreateNewPerson = async () => {
+    if (!treeData) {
+      toast.error("Tree data unavailable. Try again in a moment.");
+      return;
+    }
+
     const newPerson: Person = {
-      id: `p_${user.uid}`, // Use UID as ID or generate one
+      id: generateProfilePersonId(),
       name: { official_name: user.displayName || "New Person" },
       sex: "M",
       events: [],
       custom_fields: {},
-      userId: user.uid, // Set the userId for the new person
+      userId: user.uid,
     };
 
     try {
-      // First save the person to tree data
-      if (treeData) {
-        const newData = { ...treeData, people: [...treeData.people, newPerson] };
-        await onSave(newData);
-        
-        toast.success("Created and linked to a new profile");
-        // Force refresh of user data to show linked identity
-        await refreshUser();
-      }
-    } catch (error) {
+      const newData = { ...treeData, people: [...treeData.people, newPerson] };
+      await onSave(newData);
+      // Toast only after save succeeded — audit fix #2: prior code toasted
+      // success even when onSave rejected, misleading the user.
+      toast.success("Created and linked to a new profile");
+      await refreshUser();
+    } catch (error: unknown) {
       console.error("Error creating profile:", error);
-      toast.error("Failed to create profile");
+      const message = error instanceof Error ? error.message : "Failed to create profile";
+      toast.error(message);
     }
   };
 
-  const handleSaveProfile = (updatedPerson: Person) => {
-    if (treeData) {
-      const updatedPeople = treeData.people.map(p => p.id === updatedPerson.id ? updatedPerson : p);
-      onSave({ ...treeData, people: updatedPeople });
+  const handleSaveProfile = async (updated: DraftPerson) => {
+    if (!treeData || !updated.id) return;
+    const personId = updated.id;
+    const updatedPeople = treeData.people.map((p) =>
+      p.id === personId ? ({ ...updated, id: personId } as Person) : p
+    );
+    try {
+      await onSave({ ...treeData, people: updatedPeople });
+      toast.success("Profile saved");
+    } catch (error: unknown) {
+      console.error("Error saving profile:", error);
+      const message = error instanceof Error ? error.message : "Failed to save profile";
+      toast.error(message);
     }
   };
 

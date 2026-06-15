@@ -71,10 +71,10 @@ export default function UserManagementPage() {
                 onChange={(e) => handleRoleChange(user.uid, e.target.value)}
                 className="role-select"
               >
-                <option value="viewer">Viewer</option>
-                <option value="editor">Editor</option>
-                <option value="admin">Admin</option>
-                <option value="denied">Denied</option>
+                <option value={USER_ROLES.VIEWER}>Viewer</option>
+                <option value={USER_ROLES.EDITOR}>Editor</option>
+                <option value={USER_ROLES.ADMIN}>Admin</option>
+                <option value={USER_ROLES.DENIED}>Denied</option>
               </select>
             </div>
           ))}

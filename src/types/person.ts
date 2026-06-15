@@ -21,3 +21,10 @@ export interface Person {
   image_storage_path?: string;
   userId?: string;
 }
+
+/**
+ * A Person being edited or created in a form. The `id` is unknown until save
+ * for newly-created people; callers use `id ? update(person) : create(person)`
+ * to discriminate.
+ */
+export type DraftPerson = Omit<Person, 'id'> & { id?: string };

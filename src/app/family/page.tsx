@@ -10,12 +10,14 @@ import TextListSidebar from "../../components/TextListSidebar";
 import { useToast } from "../../components/ToastSystem";
 import SearchItem from "../../components/SearchItem";
 import PersonSearch from "../../components/PersonSearch";
-import { stringToColor } from "../../utils/colorUtils";
+import { getPersonPlaceholderUrl } from "../../utils/imageUtils";
+import { canEdit as canEditRole } from "../../lib/access";
+import { inferHusbandWife } from "../../lib/family";
 import { TREE_CONFIG } from "../../constants";
-  
+
   export default function FamilyPage() {
     const { treeData, user, onSave } = useAppContext();
-    const canEdit = user?.role === 'admin' || user?.role === 'editor';
+    const canEdit = canEditRole(user?.role);
     const toast = useToast();
   
     const [data, setData] = useState<TreeData | null>(treeData);
@@ -80,20 +82,20 @@ import { TREE_CONFIG } from "../../constants";
           <SearchItem type="family" item={f} people={data.people} />
         )}
         filterItem={(f: Family, query: string) => {
-             const q = query.toLowerCase();
-             const hId = f.husband || f.partners?.[0];
-             const wId = f.wife || f.partners?.[1];
-
-             const p1 = data.people.find(p => p.id === hId);
-             const p2 = data.people.find(p => p.id === wId);
-             
-             const p1NameMatch = p1?.name.official_name.toLowerCase().includes(q);
-             const p1AliasMatch = p1?.name.aliases?.some(alias => alias.toLowerCase().includes(q));
-             
-             const p2NameMatch = p2?.name.official_name.toLowerCase().includes(q);
-             const p2AliasMatch = p2?.name.aliases?.some(alias => alias.toLowerCase().includes(q));
-
-             return !!(p1NameMatch || p1AliasMatch || p2NameMatch || p2AliasMatch);
+          const q = query.toLowerCase();
+          const { husbandId, wifeId } = inferHusbandWife(f, (id) =>
+            data.people.find((p) => p.id === id)?.sex
+          );
+          const matchesPerson = (id: string | undefined) => {
+            if (!id) return false;
+            const person = data.people.find((p) => p.id === id);
+            if (!person) return false;
+            if (person.name.official_name.toLowerCase().includes(q)) return true;
+            return !!person.name.aliases?.some((alias) =>
+              alias.toLowerCase().includes(q)
+            );
+          };
+          return matchesPerson(husbandId) || matchesPerson(wifeId);
         }}
         onSelect={setSelectedFamily}
         selectedItem={selectedFamily}
@@ -146,13 +148,6 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
   const [selectedChild, setSelectedChild] = useState<string>("");
   const [showAddChild, setShowAddChild] = useState(false);
   const toast = useToast();
-
-  const getPlaceholderUrl = (person: Person) => {
-    return TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
-      stringToColor(person.id || person.name.official_name).substring(1),
-      person.name.official_name.substring(0, 2)
-    );
-  };
 
   useEffect(() => {
     setFormData(family);
@@ -241,8 +236,9 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
     );
   };
 
-  const husbandId = formData.husband || formData.partners?.[0] || "";
-  const wifeId = formData.wife || formData.partners?.[1] || "";
+  const inferred = inferHusbandWife(formData, (id) => people.find((p) => p.id === id)?.sex);
+  const husbandId = inferred.husbandId || "";
+  const wifeId = inferred.wifeId || "";
   const currentChildrenIds = formData.children || [];
 
   const availableChildren = people.filter(
@@ -267,7 +263,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                    return (
                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                        <img
-                         src={husband?.image_url || (husband ? getPlaceholderUrl(husband) : TREE_CONFIG.PLACEHOLDER_IMAGE_URL('cccccc', 'H'))}
+                         src={husband?.image_url || (husband ? getPersonPlaceholderUrl(husband) : TREE_CONFIG.PLACEHOLDER_IMAGE_URL('cccccc', 'H'))}
                          alt={husband?.name.official_name || "Husband"}
                          style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--color-primary)' }}
                        />
@@ -292,7 +288,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                    return (
                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                        <img
-                         src={wife?.image_url || (wife ? getPlaceholderUrl(wife) : TREE_CONFIG.PLACEHOLDER_IMAGE_URL('cccccc', 'W'))}
+                         src={wife?.image_url || (wife ? getPersonPlaceholderUrl(wife) : TREE_CONFIG.PLACEHOLDER_IMAGE_URL('cccccc', 'W'))}
                          alt={wife?.name.official_name || "Wife"}
                          style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--color-primary)' }}
                        />
@@ -360,7 +356,7 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
                                 const child = people.find(p => p.id === childId);
                                 return (
                                     <img
-                                        src={child?.image_url || (child ? getPlaceholderUrl(child) : TREE_CONFIG.PLACEHOLDER_IMAGE_URL('cccccc', 'C'))}
+                                        src={child?.image_url || (child ? getPersonPlaceholderUrl(child) : TREE_CONFIG.PLACEHOLDER_IMAGE_URL('cccccc', 'C'))}
                                         alt={child?.name.official_name || "Child"}
                                         style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover', marginRight: '10px' }}
                                     />

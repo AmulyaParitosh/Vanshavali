@@ -127,12 +127,12 @@ export class LocalDataProvider implements DataProvider {
 
   async addSuggestion(suggestion: Omit<Suggestion, 'id' | 'timestamp'>): Promise<void> {
     const suggestions = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.SUGGESTIONS);
-    const id = Date.now().toString();
+    const id = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     suggestions[id] = {
       ...suggestion,
       timestamp: Date.now(),
     };
-    await this.saveDb('suggestions', suggestions);
+    await this.saveDb(LOCAL_DATA_CONFIG.COLLECTIONS.SUGGESTIONS, suggestions);
   }
 
   async linkUserToPerson(personId: string, uid: string): Promise<void> {

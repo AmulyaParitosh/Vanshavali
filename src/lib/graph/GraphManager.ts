@@ -1,6 +1,7 @@
 import type { Person } from '../../types/person';
 import type { Family } from '../../types/family';
 import type { GraphNode, PathStep } from '../../types/graph';
+import { familyPartners, inferHusbandWife } from '../family';
 
 export class GraphManager {
   private people: Person[];
@@ -52,10 +53,7 @@ export class GraphManager {
       );
 
       parentFamilies.forEach((family) => {
-        const partners = family.partners || [];
-        const familyPartners = [family.husband, family.wife, ...partners].filter((p): p is string => !!p);
-        
-        familyPartners.forEach((parentId: string) => {
+        familyPartners(family).forEach((parentId) => {
           if (!ancestors.has(parentId)) {
             ancestors.add(parentId);
             queue.push(parentId);
@@ -83,8 +81,8 @@ export class GraphManager {
       visited.add(currentId);
 
       // Find families where this person is a partner (husband, wife, or legacy partners)
-      const familiesAsPartner = this.families.filter(
-        (f) => (f.husband === currentId) || (f.wife === currentId) || (f.partners && f.partners.includes(currentId))
+      const familiesAsPartner = this.families.filter((f) =>
+        familyPartners(f).includes(currentId)
       );
 
       familiesAsPartner.forEach((family) => {
@@ -121,41 +119,41 @@ export class GraphManager {
     };
 
     this.families.forEach((family) => {
-      // 1. Spouses (Husband <-> Wife or legacy Partner <-> Partner)
-      const partners = family.partners || [];
-      const familyPartners = [family.husband, family.wife, ...partners].filter((p): p is string => !!p);
+      const partners = familyPartners(family);
 
-      if (familyPartners.length > 1) {
-        const p1 = familyPartners[0];
-        const p2 = familyPartners[1];
-        if (p1 && p2) {
-             addEdge(p1, p2, "Spouse");
-             addEdge(p2, p1, "Spouse");
+      // 1. Spouses — all pairs, not just the first two (the legacy code missed
+      // edges when a family had 3+ entries via legacy `partners[]`).
+      for (let i = 0; i < partners.length; i++) {
+        for (let j = i + 1; j < partners.length; j++) {
+          const p1 = partners[i]!;
+          const p2 = partners[j]!;
+          addEdge(p1, p2, "Spouse");
+          addEdge(p2, p1, "Spouse");
         }
       }
 
       // 2. Parent -> Child
-      if (familyPartners.length > 0 && family.children) {
-        familyPartners.forEach((pId: string) => {
-          family.children.forEach((cId: string) => {
+      if (partners.length > 0 && family.children) {
+        partners.forEach((pId) => {
+          family.children.forEach((cId) => {
             addEdge(pId, cId, "Child");
             addEdge(cId, pId, "Parent");
           });
         });
       }
-      
+
       // 3. Siblings (Child <-> Child)
       if (family.children && family.children.length > 1) {
-           for (let i = 0; i < family.children.length; i++) {
-               for (let j = i + 1; j < family.children.length; j++) {
-                   const child1 = family.children[i];
-                   const child2 = family.children[j];
-                   if (child1 && child2) {
-                       addEdge(child1, child2, "Sibling");
-                       addEdge(child2, child1, "Sibling");
-                   }
-               }
-           }
+        for (let i = 0; i < family.children.length; i++) {
+          for (let j = i + 1; j < family.children.length; j++) {
+            const child1 = family.children[i];
+            const child2 = family.children[j];
+            if (child1 && child2) {
+              addEdge(child1, child2, "Sibling");
+              addEdge(child2, child1, "Sibling");
+            }
+          }
+        }
       }
     });
 
@@ -192,27 +190,18 @@ export class GraphManager {
    * This logic replaces the inline buildHierarchy in FamilyTree.js
    */
   buildHierarchy(): GraphNode | null {
-    if (this.people.length === 0 || this.families.length === 0) return null;
+    // A tree with only a root person (no families yet) is valid; render a single
+    // node. Only bail out when there are no people at all.
+    if (this.people.length === 0) return null;
 
     const hierarchyMap: Record<string, GraphNode> = {};
 
     // 1. Create Partner Nodes for all families
     this.families.forEach((family) => {
-      // Preferred: husband and wife fields
-      // Legacy: search in partners array
-      let husbandId = family.husband;
-      let wifeId = family.wife;
+      const { husbandId, wifeId } = inferHusbandWife(family, (id) =>
+        this.getPerson(id)?.sex
+      );
 
-      if (!husbandId || !wifeId) {
-        const legacyPartners = family.partners || [];
-        if (!husbandId) {
-          husbandId = legacyPartners.find((pId: string) => this.getPerson(pId)?.sex === "M");
-        }
-        if (!wifeId) {
-          wifeId = legacyPartners.find((pId: string) => this.getPerson(pId)?.sex === "F");
-        }
-      }
-      
       const husband = husbandId ? this.getPerson(husbandId) : undefined;
       const wife = wifeId ? this.getPerson(wifeId) : undefined;
 
@@ -230,13 +219,11 @@ export class GraphManager {
         };
       } else {
         // Fallback for single parents
-        const partners = family.partners || [];
-        const familyPartners = [family.husband, family.wife, ...partners].filter((p): p is string => !!p);
-        const primaryParentId = familyPartners[0];
+        const primaryParentId = familyPartners(family)[0];
         const primaryParent = primaryParentId ? this.getPerson(primaryParentId) : undefined;
         if (primaryParent) {
-            // Treat as a single person node, but maintain children array structure
-            partnerNode = { ...primaryParent, children: [] }; 
+          // Treat as a single person node, but maintain children array structure
+          partnerNode = { ...primaryParent, children: [] };
         }
       }
       
@@ -253,7 +240,7 @@ export class GraphManager {
         childrenIds.forEach((childId: string) => {
           // Check if this child is a partner in another family (continues the tree)
           const childOwnFamily = this.families.find((f) =>
-            (f.husband === childId) || (f.wife === childId) || (f.partners && f.partners.includes(childId))
+            familyPartners(f).includes(childId)
           );
 
           if (childOwnFamily && hierarchyMap[childOwnFamily.id]) {
@@ -277,8 +264,8 @@ export class GraphManager {
     const rootPerson = this.people.find((p) => p.root === true);
     if (!rootPerson) return null;
 
-    const rootFamily = this.families.find((f) => 
-        (f.husband === rootPerson.id) || (f.wife === rootPerson.id) || (f.partners && f.partners.includes(rootPerson.id))
+    const rootFamily = this.families.find((f) =>
+      familyPartners(f).includes(rootPerson.id)
     );
     
     // If root person belongs to a family as a partner, return that family node

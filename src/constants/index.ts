@@ -8,14 +8,29 @@ export const USER_ROLES = {
   DENIED: "denied",
   VIEWER: "viewer",
   EDITOR: "editor",
-};
+} as const;
+
+export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
+
+export const ROLES_WITH_TREE_ACCESS: readonly UserRole[] = [
+  USER_ROLES.VIEWER,
+  USER_ROLES.EDITOR,
+  USER_ROLES.ADMIN,
+];
+
+export const ROLES_WITH_EDIT_ACCESS: readonly UserRole[] = [
+  USER_ROLES.EDITOR,
+  USER_ROLES.ADMIN,
+];
 
 export const SUGGESTION_STATUS = {
   UNREAD: "unread",
   READ: "read",
   ARCHIVED: "archived",
   PRIORITIZED: "prioritized",
-};
+} as const;
+
+export type SuggestionStatusValue = (typeof SUGGESTION_STATUS)[keyof typeof SUGGESTION_STATUS];
 
 export const TREE_CONFIG = {
   NODE_WIDTH: 500,

@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import UnifiedSearch from './UnifiedSearch';
 
-interface TextListSidebarProps<T> {
+interface Identified {
+  id: string;
+}
+
+interface TextListSidebarProps<T extends Identified> {
   items: T[];
   renderItem: (item: T) => React.ReactNode;
   filterItem: (item: T, query: string) => boolean;
@@ -12,7 +16,7 @@ interface TextListSidebarProps<T> {
   canEdit?: boolean;
 }
 
-export default function TextListSidebar<T>({
+export default function TextListSidebar<T extends Identified>({
   items,
   renderItem,
   filterItem,
@@ -24,29 +28,28 @@ export default function TextListSidebar<T>({
 }: TextListSidebarProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredItems = items.filter((item) => filterItem(item, searchQuery));
+  // Memoize — list filtering re-ran on every keystroke before and was an O(n)
+  // walk through potentially thousands of people.
+  const filteredItems = useMemo(
+    () => items.filter((item) => filterItem(item, searchQuery)),
+    [items, searchQuery, filterItem]
+  );
 
   return (
     <aside className="sidebar">
-       <div className="sidebar-search">
-            <UnifiedSearch 
-              onSearch={setSearchQuery} 
-              placeholder="Search..." 
-            />
-        </div>
+      <div className="sidebar-search">
+        <UnifiedSearch
+          onSearch={setSearchQuery}
+          placeholder="Search..."
+        />
+      </div>
       <div className="sidebar-content">
         <ul className="data-list">
-          {filteredItems.map((item, index) => (
-             // We can't use item.id here because T is generic. 
-             // We'll trust the caller to make sure renderItem is clickable or wrap it.
-             // Actually, the existing implementation puts the onClick on the li. 
-             // We need a way to key these items. 
-             // Let's assume items have an 'id' property or use index as fallback, 
-             // BUT simpler generic approach: we render the LI here.
+          {filteredItems.map((item) => (
             <li
-              key={(item as any).id || index}
+              key={item.id}
               onClick={() => onSelect(item)}
-              className={selectedItem && (item as any).id === (selectedItem as any).id ? "active" : ""}
+              className={selectedItem?.id === item.id ? "active" : ""}
             >
               {renderItem(item)}
             </li>

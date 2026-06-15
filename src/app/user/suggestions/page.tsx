@@ -21,7 +21,7 @@ export default function SuggestionsPage() {
   const [filter, setFilter] = useState<SuggestionStatus | 'all'>('all');
 
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && user.role !== USER_ROLES.ADMIN) {
       router.push('/');
     }
   }, [user, router]);

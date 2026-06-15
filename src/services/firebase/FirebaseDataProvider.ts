@@ -1,17 +1,18 @@
-import type { 
-  Database 
+import type {
+  Database
 } from "firebase/database";
-import { 
-  ref, 
-  get, 
-  set, 
-  onValue, 
-  update, 
+import {
+  ref,
+  get,
+  set,
+  onValue,
+  update,
   push,
   serverTimestamp
 } from "firebase/database";
 import type { DataProvider, TreeData, UserProfile, AdminUser } from "../types";
 import type { Suggestion, SuggestionStatus } from "../../types/suggestion";
+import { USER_ROLES, SUGGESTION_STATUS } from "../../constants";
 
 export class FirebaseDataProvider implements DataProvider {
   constructor(private db: Database) {}
@@ -96,8 +97,10 @@ export class FirebaseDataProvider implements DataProvider {
   subscribeToPendingCount(callback: (count: number) => void): () => void {
     const usersRef = ref(this.db, "users/");
     return onValue(usersRef, (snapshot) => {
-      const data = snapshot.val() || {};
-      const count = Object.values(data).filter((u: any) => u.role === 'pending').length;
+      const data = (snapshot.val() ?? {}) as Record<string, { role?: string }>;
+      const count = Object.values(data).filter(
+        (u) => u?.role === USER_ROLES.PENDING
+      ).length;
       callback(count);
     });
   }
@@ -105,12 +108,15 @@ export class FirebaseDataProvider implements DataProvider {
   subscribeToSuggestions(callback: (suggestions: Suggestion[]) => void): () => void {
     const suggestionsRef = ref(this.db, "suggestions/");
     return onValue(suggestionsRef, (snapshot) => {
-      const suggestionsData = snapshot.val() || {};
-      const suggestionsList = Object.keys(suggestionsData).map((id) => ({
-        id,
-        ...suggestionsData[id],
-        status: suggestionsData[id].status || 'unread' 
-      })) as Suggestion[];
+      const suggestionsData = (snapshot.val() ?? {}) as Record<string, Omit<Suggestion, 'id'>>;
+      const suggestionsList: Suggestion[] = Object.keys(suggestionsData).map((id) => {
+        const entry = suggestionsData[id]!;
+        return {
+          ...entry,
+          id,
+          status: entry.status || SUGGESTION_STATUS.UNREAD,
+        };
+      });
       callback(suggestionsList.sort((a, b) => b.timestamp - a.timestamp));
     });
   }

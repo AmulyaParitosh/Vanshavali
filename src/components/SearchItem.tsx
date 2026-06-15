@@ -1,32 +1,24 @@
 import React from 'react';
 import type { Person } from '../types/person';
 import type { Family } from '../types/family';
-import { stringToColor } from '../utils/colorUtils';
-import { TREE_CONFIG } from '../constants';
+import { getPersonPlaceholderUrl } from '../utils/imageUtils';
+import { inferHusbandWife } from '../lib/family';
 
-interface SearchItemProps {
-  type: 'person' | 'family';
-  item: any; // Can be Person or Family
-  people?: Person[]; // Needed for family to find names/images
-  onClick?: () => void;
-}
+type SearchItemProps =
+  | { type: 'person'; item: Person; people?: Person[]; onClick?: () => void }
+  | { type: 'family'; item: Family; people: Person[]; onClick?: () => void };
 
-const SearchItem: React.FC<SearchItemProps> = ({ type, item, people = [], onClick }) => {
-  const getPlaceholderUrl = (person: Person) => {
-    return TREE_CONFIG.PLACEHOLDER_IMAGE_URL(
-      stringToColor(person.id || person.name.official_name).substring(1),
-      person.name.official_name.substring(0, 2)
-    );
-  };
+const SearchItem: React.FC<SearchItemProps> = (props) => {
+  const { type, item, people = [], onClick } = props;
 
   if (type === 'person') {
-    const person = item as Person;
+    const person = item;
     return (
       <div className="search-item" onClick={onClick}>
         <div className="search-item-image-container">
-          <img 
-            src={person.image_url || getPlaceholderUrl(person)} 
-            alt={person.name.official_name} 
+          <img
+            src={person.image_url || getPersonPlaceholderUrl(person)}
+            alt={person.name.official_name}
             className="search-item-image"
           />
         </div>
@@ -60,24 +52,24 @@ const SearchItem: React.FC<SearchItemProps> = ({ type, item, people = [], onClic
   }
 
   if (type === 'family') {
-    const family = item as Family;
-    const husbandId = family.husband || family.partners?.[0];
-    const wifeId = family.wife || family.partners?.[1];
-
-    const husband = people.find(p => p.id === husbandId);
-    const wife = people.find(p => p.id === wifeId);
+    const family = item;
+    const { husbandId, wifeId } = inferHusbandWife(family, (id) =>
+      people.find((p) => p.id === id)?.sex
+    );
+    const husband = husbandId ? people.find((p) => p.id === husbandId) : undefined;
+    const wife = wifeId ? people.find((p) => p.id === wifeId) : undefined;
 
     return (
       <div className="search-item" onClick={onClick}>
         <div className="search-item-family-images">
-          <img 
-            src={husband?.image_url || (husband ? getPlaceholderUrl(husband) : 'https://via.placeholder.com/40?text=H')} 
-            alt={husband?.name.official_name || 'Husband'} 
+          <img
+            src={husband?.image_url || (husband ? getPersonPlaceholderUrl(husband) : 'https://placehold.co/40/cccccc/FFFFFF?text=H')}
+            alt={husband?.name.official_name || 'Husband'}
             className="search-item-image husband"
           />
-          <img 
-            src={wife?.image_url || (wife ? getPlaceholderUrl(wife) : 'https://via.placeholder.com/40?text=W')} 
-            alt={wife?.name.official_name || 'Wife'} 
+          <img
+            src={wife?.image_url || (wife ? getPersonPlaceholderUrl(wife) : 'https://placehold.co/40/cccccc/FFFFFF?text=W')}
+            alt={wife?.name.official_name || 'Wife'}
             className="search-item-image wife"
           />
         </div>

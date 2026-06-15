@@ -34,17 +34,18 @@ export default function AccessRequestsPage() {
 
   const handleRoleChange = async (uid: string, newRole: string) => {
     try {
-        await dataProvider.updateUserRole(uid, newRole);
-        if (newRole === "denied") {
-            toast.success("Request denied");
-        } else {
-            toast.success(`Request approved as ${newRole}`);
-        }
-        // Locally update the state
-        setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
+      await dataProvider.updateUserRole(uid, newRole);
+      if (newRole === USER_ROLES.DENIED) {
+        toast.success("Request denied");
+      } else {
+        toast.success(`Request approved as ${newRole}`);
+      }
+      setUsers((prev) =>
+        prev.map((u) => (u.uid === uid ? { ...u, role: newRole } : u))
+      );
     } catch (error) {
-        toast.error("Failed to update role");
-        console.error(error);
+      toast.error("Failed to update role");
+      console.error(error);
     }
   };
 
@@ -73,13 +74,13 @@ export default function AccessRequestsPage() {
                 </span>
                 <div className="request-actions">
                   <button
-                    onClick={() => handleRoleChange(user.uid, "viewer")}
+                    onClick={() => handleRoleChange(user.uid, USER_ROLES.VIEWER)}
                     className="btn-approve"
                   >
                     Approve
                   </button>
                   <button
-                    onClick={() => handleRoleChange(user.uid, "denied")}
+                    onClick={() => handleRoleChange(user.uid, USER_ROLES.DENIED)}
                     className="btn-deny"
                   >
                     Deny

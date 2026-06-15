@@ -2,11 +2,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { ProviderFactory } from "../services/ProviderFactory";
 import type { TreeData, AuthUser } from "../services/types";
-
-const ALLOWED_ROLES = ["viewer", "editor", "admin"];
+import { USER_ROLES } from "../constants";
+import { canEdit, canViewTree } from "../lib/access";
 
 export function useAuthAndData() {
-  const { auth: authProvider, data: dataProvider, storage: storageProvider } = useMemo(() => ProviderFactory.getProviders(), []);
+  const {
+    auth: authProvider,
+    data: dataProvider,
+    storage: storageProvider,
+  } = useMemo(() => ProviderFactory.getProviders(), []);
 
   const [user, setUser] = useState<AuthUser | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -14,32 +18,32 @@ export function useAuthAndData() {
   const [treeData, setTreeData] = useState<TreeData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Effect for handling authentication state changes
+  // Handle authentication state changes.
   useEffect(() => {
     const unsubscribe = authProvider.onAuthStateChanged(async (currentUser) => {
       setIsLoading(true);
       if (currentUser) {
         try {
           let userData = await dataProvider.getUserProfile(currentUser.uid);
-          
+
           if (!userData) {
-            // Create new user with 'pending' role
             userData = {
               email: currentUser.email,
               name: currentUser.displayName,
-              role: "pending",
+              role: USER_ROLES.PENDING,
             };
             await dataProvider.createUserProfile(currentUser.uid, userData);
           }
           setUser(currentUser);
           setUserRole(userData.role);
           setPersonId(userData.personId || null);
+          if (!canViewTree(userData.role)) setIsLoading(false);
         } catch (error) {
           console.error("Error fetching user profile:", error);
           setUser(currentUser);
           setUserRole(null);
-          setPersonId(null); 
-          setIsLoading(false); 
+          setPersonId(null);
+          setIsLoading(false);
         }
       } else {
         setUser(null);
@@ -52,37 +56,36 @@ export function useAuthAndData() {
     return () => unsubscribe();
   }, [authProvider, dataProvider]);
 
-  // Effect for fetching data when user role is authorized
+  // Fetch tree data once the user has a tree-viewing role.
   useEffect(() => {
-    if (userRole && ALLOWED_ROLES.includes(userRole)) {
+    if (canViewTree(userRole)) {
       const unsubscribe = dataProvider.subscribeToTreeData((data) => {
         setTreeData(data);
         setIsLoading(false);
       });
-
       return () => unsubscribe();
-    } else if (userRole) {
-      // If user has a role but it's not allowed, stop loading
-      setIsLoading(false);
     }
+    setTreeData(null);
+    return undefined;
   }, [userRole, dataProvider]);
 
   const handleLogin = () => {
-    authProvider.signInWithGoogle().catch((error) =>
-      console.error("Auth error:", error)
-    );
+    authProvider
+      .signInWithGoogle()
+      .catch((error) => console.error("Auth error:", error));
   };
 
   const handleLogout = () => {
-    authProvider.signOut().catch((error) => console.error("Sign out error:", error));
+    authProvider
+      .signOut()
+      .catch((error) => console.error("Sign out error:", error));
   };
 
   const handleSaveData = (newData: TreeData) => {
-    if (!userRole || !["editor", "admin"].includes(userRole)) {
+    if (!canEdit(userRole)) {
       console.error("Permission Denied: You cannot save data.");
-      return Promise.reject("Permission Denied");
+      return Promise.reject(new Error("Permission Denied"));
     }
-    
     return dataProvider.saveTreeData(newData).catch((error) => {
       console.error("Save Data failed:", error);
       throw error;

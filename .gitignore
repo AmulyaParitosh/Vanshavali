@@ -24,3 +24,10 @@ yarn-debug.log*
 yarn-error.log*
 /.next
 /.local_data
+
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/

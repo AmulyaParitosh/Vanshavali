@@ -4,11 +4,29 @@ import { stringToColor } from "../utils/colorUtils";
 import type { GraphNode } from "../types/graph";
 import type { Person } from "../types/person";
 import { TREE_CONFIG } from "../constants";
+import { canEdit as canEditRole } from "../lib/access";
 import TreeSearch from "./TreeSearch";
 import { useAppContext } from "../context/AppContext";
 
 interface TreeProps {
   data: GraphNode | null;
+}
+
+/**
+ * Escapes HTML special characters in untrusted user content before it gets
+ * interpolated into a `.html(string)` call. This is a minimum-viable XSS guard
+ * — the proper fix is the React + foreignObject rewrite tracked in Phase 4.
+ * Until then, every interpolation of user-provided strings into the details
+ * card MUST go through this.
+ */
+function escapeHtml(value: string | undefined | null): string {
+  if (value == null) return "";
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 const Tree: React.FC<TreeProps> = ({ data }) => {
@@ -19,34 +37,31 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   const gRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null);
   const nodesRef = useRef<d3.HierarchyPointNode<GraphNode>[]>([]);
 
-
   function createDetailsHtml(person: Person) {
-    let html = `<h3>${person.name.official_name}</h3>`;
+    let html = `<h3>${escapeHtml(person.name.official_name)}</h3>`;
 
     if (person.name.aliases && person.name.aliases.length > 0) {
-      html += `<div class="aliases">${person.name.aliases.join(", ")}</div>`;
+      const aliases = person.name.aliases.map(escapeHtml).join(", ");
+      html += `<div class="aliases">${aliases}</div>`;
     }
 
     if (person.events && person.events.length > 0) {
       person.events.forEach((event) => {
-        html += `<div class="event"><strong>${event.type}:</strong> ${
-          event.date || ""
-        }<br/><em>${event.place || ""}</em></div>`;
+        html += `<div class="event"><strong>${escapeHtml(event.type)}:</strong> ${escapeHtml(event.date)}<br/><em>${escapeHtml(event.place)}</em></div>`;
       });
     }
 
     if (person.custom_fields) {
       for (const [key, value] of Object.entries(person.custom_fields)) {
-        html += `<div class="custom-field"><strong>${
-          key.charAt(0).toUpperCase() + key.slice(1)
-        }:</strong> ${value}</div>`;
+        const label = escapeHtml(key.charAt(0).toUpperCase() + key.slice(1));
+        html += `<div class="custom-field"><strong>${label}:</strong> ${escapeHtml(value)}</div>`;
       }
     }
 
-    const canEdit = user?.role === 'admin' || user?.role === 'editor';
-    if (canEdit) {
-        html += `<div class="card-actions" style="margin-top: 15px; text-align: right; border-top: 1px solid #eee; padding-top: 10px;">
-          <a href="/people?id=${person.id}" class="btn-edit-card" style="display: inline-block; padding: 6px 12px; background: var(--color-primary); color: white; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: 600;">EDIT INFO</a>
+    if (canEditRole(user?.role)) {
+      const safeId = encodeURIComponent(person.id);
+      html += `<div class="card-actions" style="margin-top: 15px; text-align: right; border-top: 1px solid #eee; padding-top: 10px;">
+          <a href="/people?id=${safeId}" class="btn-edit-card" style="display: inline-block; padding: 6px 12px; background: var(--color-primary); color: white; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: 600;">EDIT INFO</a>
         </div>`;
     }
     return html;
