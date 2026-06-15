@@ -1,15 +1,5 @@
-import type {
-  Database
-} from "firebase/database";
-import {
-  ref,
-  get,
-  set,
-  onValue,
-  update,
-  push,
-  serverTimestamp
-} from "firebase/database";
+import type { Database } from "firebase/database";
+import { ref, get, set, onValue, update, push, serverTimestamp } from "firebase/database";
 import type { DataProvider, TreeData, UserProfile, AdminUser } from "../types";
 import type { Suggestion, SuggestionStatus } from "../../types/suggestion";
 import { USER_ROLES, SUGGESTION_STATUS } from "../../constants";
@@ -46,25 +36,33 @@ export class FirebaseDataProvider implements DataProvider {
       }
     };
 
-    const unsubPeople = onValue(peopleRef, (snapshot) => {
-      peopleData = snapshot.val() || [];
-      peopleLoaded = true;
-      checkLoading();
-    }, (error) => {
-      console.error("Firebase read failed (people):", error);
-      peopleLoaded = true;
-      checkLoading();
-    });
+    const unsubPeople = onValue(
+      peopleRef,
+      (snapshot) => {
+        peopleData = snapshot.val() || [];
+        peopleLoaded = true;
+        checkLoading();
+      },
+      (error) => {
+        console.error("Firebase read failed (people):", error);
+        peopleLoaded = true;
+        checkLoading();
+      }
+    );
 
-    const unsubFamilies = onValue(familiesRef, (snapshot) => {
-      familiesData = snapshot.val() || [];
-      familiesLoaded = true;
-      checkLoading();
-    }, (error) => {
-      console.error("Firebase read failed (families):", error);
-      familiesLoaded = true;
-      checkLoading();
-    });
+    const unsubFamilies = onValue(
+      familiesRef,
+      (snapshot) => {
+        familiesData = snapshot.val() || [];
+        familiesLoaded = true;
+        checkLoading();
+      },
+      (error) => {
+        console.error("Firebase read failed (families):", error);
+        familiesLoaded = true;
+        checkLoading();
+      }
+    );
 
     return () => {
       unsubPeople();
@@ -74,8 +72,8 @@ export class FirebaseDataProvider implements DataProvider {
 
   async saveTreeData(data: TreeData): Promise<void> {
     const updates: Record<string, any> = {};
-    updates['/people'] = data.people;
-    updates['/families'] = data.families;
+    updates["/people"] = data.people;
+    updates["/families"] = data.families;
     await update(ref(this.db), updates);
   }
 
@@ -98,9 +96,7 @@ export class FirebaseDataProvider implements DataProvider {
     const usersRef = ref(this.db, "users/");
     return onValue(usersRef, (snapshot) => {
       const data = (snapshot.val() ?? {}) as Record<string, { role?: string }>;
-      const count = Object.values(data).filter(
-        (u) => u?.role === USER_ROLES.PENDING
-      ).length;
+      const count = Object.values(data).filter((u) => u?.role === USER_ROLES.PENDING).length;
       callback(count);
     });
   }
@@ -108,7 +104,7 @@ export class FirebaseDataProvider implements DataProvider {
   subscribeToSuggestions(callback: (suggestions: Suggestion[]) => void): () => void {
     const suggestionsRef = ref(this.db, "suggestions/");
     return onValue(suggestionsRef, (snapshot) => {
-      const suggestionsData = (snapshot.val() ?? {}) as Record<string, Omit<Suggestion, 'id'>>;
+      const suggestionsData = (snapshot.val() ?? {}) as Record<string, Omit<Suggestion, "id">>;
       const suggestionsList: Suggestion[] = Object.keys(suggestionsData).map((id) => {
         const entry = suggestionsData[id]!;
         return {
@@ -126,7 +122,7 @@ export class FirebaseDataProvider implements DataProvider {
     await update(suggestionRef, { status });
   }
 
-  async addSuggestion(suggestion: Omit<Suggestion, 'id' | 'timestamp'>): Promise<void> {
+  async addSuggestion(suggestion: Omit<Suggestion, "id" | "timestamp">): Promise<void> {
     const suggestionsRef = ref(this.db, "suggestions");
     await push(suggestionsRef, {
       ...suggestion,
@@ -138,7 +134,7 @@ export class FirebaseDataProvider implements DataProvider {
     const peopleRef = ref(this.db, "people");
     const snapshot = await get(peopleRef);
     const people = snapshot.val() || [];
-    
+
     if (Array.isArray(people)) {
       const personIndex = people.findIndex((p: any) => p.id === personId);
       if (personIndex !== -1) {

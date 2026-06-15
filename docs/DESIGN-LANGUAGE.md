@@ -3,7 +3,7 @@
 This document is the source of truth for Vanshavali's visual identity. It has two parts:
 
 - **Part 1: Current state (descriptive)** — what exists in the codebase today as audited in June 2026. Useful for understanding the baseline before any redesign work and for catching drift.
-- **Part 2: Target system (prescriptive)** — what the design language *should* be after the design pass. New components and refactors target this spec.
+- **Part 2: Target system (prescriptive)** — what the design language _should_ be after the design pass. New components and refactors target this spec.
 
 When the two disagree, follow Part 2 for new work and treat the gap as cleanup debt.
 
@@ -21,23 +21,23 @@ All tokens live in `:root` in `src/app/globals.css`.
 
 ### Color tokens
 
-| Token | Value | Role today |
-|---|---|---|
-| `--color-bg` | `#fdf5e6` | Page background (handmade paper) |
-| `--color-surface` | `#ffffff` | Card / panel surface |
-| `--color-surface-dim` | `#f8f9fa` | (unused — orphan) |
-| `--color-text` | `#1a1a1a` | Default body text |
-| `--color-text-light` | `#666666` | Secondary text |
-| `--color-primary` | `#b22222` | Madhubani red — branded actions, borders, accents |
-| `--color-primary-dark` | `#8b0000` | Hover / strong primary |
-| `--color-primary-light` | `#fff5f5` | Selected backgrounds, hover tints |
-| `--color-secondary` | `#ff8c00` | Marigold — display headings, secondary accents |
-| `--color-accent` | `#2e8b57` | Leaf green — confirm / success |
-| `--color-node-border` | `#b22222` | Alias of primary, used on tree node borders |
-| `--color-shadow` | `rgba(0,0,0,0.08)` | Generic shadow |
-| `--color-link-stroke` | `#221005` | Tree edge stroke color |
-| `--color-bg-transparent` | `rgba(253,245,230,0.95)` | (declared twice, unused) |
-| `--shadow-strong` | `0 12px 36px rgba(178,34,34,0.12)` | Elevated cards |
+| Token                    | Value                              | Role today                                        |
+| ------------------------ | ---------------------------------- | ------------------------------------------------- |
+| `--color-bg`             | `#fdf5e6`                          | Page background (handmade paper)                  |
+| `--color-surface`        | `#ffffff`                          | Card / panel surface                              |
+| `--color-surface-dim`    | `#f8f9fa`                          | (unused — orphan)                                 |
+| `--color-text`           | `#1a1a1a`                          | Default body text                                 |
+| `--color-text-light`     | `#666666`                          | Secondary text                                    |
+| `--color-primary`        | `#b22222`                          | Madhubani red — branded actions, borders, accents |
+| `--color-primary-dark`   | `#8b0000`                          | Hover / strong primary                            |
+| `--color-primary-light`  | `#fff5f5`                          | Selected backgrounds, hover tints                 |
+| `--color-secondary`      | `#ff8c00`                          | Marigold — display headings, secondary accents    |
+| `--color-accent`         | `#2e8b57`                          | Leaf green — confirm / success                    |
+| `--color-node-border`    | `#b22222`                          | Alias of primary, used on tree node borders       |
+| `--color-shadow`         | `rgba(0,0,0,0.08)`                 | Generic shadow                                    |
+| `--color-link-stroke`    | `#221005`                          | Tree edge stroke color                            |
+| `--color-bg-transparent` | `rgba(253,245,230,0.95)`           | (declared twice, unused)                          |
+| `--shadow-strong`        | `0 12px 36px rgba(178,34,34,0.12)` | Elevated cards                                    |
 
 ### Known issues with current tokens
 
@@ -53,10 +53,10 @@ All tokens live in `:root` in `src/app/globals.css`.
 
 ### Radius (raw values; no scale)
 
-| Token | Value | Role today |
-|---|---|---|
-| `--border-radius-sm` | `12px` | Small chips, small buttons, badges, admin inputs |
-| `--border-radius-md` | `20px` | Section/list cards |
+| Token                | Value  | Role today                                           |
+| -------------------- | ------ | ---------------------------------------------------- |
+| `--border-radius-sm` | `12px` | Small chips, small buttons, badges, admin inputs     |
+| `--border-radius-md` | `20px` | Section/list cards                                   |
 | `--border-radius-lg` | `32px` | Hero panels (login, admin container, form container) |
 
 Literal values also in active use: `9999px` (button pills, search input), `16px` (form inputs), `50%` (avatars, circle buttons), `15px` (alias tags).
@@ -70,7 +70,7 @@ Literal values also in active use: `9999px` (button pills, search input), `16px`
 **Font sizes in actual use** (20 distinct values, no scale):
 `0.7em`, `0.75rem`, `0.8em`, `0.85em`, `0.9em`, `0.9rem`, `0.95em`, `1em`, `1.1em`, `1.2em`, `1.2rem`, `1.25em`, `1.5em`, `1.8em`, `2em`, `2.2em`, `2.5em`, `3em`, `12px`, `14px`, `15px`, `16px`.
 
-**Font weights**: 400, 500, 600, bold(700). The `500` weight is *referenced but never loaded* by the Google Fonts URL — it silently falls back to 400.
+**Font weights**: 400, 500, 600, bold(700). The `500` weight is _referenced but never loaded_ by the Google Fonts URL — it silently falls back to 400.
 
 ### Spacing (no scale)
 
@@ -83,6 +83,7 @@ No token system. ~25 distinct `box-shadow` literals across `globals.css`. Roughl
 ### Motion
 
 Two easing curves used as raw literals (no tokens):
+
 - `cubic-bezier(0.4, 0, 0.2, 1)` — Material standard (5+ usages).
 - `cubic-bezier(0.175, 0.885, 0.32, 1.275)` — Overshoot/bounce, only on details-card enter/exit.
 
@@ -152,14 +153,14 @@ Effectively desktop-only. **One media query** in 1647 lines of CSS (`@media (max
 
 Per page load: **~12-14 MB of decorative imagery**.
 
-| File | Size | Usage |
-|---|---|---|
-| `public/canvas_background.png` | 8.3 MB | body::before texture wash at 0.2 opacity |
-| `public/madhubani_banner.png` | 2.0 MB | header background |
-| `public/node_border.png` | 1.9 MB | per-node decorative frame (~50 nodes per tree) |
-| `public/screenshot.jpeg` | 1.7 MB | **unused — orphan** |
-| `public/developer.png` | 888 KB | single 150×150 profile image on About page |
-| `public/favicon.ico` | 4.2 KB | tab favicon |
+| File                           | Size   | Usage                                          |
+| ------------------------------ | ------ | ---------------------------------------------- |
+| `public/canvas_background.png` | 8.3 MB | body::before texture wash at 0.2 opacity       |
+| `public/madhubani_banner.png`  | 2.0 MB | header background                              |
+| `public/node_border.png`       | 1.9 MB | per-node decorative frame (~50 nodes per tree) |
+| `public/screenshot.jpeg`       | 1.7 MB | **unused — orphan**                            |
+| `public/developer.png`         | 888 KB | single 150×150 profile image on About page     |
+| `public/favicon.ico`           | 4.2 KB | tab favicon                                    |
 
 ---
 
@@ -180,45 +181,45 @@ Think: a museum gallery where the building has Mithila murals on the walls but t
 Brand colors first (carry forward, untouched values):
 
 ```css
---color-primary-50:  #fff5f5;   /* was --color-primary-light */
---color-primary-500: #b22222;   /* was --color-primary; also drop --color-node-border alias */
---color-primary-700: #8b0000;   /* was --color-primary-dark */
+--color-primary-50: #fff5f5; /* was --color-primary-light */
+--color-primary-500: #b22222; /* was --color-primary; also drop --color-node-border alias */
+--color-primary-700: #8b0000; /* was --color-primary-dark */
 
 --color-secondary-500: #ff8c00; /* Marigold */
 
---color-accent-500:  #2e8b57;   /* Leaf green */
+--color-accent-500: #2e8b57; /* Leaf green */
 ```
 
 Neutral scale (new — replaces the 12 ad-hoc grays):
 
 ```css
---color-neutral-0:   #ffffff;   /* was --color-surface */
---color-neutral-50:  #f8f9fa;   /* was --color-surface-dim */
+--color-neutral-0: #ffffff; /* was --color-surface */
+--color-neutral-50: #f8f9fa; /* was --color-surface-dim */
 --color-neutral-100: #f0f0f0;
 --color-neutral-200: #e0e0e0;
 --color-neutral-300: #ddd;
 --color-neutral-400: #aaa;
 --color-neutral-500: #888;
---color-neutral-600: #666;      /* was --color-text-light */
+--color-neutral-600: #666; /* was --color-text-light */
 --color-neutral-700: #555;
 --color-neutral-800: #333;
---color-neutral-900: #1a1a1a;   /* was --color-text */
+--color-neutral-900: #1a1a1a; /* was --color-text */
 ```
 
 Background (heritage):
 
 ```css
---color-bg:          #fdf5e6;   /* handmade paper */
---color-bg-overlay:  rgba(253, 245, 230, 0.95);   /* for use in rgba() contexts */
+--color-bg: #fdf5e6; /* handmade paper */
+--color-bg-overlay: rgba(253, 245, 230, 0.95); /* for use in rgba() contexts */
 ```
 
 Semantic role aliases (new — one source of truth for all "this means danger" usages):
 
 ```css
---color-danger:   var(--color-primary-500);   /* same red — destructive AND brand */
---color-success:  var(--color-accent-500);
---color-warning:  var(--color-secondary-500);
---color-info:     #3b82f6;                    /* new — replaces ad-hoc blues */
+--color-danger: var(--color-primary-500); /* same red — destructive AND brand */
+--color-success: var(--color-accent-500);
+--color-warning: var(--color-secondary-500);
+--color-info: #3b82f6; /* new — replaces ad-hoc blues */
 ```
 
 **Rules**:
@@ -230,17 +231,17 @@ Semantic role aliases (new — one source of truth for all "this means danger" u
 ### Spacing scale (4px base)
 
 ```css
---space-0:   0;
---space-1:   4px;
---space-2:   8px;
---space-3:   12px;
---space-4:   16px;
---space-5:   20px;
---space-6:   24px;
---space-8:   32px;
---space-10:  40px;
---space-12:  48px;
---space-16:  64px;
+--space-0: 0;
+--space-1: 4px;
+--space-2: 8px;
+--space-3: 12px;
+--space-4: 16px;
+--space-5: 20px;
+--space-6: 24px;
+--space-8: 32px;
+--space-10: 40px;
+--space-12: 48px;
+--space-16: 64px;
 ```
 
 Use these. No `padding: 13px`. No `margin-top: 14px` magic values. If a layout demands a non-scale value, it's a design bug — fix the layout, not the value.
@@ -250,33 +251,34 @@ Use these. No `padding: 13px`. No `margin-top: 14px` magic values. If a layout d
 Six sizes only; no `em` (use `rem` or named tokens):
 
 ```css
---font-size-xs:    0.75rem;   /* 12px — captions, badges, labels */
---font-size-sm:    0.875rem;  /* 14px — secondary body */
---font-size-base:  1rem;      /* 16px — body, inputs */
---font-size-lg:    1.125rem;  /* 18px — emphasized body, login text */
---font-size-xl:    1.5rem;    /* 24px — h3 (section headings) */
---font-size-2xl:   2rem;      /* 32px — h2 (page subtitles) */
---font-size-3xl:   2.5rem;    /* 40px — h1 (page titles) */
---font-size-display: 3rem;    /* 48px — hero / display only */
+--font-size-xs: 0.75rem; /* 12px — captions, badges, labels */
+--font-size-sm: 0.875rem; /* 14px — secondary body */
+--font-size-base: 1rem; /* 16px — body, inputs */
+--font-size-lg: 1.125rem; /* 18px — emphasized body, login text */
+--font-size-xl: 1.5rem; /* 24px — h3 (section headings) */
+--font-size-2xl: 2rem; /* 32px — h2 (page subtitles) */
+--font-size-3xl: 2.5rem; /* 40px — h1 (page titles) */
+--font-size-display: 3rem; /* 48px — hero / display only */
 ```
 
 Heading hierarchy:
 
-| Tag | Token | Family |
-|---|---|---|
-| `h1` | `--font-size-3xl` | `--font-heading` (Yatra One) |
-| `h2` | `--font-size-2xl` | `--font-heading` |
-| `h3` | `--font-size-xl` | `--font-heading` |
-| `h4`+ | `--font-size-lg` | `--font-body` (Hind) bold |
-| Body | `--font-size-base` | `--font-body` |
-| Caption | `--font-size-sm` | `--font-body` |
-| Micro | `--font-size-xs` | `--font-body` |
+| Tag     | Token              | Family                       |
+| ------- | ------------------ | ---------------------------- |
+| `h1`    | `--font-size-3xl`  | `--font-heading` (Yatra One) |
+| `h2`    | `--font-size-2xl`  | `--font-heading`             |
+| `h3`    | `--font-size-xl`   | `--font-heading`             |
+| `h4`+   | `--font-size-lg`   | `--font-body` (Hind) bold    |
+| Body    | `--font-size-base` | `--font-body`                |
+| Caption | `--font-size-sm`   | `--font-body`                |
+| Micro   | `--font-size-xs`   | `--font-body`                |
 
 Add **proper fallbacks**:
 
 ```css
 --font-heading: "Yatra One", "Georgia", serif;
---font-body:    "Hind", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+--font-body:
+  "Hind", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
 ```
 
 Weights actually loaded: 400 and 600 for Hind, 400 for Yatra One. **Stop referencing `500`** — it falls back to 400 anyway.
@@ -286,33 +288,33 @@ Weights actually loaded: 400 and 600 for Hind, 400 for Yatra One. **Stop referen
 Rename for clarity, add the missing values:
 
 ```css
---radius-xs:  4px;     /* badges, tag chips */
---radius-sm:  8px;     /* small buttons, list items */
---radius-md:  12px;    /* default buttons, inputs, cards */
---radius-lg:  20px;    /* section cards, modals */
---radius-xl:  32px;    /* hero panels */
+--radius-xs: 4px; /* badges, tag chips */
+--radius-sm: 8px; /* small buttons, list items */
+--radius-md: 12px; /* default buttons, inputs, cards */
+--radius-lg: 20px; /* section cards, modals */
+--radius-xl: 32px; /* hero panels */
 --radius-pill: 9999px; /* pill buttons, search input */
---radius-circle: 50%;  /* avatars, circle buttons */
+--radius-circle: 50%; /* avatars, circle buttons */
 ```
 
 ### Elevation
 
 ```css
---shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
---shadow-sm: 0 2px 4px rgba(0,0,0,0.06);
---shadow-md: 0 4px 12px rgba(0,0,0,0.08);
---shadow-lg: 0 12px 36px rgba(178,34,34,0.12);  /* branded — was --shadow-strong */
---shadow-xl: 0 24px 64px rgba(0,0,0,0.16);
+--shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+--shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+--shadow-lg: 0 12px 36px rgba(178, 34, 34, 0.12); /* branded — was --shadow-strong */
+--shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.16);
 ```
 
 ### Motion
 
 ```css
---ease-standard:  cubic-bezier(0.4, 0, 0.2, 1);
---ease-emphasis:  cubic-bezier(0.175, 0.885, 0.32, 1.275);   /* keep for special moments only */
---duration-fast:   150ms;
---duration-base:   200ms;
---duration-slow:   300ms;
+--ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+--ease-emphasis: cubic-bezier(0.175, 0.885, 0.32, 1.275); /* keep for special moments only */
+--duration-fast: 150ms;
+--duration-base: 200ms;
+--duration-slow: 300ms;
 ```
 
 ## 2.3 Components (target)
@@ -380,10 +382,10 @@ Every component ships with:
 Mobile-first by default — design at 375 px width, expand up. Breakpoints:
 
 ```css
---breakpoint-sm: 640px;    /* phone landscape / large phones */
---breakpoint-md: 768px;    /* small tablets */
---breakpoint-lg: 1024px;   /* tablets / small laptops */
---breakpoint-xl: 1280px;   /* desktop */
+--breakpoint-sm: 640px; /* phone landscape / large phones */
+--breakpoint-md: 768px; /* small tablets */
+--breakpoint-lg: 1024px; /* tablets / small laptops */
+--breakpoint-xl: 1280px; /* desktop */
 ```
 
 At < 768 px:
@@ -397,13 +399,13 @@ At < 768 px:
 
 Target: ≤ 500 KB total decorative payload per page.
 
-| File | Current | Target | Treatment |
-|---|---|---|---|
-| `canvas_background.png` | 8.3 MB | < 50 KB | Replace with a CSS-generated tile pattern OR a small repeating SVG. At 0.2 opacity, fidelity isn't critical. |
-| `madhubani_banner.png` | 2.0 MB | < 200 KB | Optimized WebP @ 2x density. Or hand-authored SVG for crisp scaling. |
-| `node_border.png` | 1.9 MB | < 30 KB | Hand-authored SVG. Repeats ~50 times in the DOM but is a single cached request. |
-| `developer.png` | 888 KB | < 30 KB | Optimized WebP, 150 × 150 with 2x retina. |
-| `screenshot.jpeg` | 1.7 MB | **delete** | Orphan asset. |
+| File                    | Current | Target     | Treatment                                                                                                    |
+| ----------------------- | ------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
+| `canvas_background.png` | 8.3 MB  | < 50 KB    | Replace with a CSS-generated tile pattern OR a small repeating SVG. At 0.2 opacity, fidelity isn't critical. |
+| `madhubani_banner.png`  | 2.0 MB  | < 200 KB   | Optimized WebP @ 2x density. Or hand-authored SVG for crisp scaling.                                         |
+| `node_border.png`       | 1.9 MB  | < 30 KB    | Hand-authored SVG. Repeats ~50 times in the DOM but is a single cached request.                              |
+| `developer.png`         | 888 KB  | < 30 KB    | Optimized WebP, 150 × 150 with 2x retina.                                                                    |
+| `screenshot.jpeg`       | 1.7 MB  | **delete** | Orphan asset.                                                                                                |
 
 Use Next.js `<Image>` for all non-decorative photography (lazy load, responsive sizes, automatic AVIF/WebP).
 
@@ -421,13 +423,13 @@ Every list, table, and editor surface needs three pre-designed states:
 
 ## 2.10 Decorative ornaments — usage rules
 
-| Ornament | Reserved for |
-|---|---|
-| `::after` dual-bar underline | Page-title headings on **non-tree** pages (login, profile, settings) — used sparingly. |
-| `::before \2727` star glyph | Special moments — invitation accepted, tree created, milestone toasts. **Removed from `.btn`.** |
-| `::before \2740` flower glyph | Person events on tree details cards. |
-| Madhubani border | Tree node frames, sign-in card, empty-state illustrations. |
-| Primary→secondary gradient border-image | Welcome banner on first sign-in. **Removed from generic toasts.** |
+| Ornament                                | Reserved for                                                                                    |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `::after` dual-bar underline            | Page-title headings on **non-tree** pages (login, profile, settings) — used sparingly.          |
+| `::before \2727` star glyph             | Special moments — invitation accepted, tree created, milestone toasts. **Removed from `.btn`.** |
+| `::before \2740` flower glyph           | Person events on tree details cards.                                                            |
+| Madhubani border                        | Tree node frames, sign-in card, empty-state illustrations.                                      |
+| Primary→secondary gradient border-image | Welcome banner on first sign-in. **Removed from generic toasts.**                               |
 
 Ornaments should feel intentional, not pervasive. The current "every button has a star" pattern is removed.
 
@@ -437,37 +439,37 @@ Ornaments should feel intentional, not pervasive. The current "every button has 
 
 For the refactor work, this is the cheat-sheet:
 
-| Legacy | New |
-|---|---|
-| `--color-primary-light` | `--color-primary-50` |
-| `--color-primary` | `--color-primary-500` |
-| `--color-primary-dark` | `--color-primary-700` |
-| `--color-secondary` | `--color-secondary-500` |
-| `--color-accent` | `--color-accent-500` |
-| `--color-surface` | `--color-neutral-0` |
-| `--color-surface-dim` | `--color-neutral-50` |
-| `--color-text` | `--color-neutral-900` |
-| `--color-text-light` | `--color-neutral-600` |
-| `--color-node-border` | `--color-primary-500` (drop the alias) |
-| `--shadow-strong` | `--shadow-lg` |
-| `--border-radius-sm` | `--radius-md` (the legacy 12px → semantic "default") |
-| `--border-radius-md` | `--radius-lg` |
-| `--border-radius-lg` | `--radius-xl` |
+| Legacy                  | New                                                  |
+| ----------------------- | ---------------------------------------------------- |
+| `--color-primary-light` | `--color-primary-50`                                 |
+| `--color-primary`       | `--color-primary-500`                                |
+| `--color-primary-dark`  | `--color-primary-700`                                |
+| `--color-secondary`     | `--color-secondary-500`                              |
+| `--color-accent`        | `--color-accent-500`                                 |
+| `--color-surface`       | `--color-neutral-0`                                  |
+| `--color-surface-dim`   | `--color-neutral-50`                                 |
+| `--color-text`          | `--color-neutral-900`                                |
+| `--color-text-light`    | `--color-neutral-600`                                |
+| `--color-node-border`   | `--color-primary-500` (drop the alias)               |
+| `--shadow-strong`       | `--shadow-lg`                                        |
+| `--border-radius-sm`    | `--radius-md` (the legacy 12px → semantic "default") |
+| `--border-radius-md`    | `--radius-lg`                                        |
+| `--border-radius-lg`    | `--radius-xl`                                        |
 
-| Inline value | New token |
-|---|---|
-| `#dc3545`, `#a72626`, `#f44336`, `#d32f2f` | `--color-danger` |
-| `#28a745`, `#218838` | `--color-success` |
-| `#fcfcfc`, `#f5f7fa` | `--color-neutral-50` |
-| `#e0e0e0` | `--color-neutral-200` |
-| `#ddd` | `--color-neutral-300` |
-| `#aaa` | `--color-neutral-400` |
-| `#888`, `#757575`, `#777` | `--color-neutral-500` |
-| `#666`, `#6b7280` | `--color-neutral-600` |
-| `#555` | `--color-neutral-700` |
-| `#333`, `#374151` | `--color-neutral-800` |
+| Inline value                                          | New token                                                                                                    |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `#dc3545`, `#a72626`, `#f44336`, `#d32f2f`            | `--color-danger`                                                                                             |
+| `#28a745`, `#218838`                                  | `--color-success`                                                                                            |
+| `#fcfcfc`, `#f5f7fa`                                  | `--color-neutral-50`                                                                                         |
+| `#e0e0e0`                                             | `--color-neutral-200`                                                                                        |
+| `#ddd`                                                | `--color-neutral-300`                                                                                        |
+| `#aaa`                                                | `--color-neutral-400`                                                                                        |
+| `#888`, `#757575`, `#777`                             | `--color-neutral-500`                                                                                        |
+| `#666`, `#6b7280`                                     | `--color-neutral-600`                                                                                        |
+| `#555`                                                | `--color-neutral-700`                                                                                        |
+| `#333`, `#374151`                                     | `--color-neutral-800`                                                                                        |
 | Tailwind role badge pairs (`#fee2e2`/`#991b1b`, etc.) | Build new role badges with `--color-danger`/`--color-success`/`--color-warning` + matching `*-50` background |
 
 ---
 
-*This document is updated when token names change, when new components are introduced, or when the heritage motif surfaces shift. Last revised: 2026-06.*
+_This document is updated when token names change, when new components are introduced, or when the heritage motif surfaces shift. Last revised: 2026-06._

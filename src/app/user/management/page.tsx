@@ -1,7 +1,7 @@
-'use client';
+"use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from 'next/navigation';
-import { useAppContext } from '../../../context/AppContext';
+import { useRouter } from "next/navigation";
+import { useAppContext } from "../../../context/AppContext";
 import type { AdminUser } from "../../../services/types";
 import { USER_ROLES } from "../../../constants";
 
@@ -15,42 +15,42 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     if (user && user.role !== USER_ROLES.ADMIN) {
-      router.push('/');
+      router.push("/");
     }
   }, [user, router]);
 
   useEffect(() => {
     const fetchUsers = async () => {
-        try {
-            const usersList = await dataProvider.getAllUsers();
-            setUsers(usersList);
-        } catch (error) {
-            console.error("Error fetching users:", error);
-            toast.error("Failed to load users");
-        }
+      try {
+        const usersList = await dataProvider.getAllUsers();
+        setUsers(usersList);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        toast.error("Failed to load users");
+      }
     };
     fetchUsers();
-    
-    // Note: In a real app we might want to subscribe to updates, 
+
+    // Note: In a real app we might want to subscribe to updates,
     // but for now let's just fetch once or implement a specific subscription.
   }, [dataProvider]);
 
   const handleRoleChange = async (uid: string, newRole: string) => {
     try {
-        await dataProvider.updateUserRole(uid, newRole);
-        toast.success(`User role updated to ${newRole}`);
-        // Locally update the state for immediate feedback
-        setUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
+      await dataProvider.updateUserRole(uid, newRole);
+      toast.success(`User role updated to ${newRole}`);
+      // Locally update the state for immediate feedback
+      setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, role: newRole } : u)));
     } catch (err) {
-        toast.error("Failed to update role");
-        console.error(err);
+      toast.error("Failed to update role");
+      console.error(err);
     }
   };
 
   const managedUsers = users.filter((u) => u.role !== USER_ROLES.PENDING);
 
   if (!user || user.role !== USER_ROLES.ADMIN) {
-      return null; 
+    return null;
   }
 
   return (

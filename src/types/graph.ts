@@ -1,4 +1,4 @@
-import type { Person } from './person';
+import type { Person } from "./person";
 
 export interface GraphNode extends Person {
   isPartnerGroup?: boolean;
@@ -9,12 +9,12 @@ export interface GraphNode extends Person {
 }
 
 export interface ConsistencyIssue {
-  type: 'error' | 'warning';
+  type: "error" | "warning";
   message: string;
   entityId?: string;
 }
 
 export interface PathStep {
-    personId: string;
-    relation: string;
+  personId: string;
+  relation: string;
 }

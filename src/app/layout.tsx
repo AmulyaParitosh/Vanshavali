@@ -1,18 +1,18 @@
-import AppProvider from '../providers/AppProvider';
-import './globals.css';
-import { ToastSystem } from '../components/ToastSystem';
+import AppProvider from "../providers/AppProvider";
+import "./globals.css";
+import { ToastSystem } from "../components/ToastSystem";
 
 export const metadata = {
-  title: 'Vanshavali',
-  description: 'Family Tree Application',
+  title: "Vanshavali",
+  description: "Family Tree Application",
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
   },
 };
 
-import React from 'react';
+import React from "react";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

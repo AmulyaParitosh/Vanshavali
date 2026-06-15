@@ -10,7 +10,13 @@ interface ImageUploadProps {
   storagePath?: string | undefined;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onImageRemove, canEdit, storagePath }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({
+  imageUrl,
+  onImageChange,
+  onImageRemove,
+  canEdit,
+  storagePath,
+}) => {
   const { storageProvider } = useAppContext();
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -27,23 +33,27 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
 
     let finalStoragePath = storagePath;
     if (!finalStoragePath) {
-        // Fallback for backward compatibility or when no specific path is provided
-        const userId = "user_placeholder_id"; 
-        finalStoragePath = `images/${userId}`;
+      // Fallback for backward compatibility or when no specific path is provided
+      const userId = "user_placeholder_id";
+      finalStoragePath = `images/${userId}`;
     }
 
     try {
       // Upload the file using StorageProvider
-      const { url, fullPath } = await storageProvider.uploadImage(file, `${finalStoragePath}/${Date.now()}_${file.name}`);
+      const { url, fullPath } = await storageProvider.uploadImage(
+        file,
+        `${finalStoragePath}/${Date.now()}_${file.name}`
+      );
 
       // Pass the new URL and the path to the parent component
       onImageChange(url, fullPath);
       toast.success("Image uploaded successfully!");
       toast.dismiss(toastId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error uploading file:", error);
       toast.dismiss(toastId);
-      toast.error(`Upload failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Upload failed: ${message}`);
     } finally {
       setIsUploading(false);
     }
@@ -55,13 +65,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
   };
 
   const handleRemove = () => {
-      toast.confirm(
-          "Are you sure you want to remove this image?",
-          () => {
-             onImageRemove();
-             toast.success("Image removed.");
-          }
-      );
+    toast.confirm("Are you sure you want to remove this image?", () => {
+      onImageRemove();
+      toast.success("Image removed.");
+    });
   };
 
   return (
@@ -74,7 +81,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ imageUrl, onImageChange, onIm
             <span>No Image</span>
           </div>
         )}
-        
+
         {canEdit && (
           <div className="overlay-actions">
             <button

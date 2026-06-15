@@ -62,13 +62,20 @@ export default function Header({ user, userRole, onLogout }: HeaderProps) {
       <div className="header-right">
         {user && (
           <Link href="/user/profile" className="user-menu-link">
-             {user.photoURL ? (
-                <img src={user.photoURL} alt={user.displayName || "User"} className="header-user-avatar" />
-              ) : (
-                <div className="header-user-placeholder" style={{ backgroundColor: stringToColor(user.email || user.displayName || "User") }}>
-                  {user.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
-                </div>
-              )}
+            {user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={user.displayName || "User"}
+                className="header-user-avatar"
+              />
+            ) : (
+              <div
+                className="header-user-placeholder"
+                style={{ backgroundColor: stringToColor(user.email || user.displayName || "User") }}
+              >
+                {user.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
+              </div>
+            )}
           </Link>
         )}
       </div>

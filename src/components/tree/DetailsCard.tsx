@@ -22,9 +22,7 @@ const DetailsCard: React.FC<DetailsCardProps> = ({ person, canEdit }) => {
   return (
     <div className="details-card">
       <h3>{person.name.official_name}</h3>
-      {aliases.length > 0 && (
-        <div className="aliases">{aliases.join(", ")}</div>
-      )}
+      {aliases.length > 0 && <div className="aliases">{aliases.join(", ")}</div>}
       {events.map((event, i) => (
         <div key={`${event.type}-${i}`} className="event">
           <strong>{event.type}:</strong> {event.date}
@@ -43,10 +41,7 @@ const DetailsCard: React.FC<DetailsCardProps> = ({ person, canEdit }) => {
       ))}
       {canEdit && (
         <div className="card-actions">
-          <Link
-            href={`/people?id=${encodeURIComponent(person.id)}`}
-            className="btn-edit-card"
-          >
+          <Link href={`/people?id=${encodeURIComponent(person.id)}`} className="btn-edit-card">
             EDIT INFO
           </Link>
         </div>

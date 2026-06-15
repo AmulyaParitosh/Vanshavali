@@ -105,19 +105,26 @@ export default function ProfilePage() {
       <div className="section-card">
         <h2>My Account</h2>
         <div className="account-info">
-          <p><strong>Name:</strong> {user.displayName}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Role:</strong> <span className={`role-badge role-${user.role}`}>{user.role}</span></p>
+          <p>
+            <strong>Name:</strong> {user.displayName}
+          </p>
+          <p>
+            <strong>Email:</strong> {user.email}
+          </p>
+          <p>
+            <strong>Role:</strong>{" "}
+            <span className={`role-badge role-${user.role}`}>{user.role}</span>
+          </p>
         </div>
       </div>
 
       {linkedPerson ? (
         <div className="profile-person-section">
           <h2>Linked Identity in Tree</h2>
-          <PersonForm 
-            person={linkedPerson} 
-            onSave={handleSaveProfile} 
-            canEdit={true} 
+          <PersonForm
+            person={linkedPerson}
+            onSave={handleSaveProfile}
+            canEdit={true}
             isProfile={true}
           />
         </div>
@@ -125,18 +132,20 @@ export default function ProfilePage() {
         <div className="section-card linking-section">
           <h2>Link to Tree</h2>
           <p>You are not currently linked to a person in the family tree.</p>
-          
+
           {isLinking ? (
             <div className="link-choice">
               <div className="search-box-container">
                 <h3>Search for yourself in the tree:</h3>
-                <PersonSearch 
-                  people={treeData?.people || []} 
-                  onSelect={handleLinkPerson} 
+                <PersonSearch
+                  people={treeData?.people || []}
+                  onSelect={handleLinkPerson}
                   hideLinked={true}
                 />
               </div>
-              <button className="btn btn-secondary" onClick={() => setIsLinking(false)}>Cancel</button>
+              <button className="btn btn-secondary" onClick={() => setIsLinking(false)}>
+                Cancel
+              </button>
             </div>
           ) : (
             <div className="link-actions">
@@ -144,7 +153,7 @@ export default function ProfilePage() {
                 I already exist in the tree (Link)
               </button>
               <button className="btn btn-secondary" onClick={handleCreateNewPerson}>
-                I'm not in the tree (Create New)
+                I&apos;m not in the tree (Create New)
               </button>
             </div>
           )}
@@ -171,11 +180,23 @@ export default function ProfilePage() {
           font-size: 0.85em;
           text-transform: capitalize;
         }
-        .role-admin { background: #fee2e2; color: #991b1b; }
-        .role-editor { background: #fef3c7; color: #92400e; }
-        .role-viewer { background: #dcfce7; color: #166534; }
-        .role-pending { background: #f3f4f6; color: #374151; }
-        
+        .role-admin {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+        .role-editor {
+          background: #fef3c7;
+          color: #92400e;
+        }
+        .role-viewer {
+          background: #dcfce7;
+          color: #166534;
+        }
+        .role-pending {
+          background: #f3f4f6;
+          color: #374151;
+        }
+
         .linking-section {
           text-align: center;
           padding: 40px;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface SidebarProps {
   children: React.ReactNode;
@@ -6,7 +6,7 @@ interface SidebarProps {
   footer?: React.ReactNode;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ children, className = '', footer }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ children, className = "", footer }) => {
   return (
     <aside className={`sidebar ${className}`}>
       {children}
@@ -17,14 +17,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ children, className = '', foot
 
 export const SidebarContent: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
-  className = '',
+  className = "",
 }) => {
   return <div className={`sidebar-content ${className}`}>{children}</div>;
 };
 
 export const SidebarHeader: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
-  className = '',
+  className = "",
 }) => {
   return <div className={`sidebar-search ${className}`}>{children}</div>; // Reusing sidebar-search style for header padding
 };

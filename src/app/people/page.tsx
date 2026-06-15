@@ -1,8 +1,8 @@
-'use client';
+"use client";
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from 'next/navigation';
-import { useAppContext } from '../../context/AppContext';
-import Loading from '../../components/Loading';
+import { useSearchParams } from "next/navigation";
+import { useAppContext } from "../../context/AppContext";
+import Loading from "../../components/Loading";
 import type { Person, DraftPerson } from "../../types/person";
 import type { TreeData } from "../../context/AppContext";
 
@@ -17,7 +17,7 @@ export default function PeoplePage() {
   const canEdit = canEditRole(user?.role);
 
   const searchParams = useSearchParams();
-  const initId = searchParams.get('id');
+  const initId = searchParams.get("id");
 
   const [data, setData] = useState<TreeData | null>(treeData);
   const [selectedPerson, setSelectedPerson] = useState<DraftPerson | null>(() => {
@@ -66,9 +66,7 @@ export default function PeoplePage() {
     let savedPerson: Person;
     if (person.id) {
       savedPerson = person as Person;
-      updatedPeople = data.people.map((p) =>
-        p.id === savedPerson.id ? savedPerson : p
-      );
+      updatedPeople = data.people.map((p) => (p.id === savedPerson.id ? savedPerson : p));
     } else {
       savedPerson = {
         ...person,
@@ -114,26 +112,17 @@ export default function PeoplePage() {
 
   return (
     <div className="edit-screen">
-
       <TextListSidebar<Person>
         items={data.people}
-        renderItem={(p) => (
-          <SearchItem type="person" item={p} />
-        )}
+        renderItem={(p) => <SearchItem type="person" item={p} />}
         filterItem={(p, query) => {
           const q = query.toLowerCase();
           const nameMatch = p.name.official_name.toLowerCase().includes(q);
-          const aliasMatch = p.name.aliases?.some((alias) =>
-            alias.toLowerCase().includes(q)
-          );
+          const aliasMatch = p.name.aliases?.some((alias) => alias.toLowerCase().includes(q));
           return nameMatch || !!aliasMatch;
         }}
         onSelect={setSelectedPerson}
-        selectedItem={
-          selectedPerson && selectedPerson.id
-            ? (selectedPerson as Person)
-            : null
-        }
+        selectedItem={selectedPerson && selectedPerson.id ? (selectedPerson as Person) : null}
         onAdd={canEdit ? handleAddNewPerson : undefined}
         addButtonLabel="Add New Person"
         canEdit={canEdit}
@@ -143,10 +132,7 @@ export default function PeoplePage() {
           <div className="welcome-message">
             <h2>Select a person to view details</h2>
             {canEdit && (
-              <p>
-                You can add a new person using the button at the bottom of the
-                sidebar.
-              </p>
+              <p>You can add a new person using the button at the bottom of the sidebar.</p>
             )}
           </div>
         )}

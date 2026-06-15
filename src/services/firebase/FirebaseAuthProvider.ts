@@ -1,13 +1,5 @@
-import type { 
-  Auth, 
-  User 
-} from "firebase/auth";
-import { 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  onAuthStateChanged, 
-  signOut 
-} from "firebase/auth";
+import type { Auth, User } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 import type { AuthProvider, AuthUser } from "../types";
 
 export class FirebaseAuthProvider implements AuthProvider {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface UnifiedSearchProps extends React.InputHTMLAttributes<HTMLInputElement> {
   placeholder?: string;
@@ -7,9 +7,9 @@ interface UnifiedSearchProps extends React.InputHTMLAttributes<HTMLInputElement>
   className?: string;
 }
 
-const UnifiedSearch: React.FC<UnifiedSearchProps> = ({ 
-  placeholder = "Search...", 
-  onSearch, 
+const UnifiedSearch: React.FC<UnifiedSearchProps> = ({
+  placeholder = "Search...",
+  onSearch,
   initialValue = "",
   className = "",
   ...props
@@ -42,19 +42,23 @@ const UnifiedSearch: React.FC<UnifiedSearchProps> = ({
         {...props}
       />
       {query ? (
-        <button className="btn-icon-remove small clear-search-btn" onClick={handleClear} type="button">
+        <button
+          className="btn-icon-remove small clear-search-btn"
+          onClick={handleClear}
+          type="button"
+        >
           ×
         </button>
       ) : (
         <span className="search-icon-right">
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
             strokeLinejoin="round"
           >
             <circle cx="11" cy="11" r="8"></circle>

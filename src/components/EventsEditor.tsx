@@ -9,14 +9,11 @@ interface EventsEditorProps {
 
 const EventsEditor: React.FC<EventsEditorProps> = ({ events, onChange, canEdit }) => {
   const handleEventChange = (index: number, field: keyof PersonEvent, value: string) => {
+    const current = events[index];
+    if (!current) return;
     const newEvents = [...events];
-    // @ts-ignore
-    newEvents[index][field] = value;
+    newEvents[index] = { ...current, [field]: value };
     onChange(newEvents);
-  };
-
-  const addEvent = () => {
-    onChange([...events, { type: "", date: "", place: "" }]);
   };
 
   const removeEvent = (index: number) => {
@@ -53,9 +50,7 @@ const EventsEditor: React.FC<EventsEditorProps> = ({ events, onChange, canEdit }
             <input
               type="text"
               value={event.place || ""}
-              onChange={(e) =>
-                handleEventChange(index, "place", e.target.value)
-              }
+              onChange={(e) => handleEventChange(index, "place", e.target.value)}
               disabled={!canEdit}
             />
           </div>

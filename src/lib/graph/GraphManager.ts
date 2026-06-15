@@ -1,7 +1,7 @@
-import type { Person } from '../../types/person';
-import type { Family } from '../../types/family';
-import type { GraphNode, PathStep } from '../../types/graph';
-import { familyPartners, inferHusbandWife } from '../family';
+import type { Person } from "../../types/person";
+import type { Family } from "../../types/family";
+import type { GraphNode, PathStep } from "../../types/graph";
+import { familyPartners, inferHusbandWife } from "../family";
 
 export class GraphManager {
   private people: Person[];
@@ -12,8 +12,8 @@ export class GraphManager {
   constructor(people: Person[], families: Family[]) {
     this.people = people || [];
     this.families = families || [];
-    this.personMap = new Map(this.people.map(p => [p.id, p]));
-    this.familyMap = new Map(this.families.map(f => [f.id, f]));
+    this.personMap = new Map(this.people.map((p) => [p.id, p]));
+    this.familyMap = new Map(this.families.map((f) => [f.id, f]));
   }
 
   getPerson(id: string): Person | undefined {
@@ -62,7 +62,9 @@ export class GraphManager {
       });
     }
 
-    return Array.from(ancestors).map((id) => this.getPerson(id)).filter((p): p is Person => !!p);
+    return Array.from(ancestors)
+      .map((id) => this.getPerson(id))
+      .filter((p): p is Person => !!p);
   }
 
   /**
@@ -81,9 +83,7 @@ export class GraphManager {
       visited.add(currentId);
 
       // Find families where this person is a partner (husband, wife, or legacy partners)
-      const familiesAsPartner = this.families.filter((f) =>
-        familyPartners(f).includes(currentId)
-      );
+      const familiesAsPartner = this.families.filter((f) => familyPartners(f).includes(currentId));
 
       familiesAsPartner.forEach((family) => {
         if (family.children) {
@@ -97,7 +97,9 @@ export class GraphManager {
       });
     }
 
-    return Array.from(descendants).map((id) => this.getPerson(id)).filter((p): p is Person => !!p);
+    return Array.from(descendants)
+      .map((id) => this.getPerson(id))
+      .filter((p): p is Person => !!p);
   }
 
   /**
@@ -111,7 +113,7 @@ export class GraphManager {
     if (startId === endId) return [{ personId: startId, relation: "Self" }];
 
     // Adjacency List Construction (Lazy or Cached could be better, but building here for simplicity)
-    const adj = new Map<string, Array<{ target: string, relation: string }>>();
+    const adj = new Map<string, Array<{ target: string; relation: string }>>();
 
     const addEdge = (u: string, v: string, relation: string) => {
       if (!adj.has(u)) adj.set(u, []);
@@ -198,20 +200,18 @@ export class GraphManager {
 
     // 1. Create Partner Nodes for all families
     this.families.forEach((family) => {
-      const { husbandId, wifeId } = inferHusbandWife(family, (id) =>
-        this.getPerson(id)?.sex
-      );
+      const { husbandId, wifeId } = inferHusbandWife(family, (id) => this.getPerson(id)?.sex);
 
       const husband = husbandId ? this.getPerson(husbandId) : undefined;
       const wife = wifeId ? this.getPerson(wifeId) : undefined;
 
       let partnerNode: GraphNode | undefined;
-      
+
       if (husband && wife) {
         partnerNode = {
           id: family.id,
           name: { official_name: `${husband.name.official_name} & ${wife.name.official_name}` }, // Dummy name for group
-          sex: 'M', // Dummy sex
+          sex: "M", // Dummy sex
           isPartnerGroup: true,
           husband,
           wife,
@@ -226,9 +226,9 @@ export class GraphManager {
           partnerNode = { ...primaryParent, children: [] };
         }
       }
-      
+
       if (partnerNode) {
-          hierarchyMap[family.id] = partnerNode;
+        hierarchyMap[family.id] = partnerNode;
       }
     });
 
@@ -239,9 +239,7 @@ export class GraphManager {
         const childrenIds = family.children || [];
         childrenIds.forEach((childId: string) => {
           // Check if this child is a partner in another family (continues the tree)
-          const childOwnFamily = this.families.find((f) =>
-            familyPartners(f).includes(childId)
-          );
+          const childOwnFamily = this.families.find((f) => familyPartners(f).includes(childId));
 
           if (childOwnFamily && hierarchyMap[childOwnFamily.id]) {
             // Link to the child's family node
@@ -252,7 +250,11 @@ export class GraphManager {
             // Child is a leaf node
             const childPerson = this.getPerson(childId);
             if (childPerson) {
-              const leafNode: GraphNode = { ...childPerson, children: [], lineageMemberId: childPerson.id };
+              const leafNode: GraphNode = {
+                ...childPerson,
+                children: [],
+                lineageMemberId: childPerson.id,
+              };
               familyNode.children.push(leafNode);
             }
           }
@@ -264,17 +266,15 @@ export class GraphManager {
     const rootPerson = this.people.find((p) => p.root === true);
     if (!rootPerson) return null;
 
-    const rootFamily = this.families.find((f) =>
-      familyPartners(f).includes(rootPerson.id)
-    );
-    
+    const rootFamily = this.families.find((f) => familyPartners(f).includes(rootPerson.id));
+
     // If root person belongs to a family as a partner, return that family node
     if (rootFamily && hierarchyMap[rootFamily.id]) {
-        const rootNode = hierarchyMap[rootFamily.id]!;
-        rootNode.lineageMemberId = rootPerson.id;
-        return rootNode;
+      const rootNode = hierarchyMap[rootFamily.id]!;
+      rootNode.lineageMemberId = rootPerson.id;
+      return rootNode;
     }
-    
+
     // Otherwise return just the person
     const rootNode: GraphNode = { ...rootPerson, children: [], lineageMemberId: rootPerson.id };
     return rootNode;

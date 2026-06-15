@@ -11,7 +11,11 @@ interface CustomFieldsEditorProps {
   canEdit: boolean;
 }
 
-const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({ customFields, onChange, canEdit }) => {
+const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
+  customFields,
+  onChange,
+  canEdit,
+}) => {
   const handleFieldChange = (index: number, key: string, value: string) => {
     const newFields = [...customFields];
     newFields[index] = { key, value };
@@ -36,9 +40,7 @@ const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({ customFields, o
             <input
               type="text"
               value={field.key}
-              onChange={(e) =>
-                handleFieldChange(index, e.target.value, field.value)
-              }
+              onChange={(e) => handleFieldChange(index, e.target.value, field.value)}
               placeholder="e.g., occupation"
               disabled={!canEdit}
             />
@@ -48,9 +50,7 @@ const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({ customFields, o
             <input
               type="text"
               value={field.value}
-              onChange={(e) =>
-                handleFieldChange(index, field.key, e.target.value)
-              }
+              onChange={(e) => handleFieldChange(index, field.key, e.target.value)}
               disabled={!canEdit}
             />
           </div>

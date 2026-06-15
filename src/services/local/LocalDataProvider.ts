@@ -12,10 +12,10 @@ export class LocalDataProvider implements DataProvider {
     return res.json();
   }
 
-  private async saveDb(collection: string, data: any) {
-    const res = await fetch('/api/local/db', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+  private async saveDb(collection: string, data: unknown) {
+    const res = await fetch("/api/local/db", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ collection, data }),
     });
     return res.json();
@@ -25,13 +25,13 @@ export class LocalDataProvider implements DataProvider {
     try {
       const people = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.PEOPLE);
       const families = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.FAMILIES);
-      
+
       const newData = { people: people || [], families: families || [] };
       const newDataString = JSON.stringify(newData);
 
       if (newDataString !== this.lastDataString) {
         this.lastDataString = newDataString;
-        this.treeSubscribers.forEach(callback => callback(newData));
+        this.treeSubscribers.forEach((callback) => callback(newData));
       }
     } catch (error) {
       console.error("LocalDataProvider: Error refreshing tree data", error);
@@ -51,14 +51,17 @@ export class LocalDataProvider implements DataProvider {
 
   subscribeToTreeData(callback: (data: TreeData) => void): () => void {
     this.treeSubscribers.add(callback);
-    
+
     // Initial fetch
     this.triggerRefresh();
-    
+
     if (!this.pollingInterval) {
-      this.pollingInterval = setInterval(() => this.triggerRefresh(), LOCAL_DATA_CONFIG.POLLING_INTERVAL);
+      this.pollingInterval = setInterval(
+        () => this.triggerRefresh(),
+        LOCAL_DATA_CONFIG.POLLING_INTERVAL
+      );
     }
-    
+
     return () => {
       this.treeSubscribers.delete(callback);
       if (this.treeSubscribers.size === 0 && this.pollingInterval) {
@@ -93,8 +96,11 @@ export class LocalDataProvider implements DataProvider {
 
   subscribeToPendingCount(callback: (count: number) => void): () => void {
     const fetchCount = async () => {
-      const usersData = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.USERS);
-      const count = Object.values(usersData).filter((u: any) => u.role === USER_ROLES.PENDING).length;
+      const usersData = (await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.USERS)) as Record<
+        string,
+        { role?: string }
+      >;
+      const count = Object.values(usersData).filter((u) => u?.role === USER_ROLES.PENDING).length;
       callback(count);
     };
     fetchCount();
@@ -108,7 +114,7 @@ export class LocalDataProvider implements DataProvider {
       const suggestionsList = Object.keys(suggestionsData).map((id) => ({
         id,
         ...suggestionsData[id],
-        status: suggestionsData[id].status || SUGGESTION_STATUS.UNREAD 
+        status: suggestionsData[id].status || SUGGESTION_STATUS.UNREAD,
       })) as Suggestion[];
       callback(suggestionsList.sort((a, b) => b.timestamp - (a.timestamp || 0)));
     };
@@ -125,7 +131,7 @@ export class LocalDataProvider implements DataProvider {
     }
   }
 
-  async addSuggestion(suggestion: Omit<Suggestion, 'id' | 'timestamp'>): Promise<void> {
+  async addSuggestion(suggestion: Omit<Suggestion, "id" | "timestamp">): Promise<void> {
     const suggestions = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.SUGGESTIONS);
     const id = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     suggestions[id] = {
@@ -136,14 +142,17 @@ export class LocalDataProvider implements DataProvider {
   }
 
   async linkUserToPerson(personId: string, uid: string): Promise<void> {
-    const people = await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.PEOPLE);
-    const personIndex = people.findIndex((p: any) => p.id === personId);
-    
+    const people = (await this.fetchDb(LOCAL_DATA_CONFIG.COLLECTIONS.PEOPLE)) as Array<{
+      id: string;
+      userId?: string;
+    }>;
+    const personIndex = people.findIndex((p) => p.id === personId);
+
     if (personIndex !== -1) {
-      if (people[personIndex].userId) {
+      if (people[personIndex]!.userId) {
         throw new Error("This person is already linked to a user.");
       }
-      people[personIndex].userId = uid;
+      people[personIndex]!.userId = uid;
       await this.saveDb(LOCAL_DATA_CONFIG.COLLECTIONS.PEOPLE, people);
       // Trigger immediate refresh after link
       this.triggerRefresh();

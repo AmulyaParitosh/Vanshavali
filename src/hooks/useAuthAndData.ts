@@ -20,8 +20,7 @@ import { useTreeSubscription } from "./useTreeSubscription";
  * this surface.
  */
 export function useAuthAndData() {
-  const { auth: authProvider, data: dataProvider, storage: storageProvider } =
-    useProviders();
+  const { auth: authProvider, data: dataProvider, storage: storageProvider } = useProviders();
 
   const { user, isLoaded: authLoaded } = useAuthUser(authProvider);
   const {
@@ -30,30 +29,21 @@ export function useAuthAndData() {
     isLoaded: profileLoaded,
     refresh: refreshUser,
   } = useUserProfile(user, dataProvider);
-  const { treeData, isLoaded: treeLoaded } = useTreeSubscription(
-    userRole,
-    dataProvider
-  );
+  const { treeData, isLoaded: treeLoaded } = useTreeSubscription(userRole, dataProvider);
 
   // Loading is "any required check still pending":
   //   - auth state not yet decided, OR
   //   - signed in but profile not yet fetched, OR
   //   - signed in with a tree-viewing role but data not yet delivered.
   const isLoading =
-    !authLoaded ||
-    (!!user && !profileLoaded) ||
-    (!!user && canViewTree(userRole) && !treeLoaded);
+    !authLoaded || (!!user && !profileLoaded) || (!!user && canViewTree(userRole) && !treeLoaded);
 
   const handleLogin = useCallback(() => {
-    authProvider
-      .signInWithGoogle()
-      .catch((error) => console.error("Auth error:", error));
+    authProvider.signInWithGoogle().catch((error) => console.error("Auth error:", error));
   }, [authProvider]);
 
   const handleLogout = useCallback(() => {
-    authProvider
-      .signOut()
-      .catch((error) => console.error("Sign out error:", error));
+    authProvider.signOut().catch((error) => console.error("Sign out error:", error));
   }, [authProvider]);
 
   const handleSaveData = useCallback(

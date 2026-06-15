@@ -15,18 +15,23 @@ const UserSidebar: React.FC = () => {
   if (!user) return null;
 
   const avatarUrl = user.photoURL;
-  const initial = user.displayName ? user.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : "?");
+  const initial = user.displayName
+    ? user.displayName.charAt(0).toUpperCase()
+    : user.email
+      ? user.email.charAt(0).toUpperCase()
+      : "?";
   const avatarColor = stringToColor(user.email || user.displayName || "User");
 
   return (
-    <Sidebar className="user-sidebar-override" footer={
+    <Sidebar
+      className="user-sidebar-override"
+      footer={
         <button onClick={handleLogout} className="btn btn-outline-danger btn-block btn-sm">
           Logout
         </button>
-    }>
+      }
+    >
       <SidebarContent>
-
-
         <nav className="sidebar-nav">
           <span className="sidebar-divider">Account</span>
           <Link href="/user/profile" className="sidebar-link">

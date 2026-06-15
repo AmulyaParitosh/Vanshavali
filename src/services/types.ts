@@ -64,13 +64,9 @@ export interface AdminProvider {
 
 /** Site-level feedback inbox (independent of tree data). */
 export interface SuggestionProvider {
-  subscribeToSuggestions(
-    callback: (suggestions: Suggestion[]) => void
-  ): () => void;
+  subscribeToSuggestions(callback: (suggestions: Suggestion[]) => void): () => void;
   updateSuggestionStatus(id: string, status: SuggestionStatus): Promise<void>;
-  addSuggestion(
-    suggestion: Omit<Suggestion, "id" | "timestamp">
-  ): Promise<void>;
+  addSuggestion(suggestion: Omit<Suggestion, "id" | "timestamp">): Promise<void>;
 }
 
 /**
@@ -79,10 +75,7 @@ export interface SuggestionProvider {
  * (UserProvider, TreeDataProvider, etc.) when you don't need the full surface.
  */
 export interface DataProvider
-  extends UserProvider,
-    TreeDataProvider,
-    AdminProvider,
-    SuggestionProvider {}
+  extends UserProvider, TreeDataProvider, AdminProvider, SuggestionProvider {}
 
 export interface StorageProvider {
   uploadImage(file: File, path: string): Promise<{ url: string; fullPath: string }>;

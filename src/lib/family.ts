@@ -10,9 +10,7 @@ import type { Family } from "../types/family";
  */
 export function familyPartners(family: Family): string[] {
   const legacy = family.partners ?? [];
-  return [family.husband, family.wife, ...legacy].filter(
-    (id): id is string => !!id
-  );
+  return [family.husband, family.wife, ...legacy].filter((id): id is string => !!id);
 }
 
 /**

@@ -3,9 +3,8 @@ import * as d3 from "d3";
 import type { GraphNode } from "../../types/graph";
 import { TREE_CONFIG } from "../../constants";
 
-export interface LaidOutNode extends d3.HierarchyPointNode<GraphNode> {}
-
-export interface LaidOutLink extends d3.HierarchyPointLink<GraphNode> {}
+export type LaidOutNode = d3.HierarchyPointNode<GraphNode>;
+export type LaidOutLink = d3.HierarchyPointLink<GraphNode>;
 
 export interface TreeLayout {
   root: LaidOutNode | null;

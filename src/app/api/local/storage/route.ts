@@ -1,19 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { NextRequest, NextResponse } from "next/server";
+import fs from "fs/promises";
+import path from "path";
 
-import { LOCAL_DATA_CONFIG } from '../../../../constants';
+import { LOCAL_DATA_CONFIG } from "../../../../constants";
 
 const STORAGE_DIR = path.join(process.cwd(), LOCAL_DATA_CONFIG.STORAGE_DIR);
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const MIME_TYPES: Record<string, string> = {
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
 };
 
 /**
@@ -22,10 +22,10 @@ const MIME_TYPES: Record<string, string> = {
  * paths). Returns null when the path is unsafe.
  */
 function resolveSafePath(rel: string): string | null {
-  if (!rel || typeof rel !== 'string') return null;
+  if (!rel || typeof rel !== "string") return null;
   if (path.isAbsolute(rel)) return null;
   const normalized = path.normalize(rel);
-  if (normalized.startsWith('..')) return null;
+  if (normalized.startsWith("..")) return null;
   const fullPath = path.resolve(STORAGE_DIR, normalized);
   const root = path.resolve(STORAGE_DIR) + path.sep;
   if (!fullPath.startsWith(root) && fullPath !== path.resolve(STORAGE_DIR)) {
@@ -41,21 +41,15 @@ async function ensureDir(dir: string) {
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const file = formData.get('file');
-    const filePath = formData.get('path');
+    const file = formData.get("file");
+    const filePath = formData.get("path");
 
-    if (!(file instanceof File) || typeof filePath !== 'string') {
-      return NextResponse.json(
-        { error: 'File and path are required' },
-        { status: 400 }
-      );
+    if (!(file instanceof File) || typeof filePath !== "string") {
+      return NextResponse.json({ error: "File and path are required" }, { status: 400 });
     }
 
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json(
-        { error: 'Only image uploads are accepted' },
-        { status: 415 }
-      );
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ error: "Only image uploads are accepted" }, { status: 415 });
     }
 
     if (file.size > MAX_UPLOAD_BYTES) {
@@ -67,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     const fullPath = resolveSafePath(filePath);
     if (!fullPath) {
-      return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+      return NextResponse.json({ error: "Invalid path" }, { status: 400 });
     }
 
     await ensureDir(path.dirname(fullPath));
@@ -78,22 +72,22 @@ export async function POST(request: NextRequest) {
     const url = `/api/local/storage?path=${encodeURIComponent(filePath)}`;
     return NextResponse.json({ url, fullPath: filePath });
   } catch (error) {
-    console.error('Local Storage upload error:', error);
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+    console.error("Local Storage upload error:", error);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const filePath = searchParams.get('path');
+  const filePath = searchParams.get("path");
 
   if (!filePath) {
-    return NextResponse.json({ error: 'Path is required' }, { status: 400 });
+    return NextResponse.json({ error: "Path is required" }, { status: 400 });
   }
 
   const fullPath = resolveSafePath(filePath);
   if (!fullPath) {
-    return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+    return NextResponse.json({ error: "Invalid path" }, { status: 400 });
   }
 
   try {
@@ -101,10 +95,10 @@ export async function GET(request: NextRequest) {
     const ext = path.extname(fullPath).toLowerCase();
     return new NextResponse(new Uint8Array(data), {
       headers: {
-        'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
+        "Content-Type": MIME_TYPES[ext] || "application/octet-stream",
       },
     });
   } catch {
-    return NextResponse.json({ error: 'File not found' }, { status: 404 });
+    return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 }

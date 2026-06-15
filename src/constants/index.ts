@@ -18,10 +18,7 @@ export const ROLES_WITH_TREE_ACCESS: readonly UserRole[] = [
   USER_ROLES.ADMIN,
 ];
 
-export const ROLES_WITH_EDIT_ACCESS: readonly UserRole[] = [
-  USER_ROLES.EDITOR,
-  USER_ROLES.ADMIN,
-];
+export const ROLES_WITH_EDIT_ACCESS: readonly UserRole[] = [USER_ROLES.EDITOR, USER_ROLES.ADMIN];
 
 export const SUGGESTION_STATUS = {
   UNREAD: "unread",
@@ -54,9 +51,9 @@ export const TREE_CONFIG = {
     },
     TEXT: {
       FONT_SIZE: "12px",
-    }
+    },
   },
-  PLACEHOLDER_IMAGE_URL: (color: string, text: string) => 
+  PLACEHOLDER_IMAGE_URL: (color: string, text: string) =>
     `https://placehold.co/100x100/${color}/FFFFFF?text=${text}`,
 };
 
@@ -69,13 +66,13 @@ export const UI_CONFIG = {
     OVERLAY: 1000,
   },
   COLORS: {
-    ERROR_BG_LIGHT: 'rgba(255, 0, 0, 0.1)',
+    ERROR_BG_LIGHT: "rgba(255, 0, 0, 0.1)",
   },
   STYLES: {
     TEXT: {
-        FONT_SIZE: '10px'
-    }
-  }
+      FONT_SIZE: "10px",
+    },
+  },
 };
 
 export const LOCAL_DATA_CONFIG = {

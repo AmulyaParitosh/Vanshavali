@@ -9,8 +9,8 @@ const AccessDeniedScreen: React.FC<AccessDeniedScreenProps> = ({ onLogout }) => 
     <div className="access-denied-screen">
       <h2>Access Denied</h2>
       <p>
-        Your access request has been denied. Please contact an administrator if
-        you believe this is a mistake.
+        Your access request has been denied. Please contact an administrator if you believe this is
+        a mistake.
       </p>
       <button onClick={onLogout} className="btn btn-secondary">
         Logout

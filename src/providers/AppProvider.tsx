@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import React, { useMemo } from 'react';
-import { AppContext } from '../context/AppContext';
-import { useAuthAndData } from '../hooks/useAuthAndData';
+import React, { useMemo } from "react";
+import { AppContext } from "../context/AppContext";
+import { useAuthAndData } from "../hooks/useAuthAndData";
 
-import Header from '../components/Header';
-import LoginScreen from '../components/LoginScreen';
-import PendingApprovalScreen from '../components/PendingApprovalScreen';
-import AccessDeniedScreen from '../components/AccessDeniedScreen';
-import Loading from '../components/Loading';
-import { USER_ROLES } from '../constants';
-import { canViewTree } from '../lib/access';
+import Header from "../components/Header";
+import LoginScreen from "../components/LoginScreen";
+import PendingApprovalScreen from "../components/PendingApprovalScreen";
+import AccessDeniedScreen from "../components/AccessDeniedScreen";
+import Loading from "../components/Loading";
+import { USER_ROLES } from "../constants";
+import { canViewTree } from "../lib/access";
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -35,10 +35,8 @@ export default function AppProvider({ children }: AppProviderProps) {
   const renderContent = () => {
     if (isLoading) return <Loading />;
     if (!user) return <LoginScreen onLoginRequest={handleLogin} />;
-    if (userRole === USER_ROLES.PENDING)
-      return <PendingApprovalScreen onLogout={handleLogout} />;
-    if (userRole === USER_ROLES.DENIED)
-      return <AccessDeniedScreen onLogout={handleLogout} />;
+    if (userRole === USER_ROLES.PENDING) return <PendingApprovalScreen onLogout={handleLogout} />;
+    if (userRole === USER_ROLES.DENIED) return <AccessDeniedScreen onLogout={handleLogout} />;
 
     if (canViewTree(userRole) && !treeData) {
       return <Loading text="Loading family data..." />;

@@ -38,10 +38,7 @@ const PersonAvatar: React.FC<PersonAvatarProps> = ({ person, isLineage }) => {
         height={NODE_RADIUS * 2}
         clipPath={`circle(${NODE_RADIUS}px at center)`}
       />
-      <circle
-        r={NODE_RADIUS}
-        style={{ fill: "none", stroke: ringColor, strokeWidth: "4px" }}
-      />
+      <circle r={NODE_RADIUS} style={{ fill: "none", stroke: ringColor, strokeWidth: "4px" }} />
     </>
   );
 };

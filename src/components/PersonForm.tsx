@@ -34,7 +34,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked; 
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
 
@@ -69,21 +69,21 @@ const PersonForm: React.FC<PersonFormProps> = ({
   };
 
   const handleAddCustomField = () => {
-      const newKey = `new_field_${Date.now()}`;
-      setFormData({ 
-          ...formData, 
-          custom_fields: { 
-              ...(formData.custom_fields || {}), 
-              [newKey]: "" 
-          } 
-      });
+    const newKey = `new_field_${Date.now()}`;
+    setFormData({
+      ...formData,
+      custom_fields: {
+        ...(formData.custom_fields || {}),
+        [newKey]: "",
+      },
+    });
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData) {
-        onSave(formData);
-        toast.success(isProfile ? "Profile updated successfully!" : "Person saved successfully!");
+      onSave(formData);
+      toast.success(isProfile ? "Profile updated successfully!" : "Person saved successfully!");
     }
   };
 
@@ -100,52 +100,69 @@ const PersonForm: React.FC<PersonFormProps> = ({
   };
 
   return (
-    <div className="form-container" style={{ backgroundColor: 'transparent', boxShadow: 'none', padding: 0 }}>
+    <div
+      className="form-container"
+      style={{ backgroundColor: "transparent", boxShadow: "none", padding: 0 }}
+    >
       {/* Profile Header */}
       <div className="section-card profile-header">
         <div className="profile-image-section">
-           <ImageUpload
-              imageUrl={formData.image_url || ""}
-              onImageChange={handleImageChange}
-              onImageRemove={handleImageRemove}
-              canEdit={canEdit}
-              storagePath={person?.id ? `images/people/${person.id}` : undefined}
-            />
+          <ImageUpload
+            imageUrl={formData.image_url || ""}
+            onImageChange={handleImageChange}
+            onImageRemove={handleImageRemove}
+            canEdit={canEdit}
+            storagePath={person?.id ? `images/people/${person.id}` : undefined}
+          />
         </div>
         <div className="profile-header-info">
-             <div className="form-group" style={{ marginBottom: 0 }}>
-               <label htmlFor="person-name" style={{ fontSize: '0.9em', color: 'var(--color-text-light)' }}>Official Name</label>
-               <input
-                 type="text"
-                 id="person-name"
-                 value={formData?.name?.official_name || ""}
-                 onChange={(e) =>
-                   setFormData({
-                     ...formData,
-                     name: { ...formData.name, official_name: e.target.value },
-                   })
-                 }
-                 required
-                 disabled={!canEdit}
-                 style={{ fontSize: '1.5em', fontWeight: 600, padding: '10px 0', border: 'none', borderBottom: '2px solid rgba(0,0,0,0.1)', borderRadius: 0, background: 'transparent', width: '100%' }}
-                 placeholder="Enter Name"
-               />
-             </div>
-             
-             {!isProfile && (
-                <div className="form-group" style={{ marginTop: '15px' }}>
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="root"
-                      checked={formData.root || false}
-                      onChange={handleChange}
-                      disabled={!canEdit}
-                    />
-                    <span>Set as Tree Root</span>
-                  </label>
-                </div>
-             )}
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label
+              htmlFor="person-name"
+              style={{ fontSize: "0.9em", color: "var(--color-text-light)" }}
+            >
+              Official Name
+            </label>
+            <input
+              type="text"
+              id="person-name"
+              value={formData?.name?.official_name || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  name: { ...formData.name, official_name: e.target.value },
+                })
+              }
+              required
+              disabled={!canEdit}
+              style={{
+                fontSize: "1.5em",
+                fontWeight: 600,
+                padding: "10px 0",
+                border: "none",
+                borderBottom: "2px solid rgba(0,0,0,0.1)",
+                borderRadius: 0,
+                background: "transparent",
+                width: "100%",
+              }}
+              placeholder="Enter Name"
+            />
+          </div>
+
+          {!isProfile && (
+            <div className="form-group" style={{ marginTop: "15px" }}>
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  name="root"
+                  checked={formData.root || false}
+                  onChange={handleChange}
+                  disabled={!canEdit}
+                />
+                <span>Set as Tree Root</span>
+              </label>
+            </div>
+          )}
         </div>
       </div>
 
@@ -155,29 +172,29 @@ const PersonForm: React.FC<PersonFormProps> = ({
           <h3>Identity</h3>
           <div className="form-row">
             <div className="form-col">
-                <div className="form-group">
+              <div className="form-group">
                 <label htmlFor="person-sex">Sex</label>
                 <select
-                    id="person-sex"
-                    name="sex"
-                    value={formData.sex || "M"}
-                    onChange={handleChange}
-                    disabled={!canEdit}
+                  id="person-sex"
+                  name="sex"
+                  value={formData.sex || "M"}
+                  onChange={handleChange}
+                  disabled={!canEdit}
                 >
-                    <option value="M">Male</option>
-                    <option value="F">Female</option>
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
                 </select>
-                </div>
+              </div>
             </div>
             <div className="form-col">
-                <div className="form-group">
+              <div className="form-group">
                 <label>Aliases</label>
                 <AliasesInput
-                    aliases={formData.name?.aliases || []}
-                    onChange={handleAliasesChange}
-                    canEdit={canEdit}
+                  aliases={formData.name?.aliases || []}
+                  onChange={handleAliasesChange}
+                  canEdit={canEdit}
                 />
-                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -190,7 +207,12 @@ const PersonForm: React.FC<PersonFormProps> = ({
               <button
                 type="button"
                 className="btn-icon-add"
-                onClick={() => setFormData({ ...formData, events: [...(formData.events || []), { type: "", date: "", place: "" }] })}
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    events: [...(formData.events || []), { type: "", date: "", place: "" }],
+                  })
+                }
                 title="Add Event"
               >
                 +
@@ -220,9 +242,10 @@ const PersonForm: React.FC<PersonFormProps> = ({
             )}
           </div>
           <CustomFieldsEditor
-            customFields={Object.entries(formData.custom_fields || {}).map(
-              ([key, value]) => ({ key, value })
-            )}
+            customFields={Object.entries(formData.custom_fields || {}).map(([key, value]) => ({
+              key,
+              value,
+            }))}
             onChange={handleCustomFieldsChange}
             canEdit={canEdit}
           />
@@ -235,7 +258,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
                 type="button"
                 className="btn btn-danger"
                 onClick={handleDelete}
-                style={{ marginRight: 'auto' }}
+                style={{ marginRight: "auto" }}
               >
                 Delete Person
               </button>

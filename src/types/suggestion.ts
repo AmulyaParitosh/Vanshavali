@@ -1,4 +1,4 @@
-export type SuggestionStatus = 'unread' | 'read' | 'archived' | 'prioritized';
+export type SuggestionStatus = "unread" | "read" | "archived" | "prioritized";
 
 export interface Suggestion {
   id: string;

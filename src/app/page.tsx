@@ -1,14 +1,14 @@
-'use client';
+"use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { useAppContext } from '../context/AppContext';
-import Tree from '../components/Tree';
+import { useAppContext } from "../context/AppContext";
+import Tree from "../components/Tree";
 import { GraphManager } from "../lib/graph/GraphManager";
 import { ConsistencyValidator } from "../lib/graph/ConsistencyValidator";
 import type { ConsistencyIssue } from "../types/graph";
 
 import { UI_CONFIG } from "../constants";
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const { treeData, personId } = useAppContext();
@@ -19,14 +19,14 @@ export default function HomePage() {
   useEffect(() => {
     // If user is not linked to a person, redirect to profile
     if (personId === null && treeData) {
-       // Only redirect if treeData is loaded to ensure we don't redirect prematurely
-       // Actually personId comes from user profile which loads before treeData usually.
-       // But wait, personId can be null if not set.
-       // If undefined, it might mean loading?
-       // user object has personId? 
-       // In AppContext, personId is string | null.
-       // The requirement: "only do this if the user is not linked to. a person, else directly open the default page that is tree."
-       router.push('/user/profile');
+      // Only redirect if treeData is loaded to ensure we don't redirect prematurely
+      // Actually personId comes from user profile which loads before treeData usually.
+      // But wait, personId can be null if not set.
+      // If undefined, it might mean loading?
+      // user object has personId?
+      // In AppContext, personId is string | null.
+      // The requirement: "only do this if the user is not linked to. a person, else directly open the default page that is tree."
+      router.push("/user/profile");
     }
   }, [personId, router, treeData]);
 
@@ -37,7 +37,7 @@ export default function HomePage() {
     if (people && families) {
       const gm = new GraphManager(people, families);
       setGraphManager(gm);
-      
+
       const issues = ConsistencyValidator.validate(gm);
       if (issues.length > 0) {
         console.warn("Graph Consistency Issues:", issues);
@@ -53,19 +53,21 @@ export default function HomePage() {
   return (
     <div id="tree-container">
       {validationIssues.length > 0 && (
-         <div style={{
-             position: 'absolute', 
-             top: 0, 
-             right: 0, 
-             background: UI_CONFIG.COLORS.ERROR_BG_LIGHT, 
-             padding: '10px', 
-             fontSize: UI_CONFIG.STYLES?.TEXT?.FONT_SIZE || '10px',
-             zIndex: UI_CONFIG.Z_INDEX.OVERLAY,
-             pointerEvents: 'none',
-             borderRadius: 'var(--border-radius-sm)',
-         }}>
-             {validationIssues.length} {UI_CONFIG.MESSAGES.DATA_ISSUES_DETECTED}
-         </div>
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            background: UI_CONFIG.COLORS.ERROR_BG_LIGHT,
+            padding: "10px",
+            fontSize: UI_CONFIG.STYLES?.TEXT?.FONT_SIZE || "10px",
+            zIndex: UI_CONFIG.Z_INDEX.OVERLAY,
+            pointerEvents: "none",
+            borderRadius: "var(--border-radius-sm)",
+          }}
+        >
+          {validationIssues.length} {UI_CONFIG.MESSAGES.DATA_ISSUES_DETECTED}
+        </div>
       )}
       {hierarchy ? <Tree data={hierarchy} /> : UI_CONFIG.MESSAGES.BUILDING_HIERARCHY}
     </div>

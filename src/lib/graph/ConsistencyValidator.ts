@@ -1,6 +1,6 @@
-import { GraphManager } from './GraphManager';
-import type { ConsistencyIssue } from '../../types/graph';
-import { familyPartners } from '../family';
+import { GraphManager } from "./GraphManager";
+import type { ConsistencyIssue } from "../../types/graph";
+import { familyPartners } from "../family";
 
 export class ConsistencyValidator {
   /**

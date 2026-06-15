@@ -28,6 +28,9 @@ yarn-error.log*
 # TypeScript incremental build cache
 tsconfig.tsbuildinfo
 
+# Vitest coverage output
+/coverage
+
 # IDE
 .vscode/
 .idea/

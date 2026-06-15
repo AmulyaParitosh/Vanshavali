@@ -7,7 +7,8 @@ export class LocalAuthProvider implements AuthProvider {
 
   constructor() {
     // Check if we have a saved user in localStorage for persistence across reloads
-    const savedUser = typeof window !== 'undefined' ? localStorage.getItem('local_auth_user') : null;
+    const savedUser =
+      typeof window !== "undefined" ? localStorage.getItem("local_auth_user") : null;
     if (savedUser) {
       this.currentUser = JSON.parse(savedUser);
     }
@@ -17,13 +18,13 @@ export class LocalAuthProvider implements AuthProvider {
     this.listeners.push(callback);
     callback(this.currentUser);
     return () => {
-      this.listeners = this.listeners.filter(l => l !== callback);
+      this.listeners = this.listeners.filter((l) => l !== callback);
     };
   }
 
   async signInWithGoogle(): Promise<void> {
     const uid = LOCAL_DATA_CONFIG.MOCK_USER.UID;
-    
+
     try {
       // Fetch users from local DB to get email and name
       const res = await fetch(`/api/local/db?collection=${LOCAL_DATA_CONFIG.COLLECTIONS.USERS}`);
@@ -57,21 +58,21 @@ export class LocalAuthProvider implements AuthProvider {
       };
     }
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('local_auth_user', JSON.stringify(this.currentUser));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("local_auth_user", JSON.stringify(this.currentUser));
     }
     this.notifyListeners();
   }
 
   async signOut(): Promise<void> {
     this.currentUser = null;
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('local_auth_user');
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("local_auth_user");
     }
     this.notifyListeners();
   }
 
   private notifyListeners() {
-    this.listeners.forEach(l => l(this.currentUser));
+    this.listeners.forEach((l) => l(this.currentUser));
   }
 }

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from 'next/navigation';
-import { useAppContext } from '../../../context/AppContext';
+import { useRouter } from "next/navigation";
+import { useAppContext } from "../../../context/AppContext";
 import type { AdminUser } from "../../../services/types";
 import { USER_ROLES } from "../../../constants";
 
@@ -15,19 +15,19 @@ export default function AccessRequestsPage() {
 
   useEffect(() => {
     if (user && user.role !== USER_ROLES.ADMIN) {
-      router.push('/');
+      router.push("/");
     }
   }, [user, router]);
 
   useEffect(() => {
     const fetchUsers = async () => {
-        try {
-            const usersList = await dataProvider.getAllUsers();
-            setUsers(usersList);
-        } catch (error) {
-            console.error("Error fetching users:", error);
-            toast.error("Failed to load users");
-        }
+      try {
+        const usersList = await dataProvider.getAllUsers();
+        setUsers(usersList);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        toast.error("Failed to load users");
+      }
     };
     fetchUsers();
   }, [dataProvider]);
@@ -40,9 +40,7 @@ export default function AccessRequestsPage() {
       } else {
         toast.success(`Request approved as ${newRole}`);
       }
-      setUsers((prev) =>
-        prev.map((u) => (u.uid === uid ? { ...u, role: newRole } : u))
-      );
+      setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, role: newRole } : u)));
     } catch (error) {
       toast.error("Failed to update role");
       console.error(error);
@@ -52,17 +50,17 @@ export default function AccessRequestsPage() {
   const pendingUsers = users.filter((u) => u.role === USER_ROLES.PENDING);
 
   if (!user || user.role !== USER_ROLES.ADMIN) {
-      // Return null or loading spinner instead of unstyled div
-      return null; 
+    // Return null or loading spinner instead of unstyled div
+    return null;
   }
 
   return (
     <div className="admin-dashboard">
       <div className="admin-container">
         <div className="admin-header">
-            <h2>Access Requests</h2>
+          <h2>Access Requests</h2>
         </div>
-        
+
         {pendingUsers.length === 0 ? (
           <p>No pending access requests.</p>
         ) : (

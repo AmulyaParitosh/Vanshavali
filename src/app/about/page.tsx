@@ -47,9 +47,10 @@ export default function AboutPage() {
           <section className="about-section">
             <h3>Motivation</h3>
             <p>
-              Vanshavali was created with the vision of preserving family legacies and connecting generations. 
-              Inspired by the rich cultural heritage of Mithila, this app aims to provide a beautiful and 
-              intuitive way to explore and document your family tree, ensuring that our roots are never forgotten.
+              Vanshavali was created with the vision of preserving family legacies and connecting
+              generations. Inspired by the rich cultural heritage of Mithila, this app aims to
+              provide a beautiful and intuitive way to explore and document your family tree,
+              ensuring that our roots are never forgotten.
             </p>
           </section>
 
@@ -57,11 +58,11 @@ export default function AboutPage() {
             <h3>The Developer</h3>
             <div className="developer-profile">
               <div className="developer-image-container">
-                <Image 
-                  src="/developer.png" 
-                  alt="Developer" 
-                  width={150} 
-                  height={150} 
+                <Image
+                  src="/developer.png"
+                  alt="Developer"
+                  width={150}
+                  height={150}
                   className="developer-image"
                 />
               </div>
@@ -69,8 +70,20 @@ export default function AboutPage() {
                 <p className="developer-name">Amulya Paritosh</p>
                 <p className="developer-role">Full Stack Engineer</p>
                 <div className="developer-connections">
-                  <a href="https://github.com/amulyaparitosh" target="_blank" rel="noopener noreferrer">GitHub</a>
-                  <a href="https://linkedin.com/in/amulyaparitosh" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                  <a
+                    href="https://github.com/amulyaparitosh"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    GitHub
+                  </a>
+                  <a
+                    href="https://linkedin.com/in/amulyaparitosh"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    LinkedIn
+                  </a>
                   <a href="mailto:amulya.paritosh@example.com">Contact</a>
                 </div>
               </div>
@@ -86,9 +99,9 @@ export default function AboutPage() {
                 onChange={(e) => setSuggestion(e.target.value)}
                 required
               />
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
+              <button
+                type="submit"
+                className="btn btn-primary"
                 disabled={isSending || !suggestion.trim()}
               >
                 {isSending ? "Sending..." : "Send Suggestion"}

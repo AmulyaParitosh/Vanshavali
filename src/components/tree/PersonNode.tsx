@@ -32,10 +32,7 @@ const PersonNode: React.FC<PersonNodeProps> = ({
   onLock,
 }) => {
   const { NODE_RADIUS, DETAILS_CARD } = TREE_CONFIG;
-  const cardX =
-    cardSide === "left"
-      ? -NODE_RADIUS - DETAILS_CARD.WIDTH - 20
-      : NODE_RADIUS + 10;
+  const cardX = cardSide === "left" ? -NODE_RADIUS - DETAILS_CARD.WIDTH - 20 : NODE_RADIUS + 10;
   const cardY = -50;
 
   // Invisible bridge rect so the cursor can travel from avatar → card without

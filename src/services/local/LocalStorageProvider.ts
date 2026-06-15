@@ -3,16 +3,16 @@ import type { StorageProvider } from "../types";
 export class LocalStorageProvider implements StorageProvider {
   async uploadImage(file: File, path: string): Promise<{ url: string; fullPath: string }> {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('path', path);
+    formData.append("file", file);
+    formData.append("path", path);
 
-    const res = await fetch('/api/local/storage', {
-      method: 'POST',
+    const res = await fetch("/api/local/storage", {
+      method: "POST",
       body: formData,
     });
 
     if (!res.ok) {
-      throw new Error('Upload failed');
+      throw new Error("Upload failed");
     }
 
     return res.json();

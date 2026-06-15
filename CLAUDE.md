@@ -25,47 +25,55 @@ Locked-in decisions (do not re-litigate without a strong reason):
 - `npm run dev` — start Next.js dev server at `http://localhost:3000`
 - `npm run build` — production build
 - `npm run start` — run the production build
-- `npx tsx scripts/sync-firebase.ts` — download Firebase Realtime DB collections to `.local_data/db/` and Storage assets to `.local_data/storage/` (primes local mode with real data)
-- `npx tsx scripts/migrate-user-person-relation.ts` — one-off local-data migration; moves `users[uid].personId` into `people[].userId`. Edit the hardcoded absolute paths at the top before running on another machine
+- `npm run typecheck` — `tsc --noEmit`
+- `npm run db:generate` — Drizzle Kit: generate a new migration from `db/schema.ts` changes
+- `npm run db:push` — Drizzle Kit: push schema directly to the DB at `DATABASE_URL` (dev only)
+- `npm run db:studio` — Drizzle Studio (visual DB browser)
+- `npm run db:apply-policies` — apply RLS policies + triggers from `db/migrations/0001_initial.sql`
+- `npx tsx scripts/sync-firebase.ts` — legacy; pulls Firebase data into `.local_data/`
+- `npx tsx scripts/migrate-user-person-relation.ts` — legacy local-data migration
 
-No test, lint, or typecheck scripts are wired into `package.json`. The TypeScript config is strict (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`) — verify types with `npx tsc --noEmit` when needed.
+The TypeScript config is strict (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`).
 
 ## Environment
 
-Create `.env` (gitignored) with:
+Copy `.env.sample` → `.env` (gitignored) and fill values. Key vars:
 
-```
-NEXT_PUBLIC_APP_ENV=production   # or "local" for mock data
-NEXT_PUBLIC_LOCAL_USER_UID=local-admin-uid
-```
+- `NEXT_PUBLIC_APP_ENV` — `local` (file-backed, default for dev), `supabase`, or `firebase` (legacy).
+- `NEXT_PUBLIC_LOCAL_USER_UID` — mock UID used in local mode.
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase client config.
+- `SUPABASE_SERVICE_ROLE_KEY` — server-only; for routes that bypass RLS.
+- `DATABASE_URL` — Postgres connection string used by Drizzle Kit migrations.
+- `RESEND_API_KEY` / `RESEND_FROM_EMAIL` — transactional email (lands in Phase 10).
 
-`NEXT_PUBLIC_APP_ENV=local` switches to file-backed mock providers and a mock Google sign-in that resolves to `NEXT_PUBLIC_LOCAL_USER_UID`. Firebase project credentials are currently hardcoded in `src/lib/firebase.ts` and `scripts/sync-firebase.ts`.
+If `NEXT_PUBLIC_APP_ENV` is unset, the factory defaults to `supabase` when Supabase env vars are present, else `firebase`.
 
 ## Architecture
 
 ### Provider abstraction (the central pattern)
 
-All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts` (`AuthProvider`, `DataProvider`, `StorageProvider`). Two implementations exist side by side:
+All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts`. `DataProvider` is split per ISP into four sub-interfaces (`UserProvider`, `TreeDataProvider`, `AdminProvider`, `SuggestionProvider`) — consumers should type their dependencies against the narrowest one they need. Three implementations exist:
 
-- `src/services/firebase/` — Firebase Realtime Database, Firebase Auth (Google), Firebase Storage
-- `src/services/local/` — file-backed providers that hit Next.js API routes under `src/app/api/local/` (which read/write `.local_data/db/*.json` and `.local_data/storage/`)
+- `src/services/firebase/` — Firebase Realtime Database, Firebase Auth (Google), Firebase Storage. Legacy; being removed.
+- `src/services/local/` — file-backed providers hitting Next.js API routes under `src/app/api/local/` (which read/write `.local_data/db/*.json` and `.local_data/storage/`). Retained as the dev/test double.
+- `src/services/supabase/` — Phase 1 scaffold; methods throw `NotImplementedError` until Phase 5/6/7 land the real implementations.
 
-`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) chooses one set based on `NEXT_PUBLIC_APP_ENV` and memoizes it. **Any new backend operation must be added to the `DataProvider`/`AuthProvider`/`StorageProvider` interface and implemented in *both* the firebase and local providers** — otherwise local mode silently breaks.
+`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) chooses one set based on `NEXT_PUBLIC_APP_ENV` and memoizes it. **Any new backend operation must be added to the interface and implemented in _both_ the active (supabase) and local providers** — otherwise local mode silently breaks.
 
 Subscriptions: Firebase uses `onValue` listeners; local providers simulate realtime with `setInterval` polling (`LOCAL_DATA_CONFIG.POLLING_INTERVAL = 5000ms`) and only invoke callbacks when serialized data changes.
 
 ### App bootstrap and auth gating
 
-`src/app/layout.tsx` wraps everything in `AppProvider` (`src/providers/AppProvider.tsx`), which calls `useAuthAndData()` (`src/hooks/useAuthAndData.ts`). That hook is the single source of truth for:
+`src/app/layout.tsx` wraps everything in `AppProvider` (`src/providers/AppProvider.tsx`), which calls `useAuthAndData()` (`src/hooks/useAuthAndData.ts`). That hook composes four single-responsibility hooks:
 
-- Current Firebase/local `AuthUser`
-- The user's role (`pending`, `denied`, `viewer`, `editor`, `admin`)
-- `personId` linking the auth user to a `Person` row
-- The live `TreeData` ({people, families}) subscription
+- `useProviders()` — memoized `{ auth, data, storage }` from the factory.
+- `useAuthUser(authProvider)` — subscribes to auth state; returns `{ user, isLoaded }`.
+- `useUserProfile(user, userProvider)` — fetches/creates profile, auto-creates with `role: "pending"` on first sign-in; returns `{ role, personId, isLoaded, refresh }`.
+- `useTreeSubscription(role, treeProvider)` — subscribes to tree data when `canViewTree(role)`; returns `{ treeData, isLoaded }`.
 
-`AppProvider` renders one of `Loading`, `LoginScreen`, `PendingApprovalScreen`, `AccessDeniedScreen`, or `children` based on role. Pages further inside the app can rely on `useAppContext()` (`src/context/AppContext.tsx`) to get `treeData`, `dataProvider`, `onSave`, etc.
+`AppProvider` renders one of `Loading`, `LoginScreen`, `PendingApprovalScreen`, `AccessDeniedScreen`, or `children` based on role. Inner pages use `useAppContext()` (`src/context/AppContext.tsx`) for `treeData`, `dataProvider`, `onSave`, etc. — the context value is memoized so consumers don't cascade-rerender.
 
-When a user signs in for the first time, `useAuthAndData` auto-creates their profile with `role: "pending"`. Role gating: `viewer | editor | admin` see the tree; only `editor | admin` may call `onSave`.
+Role gating uses the predicates in `src/lib/access.ts`: `canViewTree(role)` (viewer/editor/admin) and `canEdit(role)` (editor/admin). Don't inline role string comparisons; use the helpers.
 
 ### Data model
 
@@ -74,21 +82,29 @@ Two top-level collections drive the tree:
 - `Person` (`src/types/person.ts`) — `id`, `name.official_name`, `sex: 'M'|'F'`, optional `events`, `custom_fields`, `image_url`, `userId` (link to auth user), `root: true` on exactly one person.
 - `Family` (`src/types/family.ts`) — `husband?`, `wife?`, `children: string[]`, plus a legacy `partners?: string[]` used as a fallback.
 
-The schema is currently in transition: prefer `husband`/`wife`; `partners` is deprecated but still read everywhere as a fallback. `GraphManager` and `ConsistencyValidator` always merge `[husband, wife, ...partners].filter(Boolean)` — preserve this pattern when touching family-walking code.
+Schema is in transition. The legacy `partners?: string[]` field is read with a fallback via the `familyPartners(family)` helper in `src/lib/family.ts` — use that helper, don't reinvent the idiom. The new Postgres schema (`db/schema.ts`) drops `partners[]` entirely; it survives only in legacy Firebase data which we're archiving.
 
-Per-user linkage lives on `Person.userId` (canonical) — older data had it on `users[uid].personId`; `migrate-user-person-relation.ts` is the migration to move it.
+Per-user linkage lives on `Person.userId` (canonical). Under multi-tenancy this narrows to per-tree semantic (one auth user can be linked to one person _per tree_; the same uid can appear in multiple trees).
+
+### Database (multi-tenant target)
+
+`db/schema.ts` defines the Postgres schema in Drizzle ORM. Tables: `users`, `trees`, `tree_members`, `people`, `families`, `tree_invites`, `suggestions`. See `docs/ARCHITECTURE.md` §4 for the full shape.
+
+`db/migrations/0001_initial.sql` contains the RLS policies + triggers. Applied via `npm run db:apply-policies`. RLS is what actually enforces per-tree access; the client uses the anon key.
+
+`drizzle.config.ts` points Drizzle Kit at `DATABASE_URL`.
 
 ### Tree rendering and graph logic
 
-`src/lib/graph/GraphManager.ts` is the pure-domain graph layer (no React, no Firebase). It builds a D3-ready hierarchy from `(people, families)`:
+`src/lib/graph/GraphManager.ts` is the pure-domain graph layer (no React, no provider awareness). It builds a D3-ready hierarchy from `(people, families)`:
 
-- `buildHierarchy()` — produces a tree rooted at the person with `root: true`. Each family becomes a "partner group" node containing the husband/wife pair plus child nodes. A child that is itself a partner in another family gets *replaced* by that family's node, with `lineageMemberId` marking which side of the couple continues the line.
+- `buildHierarchy()` — produces a tree rooted at the person with `root: true`. Each family becomes a "partner group" node; a child who is themself a partner in another family gets _replaced_ by that family's node, with `lineageMemberId` marking which side of the couple continues the line.
 - `getAncestors` / `getDescendants` — BFS over family memberships.
 - `findPath(a, b)` — BFS shortest path producing `{personId, relation}` steps (Spouse / Parent / Child / Sibling).
 
-`ConsistencyValidator.validate(graphManager)` (`src/lib/graph/ConsistencyValidator.ts`) reports phantom IDs, missing `sex`, and self-as-parent cycles.
+`ConsistencyValidator.validate(graphManager)` (`src/lib/graph/ConsistencyValidator.ts`) reports phantom IDs, missing `sex`, self-as-parent cycles, and multiple-root violations.
 
-`src/components/Tree.tsx` is the D3 visualization layer — owns the SVG, zoom/pan, and renders nodes from the hierarchy.
+The D3 visualization is decomposed in `src/components/tree/`: `useTreeLayout` (pure math), `useTreeZoom` (d3-zoom wired to refs), `<PersonNode>` / `<PartnerNode>` / `<TreeLink>` / `<DetailsCard>` (React components inside `<foreignObject>`). `src/components/Tree.tsx` is the composition. Details cards are React-rendered so user content is auto-escaped (no XSS surface).
 
 ### Routing
 

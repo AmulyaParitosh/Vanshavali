@@ -13,7 +13,7 @@ export interface PersonEvent {
 export interface Person {
   id: string;
   name: PersonName;
-  sex: 'M' | 'F';
+  sex: "M" | "F";
   events?: PersonEvent[];
   custom_fields?: Record<string, string>;
   root?: boolean;
@@ -27,4 +27,4 @@ export interface Person {
  * for newly-created people; callers use `id ? update(person) : create(person)`
  * to discriminate.
  */
-export type DraftPerson = Omit<Person, 'id'> & { id?: string };
+export type DraftPerson = Omit<Person, "id"> & { id?: string };

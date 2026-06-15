@@ -71,7 +71,7 @@ After migration:
 
 ### Invariant
 
-> **Any new backend operation must be added to the interface and implemented in *both* the Supabase and local providers** — otherwise local mode silently breaks. This applies during and after the migration.
+> **Any new backend operation must be added to the interface and implemented in _both_ the Supabase and local providers** — otherwise local mode silently breaks. This applies during and after the migration.
 
 ### Interface split (target)
 
@@ -213,7 +213,7 @@ Single source of truth for `AuthUser`, the user's global role (`pending | denied
 The single god-hook is decomposed (audit SOLID finding):
 
 - `useAuthUser()` — returns the current `AuthUser` from the `AuthProvider`. Pure auth state.
-- `useUserProfile(user)` — fetches/creates the user's `UserProfile`. On first sign-in: creates the profile *and* their first tree (with themselves as the root Person and `owner` membership). No more `pending` / `denied` global states.
+- `useUserProfile(user)` — fetches/creates the user's `UserProfile`. On first sign-in: creates the profile _and_ their first tree (with themselves as the root Person and `owner` membership). No more `pending` / `denied` global states.
 - `useMyTrees(uid)` — subscribes to `{ owned: TreeMeta[], member: TreeMeta[] }`.
 - `useCurrentTree(treeId)` — given a tree id from the URL, subscribes to tree data and the current user's membership in that tree (`{ role, personId? }`). Returns `null` for both if not a member (caller renders an access-denied per-tree screen).
 
@@ -420,15 +420,15 @@ Phase D step 16 (routes change to `/tree/[id]/*`) is the single user-visible bre
 
 ## 10. Estimated effort
 
-| Phase | Work | Risk |
-|---|---|---|
-| A — Ground-prep refactor + tooling | ~5 days | Low (no behavior change, tests catch regressions) |
-| B — Supabase scaffold | ~3 days | Low-medium (schema design is the only judgment call) |
-| C — Critical bug fixes | ~2 days | Low (mostly mechanical given the audit) |
-| D — Multi-tenant UI | ~5-7 days | Medium (every page touched; manual QA needed) |
-| E — Invitations | ~3-4 days | Medium (email plumbing; Resend setup) |
-| F — Decommission | ~1 day | Low (deletion only) |
-| G — Polish | ~5-10 days | Low-medium (design judgment + lots of small fixes) |
+| Phase                              | Work       | Risk                                                 |
+| ---------------------------------- | ---------- | ---------------------------------------------------- |
+| A — Ground-prep refactor + tooling | ~5 days    | Low (no behavior change, tests catch regressions)    |
+| B — Supabase scaffold              | ~3 days    | Low-medium (schema design is the only judgment call) |
+| C — Critical bug fixes             | ~2 days    | Low (mostly mechanical given the audit)              |
+| D — Multi-tenant UI                | ~5-7 days  | Medium (every page touched; manual QA needed)        |
+| E — Invitations                    | ~3-4 days  | Medium (email plumbing; Resend setup)                |
+| F — Decommission                   | ~1 day     | Low (deletion only)                                  |
+| G — Polish                         | ~5-10 days | Low-medium (design judgment + lots of small fixes)   |
 
 Total: **~4-6 weeks** of focused work for one engineer.
 
@@ -446,4 +446,4 @@ The biggest unknown is Phase G — design polish is open-ended and the audit fou
 
 ---
 
-*Last updated: 2026-06. Maintained alongside CLAUDE.md. When this document and the code disagree, the code is canonical and this document is wrong — open a PR to fix it.*
+_Last updated: 2026-06. Maintained alongside CLAUDE.md. When this document and the code disagree, the code is canonical and this document is wrong — open a PR to fix it._

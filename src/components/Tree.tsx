@@ -56,10 +56,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
   return (
     <div className="tree-canvas-container">
-      <TreeSearch
-        people={treeData?.people || []}
-        onSelectPerson={handleSelectPerson}
-      />
+      <TreeSearch people={treeData?.people || []} onSelectPerson={handleSelectPerson} />
       <svg
         ref={svgRef}
         className="tree-canvas"
@@ -80,10 +77,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
           <g className="nodes">
             {layout.nodes.map((node) => (
-              <g
-                key={node.data.id}
-                transform={`translate(${node.x},${node.y})`}
-              >
+              <g key={node.data.id} transform={`translate(${node.x},${node.y})`}>
                 {node.data.isPartnerGroup ? (
                   <PartnerNode
                     node={node.data}
@@ -128,10 +122,7 @@ const BackgroundOrnaments: React.FC = () => (
  * Walks the laid-out nodes to find the one containing a given personId —
  * either as a single-person node, or as one half of a partner group.
  */
-function findContainingNode(
-  nodes: LaidOutNode[],
-  personId: string
-): LaidOutNode | undefined {
+function findContainingNode(nodes: LaidOutNode[], personId: string): LaidOutNode | undefined {
   return nodes.find((n) => {
     if (n.data.isPartnerGroup) {
       return n.data.husband?.id === personId || n.data.wife?.id === personId;

@@ -77,10 +77,7 @@ export function useTreeZoom({
         .translate(rect.width / 2, rect.height / 2)
         .scale(scale)
         .translate(-x, -y);
-      d3.select(svgEl)
-        .transition()
-        .duration(750)
-        .call(zoom.transform, transform);
+      d3.select(svgEl).transition().duration(750).call(zoom.transform, transform);
     },
   };
 }

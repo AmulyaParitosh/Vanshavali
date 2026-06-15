@@ -1,16 +1,16 @@
-'use client';
+"use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from 'next/navigation';
-import { useAppContext } from '../../../context/AppContext';
+import { useRouter } from "next/navigation";
+import { useAppContext } from "../../../context/AppContext";
 import { useToast } from "../../../components/ToastSystem";
 import { USER_ROLES } from "../../../constants";
 import type { Suggestion, SuggestionStatus } from "../../../types/suggestion";
 
 const STATUS_CONFIG: Record<SuggestionStatus, { label: string; color: string; bgColor: string }> = {
-  unread: { label: 'Unread', color: '#b22222', bgColor: '#fff5f5' },
-  read: { label: 'Read', color: '#2e8b57', bgColor: '#f0f9f4' },
-  prioritized: { label: 'Prioritized', color: '#ff8c00', bgColor: '#fffaf0' },
-  archived: { label: 'Archived', color: '#666', bgColor: '#f5f5f5' }
+  unread: { label: "Unread", color: "#b22222", bgColor: "#fff5f5" },
+  read: { label: "Read", color: "#2e8b57", bgColor: "#f0f9f4" },
+  prioritized: { label: "Prioritized", color: "#ff8c00", bgColor: "#fffaf0" },
+  archived: { label: "Archived", color: "#666", bgColor: "#f5f5f5" },
 };
 
 export default function SuggestionsPage() {
@@ -18,11 +18,11 @@ export default function SuggestionsPage() {
   const router = useRouter();
   const toast = useToast();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [filter, setFilter] = useState<SuggestionStatus | 'all'>('all');
+  const [filter, setFilter] = useState<SuggestionStatus | "all">("all");
 
   useEffect(() => {
     if (user && user.role !== USER_ROLES.ADMIN) {
-      router.push('/');
+      router.push("/");
     }
   }, [user, router]);
 
@@ -44,35 +44,34 @@ export default function SuggestionsPage() {
     }
   };
 
-  const filteredSuggestions = filter === 'all' 
-    ? suggestions 
-    : suggestions.filter(s => s.status === filter);
+  const filteredSuggestions =
+    filter === "all" ? suggestions : suggestions.filter((s) => s.status === filter);
 
   if (!user || user.role !== USER_ROLES.ADMIN) {
-      return null; 
+    return null;
   }
 
   return (
     <div className="admin-dashboard">
       <div className="admin-container">
         <div className="admin-header">
-            <h2>Feature Requests & Suggestions</h2>
+          <h2>Feature Requests & Suggestions</h2>
         </div>
 
         <div className="filter-bar">
-          <button 
-            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
+          <button
+            className={`filter-btn ${filter === "all" ? "active" : ""}`}
+            onClick={() => setFilter("all")}
           >
             All ({suggestions.length})
           </button>
           {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-            <button 
+            <button
               key={key}
-              className={`filter-btn ${filter === key ? 'active' : ''}`}
+              className={`filter-btn ${filter === key ? "active" : ""}`}
               onClick={() => setFilter(key as SuggestionStatus)}
             >
-              {config.label} ({suggestions.filter(s => s.status === key).length})
+              {config.label} ({suggestions.filter((s) => s.status === key).length})
             </button>
           ))}
         </div>
@@ -90,29 +89,32 @@ export default function SuggestionsPage() {
                   </div>
                   <div className="meta-info">
                     <span className="timestamp">{new Date(s.timestamp).toLocaleString()}</span>
-                    <div className="status-badge" style={{ 
-                      color: STATUS_CONFIG[s.status].color,
-                      backgroundColor: STATUS_CONFIG[s.status].bgColor,
-                      borderColor: STATUS_CONFIG[s.status].color
-                    }}>
+                    <div
+                      className="status-badge"
+                      style={{
+                        color: STATUS_CONFIG[s.status].color,
+                        backgroundColor: STATUS_CONFIG[s.status].bgColor,
+                        borderColor: STATUS_CONFIG[s.status].color,
+                      }}
+                    >
                       {STATUS_CONFIG[s.status].label}
                     </div>
                   </div>
                 </div>
-                
-                <div className="message-content">
-                  {s.message}
-                </div>
+
+                <div className="message-content">{s.message}</div>
 
                 <div className="card-actions">
                   <label>Change Status:</label>
-                  <select 
-                    value={s.status} 
+                  <select
+                    value={s.status}
                     onChange={(e) => handleStatusChange(s.id, e.target.value as SuggestionStatus)}
                     className="status-select"
                   >
                     {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                      <option key={key} value={key}>{config.label}</option>
+                      <option key={key} value={key}>
+                        {config.label}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -167,12 +169,12 @@ export default function SuggestionsPage() {
           border: 1px solid var(--color-node-border);
           border-radius: var(--border-radius-md);
           padding: 20px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
           transition: transform 0.2s;
         }
         .suggestion-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         .card-header {
           display: flex;

@@ -1,17 +1,17 @@
-import React from 'react';
-import type { Person } from '../types/person';
-import type { Family } from '../types/family';
-import { getPersonPlaceholderUrl } from '../utils/imageUtils';
-import { inferHusbandWife } from '../lib/family';
+import React from "react";
+import type { Person } from "../types/person";
+import type { Family } from "../types/family";
+import { getPersonPlaceholderUrl } from "../utils/imageUtils";
+import { inferHusbandWife } from "../lib/family";
 
 type SearchItemProps =
-  | { type: 'person'; item: Person; people?: Person[]; onClick?: () => void }
-  | { type: 'family'; item: Family; people: Person[]; onClick?: () => void };
+  | { type: "person"; item: Person; people?: Person[]; onClick?: () => void }
+  | { type: "family"; item: Family; people: Person[]; onClick?: () => void };
 
 const SearchItem: React.FC<SearchItemProps> = (props) => {
   const { type, item, people = [], onClick } = props;
 
-  if (type === 'person') {
+  if (type === "person") {
     const person = item;
     return (
       <div className="search-item" onClick={onClick}>
@@ -25,13 +25,9 @@ const SearchItem: React.FC<SearchItemProps> = (props) => {
         <div className="search-item-content">
           <span className="search-item-name">{person.name.official_name}</span>
           {person.name.aliases && person.name.aliases.length > 0 && (
-            <span className="search-item-subtext">
-              AKA: {person.name.aliases.join(', ')}
-            </span>
+            <span className="search-item-subtext">AKA: {person.name.aliases.join(", ")}</span>
           )}
-          {person.userId && (
-            <span className="linked-badge">Linked</span>
-          )}
+          {person.userId && <span className="linked-badge">Linked</span>}
         </div>
         <style jsx>{`
           .linked-badge {
@@ -51,10 +47,11 @@ const SearchItem: React.FC<SearchItemProps> = (props) => {
     );
   }
 
-  if (type === 'family') {
+  if (type === "family") {
     const family = item;
-    const { husbandId, wifeId } = inferHusbandWife(family, (id) =>
-      people.find((p) => p.id === id)?.sex
+    const { husbandId, wifeId } = inferHusbandWife(
+      family,
+      (id) => people.find((p) => p.id === id)?.sex
     );
     const husband = husbandId ? people.find((p) => p.id === husbandId) : undefined;
     const wife = wifeId ? people.find((p) => p.id === wifeId) : undefined;
@@ -63,19 +60,29 @@ const SearchItem: React.FC<SearchItemProps> = (props) => {
       <div className="search-item" onClick={onClick}>
         <div className="search-item-family-images">
           <img
-            src={husband?.image_url || (husband ? getPersonPlaceholderUrl(husband) : 'https://placehold.co/40/cccccc/FFFFFF?text=H')}
-            alt={husband?.name.official_name || 'Husband'}
+            src={
+              husband?.image_url ||
+              (husband
+                ? getPersonPlaceholderUrl(husband)
+                : "https://placehold.co/40/cccccc/FFFFFF?text=H")
+            }
+            alt={husband?.name.official_name || "Husband"}
             className="search-item-image husband"
           />
           <img
-            src={wife?.image_url || (wife ? getPersonPlaceholderUrl(wife) : 'https://placehold.co/40/cccccc/FFFFFF?text=W')}
-            alt={wife?.name.official_name || 'Wife'}
+            src={
+              wife?.image_url ||
+              (wife
+                ? getPersonPlaceholderUrl(wife)
+                : "https://placehold.co/40/cccccc/FFFFFF?text=W")
+            }
+            alt={wife?.name.official_name || "Wife"}
             className="search-item-image wife"
           />
         </div>
         <div className="search-item-content">
           <span className="search-item-name">
-            {husband?.name.official_name || '?'} & {wife?.name.official_name || '?'}
+            {husband?.name.official_name || "?"} & {wife?.name.official_name || "?"}
           </span>
         </div>
       </div>

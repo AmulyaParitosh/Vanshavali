@@ -142,7 +142,7 @@ When adding new domain logic, put it in `src/lib/` (pure, no React, no provider 
 ### Comments
 
 - **Default to no comments.** Well-named identifiers are the documentation.
-- Comments are for the *why*, not the *what*: a hidden constraint, a workaround for a specific bug (with a link), a surprising invariant.
+- Comments are for the _why_, not the _what_: a hidden constraint, a workaround for a specific bug (with a link), a surprising invariant.
 - **Don't write comments referencing tasks, PRs, callers, or current refactor state** — those belong in the PR description and rot fast.
 - Don't write multi-paragraph docstrings. If a function needs that much explanation, it probably needs to be smaller.
 
@@ -150,7 +150,7 @@ When adding new domain logic, put it in `src/lib/` (pure, no React, no provider 
 
 ## 4. Provider abstraction — the central rule
 
-> **Any new backend operation must be added to the interface in `src/services/types.ts` and implemented in *both* the Supabase and local providers.**
+> **Any new backend operation must be added to the interface in `src/services/types.ts` and implemented in _both_ the Supabase and local providers.**
 
 If you only add the Supabase implementation, local mode breaks silently. If you only add the local one, production breaks. Both must land in the same PR.
 
@@ -198,14 +198,16 @@ style: format with prettier
 ```
 
 Subject line:
+
 - Imperative mood ("add", not "added" or "adds").
 - ≤ 70 characters.
 - No trailing period.
 - Lowercase after the prefix.
 
 Body (optional, for non-trivial commits):
+
 - Wrap at 72 chars.
-- Explain *why*, not *what* — the diff shows what.
+- Explain _why_, not _what_ — the diff shows what.
 - Reference issues / decisions: `Closes #123`, `See docs/ARCHITECTURE.md §9`.
 
 Never rewrite published history without coordination. Don't `--force` push to `main` ever.
@@ -258,26 +260,31 @@ Anything you want a second opinion on.
 A reviewer should check (and an author should self-check before requesting review):
 
 ### Correctness
+
 - [ ] Does the code do what the PR description says?
 - [ ] Edge cases handled (empty arrays, null/undefined inputs, error paths)?
 - [ ] No new TODO / FIXME left unaddressed without an issue link.
 
 ### Safety
+
 - [ ] No user input rendered as HTML without escaping.
 - [ ] No new client-side trust assumptions (e.g., role checks that only exist in the client).
 - [ ] No secrets, API keys, or production URLs in source.
 
 ### Types
+
 - [ ] No `any`. No `as` assertions outside parse boundaries. No `@ts-ignore`.
 - [ ] Tree-scoped methods take `treeId`.
 - [ ] Discriminated unions instead of optional-field-everywhere.
 
 ### Architecture
+
 - [ ] New backend ops added to `src/services/types.ts` and implemented in **both** providers.
 - [ ] Pure-domain code (`src/lib/`) stayed pure (no React, no provider imports).
 - [ ] Constants from `src/constants/index.ts` used instead of inline string literals.
 
 ### Style
+
 - [ ] Tokens used (no raw hex / magic px).
 - [ ] No inline `style={}` for new components.
 - [ ] `:focus-visible` on new interactive elements.
@@ -285,6 +292,7 @@ A reviewer should check (and an author should self-check before requesting revie
 - [ ] No dead code (orphan exports, unused imports, commented-out blocks).
 
 ### Tests
+
 - [ ] Unit tests for new domain logic.
 - [ ] Provider implementations: both Supabase and local exercise the new method.
 - [ ] Tests describe behavior, not implementation (no testing private internals).
@@ -293,15 +301,15 @@ A reviewer should check (and an author should self-check before requesting revie
 
 ## 8. Where to find things
 
-| Question | File |
-|---|---|
-| Project goals, locked-in decisions, contributor onboarding | `CLAUDE.md`, this file |
-| Current architecture + target architecture + migration plan | `docs/ARCHITECTURE.md` |
-| Visual identity, tokens, component spec | `docs/DESIGN-LANGUAGE.md` |
-| What every backend op contractually does | `src/services/types.ts` |
-| Domain logic that has no provider awareness | `src/lib/` |
-| Project-wide constants (roles, statuses, etc.) | `src/constants/index.ts` |
-| Mock backend for offline dev | `src/services/local/` + `src/app/api/local/` |
+| Question                                                    | File                                         |
+| ----------------------------------------------------------- | -------------------------------------------- |
+| Project goals, locked-in decisions, contributor onboarding  | `CLAUDE.md`, this file                       |
+| Current architecture + target architecture + migration plan | `docs/ARCHITECTURE.md`                       |
+| Visual identity, tokens, component spec                     | `docs/DESIGN-LANGUAGE.md`                    |
+| What every backend op contractually does                    | `src/services/types.ts`                      |
+| Domain logic that has no provider awareness                 | `src/lib/`                                   |
+| Project-wide constants (roles, statuses, etc.)              | `src/constants/index.ts`                     |
+| Mock backend for offline dev                                | `src/services/local/` + `src/app/api/local/` |
 
 ---
 
@@ -321,4 +329,4 @@ Visual identity inspired by the Madhubani / Mithila painting tradition of Bihar,
 
 ---
 
-*Last revised: 2026-06.*
+_Last revised: 2026-06._

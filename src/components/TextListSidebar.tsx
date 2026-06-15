@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import UnifiedSearch from './UnifiedSearch';
+import React, { useMemo, useState } from "react";
+import UnifiedSearch from "./UnifiedSearch";
 
 interface Identified {
   id: string;
@@ -38,10 +38,7 @@ export default function TextListSidebar<T extends Identified>({
   return (
     <aside className="sidebar">
       <div className="sidebar-search">
-        <UnifiedSearch
-          onSearch={setSearchQuery}
-          placeholder="Search..."
-        />
+        <UnifiedSearch onSearch={setSearchQuery} placeholder="Search..." />
       </div>
       <div className="sidebar-content">
         <ul className="data-list">
@@ -58,10 +55,7 @@ export default function TextListSidebar<T extends Identified>({
       </div>
       {canEdit && onAdd && (
         <div className="sidebar-actions">
-          <button
-            className="btn btn-primary btn-block"
-            onClick={onAdd}
-          >
+          <button className="btn btn-primary btn-block" onClick={onAdd}>
             {addButtonLabel}
           </button>
         </div>
