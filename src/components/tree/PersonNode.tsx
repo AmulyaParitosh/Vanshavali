@@ -15,6 +15,8 @@ interface PersonNodeProps {
   /** Y-offset for the name label (partner-group wife sits lower than husband). */
   labelOffsetY?: number;
   canEdit: boolean;
+  /** Active treeId — threaded through to the EDIT INFO link inside DetailsCard. */
+  treeId: string | null;
   onLock: (personId: string) => void;
 }
 
@@ -29,6 +31,7 @@ const PersonNode: React.FC<PersonNodeProps> = ({
   cardSide,
   labelOffsetY = TREE_CONFIG.NODE_RADIUS + 50,
   canEdit,
+  treeId,
   onLock,
 }) => {
   const { NODE_RADIUS, DETAILS_CARD } = TREE_CONFIG;
@@ -45,13 +48,30 @@ const PersonNode: React.FC<PersonNodeProps> = ({
     onLock(person.id);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<SVGGElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onLock(person.id);
+    }
+  };
+
   return (
     <g
       className={`node${isLocked ? " locked" : ""}`}
       data-id={person.id}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label={`${person.name.official_name} — toggle details`}
+      aria-pressed={isLocked}
       onMouseEnter={(e) => {
         // Raise this node above its siblings so the details card isn't clipped.
+        const el = e.currentTarget;
+        el.parentNode?.appendChild(el);
+      }}
+      onFocus={(e) => {
+        // Raise on keyboard focus so the details card is also above siblings.
         const el = e.currentTarget;
         el.parentNode?.appendChild(el);
       }}
@@ -88,7 +108,7 @@ const PersonNode: React.FC<PersonNodeProps> = ({
         height={DETAILS_CARD.HEIGHT}
         style={{ overflow: "visible", pointerEvents: "none" }}
       >
-        <DetailsCard person={person} canEdit={canEdit} />
+        <DetailsCard person={person} canEdit={canEdit} treeId={treeId} />
       </foreignObject>
     </g>
   );

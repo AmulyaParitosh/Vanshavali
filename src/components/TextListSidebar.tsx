@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import UnifiedSearch from "./UnifiedSearch";
+import { Sidebar, SidebarContent } from "./Sidebar";
 
 interface Identified {
   id: string;
@@ -16,6 +17,11 @@ interface TextListSidebarProps<T extends Identified> {
   canEdit?: boolean;
 }
 
+/**
+ * Searchable list inside the shared <Sidebar> primitive — used in /people and
+ * /family. Active-item styling matches the rest of the sidebar treatment via
+ * the `active` class on the `<li>`.
+ */
 export default function TextListSidebar<T extends Identified>({
   items,
   renderItem,
@@ -28,38 +34,45 @@ export default function TextListSidebar<T extends Identified>({
 }: TextListSidebarProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Memoize — list filtering re-ran on every keystroke before and was an O(n)
-  // walk through potentially thousands of people.
   const filteredItems = useMemo(
     () => items.filter((item) => filterItem(item, searchQuery)),
     [items, searchQuery, filterItem]
   );
 
   return (
-    <aside className="sidebar">
+    <Sidebar
+      footer={
+        canEdit && onAdd ? (
+          <button type="button" className="btn btn-primary btn-block" onClick={onAdd}>
+            {addButtonLabel}
+          </button>
+        ) : null
+      }
+    >
       <div className="sidebar-search">
         <UnifiedSearch onSearch={setSearchQuery} placeholder="Search..." />
       </div>
-      <div className="sidebar-content">
+      <SidebarContent>
         <ul className="data-list">
           {filteredItems.map((item) => (
             <li
               key={item.id}
               onClick={() => onSelect(item)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(item);
+                }
+              }}
+              tabIndex={0}
+              role="button"
               className={selectedItem?.id === item.id ? "active" : ""}
             >
               {renderItem(item)}
             </li>
           ))}
         </ul>
-      </div>
-      {canEdit && onAdd && (
-        <div className="sidebar-actions">
-          <button className="btn btn-primary btn-block" onClick={onAdd}>
-            {addButtonLabel}
-          </button>
-        </div>
-      )}
-    </aside>
+      </SidebarContent>
+    </Sidebar>
   );
 }

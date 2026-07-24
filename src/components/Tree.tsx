@@ -20,7 +20,7 @@ interface TreeProps {
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
-  const { treeData, membership } = useAppContext();
+  const { treeData, membership, currentTreeId } = useAppContext();
   const [lockedPersonId, setLockedPersonId] = useState<string | null>(null);
 
   const canEdit = canEditRole(membership?.role);
@@ -84,6 +84,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                     depth={node.depth}
                     lockedPersonId={lockedPersonId}
                     canEdit={canEdit}
+                    treeId={currentTreeId}
                     onLock={toggleLock}
                   />
                 ) : (
@@ -93,6 +94,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                     isLocked={lockedPersonId === node.data.id}
                     cardSide="right"
                     canEdit={canEdit}
+                    treeId={currentTreeId}
                     onLock={toggleLock}
                   />
                 )}

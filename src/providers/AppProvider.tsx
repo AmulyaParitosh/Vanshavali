@@ -1,19 +1,33 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { AppContext } from "../context/AppContext";
 import { useAuthAndData } from "../hooks/useAuthAndData";
 
 import Header from "../components/Header";
 import LoginScreen from "../components/LoginScreen";
 import Loading from "../components/Loading";
-import { canViewTree } from "../lib/access";
 
 interface AppProviderProps {
   children: React.ReactNode;
 }
 
+/**
+ * Routes that don't require an active tree to be selected. `/invite/[id]` is
+ * the canonical example — an invited user lands on it before they're a member
+ * of any tree, so we must let it render past the auth gate.
+ */
+const TREE_OPTIONAL_PREFIXES = ["/invite/", "/about", "/user/profile", "/user/suggestions"];
+
+function isTreeOptional(pathname: string | null): boolean {
+  if (!pathname) return false;
+  if (pathname === "/") return true;
+  return TREE_OPTIONAL_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 export default function AppProvider({ children }: AppProviderProps) {
+  const pathname = usePathname();
   const {
     user,
     profile,
@@ -34,14 +48,12 @@ export default function AppProvider({ children }: AppProviderProps) {
 
   const renderContent = () => {
     if (isLoading) return <Loading />;
-    if (!user) return <LoginScreen onLoginRequest={handleLogin} />;
-    // User exists, profile + my-trees loaded; auto-provision effect should have
-    // selected a tree by now. If we still don't have one, fall back to spinner —
-    // the tree picker (Phase 9) will render here when there are multiple trees.
+    if (!user) return <LoginScreen authProvider={authProvider} onLoginRequest={handleLogin} />;
+    // Tree-optional routes (landing, invite accept, profile, etc.) render
+    // without requiring a current tree or membership. Tree-scoped routes have
+    // their own gating in `src/app/tree/[id]/layout.tsx`.
+    if (isTreeOptional(pathname)) return children;
     if (!currentTreeId || !membership) return <Loading text="Setting up your tree..." />;
-    if (canViewTree(membership.role) && !treeData) {
-      return <Loading text="Loading family data..." />;
-    }
     return children;
   };
 

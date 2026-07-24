@@ -1,19 +1,19 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useAppContext } from "../../context/AppContext";
-import Loading from "../../components/Loading";
-import type { Family } from "../../types/family";
-import type { TreeData } from "../../context/AppContext";
-import type { Person } from "../../types/person";
+import { useAppContext } from "../../../../context/AppContext";
+import Loading from "../../../../components/Loading";
+import type { Family } from "../../../../types/family";
+import type { TreeData } from "../../../../context/AppContext";
+import type { Person } from "../../../../types/person";
 
-import TextListSidebar from "../../components/TextListSidebar";
-import { useToast } from "../../components/ToastSystem";
-import SearchItem from "../../components/SearchItem";
-import PersonSearch from "../../components/PersonSearch";
-import { getPersonPlaceholderUrl } from "../../utils/imageUtils";
-import { canEdit as canEditRole } from "../../lib/access";
-import { inferHusbandWife } from "../../lib/family";
-import { TREE_CONFIG } from "../../constants";
+import TextListSidebar from "../../../../components/TextListSidebar";
+import { useToast } from "../../../../components/ToastSystem";
+import SearchItem from "../../../../components/SearchItem";
+import PersonSearch from "../../../../components/PersonSearch";
+import { getPersonPlaceholderUrl } from "../../../../utils/imageUtils";
+import { canEdit as canEditRole } from "../../../../lib/access";
+import { inferHusbandWife } from "../../../../lib/family";
+import { TREE_CONFIG } from "../../../../constants";
 
 export default function FamilyPage() {
   const { treeData, membership, onSave } = useAppContext();
@@ -116,14 +116,31 @@ export default function FamilyPage() {
         canEdit={canEdit}
       />
       <main className="editor-panel">
-        {!selectedFamily && (
-          <div className="welcome-message">
-            <h2>Select a family to view details</h2>
-            {canEdit && (
-              <p>You can add a new family using the button at the bottom of the sidebar.</p>
-            )}
-          </div>
-        )}
+        {!selectedFamily &&
+          (data.families.length === 0 && canEdit ? (
+            <div className="welcome-message">
+              <h2>Create your first family</h2>
+              <p>
+                Families connect people. Pick a husband and wife, list their children, and the tree
+                starts taking shape.
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleAddNewFamily}
+                style={{ marginTop: "var(--space-4)" }}
+              >
+                Create a family
+              </button>
+            </div>
+          ) : (
+            <div className="welcome-message">
+              <h2>Select a family to view details</h2>
+              {canEdit && (
+                <p>You can add a new family using the button at the bottom of the sidebar.</p>
+              )}
+            </div>
+          ))}
         {selectedFamily && (
           <FamilyForm
             family={selectedFamily}

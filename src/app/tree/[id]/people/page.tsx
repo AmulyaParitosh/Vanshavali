@@ -1,17 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useAppContext } from "../../context/AppContext";
-import Loading from "../../components/Loading";
-import type { Person, DraftPerson } from "../../types/person";
-import type { TreeData } from "../../context/AppContext";
+import { useAppContext } from "../../../../context/AppContext";
+import Loading from "../../../../components/Loading";
+import type { Person, DraftPerson } from "../../../../types/person";
+import type { TreeData } from "../../../../context/AppContext";
 
-import PersonForm from "../../components/PersonForm";
-import TextListSidebar from "../../components/TextListSidebar";
-import SearchItem from "../../components/SearchItem";
-import { useToast } from "../../components/ToastSystem";
-import { canEdit as canEditRole } from "../../lib/access";
-import { familyPartners } from "../../lib/family";
+import PersonForm from "../../../../components/PersonForm";
+import TextListSidebar from "../../../../components/TextListSidebar";
+import SearchItem from "../../../../components/SearchItem";
+import { useToast } from "../../../../components/ToastSystem";
+import { canEdit as canEditRole } from "../../../../lib/access";
+import { familyPartners } from "../../../../lib/family";
 
 export default function PeoplePage() {
   const { treeData, membership, onSave } = useAppContext();
@@ -148,14 +148,30 @@ export default function PeoplePage() {
         canEdit={canEdit}
       />
       <main className="editor-panel">
-        {!selectedPerson && (
-          <div className="welcome-message">
-            <h2>Select a person to view details</h2>
-            {canEdit && (
-              <p>You can add a new person using the button at the bottom of the sidebar.</p>
-            )}
-          </div>
-        )}
+        {!selectedPerson &&
+          (data.people.length <= 1 && canEdit ? (
+            <div className="welcome-message">
+              <h2>Add your first family member</h2>
+              <p>
+                Your tree starts with you. Add a parent, sibling, or child to begin building it out.
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleAddNewPerson}
+                style={{ marginTop: "var(--space-4)" }}
+              >
+                Add a person
+              </button>
+            </div>
+          ) : (
+            <div className="welcome-message">
+              <h2>Select a person to view details</h2>
+              {canEdit && (
+                <p>You can add a new person using the button at the bottom of the sidebar.</p>
+              )}
+            </div>
+          ))}
         {selectedPerson && (
           <PersonForm
             person={selectedPerson}

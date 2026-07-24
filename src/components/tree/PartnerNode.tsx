@@ -8,6 +8,7 @@ interface PartnerNodeProps {
   depth: number;
   lockedPersonId: string | null;
   canEdit: boolean;
+  treeId: string | null;
   onLock: (personId: string) => void;
 }
 
@@ -25,6 +26,7 @@ const PartnerNode: React.FC<PartnerNodeProps> = ({
   depth,
   lockedPersonId,
   canEdit,
+  treeId,
   onLock,
 }) => {
   const { PARTNER_OFFSET, NODE_RADIUS } = TREE_CONFIG;
@@ -42,6 +44,7 @@ const PartnerNode: React.FC<PartnerNodeProps> = ({
         cardSide="left"
         labelOffsetY={NODE_RADIUS + 50}
         canEdit={canEdit}
+        treeId={treeId}
         onLock={onLock}
       />
     </g>
@@ -56,6 +59,7 @@ const PartnerNode: React.FC<PartnerNodeProps> = ({
         cardSide="right"
         labelOffsetY={NODE_RADIUS + 72}
         canEdit={canEdit}
+        treeId={treeId}
         onLock={onLock}
       />
     </g>

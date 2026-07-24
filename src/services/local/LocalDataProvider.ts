@@ -118,16 +118,24 @@ export class LocalDataProvider implements DataProvider {
     const owned: TreeMeta[] = [];
     const member: TreeMeta[] = [];
 
+    // A tree is included only if the user has a membership row in it. This
+    // matches Supabase mode (which joins through tree_members) and self-heals
+    // against orphaned trees — e.g. a tree whose per-tree files were removed
+    // out-of-band, where checking ownerUid alone would otherwise lead the UI
+    // to pick the orphan as currentTreeId and stall on "Setting up your tree..."
+    // because the membership read keeps returning null.
     for (const tree of allTrees) {
-      if (tree.ownerUid === uid) {
-        owned.push(tree);
-        continue;
-      }
       const members = (await this.fetchDb<MembersBlob>(
         TREE_COLLECTIONS.MEMBERS,
         tree.id
-      )) as MembersBlob;
-      if (members && members[uid]) member.push(tree);
+      )) as MembersBlob | null;
+      if (!members || !members[uid]) continue;
+
+      if (tree.ownerUid === uid) {
+        owned.push(tree);
+      } else {
+        member.push(tree);
+      }
     }
     return { owned, member };
   }
@@ -155,9 +163,18 @@ export class LocalDataProvider implements DataProvider {
   }
 
   async saveTreeData(treeId: string, data: TreeData): Promise<void> {
-    await this.saveDb(TREE_COLLECTIONS.PEOPLE, data.people, treeId);
-    await this.saveDb(TREE_COLLECTIONS.FAMILIES, data.families, treeId);
-    // Force the next poll to deliver the new data immediately.
+    // Batch into a single request so the temp-file-then-rename sequence on the
+    // server side commits both files together (or neither).
+    await fetch("/api/local/db", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        writes: [
+          { collection: TREE_COLLECTIONS.PEOPLE, data: data.people, tree: treeId },
+          { collection: TREE_COLLECTIONS.FAMILIES, data: data.families, tree: treeId },
+        ],
+      }),
+    });
     this.treeDataSubs.get(treeId)?.refreshNow();
   }
 

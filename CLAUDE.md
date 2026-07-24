@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Direction (June 2026)
 
-This project is being **migrated to multi-tenancy and off Firebase entirely** for public release. See `docs/ARCHITECTURE.md` for the target architecture, data model, and phased migration plan. See `docs/DESIGN-LANGUAGE.md` for the visual identity. See `docs/BACKLOG.md` for deferred design / refactor work that's been scoped but not picked up. See `CONTRIBUTING.md` for dev workflow.
+This project is being **migrated to multi-tenancy and off Firebase entirely** for public release. See `docs/ARCHITECTURE.md` for the target architecture, data model, and phased migration plan. See `docs/SUPABASE-SETUP.md` for the end-to-end provisioning checklist (manual steps the migrations can't do — storage policies, realtime publication, OAuth config). See `docs/DESIGN-LANGUAGE.md` for the visual identity. See `docs/BACKLOG.md` for deferred design / refactor work that's been scoped but not picked up. See `CONTRIBUTING.md` for dev workflow.
 
 Locked-in decisions (do not re-litigate without a strong reason):
 
@@ -44,7 +44,8 @@ Copy `.env.sample` → `.env` (gitignored) and fill values. Key vars:
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase client config.
 - `SUPABASE_SERVICE_ROLE_KEY` — server-only; for routes that bypass RLS.
 - `DATABASE_URL` — Postgres connection string used by Drizzle Kit migrations.
-- `RESEND_API_KEY` / `RESEND_FROM_EMAIL` — transactional email (lands in Phase 10).
+- `RESEND_API_KEY` / `RESEND_FROM_EMAIL` — transactional email (invitations).
+- `NEXT_PUBLIC_SITE_URL` — canonical site origin used to build invite-acceptance URLs in outbound email. Defaults to request origin when unset.
 - `NEXT_PUBLIC_SITE_ADMIN_UIDS` — comma-separated allowlist for the global suggestions inbox.
 
 If `NEXT_PUBLIC_APP_ENV` is unset, the factory defaults to `supabase` when Supabase env vars are present, else `local`.
@@ -122,6 +123,9 @@ App router under `src/app/`. All non-`/api` routes currently operate on `current
 - `/about` — static info page
 - `/user/profile` — global user profile (name/email/photo) + per-tree linked-person editor
 - `/user/suggestions` — site-level feedback inbox; gated by the `NEXT_PUBLIC_SITE_ADMIN_UIDS` allowlist
+- `/invite/[id]` — invite-acceptance landing; calls `/api/invite/accept` after the user is signed in
+- `/api/invite/send` — server route; sends the invitation email via Resend after the owner creates an invite
+- `/api/invite/accept` — server route; uses the service-role client to atomically validate the invite + create the `tree_members` row + mark the invite accepted (RLS blocks the invitee from doing this client-side)
 - `/api/local/db` — local-mode database; supports `?collection=...` for global, `?collection=...&tree=...` for tree-scoped, and `DELETE ?tree=...` for tree deletion
 - `/api/local/storage` — local-mode file storage
 

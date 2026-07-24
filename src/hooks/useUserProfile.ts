@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import type { AuthUser, UserProfile, UserProvider } from "../services/types";
+import { formatError } from "../lib/formatError";
 
 export interface UseUserProfileResult {
   profile: UserProfile | null;
@@ -47,7 +48,7 @@ export function useUserProfile(
         }
         setProfile(existing);
       } catch (error) {
-        console.error("Error fetching user profile:", error);
+        console.error("Error fetching user profile:", formatError(error));
         if (!cancelled) setProfile(null);
       } finally {
         if (!cancelled) setIsLoaded(true);
@@ -65,7 +66,7 @@ export function useUserProfile(
       const updated = await userProvider.getUserProfile(user.uid);
       if (updated) setProfile(updated);
     } catch (error) {
-      console.error("Error refreshing user profile:", error);
+      console.error("Error refreshing user profile:", formatError(error));
     }
   }, [user, userProvider]);
 

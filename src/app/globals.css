@@ -112,6 +112,12 @@
   /* --- Layout constants --- */
   --header-height: 100px;
   --sidebar-width: 300px;
+
+  /* --- Breakpoints (use via @media (max-width: var(--bp-md))) --- */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
 }
 
 /* Global focus-visible base — every interactive element shows the same ring.
@@ -217,8 +223,83 @@ main {
 .header-left-section {
   display: flex;
   align-items: center;
-  gap: 40px; /* Space between title and nav */
+  gap: var(--space-10);
   flex: 1;
+}
+
+.header-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* --- Tree switcher (dropdown in header for picking the active tree) --- */
+.tree-switcher {
+  position: relative;
+}
+
+.tree-switcher-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-neutral-0);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: background var(--duration-base) var(--ease-standard);
+}
+
+.tree-switcher-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tree-switcher-caret {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+}
+
+.tree-switcher-menu {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  min-width: 240px;
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2);
+  background: var(--color-neutral-0);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 1200;
+}
+
+.tree-switcher-item {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+}
+
+.tree-switcher-item:hover {
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+}
+
+.tree-switcher-item.active {
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+  font-weight: 600;
+}
+
+.tree-switcher-separator {
+  height: 1px;
+  background: var(--color-neutral-200);
+  margin: var(--space-2) 0;
 }
 
 .header-nav {
@@ -287,11 +368,26 @@ main {
 }
 
 .login-content {
-  background-color: var(--color-surface);
-  padding: 40px 50px;
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-strong);
+  position: relative;
+  background-color: var(--color-neutral-0);
+  padding: var(--space-10) var(--space-12);
+  border: 4px double var(--color-primary-500);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
   max-width: 500px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Inner Madhubani secondary border — same trick the tree details-card uses. */
+.login-content::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--color-secondary-500);
+  border-radius: calc(var(--radius-xl) - 4px);
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .login-content h2 {
@@ -306,6 +402,230 @@ main {
   font-size: 1.1em;
   line-height: 1.6;
   margin-bottom: 30px;
+}
+
+/* --- Auth form (login screen tabs + inputs) --- */
+.auth-tabs {
+  display: flex;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-5);
+  padding: var(--space-1);
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-md);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--color-neutral-700);
+  cursor: pointer;
+  transition:
+    background var(--duration-base) var(--ease-standard),
+    color var(--duration-base) var(--ease-standard);
+}
+
+.auth-tab.active {
+  background: var(--color-neutral-0);
+  color: var(--color-primary-700);
+  box-shadow: var(--shadow-xs);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  text-align: left;
+}
+
+.auth-form .form-group {
+  margin: 0;
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-neutral-700);
+}
+
+.auth-form input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-neutral-0);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  box-sizing: border-box;
+  transition: border-color var(--duration-base) var(--ease-standard);
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--color-primary-500);
+}
+
+.auth-submit {
+  margin-top: var(--space-2);
+}
+
+.auth-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: var(--space-2) 0 0;
+  color: var(--color-primary-500);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.auth-link:hover {
+  color: var(--color-primary-700);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-6) 0 var(--space-4);
+  color: var(--color-neutral-500);
+  font-size: var(--font-size-sm);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-neutral-200);
+}
+
+.auth-google {
+  width: 100%;
+}
+
+/* --- Onboarding: welcome modal + empty tree banner --- */
+.welcome-modal {
+  position: absolute;
+  top: var(--space-6);
+  right: var(--space-6);
+  max-width: 360px;
+  padding: var(--space-6);
+  background: var(--color-neutral-0);
+  border: 4px double var(--color-primary-500);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  z-index: 900;
+}
+
+.welcome-modal h2 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  margin: 0 0 var(--space-3);
+  color: var(--color-primary-700);
+}
+
+.welcome-modal p {
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--color-text);
+  margin: 0 0 var(--space-5);
+}
+
+.welcome-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.welcome-modal-close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-circle);
+  color: var(--color-neutral-500);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--duration-base) var(--ease-standard);
+}
+
+.welcome-modal-close:hover {
+  background: var(--color-neutral-100);
+}
+
+.empty-tree-banner {
+  position: absolute;
+  left: 50%;
+  bottom: var(--space-6);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-neutral-0);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-md);
+  z-index: 800;
+  max-width: calc(100% - var(--space-12));
+}
+
+.empty-tree-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.empty-tree-banner-content strong {
+  font-family: var(--font-heading);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+}
+
+.empty-tree-banner-content span {
+  color: var(--color-neutral-600);
+  font-size: var(--font-size-sm);
+}
+
+.empty-tree-banner-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .welcome-modal {
+    top: var(--space-4);
+    right: var(--space-4);
+    left: var(--space-4);
+    max-width: none;
+  }
+  .empty-tree-banner {
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: var(--radius-lg);
+    text-align: center;
+  }
+  .empty-tree-banner-actions {
+    justify-content: center;
+  }
 }
 
 /* --- SVG and Tree Styles --- */
@@ -326,6 +646,49 @@ main {
   height: 100%;
   display: block;
   cursor: grab;
+  /* Prevent the browser from interpreting two-finger gestures as page
+   * scroll/zoom so d3-zoom gets the touch events and can pinch-zoom. */
+  touch-action: none;
+}
+
+/* --- Confirm dialog (native <dialog>) --- */
+.confirm-dialog {
+  border: 4px double var(--color-primary-500);
+  border-radius: var(--radius-xl);
+  background: var(--color-neutral-0);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-xl);
+  max-width: min(440px, calc(100vw - var(--space-8)));
+  font-family: var(--font-body);
+  color: var(--color-text);
+}
+
+.confirm-dialog::backdrop {
+  background: rgba(26, 26, 26, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.confirm-dialog-message {
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  margin: 0 0 var(--space-5);
+  color: var(--color-text);
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}
+
+/* Floating tree search overlay (top-left of the tree visualization). */
+.tree-search {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  width: 320px;
+  max-width: calc(100vw - var(--space-8));
+  z-index: 800;
 }
 
 .node-label {
@@ -416,11 +779,21 @@ main {
 }
 
 .node:hover .details-card,
+.node:focus-visible .details-card,
 .node.locked .details-card {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Smooth enter */
+  transition: all 0.4s var(--ease-emphasis);
+}
+
+.node:focus {
+  outline: none;
+}
+.node:focus-visible {
+  outline: 3px solid var(--color-primary-500);
+  outline-offset: 4px;
+  border-radius: var(--radius-circle);
 }
 
 .details-card h3 {
@@ -767,10 +1140,13 @@ main {
   font-weight: 600;
 }
 
-.sidebar-actions {
-  padding: 15px;
-  padding-bottom: 40px;
-  border-top: 1px solid var(--color-node-border);
+/* Legacy alias — kept so any straggling JSX with .sidebar-actions still works,
+ * but new code uses .sidebar-footer via the <Sidebar> footer slot. */
+.sidebar-actions,
+.sidebar-footer {
+  padding: var(--space-4) var(--space-4) var(--space-8);
+  border-top: 1px solid var(--color-neutral-200);
+  flex-shrink: 0;
 }
 
 .editor-panel {
@@ -1262,14 +1638,104 @@ main {
   min-width: 0;
 }
 
+/* ============================================================================
+ * Mobile responsive — collapse layout, narrow sidebars, hide secondary nav.
+ * ============================================================================ */
+
+@media (max-width: 1024px) {
+  /* Sidebars get a bit narrower on tablets so the editor panel has room. */
+  .sidebar,
+  .sidebar.user-sidebar-override {
+    width: 260px;
+    --sidebar-width: 260px;
+  }
+}
+
 @media (max-width: 768px) {
+  /* Header — drop the gigantic h1 and the long nav row down to a compact bar. */
+  :root {
+    --header-height: 64px;
+  }
+  .App-header {
+    padding: var(--space-3) var(--space-4);
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+  .App-header h1 {
+    font-size: var(--font-size-2xl);
+    letter-spacing: 0;
+  }
+  .header-left-section {
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .header-nav {
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .nav-link {
+    font-size: var(--font-size-sm);
+    letter-spacing: 0.5px;
+  }
+  .tree-switcher-button {
+    max-width: 180px;
+  }
+  .tree-switcher-button > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Split editor: sidebar above the panel as a horizontal scroll list. */
+  .edit-screen {
+    flex-direction: column;
+  }
+  .sidebar,
+  .sidebar.user-sidebar-override {
+    width: 100%;
+    --sidebar-width: 100%;
+    height: auto;
+    max-height: 40vh;
+    position: static;
+  }
+  .user-layout {
+    flex-direction: column;
+  }
+
+  /* Forms stack their two-column rows. */
   .profile-header {
     flex-direction: column;
     text-align: center;
   }
   .form-row {
     flex-direction: column;
-    gap: 15px;
+    gap: var(--space-4);
+  }
+
+  /* Tree picker grid → single column on phones. */
+  .tree-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Big-padded pages get tighter. */
+  .profile-page-container,
+  .members-page,
+  .settings-page,
+  .trees-landing {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 600px) {
+  .App-header h1 {
+    font-size: var(--font-size-xl);
+  }
+  /* Hide the People/Family/Members text labels — switch to icon-style chips
+   * (with title attributes) would be better but is out of scope here. For
+   * v1.5 the responsive nav is on the BACKLOG (mobile hamburger). */
+  .header-nav .nav-link {
+    padding: var(--space-1) var(--space-2);
   }
 }
 /* --- Loading Component --- */
@@ -1488,21 +1954,30 @@ main {
   top: 100%;
   left: 0;
   right: 0;
-  background-color: var(--color-surface);
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  background-color: var(--color-neutral-0);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-neutral-200);
   z-index: 100;
-  margin-top: 6px;
   max-height: 300px;
   overflow-y: auto;
 }
 
+.search-dropdown-empty {
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-neutral-600);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
 .search-dropdown-item {
-  padding: 10px 14px;
+  padding: var(--space-3) var(--space-4);
   cursor: pointer;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
-  transition: all 0.2s;
+  border-bottom: 1px solid var(--color-neutral-100);
+  transition: background var(--duration-base) var(--ease-standard);
 }
 
 .search-dropdown-item:last-child {
@@ -1598,14 +2073,10 @@ main {
   font-weight: 600;
 }
 
-.sidebar-footer {
-  padding-top: 1.5rem;
-  padding-bottom: 2rem; /* Significant bottom padding to avoid touching screen edge */
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  flex-shrink: 0; /* Keep footer visible */
-  margin-bottom: 0;
-  padding-left: 10px;
-  padding-right: 10px;
+/* User-sidebar footer override — slightly tighter padding than the default
+ * .sidebar-footer because the logout button is the only thing in it. */
+.user-sidebar-override .sidebar-footer {
+  padding: 1.5rem var(--space-3) 2rem;
 }
 
 /* Header Avatar */

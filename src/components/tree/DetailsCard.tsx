@@ -5,6 +5,8 @@ import type { Person } from "../../types/person";
 interface DetailsCardProps {
   person: Person;
   canEdit: boolean;
+  /** Active treeId — used to build the EDIT INFO link to the scoped people page. */
+  treeId: string | null;
 }
 
 /**
@@ -12,7 +14,7 @@ interface DetailsCardProps {
  * inside a <foreignObject> — every interpolation auto-escapes, closing the
  * stored-XSS root cause that the imperative `.html(string)` rendering had.
  */
-const DetailsCard: React.FC<DetailsCardProps> = ({ person, canEdit }) => {
+const DetailsCard: React.FC<DetailsCardProps> = ({ person, canEdit, treeId }) => {
   const aliases = person.name.aliases?.filter((a) => a.trim().length > 0) ?? [];
   const events = person.events ?? [];
   const customFields = person.custom_fields
@@ -39,9 +41,12 @@ const DetailsCard: React.FC<DetailsCardProps> = ({ person, canEdit }) => {
           <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong> {value}
         </div>
       ))}
-      {canEdit && (
+      {canEdit && treeId && (
         <div className="card-actions">
-          <Link href={`/people?id=${encodeURIComponent(person.id)}`} className="btn-edit-card">
+          <Link
+            href={`/tree/${treeId}/people?id=${encodeURIComponent(person.id)}`}
+            className="btn-edit-card"
+          >
             EDIT INFO
           </Link>
         </div>

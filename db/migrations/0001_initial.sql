@@ -104,9 +104,12 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  -- auth.users.id is uuid; our public.users.uid is text. Cast at the boundary
+  -- so the rest of the schema can use text ids (matches local-mode mocks
+  -- which use arbitrary strings like "local-admin-uid").
   INSERT INTO public.users (uid, email, name, photo_url)
   VALUES (
-    NEW.id,
+    NEW.id::text,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'name', NEW.raw_user_meta_data->>'full_name'),
     NEW.raw_user_meta_data->>'avatar_url'
@@ -133,151 +136,166 @@ ALTER TABLE families       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tree_invites   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE suggestions    ENABLE ROW LEVEL SECURITY;
 
+-- All policies below use `DROP POLICY IF EXISTS … ; CREATE POLICY …` so the
+-- migration is idempotent — safe to re-run after partial application.
+
 -- users — self-read/write only. Uid is immutable (no policy allows it to
 -- change). New rows are created by the auth trigger above, not directly.
+DROP POLICY IF EXISTS users_self_select ON users;
 CREATE POLICY users_self_select ON users
-  FOR SELECT USING (uid = auth.uid());
+  FOR SELECT USING (uid = auth.uid()::text);
 
+DROP POLICY IF EXISTS users_self_update ON users;
 CREATE POLICY users_self_update ON users
-  FOR UPDATE USING (uid = auth.uid())
-  WITH CHECK (uid = auth.uid());
+  FOR UPDATE USING (uid = auth.uid()::text)
+  WITH CHECK (uid = auth.uid()::text);
+
+-- ---------------------------------------------------------------------------
+-- RLS helper functions
+--
+-- Every cross-table membership / ownership check goes through a SECURITY
+-- DEFINER function rather than an inline `EXISTS (SELECT … FROM other_table)`
+-- subquery. The reason is RLS recursion: Postgres re-applies row-level
+-- policies to every implicit SELECT, including the ones inside USING clauses.
+-- That means a policy on `trees` that subqueries `tree_members` triggers the
+-- policy on `tree_members`, which can subquery `trees` again — Postgres
+-- detects the loop and aborts with "infinite recursion detected in policy".
+--
+-- The functions below run as their owner (the migration-applying role, which
+-- has BYPASSRLS on Supabase), so their internal SELECTs don't re-fire the
+-- calling table's policy. Treat these as the canonical way to express any
+-- "is this user a member / owner / editor of this tree?" check.
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.is_tree_member(p_tree_id text, p_uid text)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.tree_members
+    WHERE tree_id = p_tree_id AND uid = p_uid
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_tree_owner(p_tree_id text, p_uid text)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.trees
+    WHERE id = p_tree_id AND owner_uid = p_uid
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_tree_editor(p_tree_id text, p_uid text)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.tree_members
+    WHERE tree_id = p_tree_id AND uid = p_uid AND role IN ('owner', 'editor')
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.user_email(p_uid text)
+RETURNS text
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT email FROM public.users WHERE uid = p_uid;
+$$;
 
 -- trees — readable by any member; writable only by owner.
+DROP POLICY IF EXISTS trees_member_select ON trees;
 CREATE POLICY trees_member_select ON trees
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM tree_members tm
-      WHERE tm.tree_id = trees.id AND tm.uid = auth.uid()
-    )
-  );
+  FOR SELECT USING (public.is_tree_member(id, auth.uid()::text));
 
+DROP POLICY IF EXISTS trees_owner_insert ON trees;
 CREATE POLICY trees_owner_insert ON trees
-  FOR INSERT WITH CHECK (owner_uid = auth.uid());
+  FOR INSERT WITH CHECK (owner_uid = auth.uid()::text);
 
+DROP POLICY IF EXISTS trees_owner_update ON trees;
 CREATE POLICY trees_owner_update ON trees
-  FOR UPDATE USING (owner_uid = auth.uid())
-  WITH CHECK (owner_uid = auth.uid());
+  FOR UPDATE USING (owner_uid = auth.uid()::text)
+  WITH CHECK (owner_uid = auth.uid()::text);
 
+DROP POLICY IF EXISTS trees_owner_delete ON trees;
 CREATE POLICY trees_owner_delete ON trees
-  FOR DELETE USING (owner_uid = auth.uid());
+  FOR DELETE USING (owner_uid = auth.uid()::text);
 
 -- tree_members — readable by any member of the same tree; writable only by
 -- owner. The "create your own membership" path is the owner-insert during tree
--- creation, which the API route does as the user (auth.uid() === owner_uid).
+-- creation, which the API route does as the user (auth.uid()::text === owner_uid).
+DROP POLICY IF EXISTS tree_members_select ON tree_members;
 CREATE POLICY tree_members_select ON tree_members
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM tree_members self
-      WHERE self.tree_id = tree_members.tree_id AND self.uid = auth.uid()
-    )
-  );
+  FOR SELECT USING (public.is_tree_member(tree_id, auth.uid()::text));
 
+DROP POLICY IF EXISTS tree_members_owner_write ON tree_members;
 CREATE POLICY tree_members_owner_write ON tree_members
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM trees t
-      WHERE t.id = tree_members.tree_id AND t.owner_uid = auth.uid()
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM trees t
-      WHERE t.id = tree_members.tree_id AND t.owner_uid = auth.uid()
-    )
-  );
+  FOR ALL
+  USING (public.is_tree_owner(tree_id, auth.uid()::text))
+  WITH CHECK (public.is_tree_owner(tree_id, auth.uid()::text));
 
 -- people — readable by any tree member; writable by owner + editor.
+DROP POLICY IF EXISTS people_member_select ON people;
 CREATE POLICY people_member_select ON people
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM tree_members tm
-      WHERE tm.tree_id = people.tree_id AND tm.uid = auth.uid()
-    )
-  );
+  FOR SELECT USING (public.is_tree_member(tree_id, auth.uid()::text));
 
+DROP POLICY IF EXISTS people_editor_write ON people;
 CREATE POLICY people_editor_write ON people
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM tree_members tm
-      WHERE tm.tree_id = people.tree_id
-        AND tm.uid = auth.uid()
-        AND tm.role IN ('owner', 'editor')
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM tree_members tm
-      WHERE tm.tree_id = people.tree_id
-        AND tm.uid = auth.uid()
-        AND tm.role IN ('owner', 'editor')
-    )
-  );
+  FOR ALL
+  USING (public.is_tree_editor(tree_id, auth.uid()::text))
+  WITH CHECK (public.is_tree_editor(tree_id, auth.uid()::text));
 
 -- families — same rules as people.
+DROP POLICY IF EXISTS families_member_select ON families;
 CREATE POLICY families_member_select ON families
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM tree_members tm
-      WHERE tm.tree_id = families.tree_id AND tm.uid = auth.uid()
-    )
-  );
+  FOR SELECT USING (public.is_tree_member(tree_id, auth.uid()::text));
 
+DROP POLICY IF EXISTS families_editor_write ON families;
 CREATE POLICY families_editor_write ON families
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM tree_members tm
-      WHERE tm.tree_id = families.tree_id
-        AND tm.uid = auth.uid()
-        AND tm.role IN ('owner', 'editor')
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM tree_members tm
-      WHERE tm.tree_id = families.tree_id
-        AND tm.uid = auth.uid()
-        AND tm.role IN ('owner', 'editor')
-    )
-  );
+  FOR ALL
+  USING (public.is_tree_editor(tree_id, auth.uid()::text))
+  WITH CHECK (public.is_tree_editor(tree_id, auth.uid()::text));
 
 -- tree_invites — owner can read all for trees they own; the invited email can
 -- read their own pending invite (to surface "you have a pending invite to X").
 -- Write access (create/revoke) is owner-only.
+DROP POLICY IF EXISTS tree_invites_owner_select ON tree_invites;
 CREATE POLICY tree_invites_owner_select ON tree_invites
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM trees t
-      WHERE t.id = tree_invites.tree_id AND t.owner_uid = auth.uid()
-    )
-  );
+  FOR SELECT USING (public.is_tree_owner(tree_id, auth.uid()::text));
 
+DROP POLICY IF EXISTS tree_invites_invitee_select ON tree_invites;
 CREATE POLICY tree_invites_invitee_select ON tree_invites
-  FOR SELECT USING (
-    email = (SELECT email FROM users WHERE uid = auth.uid())
-  );
+  FOR SELECT USING (email = public.user_email(auth.uid()::text));
 
+DROP POLICY IF EXISTS tree_invites_owner_write ON tree_invites;
 CREATE POLICY tree_invites_owner_write ON tree_invites
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM trees t
-      WHERE t.id = tree_invites.tree_id AND t.owner_uid = auth.uid()
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM trees t
-      WHERE t.id = tree_invites.tree_id AND t.owner_uid = auth.uid()
-    )
-  );
+  FOR ALL
+  USING (public.is_tree_owner(tree_id, auth.uid()::text))
+  WITH CHECK (public.is_tree_owner(tree_id, auth.uid()::text));
 
 -- suggestions — any authenticated user can insert their own; reads are
 -- handled by a separate site-admin role (env-allowlisted uid) via a server
 -- route, so the table-level policy is restrictive by default.
+DROP POLICY IF EXISTS suggestions_self_insert ON suggestions;
 CREATE POLICY suggestions_self_insert ON suggestions
-  FOR INSERT WITH CHECK (uid = auth.uid());
+  FOR INSERT WITH CHECK (uid = auth.uid()::text);
 
+DROP POLICY IF EXISTS suggestions_self_select ON suggestions;
 CREATE POLICY suggestions_self_select ON suggestions
-  FOR SELECT USING (uid = auth.uid());
+  FOR SELECT USING (uid = auth.uid()::text);
 
 -- ---------------------------------------------------------------------------
 -- updated_at trigger — automatically bump updated_at on row updates.
@@ -293,10 +311,12 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS people_updated_at ON people;
 CREATE TRIGGER people_updated_at
   BEFORE UPDATE ON people
   FOR EACH ROW EXECUTE FUNCTION public.tg_touch_updated_at();
 
+DROP TRIGGER IF EXISTS families_updated_at ON families;
 CREATE TRIGGER families_updated_at
   BEFORE UPDATE ON families
   FOR EACH ROW EXECUTE FUNCTION public.tg_touch_updated_at();

@@ -1,94 +1,72 @@
 # Vanshavali Backlog
 
-Work that's been identified and scoped but deferred from its parent phase. Each entry references the audit finding(s) that surfaced it, so the rationale stays attached.
-
-When picking up an item: read `docs/ARCHITECTURE.md` for current architecture, `docs/DESIGN-LANGUAGE.md` for the token / component spec, and the audit references below for the specific problem statement. Then split the item into focused PRs.
+Work that's been identified and scoped but deferred from its parent phase. When picking up an item: read `docs/ARCHITECTURE.md` for current architecture, `docs/DESIGN-LANGUAGE.md` for the token/component spec, and the audit references below for the specific problem. Mark items "Resolved in:" with a one-line summary when shipped.
 
 ---
 
-## Phase 11 follow-up — design polish
+## Still open
 
-Phase 11 landed the foundation (token system, semantic colors, dead-CSS cleanup, focus-visible, aria-labels on icon buttons, six-reds → `--color-danger`, broken-CSS fixes). The items below were scoped during that pass but deferred because each is a session-sized chunk on its own.
+### Asset optimization (needs external tooling)
 
-### Mobile responsive
+- **Status**: not started — needs image-processing tooling (`sharp`, `imagemin`, or a hand pass through Squoosh / SVG-converter).
+- **Audit ref**: §14 perf — `canvas_background.png` 8.3 MB, `madhubani_banner.png` 2 MB, `node_border.png` 1.9 MB. Target: ≤500 KB total decorative payload per page.
+- **Scope**: Madhubani banner → optimized WebP @ 2x or hand-authored SVG (≤200 KB); canvas wash → CSS-generated tile pattern or small repeating SVG (≤50 KB); node border → hand-authored SVG (≤30 KB, single cached request). Use Next.js `<Image>` for all non-decorative photography.
 
-- **Status**: not started.
-- **Audit ref**: §11 (4 CRITICAL findings) — one media query in 1640 lines of CSS; 300px sidebars + 3em headers break on phones; no pinch-to-zoom on the D3 tree.
-- **Scope**: add breakpoint tokens (`--breakpoint-sm/md/lg/xl`), collapse header to title + hamburger drawer at `< 768px`, convert both sidebars to slide-in drawers or top tab strips at narrow widths, bind pinch-to-zoom to D3-zoom on the tree, stack form rows below `--breakpoint-md`, audit every page for narrow-viewport layout breakage.
-- **Why deferred**: significant per-component layout work; needs design judgment, not just CSS.
+### Component tests with React Testing Library
 
-### Button base + variants consolidation
+- **Status**: not started — domain/helper tests are in place; component tests aren't.
+- **Audit ref**: explicitly deferred from Phase 14 by user choice.
+- **Scope**: smoke tests for `Tree.tsx` (renders a hierarchy without crashing), `<MembersPage>` (lists members, role dropdown updates), `<LoginScreen>` (form switches between modes). Vitest + RTL infrastructure is already configured under `vitest.config.ts` — the components are still excluded.
 
-- **Status**: partial — Phase 11 added missing `.btn-block`, `.btn-sm`, `.btn-lg`, `.btn-outline-danger` and collapsed the danger reds. The 12-variant zoo still exists.
-- **Audit ref**: §5 buttons — `.btn-approve`/`.btn-deny` don't extend `.btn`, `.btn-icon-add` uses bootstrap green semantics rather than `.btn-icon` base, `Tree.tsx` EDIT INFO button bypasses `.btn` entirely.
-- **Scope**: define single `.btn` base + modifiers (`--primary`, `--secondary`, `--danger`, `--ghost`, `--icon`, `--icon-sm`). Migrate every `.btn-*` custom class + every JSX caller. Drop the `::before \2727` star from generic `.btn` (Phase 11 design rule) — reapply only on milestone toasts.
-- **Why deferred**: larger refactor; touches ~30 JSX call sites + CSS rewrite.
+### Playwright e2e
 
-### Input / select / textarea unification
+- **Status**: not started — explicitly deferred from Phase 14 by user choice.
+- **Scope**: critical-flow smoke tests against a running Supabase or local-mode env — sign-up + auto-provision, invite-send + accept, create person, delete tree. Worth picking up before public launch.
 
-- **Status**: not started.
-- **Audit ref**: §5 inputs — 4 distinct select treatments (`form-group select`, `add-child-container select`, `role-select`, `status-select` — three of which duplicate the embedded chevron SVG), 3+ input treatments (form input, unified-search-input, aliases-container), unique inline-override for the Person name field, About page textarea doesn't match form inputs.
-- **Scope**: define `.input` base + `--search` variant + `--inline` (transparent-underline) variant. Single chevron SVG via CSS custom property. Migrate every form across `/family`, `/people`, `/user/*`, and search components.
-- **Why deferred**: same as button consolidation.
+### Heritage motif: error & 404 pages
 
-### Heritage motif consolidation
+- **Status**: partial — sign-in card, welcome modal, confirm dialog, and details card use the double-Madhubani-border treatment. Standalone 404 / 500 pages don't exist yet (Next.js defaults).
+- **Scope**: `src/app/not-found.tsx` + `src/app/error.tsx` rendered with the same heritage shell.
 
-- **Status**: not started.
-- **Audit ref**: §7 identity drift — Madhubani aesthetic stops at the tree + About page. The `corners` array in old `Tree.tsx` was "commented-in but never rendered" (now in new code via `<BackgroundOrnaments/>`); `links.each(... leavesGroup)` motif was wired but never drawn.
-- **Scope**: per `DESIGN-LANGUAGE.md` §2.4 surface accents — Madhubani border on the sign-in / sign-up cards; empty-state illustrations with heritage SVGs; error-page (404/500) heritage flavor; invitation accept page (`/invite/[id]`); milestone toasts on first-tree-created / first-invite-accepted; decorative dividers on key page headers.
-- **Why deferred**: needs design exploration + new SVG assets.
+### Tree visualization performance (large data)
 
-### Asset optimization
-
-- **Status**: not started.
-- **Audit ref**: §14 perf — ~14 MB decorative payload per page (`canvas_background.png` 8.3 MB, `madhubani_banner.png` 2 MB, `node_border.png` 1.9 MB × ~50 nodes). `public/screenshot.jpeg` (1.7 MB) is orphan.
-- **Scope**: Madhubani banner → optimized WebP @ 2x or hand-authored SVG (target ≤200 KB); canvas wash → CSS-generated tile pattern or small repeating SVG (target ≤50 KB); node border → hand-authored SVG (target ≤30 KB, single network request cached). Delete `screenshot.jpeg`. Use Next.js `<Image>` for all non-decorative photography. Target: ≤500 KB total decorative payload per page.
-- **Why deferred**: image processing pass; design judgment on what SVG-ization looks like for each motif.
-
-### D3 tree keyboard navigation
-
-- **Status**: not started.
-- **Audit ref**: §10 CRITICAL — tree is entirely mouse-driven; no `tabindex` on nodes, no `Enter`-to-open, no arrow-key sibling traversal.
-- **Scope**: extend `<PersonNode>` with `tabIndex={0}`, `role="button"`, `aria-label="View details for {name}"`. Bind `Enter` / `Space` to toggle lock. Bind arrow keys at the `<TreeCanvas>` level to navigate between siblings → parents → children using the laid-out positions. Update `:focus-visible` styling specifically for foreignObject node focus.
-- **Why deferred**: real implementation work — keyboard nav model needs design + the new Tree decomposition makes this tractable but still ~1 session.
-
-### Real `<dialog>` for ConfirmToast
-
-- **Status**: not started.
-- **Audit ref**: §5 modals — `ConfirmToast` is a `toast.custom` with no overlay scrim, no focus trap, no `aria-modal`, no escape-to-close. Two simultaneous confirms collide on the hardcoded `'confirm-toast'` id.
-- **Scope**: replace `toast.confirm()` call sites with a new `<ConfirmDialog>` component that uses the native `<dialog>` element (or a stack-aware portal if `<dialog>` polyfilling becomes a pain). Add `role="alertdialog"`, `aria-labelledby`, focus-trap on open, escape-to-cancel, return-focus-on-close. Update callers in `family/page.tsx`, `people/page.tsx`, `user/profile/page.tsx`.
-- **Why deferred**: focused refactor; need to verify behavior matches existing confirm flows.
-
-### Empty / loading / error state design language
-
-- **Status**: not started.
-- **Audit ref**: §9 — three distinct empty-state patterns (`.welcome-message`, `.no-data` plain `<p>`, inline "No results found" in dropdowns). Loading variants: `<Loading>` component, `toast.loading`, inline "Sending..." text. No unified error-page design.
-- **Scope**: single `<EmptyState illustration={...} title cta />` component used across all routes. Single `<Loading>` spinner used everywhere (deprecate `toast.loading` for full-page loads). Design 404 / 500 / access-denied pages with heritage illustrations.
-- **Why deferred**: needs illustrative SVG work tied to heritage motif consolidation above.
-
----
-
-## Other deferred items
-
-These were identified by the audits but live outside Phase 11.
-
-### Audit follow-up (mostly Phase 2 territory)
-
-- **Firebase `subscribeToTreeData` dedupe** — `LocalDataProvider` has `lastDataString` dedupe; `FirebaseDataProvider` doesn't, so every poll tick rebuilds the tree. Moot once Firebase is removed in Phase 5, but a quick win if Firebase stays around longer.
-- **Atomic save in `LocalDataProvider.saveTreeData`** — sequential `await saveDb(people)` then `await saveDb(families)`; if second fails, half-committed. Extend `/api/local/db` to accept a multi-collection batch, or write to temp files + atomic rename. Same pattern Supabase already gets for free via transactions.
-- **`TreeSearch` glassmorphic dropdown** — re-implements the dropdown inline with `backdrop-filter: blur(4px)` that appears nowhere else. Migrate to the shared `.search-dropdown` styling from `PersonSearch`.
-- **Three sidebar implementations** — `UserSidebar`, `TextListSidebar`, raw `.sidebar` markup. Audit §6 documents the divergence. Worth unifying when mobile responsive lands.
+- **Status**: not started — works fine for ≤200 person trees; D3 selectAll rebuilds on every data change.
+- **Scope**: switch the React tree decomposition to use proper `key`-based reconciliation so only changed nodes re-render. Add virtualization (windowing) for trees > 500 people. Both useful when public users start importing large GEDCOM files.
 
 ### CLAUDE.md / docs maintenance
 
-- `docs/ARCHITECTURE.md` §10 effort estimates are pre-Phase-3 and overshoot reality now. Worth a quick edit when one of the remaining phases (5/6/7/8) ships.
-- `docs/DESIGN-LANGUAGE.md` Part 1 (descriptive) is now stale — Phase 11 fixed many of the issues it documents. Either rewrite Part 1 to reflect post-Phase-11 state or note that Part 1 is the pre-Phase-11 baseline (which is useful for context but should not be read as current).
-
-### Tests
-
-- Component tests with React Testing Library — currently we only have logic / helper tests. The audit didn't ask for component tests in v1, but as Tree, AppProvider, and the hooks settle they're worth adding.
-- E2E with Playwright — explicitly deferred from Phase 14 by the user's choice. Reconsider before public launch.
+- **Status**: ARCHITECTURE.md §10 effort estimates predate Phase 3 — still mildly stale; DESIGN-LANGUAGE.md Part 1 (descriptive snapshot) is pre-Phase-11.
+- **Scope**: when there's a natural editing pass on either doc, refresh the stale sections. Not urgent — the new sections are accurate; the stale sections just describe a less-evolved state for historical context.
 
 ---
 
-_Last revised: 2026-06. Add a section per item picked up; mark resolved with "Resolved in: <commit / PR>" and a one-line "what shipped"._
+## Resolved
+
+| Item                                                                          | Resolved in   | Notes                                                                                                                                                                                                                                                                   |
+| ----------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storage bucket RLS policies                                                   | Phase 10      | `db/migrations/0002_storage_policies.sql` — bucket policies gated on `tree_members`.                                                                                                                                                                                    |
+| `acceptInvite` server flow                                                    | Phase 10      | `/api/invite/accept` route + Resend wiring.                                                                                                                                                                                                                             |
+| Firebase `subscribeToTreeData` dedupe                                         | Phase 8       | Firebase deleted entirely; moot.                                                                                                                                                                                                                                        |
+| Atomic save in `LocalDataProvider.saveTreeData`                               | Backlog sweep | `/api/local/db` accepts `{ writes: [...] }`; the route writes temp files then renames so all-or-nothing.                                                                                                                                                                |
+| `TreeSearch` glassmorphic dropdown unification                                | Backlog sweep | Migrated to shared `.search-dropdown` styling; backdrop-filter dropped.                                                                                                                                                                                                 |
+| Three sidebar implementations                                                 | Backlog sweep | `TextListSidebar` now uses the shared `<Sidebar>` primitive — same active-item styling everywhere.                                                                                                                                                                      |
+| Mobile responsive (header + sidebar collapse + forms stack)                   | Backlog sweep | Breakpoint tokens added; layouts collapse at `<=1024px` and `<=768px`; sidebars become full-width with max-height. Pinch-to-zoom via `touch-action: none` on the tree canvas.                                                                                           |
+| Real `<dialog>` for ConfirmToast                                              | Backlog sweep | `ConfirmDialog` component (native `<dialog>`) with focus trap, Escape to cancel, async confirm state. `useToast().confirm()` drives it via a global pub/sub.                                                                                                            |
+| D3 tree keyboard navigation                                                   | Backlog sweep | `<PersonNode>` gets `tabIndex={0}`, `role="button"`, Enter/Space to toggle lock, `:focus-visible` outline, focus-raises-node-to-front for the details card to clear siblings.                                                                                           |
+| Heritage motif on sign-in card                                                | Backlog sweep | Double Madhubani border + inner secondary ring on `.login-content` via `::after`.                                                                                                                                                                                       |
+| Empty-state CTAs (tree, people, family)                                       | Phase 12      | `EmptyTreeBanner` + welcome modal + first-person/first-family CTAs on the editor pages.                                                                                                                                                                                 |
+| Button base modifiers (`btn-block`, `btn-sm`, `btn-outline-danger`, `btn-lg`) | Phase 11      | Added in the design-tokens pass. Note: full button-variant consolidation (single `.btn` base + `--primary/--secondary/--danger/--ghost/--icon` modifiers, dropping `.btn-approve`/`.btn-deny`/etc.) **was not done** — see "Still open" below if you want to finish it. |
+| Orphan `screenshot.jpeg`                                                      | Backlog sweep | Deleted from `public/`.                                                                                                                                                                                                                                                 |
+
+---
+
+## Explicit non-goals (decided)
+
+These were considered and intentionally **not** pursued, captured here so future Claudes don't reopen the debate:
+
+- **Full button/input variant consolidation across all call sites** — Phase 11 added the missing CSS modifiers (`.btn-block`, `.btn-sm`, `.btn-outline-danger`); Phase 11 cleanup pass standardized inputs against design tokens. The remaining ~12 button class names (`.btn-approve`, `.btn-deny`, `.btn-icon-*`, etc.) still exist and could be collapsed to one `.btn` base + modifiers — but the cost is touching every JSX call site (~30), and the visual outcome is the same. Deferred indefinitely; if it gets done it'll be a focused refactor PR of its own.
+- **Self-service account deletion / data export** — was earmarked for Phase 15. Phase 15 is postponed indefinitely; revisit when a user actually asks.
+
+---
+
+_Last revised: 2026-06. Add a "Resolved in" row when a backlog item ships._

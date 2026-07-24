@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import type { TreeData } from "../services/types";
 import type { TreeMembership } from "../types/tree";
 import { canEdit, canViewTree } from "../lib/access";
+import { formatError } from "../lib/formatError";
 import { useProviders } from "./useProviders";
 import { useAuthUser } from "./useAuthUser";
 import { useUserProfile } from "./useUserProfile";
@@ -64,24 +65,41 @@ export function useAuthAndData() {
         const meta = await dataProvider.createTree(user.uid, `${profile.name || "My"} family tree`);
         if (cancelled) return;
 
-        // Seed a single root person representing the user themselves.
+        // Seed a single root person representing the user themselves. We leave
+        // userId unset here and let linkUserToPerson set it, because that call
+        // also populates the membership's personId — doing both in one atomic
+        // step. (linkUserToPerson requires the person's user_id to still be
+        // null, so we must NOT pre-set it above.)
+        const rootPersonId = `p_${user.uid}`;
         const rootPerson = {
-          id: `p_${user.uid}`,
+          id: rootPersonId,
           name: { official_name: profile.name || "Me" },
           sex: "M" as const,
           events: [],
           custom_fields: {},
           root: true,
-          userId: user.uid,
         };
         await dataProvider.saveTreeData(meta.id, {
           people: [rootPerson],
           families: [],
         });
         if (cancelled) return;
+
+        // Link owner → root person so the tree view knows "this node is me"
+        // and the membership carries personId. Non-fatal: if it fails, the
+        // tree still exists and the user can link manually from their profile.
+        try {
+          await dataProvider.linkUserToPerson(meta.id, rootPersonId, user.uid);
+        } catch (linkError) {
+          console.error(
+            "Auto-link owner to root person failed (non-fatal):",
+            formatError(linkError)
+          );
+        }
+        if (cancelled) return;
         setCurrentTreeId(meta.id);
       } catch (error) {
-        console.error("Auto-provision tree failed:", error);
+        console.error("Auto-provision tree failed:", formatError(error));
         toast.error("Couldn't create your tree. Try refreshing.");
       } finally {
         if (!cancelled) setIsProvisioningTree(false);
