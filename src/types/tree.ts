@@ -3,8 +3,8 @@
  * invited to others; people / families are tree-scoped; roles live on
  * TreeMembership (per-tree), not on the user.
  *
- * The persistence layer's row shapes are in `db/schema.ts`; these are the
- * domain-level types the UI and hooks operate against.
+ * The persistence layer's row shapes are in `db/migrations/0001_initial.sql`;
+ * these are the domain-level types the UI and hooks operate against.
  */
 
 export type TreeRole = "owner" | "editor" | "viewer";

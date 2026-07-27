@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatError } from "./formatError";
+import { formatError } from "@/lib/formatError";
 
 describe("formatError", () => {
   it("unpacks non-enumerable supabase-style fields", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stringToColor } from "./colorUtils";
+import { stringToColor } from "@/utils/colorUtils";
 
 describe("stringToColor", () => {
   it("is deterministic — same input yields same output", () => {

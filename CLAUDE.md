@@ -22,16 +22,22 @@ Locked-in decisions (do not re-litigate without a strong reason):
 
 ## Commands
 
-- `npm run dev` — start Next.js dev server at `http://localhost:3000`
+All backend-touching commands follow **`NEXT_PUBLIC_ENV`** (`local` | `prod`) — one set of commands, one switch. No `:local` twins.
+
+- `npm run dev` — start Next.js dev server at `http://localhost:3000` (against the active env)
 - `npm run build` — production build
 - `npm run start` — run the production build
 - `npm run typecheck` — `tsc --noEmit`
-- `npm run db:generate` — Drizzle Kit: generate a new migration from `db/schema.ts` changes
-- `npm run db:push` — Drizzle Kit: push schema directly to the DB at `DATABASE_URL` (dev only)
-- `npm run db:studio` — Drizzle Studio (visual DB browser)
-- `npm run db:apply-policies` — apply RLS policies + triggers from `db/migrations/0001_initial.sql`
-- `npx tsx scripts/sync-firebase.ts` — legacy; pulls Firebase data into `.local_data/`
-- `npx tsx scripts/migrate-user-person-relation.ts` — legacy local-data migration
+- `npm run db:apply-policies` — apply the SQL migrations (`db/migrations/*.sql`: tables + RLS + triggers) to the active env
+- `npm run db:extras` — grants + realtime publication + storage bucket & policies
+- `npm run db:setup` — `db:apply-policies` + `db:extras` in one shot (idempotent)
+
+Local Supabase stack lifecycle (Docker via the Supabase CLI — no cloud analog):
+
+- `npm run stack:start` / `stack:stop` / `stack:status` — manage the local stack
+- `npm run stack:reset` — wipe + restart with a fresh DB (re-run `db:setup` after)
+
+Typical first-time local setup: `npm run stack:start` → `NEXT_PUBLIC_ENV=local npm run db:setup` → `npm run dev` (with `NEXT_PUBLIC_ENV=local` in `.env`). Cloud-targeting `db:*` commands prompt for confirmation (bypass with `--yes` / `CONFIRM_CLOUD=1`). See `docs/SUPABASE-SETUP.md`.
 
 The TypeScript config is strict (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`).
 
@@ -39,16 +45,16 @@ The TypeScript config is strict (`strict`, `noUncheckedIndexedAccess`, `exactOpt
 
 Copy `.env.sample` → `.env` (gitignored) and fill values. Key vars:
 
-- `NEXT_PUBLIC_APP_ENV` — `local` (file-backed, default for dev) or `supabase`. Firebase support was removed in Phase 8.
-- `NEXT_PUBLIC_LOCAL_USER_UID` — mock UID used in local mode.
-- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase client config.
-- `SUPABASE_SERVICE_ROLE_KEY` — server-only; for routes that bypass RLS.
-- `DATABASE_URL` — Postgres connection string used by Drizzle Kit migrations.
+- `NEXT_PUBLIC_ENV` — **the single backend switch**: `local` (local Supabase stack) or `prod` (cloud project). Drives both the app and the `db:*` CLI tooling. Resolved for the client in `src/lib/supabaseEnv.ts`, for server routes in `src/lib/supabase-server.ts`, and for scripts in `scripts/env.ts`. For `local`, the URL + demo keys are built in — no other Supabase vars needed. Unset → cloud.
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — cloud Supabase client config (used when `NEXT_PUBLIC_ENV=prod`).
+- `NEXT_PUBLIC_SUPABASE_URL_LOCAL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY_LOCAL` / `SUPABASE_SERVICE_ROLE_KEY_LOCAL` — optional overrides for the local stack if your CLI mints non-default keys.
+- `SUPABASE_SERVICE_ROLE_KEY` — server-only; for routes that bypass RLS (cloud).
+- `DATABASE_URL` — cloud Postgres connection string for the policy/setup scripts (used when `NEXT_PUBLIC_ENV=prod`). The local stack uses `postgresql://postgres:postgres@127.0.0.1:54322/postgres` automatically.
 - `RESEND_API_KEY` / `RESEND_FROM_EMAIL` — transactional email (invitations).
 - `NEXT_PUBLIC_SITE_URL` — canonical site origin used to build invite-acceptance URLs in outbound email. Defaults to request origin when unset.
 - `NEXT_PUBLIC_SITE_ADMIN_UIDS` — comma-separated allowlist for the global suggestions inbox.
 
-If `NEXT_PUBLIC_APP_ENV` is unset, the factory defaults to `supabase` when Supabase env vars are present, else `local`.
+Backend resolution: the app always uses the Supabase providers (`ProviderFactory`); `NEXT_PUBLIC_ENV` only chooses which Supabase they point at (local stack vs cloud), via `src/lib/supabaseEnv.ts`. The file-backed JSON mock under `src/services/local/` was retired as a runtime mode and is kept only as the unit-test double.
 
 ## Architecture
 
@@ -56,10 +62,10 @@ If `NEXT_PUBLIC_APP_ENV` is unset, the factory defaults to `supabase` when Supab
 
 All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts`. `DataProvider` is split per ISP into focused sub-interfaces — `UserProvider`, `TreeMetaProvider`, `TreeDataProvider`, `MembershipProvider`, `InvitationProvider`, `SuggestionProvider`. Consumers should type their dependencies against the narrowest one they need. Two implementations:
 
-- `src/services/local/` — file-backed providers hitting Next.js API routes under `src/app/api/local/`. The local DB layout is `.local_data/db/{global}.json` for global collections (users, trees, suggestions) and `.local_data/db/trees/{treeId}/{collection}.json` for per-tree data (people, families, members, invites). Retained as the dev/test double.
-- `src/services/supabase/` — Phase 1 scaffold; methods throw `NotImplementedError` until Phase 5/6/7 land the real implementations against `db/schema.ts`.
+- `src/services/supabase/` — the real implementation, used at runtime for both `local` and `prod` (same code, different target URL/keys). Backs onto the schema + RLS policies in `db/migrations/*.sql`.
+- `src/services/local/` — file-backed providers hitting Next.js API routes under `src/app/api/local/` (`.local_data/db/…json`). **Retired as a runtime mode** — no longer wired by `ProviderFactory`. Kept only as the unit-test double (`LocalDataProvider.test.ts` stubs `fetch` against it), so the interface has a fast in-memory implementation to test contract behavior without a live backend.
 
-`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) chooses one set based on `NEXT_PUBLIC_APP_ENV` and memoizes it. **Any new backend operation must be added to the interface and implemented in _both_ the local and Supabase providers** — otherwise one mode silently breaks.
+`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) always returns the Supabase providers and memoizes them. **Any new backend operation must be added to the interface and implemented in _both_ the Supabase provider and the local (test-double) provider** — otherwise the unit tests and the real backend drift.
 
 Local-mode subscriptions are 5s-polled (`LOCAL_DATA_CONFIG.POLLING_INTERVAL`) and dedupe via JSON string comparison so the callback only fires when content actually changes. Supabase will use Realtime channels.
 
@@ -95,11 +101,11 @@ Per-tree uniqueness:
 
 ### Database (multi-tenant target)
 
-`db/schema.ts` defines the Postgres schema in Drizzle ORM. Tables: `users`, `trees`, `tree_members`, `people`, `families`, `tree_invites`, `suggestions`. See `docs/ARCHITECTURE.md` §4 for the full shape.
+The schema lives entirely in SQL migrations under `db/migrations/` — there's no ORM. `0001_initial.sql` is the single source of truth: it defines all tables (`users`, `trees`, `tree_members`, `people`, `families`, `tree_invites`, `suggestions`), indexes, RLS policies, triggers, and the SECURITY DEFINER helper functions. Later files (`0003`–`0005`) are follow-up fixes; `0002` is the storage policies. See `docs/ARCHITECTURE.md` §4 for the full shape.
 
-`db/migrations/0001_initial.sql` contains the RLS policies + triggers. Applied via `npm run db:apply-policies`. RLS is what actually enforces per-tree access; the client uses the anon key.
+Apply with `npm run db:setup` (migrations + grants/realtime/storage extras) or `npm run db:apply-policies` (migrations only). RLS is what actually enforces per-tree access; the client uses the anon key. **Schema changes = add a new `db/migrations/000N_*.sql` file** (same workflow as the RLS changes), then re-run `db:setup`.
 
-`drizzle.config.ts` points Drizzle Kit at `DATABASE_URL`.
+`scripts/env.ts` resolves which database the scripts target from `NEXT_PUBLIC_ENV`; `pg` (not an ORM) is the connection driver.
 
 ### Tree rendering and graph logic
 
@@ -135,6 +141,7 @@ App router under `src/app/`. All non-`/api` routes currently operate on `current
 - `'use client'` is required at the top of any component that uses hooks or browser APIs.
 - Constants and string literals for roles, suggestion statuses, and local-mode config live in `src/constants/index.ts` — reuse `TREE_ROLES`, `SUGGESTION_STATUS`, `LOCAL_DATA_CONFIG.GLOBAL_COLLECTIONS` / `TREE_COLLECTIONS` instead of inlining strings.
 - Styling: single global stylesheet at `src/app/globals.css` with the token system documented in `docs/DESIGN-LANGUAGE.md`; no CSS-in-JS or modules in new code.
+- Tests live under `tests/`, mirroring `src/` (e.g. `tests/lib/access.test.ts` for `src/lib/access.ts`), and import via the `@/*` → `src/*` alias (`tsconfig.json` + `vitest.config.ts`). Vitest only picks up `tests/**/*.test.ts`. App code uses relative imports; the `@/` alias is for test imports.
 
 ## Deployment
 

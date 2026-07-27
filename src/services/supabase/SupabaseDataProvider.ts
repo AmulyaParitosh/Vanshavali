@@ -33,7 +33,7 @@ import { subscribeWithRealtime } from "./realtime";
 /**
  * Supabase implementation of DataProvider.
  *
- * The supabase-js client is used directly (rather than Drizzle) because most
+ * Queries go through the supabase-js client (there's no ORM) because most
  * operations are client-side and need to go through RLS with the user's JWT.
  * Server-side flows (e.g. invite accept) will live in `/api/*` route handlers
  * with the service role — Phase 10.

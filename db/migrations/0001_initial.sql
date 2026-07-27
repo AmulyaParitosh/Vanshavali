@@ -1,20 +1,18 @@
 -- ============================================================================
--- 0001_initial.sql — Vanshavali multi-tenant schema
+-- 0001_initial.sql — Vanshavali multi-tenant schema (single source of truth)
 --
--- Companion to `db/schema.ts`. The Drizzle schema shapes the tables; this file
--- adds the Row-Level Security policies that enforce per-tree access on the
--- server. Without these policies the anon key would let any authenticated user
--- read or write any tree.
+-- Defines the full initial schema: tables, indexes, the Row-Level Security
+-- policies that enforce per-tree access, triggers, and helper functions.
+-- Without the policies the anon key would let any authenticated user read or
+-- write any tree.
 --
--- Apply via: `npm run db:push` (Drizzle Kit) for the structure, then run this
--- file manually in the Supabase SQL editor for the policies. A future migration
--- workflow can fold policies into the generator once Drizzle Kit's policy
--- support stabilizes.
+-- Apply via `npm run db:setup` (which runs this + the later migrations, then
+-- the grants/realtime/storage extras). Schema changes are made by adding a new
+-- `db/migrations/000N_*.sql` file — there is no ORM/codegen layer.
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
--- Tables (mirror of db/schema.ts; left here as a safety net for fresh DBs
--- where Drizzle hasn't run yet).
+-- Tables.
 -- ---------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS users (

@@ -14,9 +14,9 @@ import {
   type TreeInviteRow,
   type TreeMemberRow,
   type TreeRow,
-} from "./mappers";
-import type { Person } from "../../types/person";
-import type { Family } from "../../types/family";
+} from "@/services/supabase/mappers";
+import type { Person } from "@/types/person";
+import type { Family } from "@/types/family";
 
 /**
  * The mappers are the only place where Postgres column shapes meet domain

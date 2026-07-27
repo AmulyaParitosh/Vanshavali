@@ -30,47 +30,43 @@ Vanshavali is a dynamic and interactive family tree application designed to brin
 
 ### Installation
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
 
-    ```bash
-    git clone https://github.com/amulyaparitosh/Vanshavali.git
-    cd Vanshavali
-    ```
+   ```bash
+   git clone https://github.com/amulyaparitosh/Vanshavali.git
+   cd Vanshavali
+   ```
 
-2.  **Install dependencies:**
+2. **Install dependencies:**
 
-    ```bash
-    npm install
-    ```
+   ```bash
+   npm install
+   ```
 
-3.  **Environment Setup:**
-    Create a `.env` file in the root directory and add your Firebase credentials and app configuration:
-    ```env
-    NEXT_PUBLIC_APP_ENV=production # Use 'local' for mock data
-    NEXT_PUBLIC_LOCAL_USER_UID=local-admin-uid # Force a specific user in local mode
-    ```
+3. **Environment Setup:**
+   Copy `.env.sample` to `.env`. A single switch, `NEXT_PUBLIC_ENV`, picks the backend:
+   ```env
+   NEXT_PUBLIC_ENV=local   # local Supabase stack (Docker); "prod" for your cloud project
+   ```
+   For `local`, the URL and keys are built in — nothing else to set. For `prod`, fill the `NEXT_PUBLIC_SUPABASE_*`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` values.
 
 ### Running Locally
 
-To start the development server:
-
 ```bash
-npm run dev
+npm run stack:start   # boot the local Supabase stack (Docker; first run pulls images)
+npm run db:setup      # schema + RLS + realtime + storage (targets NEXT_PUBLIC_ENV)
+npm run dev           # → http://localhost:3000
 ```
 
-The application will be available at `http://localhost:3000`.
+## Local Development
 
-## Local Development & Mock Data
+`NEXT_PUBLIC_ENV=local` runs the app against a full **local Supabase stack** (real Postgres + Auth + Storage + Realtime in Docker via the Supabase CLI) — the exact same provider code as production. No cloud account needed, works offline, and RLS/auth/storage behave identically to prod.
 
-Vanshavali supports a full "local" mode that doesn't require a live Firebase connection for data.
+- Sign up with any email/password — email confirmation is off locally, so you get a session immediately.
+- Browse local data at Supabase Studio (`http://127.0.0.1:54323`).
+- Outbound email (invites, resets) is caught by Mailpit at `http://127.0.0.1:54324`.
 
-1.  **Enable Local Mode:** Set `NEXT_PUBLIC_APP_ENV=local` in your `.env`.
-2.  **Sync Data from Firebase (Optional):** If you want to prime your local environment with real data from your Firebase instance, run:
-    ```bash
-    npx tsx scripts/sync-firebase.ts
-    ```
-    This will download database collections to `.local_data/db/` and storage assets to `.local_data/storage/`.
-3.  **Mock Auth:** In local mode, authentication is mocked. You can control which user is "logged in" by adjusting `NEXT_PUBLIC_LOCAL_USER_UID`.
+See **`docs/SUPABASE-SETUP.md`** for the complete local + cloud setup guide and troubleshooting.
 
 ## Deployment
 
@@ -78,8 +74,8 @@ This project is deployed using **Firebase App Hosting**.
 
 The deployment is automated via a GitHub integration:
 
-1.  Any commits pushed to the `main` branch trigger an automatic build.
-2.  Firebase App Hosting handles the build process and deploys the new version once complete.
+1. Any commits pushed to the `main` branch trigger an automatic build.
+2. Firebase App Hosting handles the build process and deploys the new version once complete.
 
 ## Contributing
 

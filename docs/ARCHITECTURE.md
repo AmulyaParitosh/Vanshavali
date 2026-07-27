@@ -40,7 +40,7 @@ Roles are scoped to a single tree. The same user can be an Owner of one tree and
 
 - **Framework**: Next.js 15 / React / TypeScript — unchanged.
 - **Backend**: **Supabase** — managed Postgres + Auth (Google + email/password) + Storage. Real-time tree subscriptions via Supabase Realtime channels. Replaces Firebase entirely (per project owner decision: no GCP/Google services).
-- **ORM**: Drizzle, schema-first migrations under `db/`.
+- **Schema**: plain SQL migrations under `db/migrations/` (no ORM). `supabase-js` is the runtime query layer; RLS enforces access.
 - **Visualization**: D3 retained for hierarchy/layout math only; nodes and ornaments rendered as **React components inside `<foreignObject>`** (closes the current XSS surface and makes the tree testable).
 - **Styling**: same global stylesheet model. New design tokens for spacing, type scale, semantic color roles (`--color-danger`, `--color-success`, etc.) and elevation. Heritage motifs as **surface accents** — banner, decorative borders, key empty/login/error states — not on every button.
 - **Email**: Resend for transactional invites. SMTP creds in `.env` only (never committed).
@@ -67,7 +67,7 @@ After migration:
 - **Supabase** (`src/services/supabase/`, new) — replaces Firebase.
 - **Local** — kept, schema mirrored: `.local_data/db/trees/{treeId}/people.json` (per-tree paths replace the flat layout).
 
-`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) chooses one set based on `NEXT_PUBLIC_APP_ENV` (`local` vs anything else) and memoizes it.
+`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) returns the Supabase providers and memoizes them. `NEXT_PUBLIC_ENV` (`local` | `prod`) selects which Supabase they target — the local `supabase start` stack or the cloud project — via `src/lib/supabaseEnv.ts`. The file-backed local provider was retired as a runtime mode; it survives only as the unit-test double.
 
 ### Invariant
 
@@ -375,7 +375,7 @@ The migration runs in **non-breaking ground-prep** → **breaking schema swap** 
 7. **Author schema migrations** (`db/migrations/0001_initial.sql`) — tables from §4, RLS policies from §7.
 8. **Author `SupabaseDataProvider`, `SupabaseAuthProvider`, `SupabaseStorageProvider`** — implement the split interfaces against Supabase JS SDK. Real-time subscriptions via Supabase channels.
 9. **Update `LocalDataProvider`** to mirror the per-tree path layout (`.local_data/db/trees/{treeId}/people.json`). The local API route accepts `?tree=...`.
-10. **`ProviderFactory` selects Supabase** when `NEXT_PUBLIC_APP_ENV !== 'local'` (replacing the current Firebase selection).
+10. **`ProviderFactory` always selects Supabase**; `NEXT_PUBLIC_ENV` (`local` | `prod`) chooses local stack vs cloud. (The JSON local mode was later retired as a runtime path — test-double only.)
 
 ### Phase C — Critical bug fixes (lands with Phase B or earlier)
 

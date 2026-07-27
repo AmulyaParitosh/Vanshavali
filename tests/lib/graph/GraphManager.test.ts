@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { GraphManager } from "./GraphManager";
-import type { Person } from "../../types/person";
-import type { Family } from "../../types/family";
+import { GraphManager } from "@/lib/graph/GraphManager";
+import type { Person } from "@/types/person";
+import type { Family } from "@/types/family";
 
 const person = (id: string, overrides: Partial<Person> = {}): Person => ({
   id,

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { SupabaseDataProvider } from "./SupabaseDataProvider";
+import { SupabaseDataProvider } from "@/services/supabase/SupabaseDataProvider";
 
 /**
  * The Supabase data provider can't be fully exercised without a live Supabase

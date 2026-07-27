@@ -1,7 +1,8 @@
 /**
  * Boundary mappers between Postgres row shapes (snake_case, columns mirror
- * `db/schema.ts`) and the domain types the rest of the codebase uses
- * (camelCase). Keep the rest of the code free of snake_case knowledge.
+ * `db/migrations/0001_initial.sql`) and the domain types the rest of the
+ * codebase uses (camelCase). Keep the rest of the code free of snake_case
+ * knowledge.
  */
 
 import type { Person } from "../../types/person";

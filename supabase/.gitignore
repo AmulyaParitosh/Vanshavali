@@ -1,0 +1,11 @@
+# Supabase
+.branches
+.temp
+
+# Local Studio SQL scratch snippets — per-machine, not shared
+snippets/
+
+# dotenvx
+.env.keys
+.env.local
+.env.*.local

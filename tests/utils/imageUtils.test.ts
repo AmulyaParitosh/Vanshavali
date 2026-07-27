@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getPersonPlaceholderUrl } from "./imageUtils";
-import type { Person } from "../types/person";
+import { getPersonPlaceholderUrl } from "@/utils/imageUtils";
+import type { Person } from "@/types/person";
 
 const person = (overrides: Partial<Person> = {}): Person => ({
   id: "p_alice",

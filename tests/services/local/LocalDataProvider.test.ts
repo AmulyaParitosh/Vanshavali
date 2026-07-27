@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { LocalDataProvider } from "./LocalDataProvider";
-import { LOCAL_DATA_CONFIG, SUGGESTION_STATUS, TREE_ROLES } from "../../constants";
+import { LocalDataProvider } from "@/services/local/LocalDataProvider";
+import { LOCAL_DATA_CONFIG, SUGGESTION_STATUS, TREE_ROLES } from "@/constants";
 
 const { GLOBAL_COLLECTIONS, TREE_COLLECTIONS } = LOCAL_DATA_CONFIG;
 

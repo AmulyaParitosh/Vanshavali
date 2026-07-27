@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { familyPartners, inferHusbandWife } from "./family";
-import type { Family } from "../types/family";
+import { familyPartners, inferHusbandWife } from "@/lib/family";
+import type { Family } from "@/types/family";
 
 const family = (overrides: Partial<Family> = {}): Family => ({
   id: "f1",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { canEdit, canInvite, canViewTree, isOwner, isMember } from "./access";
-import { TREE_ROLES } from "../constants";
+import { canEdit, canInvite, canViewTree, isOwner, isMember } from "@/lib/access";
+import { TREE_ROLES } from "@/constants";
 
 describe("canViewTree", () => {
   it.each([TREE_ROLES.VIEWER, TREE_ROLES.EDITOR, TREE_ROLES.OWNER])(

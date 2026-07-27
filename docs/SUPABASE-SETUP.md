@@ -1,73 +1,131 @@
 # Supabase setup
 
-End-to-end checklist for provisioning a Supabase project to run Vanshavali. The migrations and the apply-policies script handle most of it, but a handful of steps have to be done through the dashboard because Supabase blocks direct SQL access to specific subsystems (storage, auth providers, realtime publication).
+Two ways to run Vanshavali's Supabase backend:
 
-Order matters. Following the steps top-to-bottom takes ~10 minutes on a fresh project.
+- **Local development stack** (recommended for day-to-day dev) — a full Supabase stack (Postgres + Auth + Storage + Realtime) running in Docker on your machine via the Supabase CLI. Fast, offline, disposable, and it exercises the **exact same provider code as prod**, so RLS / JWT / storage bugs surface locally before they reach the cloud. See [§ Local development stack](#local-development-stack) below.
+- **Cloud project** — a hosted Supabase project for staging/production. See [§ Cloud project setup](#cloud-project-setup).
+
+Switch between them with a single env var, `NEXT_PUBLIC_ENV` = `local` | `prod`.
+
+---
+
+## Local development stack
+
+Runs the whole backend locally with `supabase start`. One-time setup is ~5 minutes (mostly image pulls).
+
+### Prerequisites
+
+- **Docker** running. Docker Desktop, OrbStack, or colima (`colima start`) all work — the Supabase CLI talks to the Docker daemon directly.
+- The Supabase CLI, already added as a dev dependency (`npx supabase`), so no global install needed.
+
+### One-time setup
+
+Set `NEXT_PUBLIC_ENV=local` in `.env` first — every `db:*` command below then targets the local stack automatically.
+
+```bash
+# 1. Boot the local stack (pulls images on first run — a few minutes).
+npm run stack:start
+
+# 2. Create the schema + RLS + realtime publication + storage bucket & policies.
+npm run db:setup
+```
+
+`db:setup` runs two steps against the active target (here, local):
+
+- **migrations** (`db:apply-policies`) — applies `db/migrations/*.sql`: tables via the `CREATE TABLE IF NOT EXISTS` safety net in `0001`, plus all RLS policies, helper functions, and triggers.
+- **extras** (`db:extras`) — the things a direct connection can't do through those migrations: GRANTs for the Data API roles, the `supabase_realtime` publication, and (local only) the `images` storage bucket + its RLS policies. Unlike cloud, the local `postgres` superuser _can_ create `storage.objects` policies directly, so local storage enforces the same per-tree rules as prod.
+
+### Run the app against local
+
+With `NEXT_PUBLIC_ENV=local` in `.env`:
+
+```bash
+npm run dev
+```
+
+The local API URL and demo keys are built in, so no other env vars are needed. Sign up with any email/password — email confirmation is off locally (`supabase/config.toml`), so you get a session immediately.
+
+### Day-to-day commands
+
+The `db:*` commands all follow `NEXT_PUBLIC_ENV`, so with it set to `local` they target the local DB. The `stack:*` commands manage the Docker stack (local-only, no cloud analog).
+
+| Command                | What it does                                                             |
+| ---------------------- | ------------------------------------------------------------------------ |
+| `npm run stack:start`  | Start the stack (idempotent).                                            |
+| `npm run stack:stop`   | Stop it (keeps data).                                                    |
+| `npm run stack:status` | Print URLs + keys (`API URL`, `anon key`, `DB URL`, Studio, Mailpit).    |
+| `npm run stack:reset`  | Wipe + restart with a fresh DB (`--no-backup`). Re-run `db:setup` after. |
+| `npm run db:setup`     | (Re)apply schema + policies + extras to the active env.                  |
+
+Useful local URLs: **Supabase Studio** `http://127.0.0.1:54323` (tables + auth users + storage browser — the fullest view of local data), **Mailpit** `http://127.0.0.1:54324` (catches all outbound email — invites, password resets — so you can click links without real SMTP).
+
+> **Browsing data:** use **Supabase Studio** — local at `http://127.0.0.1:54323`, or the cloud project's dashboard. (There's no ORM/`db:studio` — Studio is the browser.)
+
+### Notes
+
+- If `npm run stack:status` shows an anon/service key different from the built-ins (older/newer CLI), set `NEXT_PUBLIC_SUPABASE_ANON_KEY_LOCAL` / `SUPABASE_SERVICE_ROLE_KEY_LOCAL` in `.env`.
+- Google OAuth isn't configured locally by default; use email/password. (Add `[auth.external.google]` to `supabase/config.toml` if you need it.)
+- The local Postgres is `postgres` / `postgres` on port `54322` — browse it in Supabase Studio (`http://127.0.0.1:54323`) or point any SQL client at `postgresql://postgres:postgres@127.0.0.1:54322/postgres`.
+
+---
+
+## Cloud project setup
+
+End-to-end checklist for provisioning a hosted Supabase project. The migrations and the apply-policies script handle most of it, but a handful of steps have to be done through the dashboard because Supabase blocks direct SQL access to specific subsystems (storage, auth providers, realtime publication).
+
+Order matters. Following the steps top-to-bottom takes ~10 minutes on a fresh project. Set `NEXT_PUBLIC_ENV=prod` so the app and every `db:*` command target the cloud project. (Cloud-targeting `db:*` commands prompt for confirmation before writing — pass `--yes` or set `CONFIRM_CLOUD=1` in CI.)
 
 ## Prerequisites on your machine
 
 - Node 20+
-- `.env` populated from `.env.sample`. Required for setup:
+- `.env` populated from `.env.sample`. Required for cloud setup:
+  - `NEXT_PUBLIC_ENV=prod`
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   - `SUPABASE_SERVICE_ROLE_KEY` (server-only)
   - `DATABASE_URL` — Supabase Project Settings → Database → **Connection string → URI**, with your DB password substituted
-  - `NEXT_PUBLIC_APP_ENV=supabase` (or leave unset — the provider factory auto-selects supabase when the env above is present)
 
 ## 1. Create the Supabase project
 
 Dashboard → **New project**. Pick a strong DB password (you'll need it for `DATABASE_URL`). Wait ~2 minutes for provisioning.
 
-## 2. Push the schema
+## 2. Apply the schema + policies + extras
 
 ```bash
-npm run db:push
+npm run db:setup      # tables + RLS + grants + realtime publication + bucket
 ```
 
-Drizzle Kit creates the tables defined in `db/schema.ts` (`users`, `trees`, `tree_members`, `people`, `families`, `tree_invites`, `suggestions`). Run this first — `0001_initial.sql` has `CREATE TABLE IF NOT EXISTS …` as a safety net but Drizzle won't track the schema state unless `db:push` baselines it.
-
-Verify:
-
-- Dashboard → **Table Editor** → confirm all seven tables exist under the `public` schema.
-
-## 3. Apply RLS policies + triggers
-
-```bash
-npm run db:apply-policies
-```
-
-This runs every `.sql` file under `db/migrations/` in alphabetical order, each in its own transaction. Expected output:
+You'll be asked to confirm since the target is CLOUD (`--yes` / `CONFIRM_CLOUD=1` to skip in CI). `db:setup` runs every `.sql` file under `db/migrations/` (each in its own transaction) — `0001_initial.sql` creates all seven tables (`users`, `trees`, `tree_members`, `people`, `families`, `tree_invites`, `suggestions`) plus RLS/triggers/functions — then applies the extras. Expected shape:
 
 ```
+▶ target: CLOUD (<your-ref>)
+== Migrations ==
 Applying 0001_initial.sql...
   ✓ 0001_initial.sql
 Applying 0002_storage_policies.sql...
-  ⚠ 0002_storage_policies.sql: cannot apply as plain SQL on Supabase
+  ⚠ 0002_storage_policies.sql: skipped (storage.objects can't take direct policy DDL)
      apply via Dashboard → Storage → <bucket> → Policies → New policy.
-     See the header comment in this file for step-by-step.
-Applying 0003_fix_member_select_recursion.sql...
   ✓ 0003_fix_member_select_recursion.sql
-
-Done — but 1 file(s) still need the dashboard:
-  • db/migrations/0002_storage_policies.sql
-Open: https://supabase.com/dashboard/project/<your-ref>/sql/new
+  ✓ 0004_fix_cross_table_recursion.sql
+  ✓ 0005_whoami_diagnostic.sql
+== Extras ==
+  ✓ Data API grants
+  ✓ realtime publication
+  • storage policies: apply via Dashboard Storage UI (cloud is owner-locked)
+  ✓ images bucket
 ```
 
-The skipped `0002` is intentional — see step 5. The `0001`/`0003` apply makes table policies, triggers, and the `public.is_tree_member` SECURITY DEFINER helper that breaks the `tree_members` RLS recursion.
+The `0001`/`0003`/`0004` apply makes table policies, triggers, and the SECURITY DEFINER helpers (`is_tree_member`, `is_tree_owner`, `is_tree_editor`) that break the RLS recursion. The skipped `0002` (storage policies) is intentional — it's owner-locked on cloud, so it's the one thing you still do by hand in step 4. `db:setup` already handled the realtime publication (step 5) and the `images` bucket (step 3), so on cloud only the **storage policies** and **auth provider config** remain manual.
 
 If `0001` errors with `operator does not exist: text = uuid`, you're on an older copy — pull the latest, which casts `auth.uid()` to `text` everywhere.
 
-## 4. Create the `images` storage bucket
+## 3. Create the `images` storage bucket
 
-The storage provider hardcodes `BUCKET = "images"` (`src/services/supabase/SupabaseStorageProvider.ts`). It has to exist before any upload works, and the policies in step 5 reference it.
+> **`db:setup` already created this** (public `images` bucket). This step is verify-only unless you skipped `db:setup`.
 
-1. Dashboard → **Storage** → **New bucket**
-2. Name: `images`
-3. **Public bucket**: ON (v1 uses `getPublicUrl()`; tightening to signed URLs is on the backlog)
-4. File size limit: `5 MB` is a reasonable cap
-5. Allowed MIME types: leave blank to allow all, or restrict to `image/*`
+The storage provider hardcodes `BUCKET = "images"` (`src/services/supabase/SupabaseStorageProvider.ts`). It has to exist before any upload works, and the policies in step 4 reference it. To create manually: Dashboard → **Storage** → **New bucket** → name `images`, **Public bucket** ON, `5 MB` limit, MIME types blank or `image/*`.
 
-## 5. Create storage policies (via the Storage UI, not SQL)
+## 4. Create storage policies (via the Storage UI, not SQL)
 
 `storage.objects` is owned by `supabase_storage_admin`, and recent Supabase projects block direct policy DDL on it **even through the Dashboard SQL editor**. The supported path is the Storage Policies UI.
 
@@ -92,9 +150,11 @@ After all four are saved, an upload attempt from the app to a path outside `tree
 
 Skip this step at your peril — without it, any authenticated user can read/write any path in the bucket.
 
-## 6. Add tables to the Realtime publication
+## 5. Add tables to the Realtime publication
 
-Supabase Realtime only emits `postgres_changes` events for tables in the `supabase_realtime` publication. **The default publication includes nothing.** Without this step, every `subscribeWithRealtime` channel works (initial fetch fires once) but live updates never come through, and you'll think realtime is broken when it's actually just unconfigured.
+> **`db:setup` already did this.** This step is verify-only (or a manual fallback if the extras step warned it couldn't).
+
+Supabase Realtime only emits `postgres_changes` events for tables in the `supabase_realtime` publication. **The default publication includes nothing.** Without it, every `subscribeWithRealtime` channel works (initial fetch fires once) but live updates never come through, and you'll think realtime is broken when it's actually just unconfigured.
 
 Dashboard → **SQL Editor** → New query → paste and run:
 
@@ -117,7 +177,7 @@ The block swallows `duplicate_object` so it's safe to re-run.
 
 Verify: Dashboard → **Database** → **Publications** → `supabase_realtime` → six tables listed.
 
-## 7. Configure auth providers
+## 6. Configure auth providers
 
 Dashboard → **Authentication** → **Sign In / Providers**.
 
@@ -146,7 +206,7 @@ Then in Vanshavali's URL configuration (Dashboard → Auth → URL Configuration
 - **Site URL**: `http://localhost:3000` (dev) or your production origin
 - **Redirect URLs (Allow List)**: add the same origin(s) plus any preview deployments
 
-## 8. Smoke test
+## 7. Smoke test
 
 ```bash
 npm run dev
@@ -154,9 +214,9 @@ npm run dev
 
 Walk through:
 
-1. **Sign up** with email/password → should land on the auto-provisioned root tree without any console errors. (If `my-trees:<uid> fetch failed` appears, step 3 didn't apply `0003` — re-run `db:apply-policies`.)
-2. **Add a person** in `/tree/<id>/people` → should appear immediately. Open the app in a second tab to confirm Realtime fires the update (step 6).
-3. **Upload an image** for that person → should succeed. (Bucket missing = step 4; "violates row-level security policy" = step 5.)
+1. **Sign up** with email/password → should land on the auto-provisioned root tree without any console errors. (If `my-trees:<uid> fetch failed` appears, step 2 didn't apply `0003` — re-run `db:setup`.)
+2. **Add a person** in `/tree/<id>/people` → should appear immediately. Open the app in a second tab to confirm Realtime fires the update (step 5).
+3. **Upload an image** for that person → should succeed. (Bucket missing = step 3; "violates row-level security policy" = step 4.)
 4. **Sign out, sign in with Google** → should land on the same tree.
 5. **Send an invite** from `/tree/<id>/members` to a different email → should send via Resend, land at `/invite/<id>`, and after acceptance create a `tree_members` row visible to both users.
 

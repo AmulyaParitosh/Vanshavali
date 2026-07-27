@@ -26,24 +26,23 @@ npm run dev               # → http://localhost:3000
 
 ### Environment variables
 
-`.env` is gitignored. Required for local development:
+`.env` is gitignored. A single switch — `NEXT_PUBLIC_ENV` — picks the backend for both the app and the `db:*` tooling:
 
 ```env
-# Picks the provider implementation. "local" → file-backed mock providers.
-NEXT_PUBLIC_APP_ENV=local
-
-# Which mock UID the local AuthProvider "signs in" as.
-NEXT_PUBLIC_LOCAL_USER_UID=local-admin-uid
+# "local" → local Supabase stack (Docker). URL + keys are built in, nothing else needed.
+# "prod"  → your cloud project (fill the vars below).
+NEXT_PUBLIC_ENV=local
 ```
 
-Once Supabase migration lands, additional vars will be required for the non-local mode:
+For `prod` (cloud), also set:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 
-# Server-only (NOT prefixed with NEXT_PUBLIC_) — used by API routes only
+# Server-only (NOT prefixed with NEXT_PUBLIC_) — used by API routes / scripts only
 SUPABASE_SERVICE_ROLE_KEY=...
+DATABASE_URL=...
 RESEND_API_KEY=...
 RESEND_FROM_EMAIL=...
 ```
@@ -52,28 +51,30 @@ Never commit `.env`. Never put secrets in `NEXT_PUBLIC_*` variables — those ar
 
 ### Local mode (recommended for most dev work)
 
-`NEXT_PUBLIC_APP_ENV=local` runs the entire app against file-backed providers under `.local_data/`. No backend account needed. Auth is mocked — the UID from `NEXT_PUBLIC_LOCAL_USER_UID` is "always signed in" once you click Sign In.
-
-To prime local mode with realistic data, use the seed script:
+`NEXT_PUBLIC_ENV=local` runs the app against a full **local Supabase stack** (real Postgres + Auth + Storage + Realtime in Docker) — the same provider code as prod, so RLS/auth/storage behave identically. One-time setup:
 
 ```bash
-npx tsx scripts/seed-local.ts        # creates a sample tree with placeholder people
+npm run stack:start   # boot the Docker stack (pulls images on first run)
+npm run db:setup      # schema + RLS + realtime + storage bucket & policies (targets local)
+npm run dev           # with NEXT_PUBLIC_ENV=local in .env
 ```
 
-(Pre-migration: `npx tsx scripts/sync-firebase.ts` pulls real Firebase data; this will be removed once the Firebase backend is decommissioned.)
+Sign up with any email/password — email confirmation is off locally, so you get a session immediately. Browse local data at Supabase Studio (`http://127.0.0.1:54323`). Full details + troubleshooting in `docs/SUPABASE-SETUP.md`.
+
+> The old file-backed JSON mock (`NEXT_PUBLIC_APP_ENV=local`, `.local_data/`) was retired as a runtime mode once the local stack landed. Its provider classes survive only as the unit-test double.
 
 ### Tests, lint, types
 
 ```bash
 npm run typecheck         # tsc --noEmit
-npm run lint              # ESLint (once configured)
+npm run lint              # ESLint
 npm run format            # Prettier write
 npm run format:check      # Prettier check (CI runs this)
 npm test                  # Vitest (run once)
 npm run test:watch        # Vitest in watch mode
 ```
 
-(These scripts will be wired into `package.json` as Phase 14 of the migration plan. If they don't exist yet, run the underlying tools directly — `npx tsc --noEmit` etc.)
+Tests live under `tests/`, mirroring the `src/` layout (e.g. `src/lib/access.ts` → `tests/lib/access.test.ts`). Import the code under test through the `@/*` → `src/*` alias (declared in `tsconfig.json` + `vitest.config.ts`), e.g. `import { canEdit } from "@/lib/access"` — so an import doesn't depend on how deeply the test is nested.
 
 ---
 
