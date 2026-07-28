@@ -5,34 +5,32 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useAppContext } from "../context/AppContext";
-import { isOwner } from "../lib/access";
 
 /**
- * The left rail (§03 shell metrics) — 232px of fixed furniture on every
- * tree-scoped screen. Carries the identity of the tree and the four
- * destinations (plus Settings for the owner). Navigation used to live in the
- * top bar; it lives here now so the chrome bar can stay a single quiet lockup.
+ * The left rail (Spec 00 §02) — 232px of fixed furniture on every tree-scoped
+ * screen, part of the shell that never remounts on route change. Carries the
+ * identity of the tree and its four — and only four — destinations: Tree,
+ * Members, Households, Settings (Spec 00: "Nothing else is ever added here").
+ * Members and Households show a count badge.
  */
 export default function TreeRail() {
   const pathname = usePathname();
-  const { currentTreeId, myTrees, membership, treeData } = useAppContext();
+  const { currentTreeId, myTrees, treeData } = useAppContext();
 
   if (!currentTreeId) return null;
 
   const allTrees = myTrees ? [...myTrees.owned, ...myTrees.member] : [];
   const tree = allTrees.find((t) => t.id === currentTreeId);
   const peopleCount = treeData?.people.length ?? 0;
+  const familyCount = treeData?.families.length ?? 0;
 
   const base = `/tree/${currentTreeId}`;
   const destinations = [
-    { href: base, label: "Tree" },
-    { href: `${base}/people`, label: "People" },
-    { href: `${base}/family`, label: "Family" },
-    { href: `${base}/members`, label: "Members" },
+    { href: base, label: "Tree", glyph: "❦", badge: "" },
+    { href: `${base}/members`, label: "Members", glyph: "☰", badge: peopleCount || "" },
+    { href: `${base}/families`, label: "Households", glyph: "❀", badge: familyCount || "" },
+    { href: `${base}/settings`, label: "Settings", glyph: "✧", badge: "" },
   ];
-  if (isOwner(membership?.role)) {
-    destinations.push({ href: `${base}/settings`, label: "Settings" });
-  }
 
   return (
     <nav className="tree-rail" aria-label="Tree navigation">
@@ -56,18 +54,16 @@ export default function TreeRail() {
                 className={`tree-rail-item${active ? " active" : ""}`}
                 aria-current={active ? "page" : undefined}
               >
-                {d.label}
+                <span className="tree-rail-glyph" aria-hidden="true">
+                  {d.glyph}
+                </span>
+                <span className="tree-rail-label">{d.label}</span>
+                {d.badge !== "" && <span className="tree-rail-badge">{d.badge}</span>}
               </Link>
             </li>
           );
         })}
       </ul>
-
-      <div className="tree-rail-foot">
-        <Link href="/about" className={`tree-rail-item${pathname === "/about" ? " active" : ""}`}>
-          About
-        </Link>
-      </div>
     </nav>
   );
 }

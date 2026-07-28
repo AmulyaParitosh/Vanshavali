@@ -72,8 +72,8 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
   **DONE** (see receipt; note reconstructed 2/3 — QUESTIONS Q7)
 - Auth fixture — Playwright `setup` project logs in via the UI and persists `storageState`; chromium
   reuses it (signed in as the seeded tree keeper). Seed constants in `tests/e2e/fixtures.ts`. **DONE**
-- Shell (Spec 00 §02) — audited (see note below); **NEXT to implement**.
-- Component library (`Vanshavali Components.dc.html`) — not started (fetch that spec next)
+- Shell (Spec 00 §02) — **DONE** (see receipt). Chrome + rail brought to spec; contract §1 green.
+- Component library (`Vanshavali Components.dc.html`) — **NEXT** (the longest Wave 0 unit; fetch that spec)
 
 ### Shell audit (Spec 00 §02 vs current code) — architecture is sound, fidelity gaps remain
 
@@ -163,3 +163,28 @@ persist storageState to `.playwright/auth/user.json`; chromium project depends o
 Seed password set deterministically via `crypt('password123', gen_salt('bf'))` on auth.users. Public
 specs (landing/sign-in) opt out with `test.use({ storageState: { cookies:[], origins:[] } })`.
 deviations: none.
+
+## Shell — chrome bar + rail (Spec 00 §02) — DONE
+
+spec: Spec 00 §02 (`_FOUNDATIONS.md` §Shell), integration contract §1
+files: src/components/Header.tsx, src/components/TreeRail.tsx, src/components/CommandSearch.tsx,
+src/providers/AppProvider.tsx, src/app/globals.css, src/app/tree/[id]/families/page.tsx,
+tests/e2e/shell.spec.ts
+tests: tests/e2e/shell.spec.ts — 8/8 (+ setup) passing; contract §1 (no-remount) green
+consumes: tokens, heritage tokens, CommandSearch (⌘K palette)
+decisions: Chrome bar now carries the 260px search trigger (opens CommandSearch via a
+`vanshavali:open-search` event) and the leaf-green (#2e8b57) you-avatar; banner → `/banner.jpg`;
+chrome gated on `user` so it's absent on Landing/Sign-in (Spec 00). Rail cut to the four spec
+destinations Tree ❦ / Members ☰ / Households ❀ / Settings ✧ (dropped People/Family/About; Settings
+shown to everyone), glyph column + count badges, name → 19px Yatra, and the active state fixed to a
+SOLID red block with light text (was the red wash). Created `/tree/[id]/families` (re-exports the
+family page until Wave 3's Households). No-remount already held architecturally (chrome in
+AppProvider, rail in the persistent tree layout) — the test that first "failed" was capturing the
+rail handle during the initial Loading tick; fixed the test, the app was correct.
+Reconciliations (cross-referenced): rail bg stays `#fffdf9` (Style Guide "rail=Paper" + §01 screen;
+§02 shellParts' `#f8f2e4` is the outlier). Chrome search trigger present per §02 + Style Guide m2,
+though Spec 00 §01's tree screen shows a bottom canvas search pill instead — Spec 09/05 reconcile.
+deviations: none for the shell itself. Follow-ups for later waves (not shell): the Members page still
+shows a role `<select>` + "change a role from its dropdown" copy — a Spec-06 "Do not" violation to
+fix in Wave 3; a stray fixed bottom-left "N" circle on tree/members pages to investigate in Wave 3;
+`node_border.png` kept in `public/` until PersonAvatar is rewired to `--ornament-ring` (Wave 3).

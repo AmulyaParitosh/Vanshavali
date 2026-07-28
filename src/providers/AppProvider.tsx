@@ -99,7 +99,9 @@ export default function AppProvider({ children }: AppProviderProps) {
   return (
     <AppContext.Provider value={contextValue}>
       <div className="App">
-        <Header user={user} membership={membership} />
+        {/* Chrome bar is present on every authenticated route, absent on Landing
+         * and Sign in (Spec 00 §02). */}
+        {user && <Header user={user} membership={membership} />}
         <main>{renderContent()}</main>
         {user && <CommandSearch />}
       </div>

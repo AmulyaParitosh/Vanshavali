@@ -8,7 +8,9 @@ import { useAppContext } from "../context/AppContext";
 import type { AuthUser } from "../services/types";
 import type { TreeMembership } from "../types/tree";
 import { canViewTree } from "../lib/access";
-import { stringToColor } from "../utils/colorUtils";
+
+/** Opens the ⌘K search palette (CommandSearch listens for this). */
+const OPEN_SEARCH_EVENT = "vanshavali:open-search";
 
 interface HeaderProps {
   user: AuthUser | null;
@@ -99,6 +101,34 @@ export default function Header({ user, membership }: HeaderProps) {
         </div>
       )}
 
+      {showTreeSwitcher && (
+        <button
+          type="button"
+          className="chrome-search"
+          onClick={() => window.dispatchEvent(new CustomEvent(OPEN_SEARCH_EVENT))}
+          aria-label="Search people, places and events"
+          aria-keyshortcuts="Meta+K Control+K"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <span className="chrome-search-placeholder">Search people, places, events</span>
+          <span className="chrome-search-kbd" aria-hidden="true">
+            ⌘K
+          </span>
+        </button>
+      )}
+
       <div className="chrome-spacer" />
 
       {user && (
@@ -106,10 +136,7 @@ export default function Header({ user, membership }: HeaderProps) {
           {user.photoURL ? (
             <img src={user.photoURL} alt={user.displayName || "You"} className="chrome-avatar" />
           ) : (
-            <span
-              className="chrome-avatar chrome-avatar--placeholder"
-              style={{ backgroundColor: stringToColor(user.email || user.displayName || "You") }}
-            >
+            <span className="chrome-avatar chrome-avatar--placeholder">
               {user.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
             </span>
           )}

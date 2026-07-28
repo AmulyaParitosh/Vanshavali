@@ -343,7 +343,7 @@ main {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(20, 18, 16, 0.76), rgba(20, 18, 16, 0.93)), url("/madhubani_banner.png");
+    linear-gradient(rgba(20, 18, 16, 0.76), rgba(20, 18, 16, 0.93)), url("/banner.jpg");
   background-size: cover;
   background-position: 0% 34%;
   pointer-events: none;
@@ -398,6 +398,44 @@ main {
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* Search trigger — the global ⌘K entry point, part of the chrome furniture
+ * (Spec 00 §02: wordmark · tree switcher · search · you). Opens CommandSearch. */
+.chrome-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 260px;
+  flex-shrink: 0;
+  padding: 7px 13px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background var(--dur-panel) var(--ease);
+}
+.chrome-search:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.chrome-search-placeholder {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chrome-search-kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
 .chrome-spacer {
   flex: 1;
 }
@@ -423,6 +461,8 @@ main {
   font-size: 14px;
   font-weight: 600;
   color: #fff;
+  /* Leaf green means "you" and nothing else (Spec 00 §02). */
+  background: var(--color-green);
 }
 
 /* Tree-switcher dropdown (opened from the chrome bar) */
@@ -496,7 +536,7 @@ main {
 }
 .tree-rail-name {
   font-family: var(--font-display);
-  font-size: var(--font-size-lg);
+  font-size: var(--fs-19);
   line-height: 1.25;
   color: var(--text-primary);
 }
@@ -513,7 +553,9 @@ main {
   gap: 2px;
 }
 .tree-rail-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   padding: 9px 12px;
   border-radius: var(--radius-10);
   color: var(--text-rail);
@@ -521,21 +563,38 @@ main {
   font-weight: 500;
   text-decoration: none;
   transition:
-    background var(--duration-base) var(--ease-standard),
-    color var(--duration-base) var(--ease-standard);
+    background var(--dur-panel) var(--ease),
+    color var(--dur-panel) var(--ease);
 }
+.tree-rail-glyph {
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.85;
+}
+.tree-rail-label {
+  flex: 1;
+  min-width: 0;
+}
+.tree-rail-badge {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-meta);
+}
+/* Hover takes the red wash; the active destination is a solid red block with
+ * light text — the one loud element in the rail (Spec 00 §02). */
 .tree-rail-item:hover {
   background: var(--color-red-wash);
 }
 .tree-rail-item.active {
-  background: var(--color-red-wash);
-  color: var(--color-red-deep);
+  background: var(--color-red);
+  color: var(--surface-paper);
   font-weight: 600;
 }
-.tree-rail-foot {
-  margin-top: auto;
-  padding: var(--space-2) var(--space-2) var(--space-4);
-  border-top: 1px solid var(--line-inner);
+.tree-rail-item.active .tree-rail-badge {
+  color: rgba(255, 253, 249, 0.8);
 }
 
 /* --- Sign-in screen — heritage-quiet: wordmark lockup on a calm paper card,
@@ -3554,8 +3613,7 @@ main {
   height: 56px;
   position: relative;
   background-image:
-    linear-gradient(rgba(253, 245, 230, 0.55), rgba(253, 245, 230, 0.9)),
-    url("/madhubani_banner.png");
+    linear-gradient(rgba(253, 245, 230, 0.55), rgba(253, 245, 230, 0.9)), url("/banner.jpg");
   background-size: cover;
   background-position: 0% 34%;
 }

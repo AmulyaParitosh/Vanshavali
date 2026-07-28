@@ -27,8 +27,13 @@ export default function CommandSearch() {
         setOpen(false);
       }
     };
+    const onOpen = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("vanshavali:open-search", onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("vanshavali:open-search", onOpen);
+    };
   }, []);
 
   useEffect(() => {
