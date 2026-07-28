@@ -76,7 +76,9 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
 - Component library (`Vanshavali Components.dc.html`) — **IN PROGRESS** (mirror at
   `design-specs/Vanshavali-Components.html`; test `tests/e2e/components.spec.ts`). Sub-units by section:
   - Actions (buttons) — **DONE** (L275–343).
-  - Inputs (L348–441) — **NEXT**: search pill (250×38, radius 999, 9/13, 14px, glyph 14) · data field
+  - Inputs (L348–441) — **DONE** (search pill, data field, label/error/suggested, segmented, toggle,
+    radio row, alias chip; components.spec.ts Inputs 8/8). Values (kept for reference): search pill
+    (250×38, radius 999, 9/13, 14px, glyph 14) · data field
     (radius 12, 11/14, 15.5 value, label 12.5/600 #55504a, focus border #b22222 + halo, error msg 12.5
     #8b0000 at 6px) · suggested chip (10.5/600 #8a8377) · segmented switch (track #f8f2e4 border #e6ddc9
     radius 12 pad 3; segment radius 9 pad 7; selected bg #fffdf9 border #d8cdb4 600) · toggle (40×22,
@@ -85,7 +87,8 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
     #e6ddc9 13.5, ✕ 11 #8a8377) · place suggestion row (9/13, selected #fff5f5, reason 12.5 #8a8377,
     "new" tag 10.5 on #fdf1e2/#8a5300). Focus = border #b22222 + `0 0 0 3px rgba(178,34,34,.1)`;
     validate on blur/submit, never keystroke.
-  - Status (chips/badges/generation marker) — L448–484.
+  - Status (chips/badges/generation marker) — **NEXT** (L448–484). Existing `.chip*` primitives already
+    largely spec-match (see globals.css ~L1546); audit vs Components §Status + add generation marker.
   - Containers & lists (card, list row 40·flex·46·100·112, table header) — L484–559.
   - Overlays (dialog, toast, search palette) — L559–622.
   - Empty & loading (empty state, skeleton) — L622–654.
