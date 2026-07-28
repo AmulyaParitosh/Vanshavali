@@ -16,7 +16,8 @@ export interface UseTreeMembershipResult {
 export function useTreeMembership(
   treeId: string | null,
   uid: string | null,
-  provider: MembershipProvider
+  provider: MembershipProvider,
+  refreshNonce = 0
 ): UseTreeMembershipResult {
   const [membership, setMembership] = useState<TreeMembership | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -34,7 +35,7 @@ export function useTreeMembership(
       setIsLoaded(true);
     });
     return () => unsubscribe();
-  }, [treeId, uid, provider]);
+  }, [treeId, uid, provider, refreshNonce]);
 
   return { membership, isLoaded };
 }

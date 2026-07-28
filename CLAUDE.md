@@ -4,11 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Direction (June 2026)
 
-This project was **migrated to multi-tenancy and off Firebase entirely** for public release. See `docs/ARCHITECTURE.md` for the target architecture, data model, and phased migration plan. See `docs/SUPABASE-SETUP.md` for the end-to-end provisioning checklist (manual steps the migrations can't do — storage policies, realtime publication, OAuth config). See `docs/DESIGN-LANGUAGE.md` for the visual identity. See `docs/BACKLOG.md` for deferred design / refactor work that's been scoped but not picked up. See `CONTRIBUTING.md` for dev workflow.
+This project was **migrated to multi-tenancy and off Firebase entirely** for public release. See `docs/ARCHITECTURE.md` for the target architecture, data model, and phased migration plan. See `docs/SUPABASE-SETUP.md` for the end-to-end provisioning checklist (manual steps the migrations can't do — the storage bucket, OAuth config). See `docs/DESIGN-LANGUAGE.md` for the visual identity. See `docs/BACKLOG.md` for deferred design / refactor work that's been scoped but not picked up. See `CONTRIBUTING.md` for dev workflow.
 
 Locked-in decisions (do not re-litigate without a strong reason):
 
-- **Backend**: Supabase (Postgres + Auth + Storage + Realtime). No Firebase / GCP anywhere.
+- **Backend**: Supabase Postgres + Auth + Storage. No Firebase / GCP anywhere.
+- **No RLS**: the backend owns the tables completely — the app connects as the Postgres owner through the repository layer and enforces access in the **service layer** (`src/services/authz.ts`). RLS is not used at all.
+- **No Realtime**: there are no live subscriptions; the client fetches through the API and re-fetches after its own mutations (a refresh nonce in `AppContext`).
+- **Schema management**: declarative schemas in `supabase/schemas/*.sql` are the source of truth; migrations in `supabase/migrations/` are generated via `supabase db diff` and applied by the Supabase CLI.
 - **Auth providers**: Google + email/password.
 - **Tenancy**: Tree owners + invites. Per-tree roles: `owner` / `editor` / `viewer`. Global admin role is gone.
 - **Existing Firebase data**: archived, not migrated. Clean slate on launch.
@@ -22,22 +25,23 @@ Locked-in decisions (do not re-litigate without a strong reason):
 
 ## Commands
 
-All backend-touching commands follow **`NEXT_PUBLIC_ENV`** (`local` | `prod`) — one set of commands, one switch. No `:local` twins.
+The **app** and `db:extras` follow **`NEXT_PUBLIC_ENV`** (`local` | `prod`). The **migration** commands (`db:diff`/`db:reset`/`db:push`) use the Supabase CLI, which targets the local stack or the linked cloud project (`supabase link`), not `NEXT_PUBLIC_ENV`.
 
 - `npm run dev` — start Next.js dev server at `http://localhost:3000` (against the active env)
 - `npm run build` — production build
 - `npm run start` — run the production build
 - `npm run typecheck` — `tsc --noEmit`
-- `npm run db:apply-policies` — apply the SQL migrations (`db/migrations/*.sql`: tables + RLS + triggers) to the active env
-- `npm run db:extras` — grants + realtime publication + storage bucket & policies
-- `npm run db:setup` — `db:apply-policies` + `db:extras` in one shot (idempotent)
+- `npm run db:diff -- <name>` — generate a migration in `supabase/migrations/` from edits to the declarative schema (`supabase/schemas/*.sql`), via `supabase db diff`
+- `npm run db:reset` — drop + recreate the local DB, re-applying all migrations (+ seed); run after pulling new migrations
+- `npm run db:push` — apply pending migrations to the linked cloud project (`supabase link` first)
+- `npm run db:extras` — ensure the `images` storage bucket exists on the active env (the one setup step migrations can't express — buckets are created through the Storage API)
 
 Local Supabase stack lifecycle (Docker via the Supabase CLI — no cloud analog):
 
-- `npm run stack:start` / `stack:stop` / `stack:status` — manage the local stack
-- `npm run stack:reset` — wipe + restart with a fresh DB (re-run `db:setup` after)
+- `npm run stack:start` / `stack:stop` / `stack:status` — manage the local stack (`stack:start` auto-applies migrations)
+- `npm run stack:reset` — nuke + restart the containers with a fresh DB
 
-Typical first-time local setup: `npm run stack:start` → `NEXT_PUBLIC_ENV=local npm run db:setup` → `npm run dev` (with `NEXT_PUBLIC_ENV=local` in `.env`). Cloud-targeting `db:*` commands prompt for confirmation (bypass with `--yes` / `CONFIRM_CLOUD=1`). See `docs/SUPABASE-SETUP.md`.
+Typical first-time local setup: `npm run stack:start` (applies migrations) → `NEXT_PUBLIC_ENV=local npm run db:extras` (bucket) → `npm run dev` (with `NEXT_PUBLIC_ENV=local` in `.env`). **Schema change workflow**: edit `supabase/schemas/*.sql` → `npm run db:diff -- <name>` → review the generated migration → `npm run db:reset` to apply locally. See `docs/SUPABASE-SETUP.md`.
 
 The TypeScript config is strict (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`).
 
@@ -48,7 +52,7 @@ Copy `.env.sample` → `.env` (gitignored) and fill values. Key vars:
 - `NEXT_PUBLIC_ENV` — **the single backend switch**: `local` (local Supabase stack) or `prod` (cloud project). Drives both the app and the `db:*` CLI tooling. Resolved for the client in `src/lib/supabaseEnv.ts`, for server routes in `src/lib/supabase-server.ts`, and for scripts in `scripts/env.ts`. For `local`, the URL + demo keys are built in — no other Supabase vars needed. Unset → cloud.
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — cloud Supabase client config (used when `NEXT_PUBLIC_ENV=prod`).
 - `NEXT_PUBLIC_SUPABASE_URL_LOCAL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY_LOCAL` / `SUPABASE_SERVICE_ROLE_KEY_LOCAL` — optional overrides for the local stack if your CLI mints non-default keys.
-- `SUPABASE_SERVICE_ROLE_KEY` — server-only; reserved for the setup scripts. The app's data path no longer uses a service-role Supabase client (it uses `pg` + service-layer authz).
+- `SUPABASE_SERVICE_ROLE_KEY` — server-only; used by `/api/upload` (the service-role storage client) and the `db:extras` bucket step. The data path uses `pg` + service-layer authz, not this.
 - `DATABASE_URL` — cloud Postgres connection string (used when `NEXT_PUBLIC_ENV=prod`) for **both** the setup scripts and the app's server-side repository layer (`src/repositories/db.ts`). The local stack uses `postgresql://postgres:postgres@127.0.0.1:54322/postgres` automatically.
 - `RESEND_API_KEY` / `RESEND_FROM_EMAIL` — transactional email (invitations).
 - `NEXT_PUBLIC_SITE_URL` — canonical site origin used to build invite-acceptance URLs in outbound email. Defaults to request origin when unset.
@@ -62,14 +66,14 @@ Backend resolution: `NEXT_PUBLIC_ENV` chooses which backend everything points at
 
 All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts`. `DataProvider` is split per ISP into focused sub-interfaces — `UserProvider`, `TreeMetaProvider`, `TreeDataProvider`, `MembershipProvider`, `InvitationProvider`, `SuggestionProvider`. Consumers should type their dependencies against the narrowest one they need. Data implementations:
 
-- `src/services/ApiDataProvider.ts` — the runtime `DataProvider`. It is a **thin HTTP client**: every read/write calls a `/api/*` route (via `authedFetch`, attaching the user's Supabase access token as a bearer). It holds a supabase-js client for exactly two things — minting that token and opening Realtime channels. It contains **no SQL and no row-shape knowledge**.
+- `src/services/ApiDataProvider.ts` — the runtime `DataProvider`. A **thin HTTP client**: every read/write calls a `/api/*` route (via `authedFetch`, attaching the user's Supabase access token as a bearer). It holds a supabase-js client only for that token. It contains **no SQL and no row-shape knowledge**. `src/services/ApiStorageProvider.ts` is the same idea for images (posts multipart to `/api/upload`).
 - `src/services/local/` — `LocalDataProvider`, the file-backed unit-test double. **Not wired at runtime**; `LocalDataProvider.test.ts` stubs `fetch` against it so the interface has a fast in-memory implementation to test contract behavior without a live backend.
 
-`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) returns `{ auth, data, storage }` and memoizes them: auth + storage go straight through supabase-js; data goes through `ApiDataProvider`.
+`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) returns `{ auth, data, storage }` and memoizes them: **auth** goes through supabase-js (`SupabaseAuthProvider`); **data** and **storage** go through `ApiDataProvider` / `ApiStorageProvider`, which hit the `/api/*` routes.
 
 **Never import `supabase-js` for data in a component or hook — go through the providers.** And the real data logic never lives in the provider: it lives server-side. See the next section.
 
-Realtime: the `subscribe*` methods open a `postgres_changes` channel (`src/services/supabase/realtime.ts`) purely as a **change ping** — the ping triggers a re-fetch through the API (→ repository → raw SQL), so the authoritative read always goes through the server. RLS still gates which pings the anon client receives (defense in depth). The retained test double's subscriptions are 5s-polled (`LOCAL_DATA_CONFIG.POLLING_INTERVAL`).
+No live updates: the tables have no RLS and no anon grants, so the browser can't subscribe to Postgres changes. Each `subscribe*` method does a single fetch and returns a no-op unsubscribe; the UI re-fetches after the user's own mutations via a **refresh nonce** in `AppContext`. `withRefresh` (`src/services/withRefresh.ts`) wraps the provider so every mutating method bumps the nonce, and each subscribe hook includes the nonce in its effect deps.
 
 ### Server data layer: routes → services → repositories (raw SQL)
 
@@ -111,15 +115,16 @@ Per-tree uniqueness:
 - One root Person per tree (enforced by `ConsistencyValidator` and a partial unique index in Postgres).
 - One linked Person per (tree, uid) pair — i.e. a single auth user maps to at most one Person within a tree, but can be linked across multiple trees.
 
-### Database (multi-tenant target)
+### Database (declarative schema + CLI migrations, no RLS)
 
-The schema lives entirely in SQL migrations under `db/migrations/` — there's no ORM. `0001_initial.sql` is the single source of truth: it defines all tables (`users`, `trees`, `tree_members`, `people`, `families`, `tree_invites`, `suggestions`), indexes, RLS policies, triggers, and the SECURITY DEFINER helper functions. Later files (`0003`–`0005`) are follow-up fixes; `0002` is the storage policies. See `docs/ARCHITECTURE.md` §4 for the full shape.
+There's no ORM. The schema is managed the Supabase declarative way:
 
-Apply with `npm run db:setup` (migrations + grants/realtime/storage extras) or `npm run db:apply-policies` (migrations only). **Schema changes = add a new `db/migrations/000N_*.sql` file**, then re-run `db:setup`.
+- **`supabase/schemas/*.sql`** — the declared source of truth (all 7 tables: `users`, `trees`, `tree_members`, `people`, `families`, `tree_invites`, `suggestions`; indexes; the `updated_at` trigger). Edit these to change the schema.
+- **`supabase/migrations/*.sql`** — generated by `supabase db diff` (`npm run db:diff -- <name>`) from changes to the declared schema, and applied by the Supabase CLI (`supabase start` / `db reset` locally, `db push` to cloud). Never hand-edit the DB; edit the schema and diff.
 
-**Access control lives in the service layer, not RLS.** The app's data path connects as the Postgres owner (`src/repositories/db.ts`), which bypasses RLS, and authorization is enforced by `src/services/authz.ts`. RLS is kept as **defense in depth** and to gate which Realtime `postgres_changes` pings the anon client receives — it is no longer the primary gate. (This is a deliberate change from the earlier "RLS is the enforcement" design; see `docs/ARCHITECTURE.md`.)
+There is **no RLS, no policies, no SECURITY DEFINER helpers, and no `auth.users` trigger** (services create the `users` row on every write path). Config: `auto_expose_new_tables = false` in `supabase/config.toml` — the Data API roles (anon/authenticated) get no access, so the auto-generated REST API is permission-denied for our tables by design.
 
-`scripts/env.ts` and `src/repositories/db.ts` both resolve which database to target from `NEXT_PUBLIC_ENV`; `pg` (not an ORM) is the connection driver in both.
+**Access control lives in the service layer.** The app connects as the Postgres owner (`src/repositories/db.ts`) and authorizes in `src/services/authz.ts`. `src/repositories/db.ts` resolves the target from `NEXT_PUBLIC_ENV`; the CLI migration commands target the local stack or the linked cloud project instead. `pg` (not an ORM) is the app's connection driver.
 
 ### Tree rendering and graph logic
 

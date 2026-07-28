@@ -30,7 +30,7 @@ const STATUS_CONFIG: Record<SuggestionStatus, { label: string; color: string; bg
 };
 
 export default function SuggestionsPage() {
-  const { user, dataProvider } = useAppContext();
+  const { user, dataProvider, refreshNonce } = useAppContext();
   const router = useRouter();
   const toast = useToast();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -48,7 +48,7 @@ export default function SuggestionsPage() {
     });
 
     return () => unsubscribe();
-  }, [dataProvider]);
+  }, [dataProvider, refreshNonce]);
 
   const handleStatusChange = async (id: string, newStatus: SuggestionStatus) => {
     try {

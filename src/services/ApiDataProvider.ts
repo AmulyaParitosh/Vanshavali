@@ -9,28 +9,43 @@ import type {
   MyTrees,
 } from "../types/tree";
 import type { Suggestion, SuggestionStatus } from "../types/suggestion";
-import { subscribeWithRealtime } from "./supabase/realtime";
 import { authedFetch } from "./api/authedFetch";
+import { formatError } from "../lib/formatError";
 
 /**
  * The client-side DataProvider. Every data read/write goes over HTTP to the
  * `/api/*` routes (→ service → repository → raw SQL), attaching the user's
  * Supabase access token as a bearer via `authedFetch`.
  *
- * supabase-js (`this.client`) is kept for exactly two things:
- *   1. Auth — minting the bearer token for each request.
- *   2. Realtime — the `subscribe*` methods open a `postgres_changes` channel
- *      purely as a change *ping*; the ping triggers a re-fetch through the API,
- *      so the authoritative read always goes through the repository layer. RLS
- *      still gates which pings the anon client receives (defense in depth).
+ * supabase-js (`this.client`) is kept only for auth — minting the bearer token
+ * for each request (and reading the session uid in acceptInvite).
  *
- * There are no direct table queries here anymore — the class holds no
- * knowledge of row shapes or SQL.
+ * There are no live updates: the tables have no RLS and no anon grants, so the
+ * browser can't subscribe to Postgres changes. The `subscribe*` methods do a
+ * single fetch and return a no-op unsubscribe; the UI re-fetches after the
+ * user's own mutations via the refresh-nonce in AppContext (see useAuthAndData).
  */
 export class ApiDataProvider implements DataProvider {
   protected readonly client: SupabaseClient;
   constructor(client: SupabaseClient) {
     this.client = client;
+  }
+
+  /**
+   * Run the fetcher once and hand the result to the callback. Returns a no-op
+   * unsubscribe (guarded so a late fetch after unmount doesn't fire the
+   * callback). Every subscribe* method uses this now that there are no channels.
+   */
+  private subscribeOnce<T>(fetcher: () => Promise<T>, callback: (value: T) => void): () => void {
+    let cancelled = false;
+    void fetcher()
+      .then((value) => {
+        if (!cancelled) callback(value);
+      })
+      .catch((error) => console.error("[subscribeOnce] fetch failed", formatError(error)));
+    return () => {
+      cancelled = true;
+    };
   }
 
   // ----------------------------- UserProvider -----------------------------
@@ -64,29 +79,14 @@ export class ApiDataProvider implements DataProvider {
     return authedFetch<MyTrees>(this.client, "/api/trees");
   }
 
-  subscribeToMyTrees(uid: string, callback: (trees: MyTrees) => void): () => void {
-    return subscribeWithRealtime(
-      this.client,
-      `my-trees:${uid}`,
-      // Anything that affects which trees a user can see touches trees or tree_members.
-      [{ table: "trees" }, { table: "tree_members", filter: `uid=eq.${uid}` }],
-      () => authedFetch<MyTrees>(this.client, "/api/trees"),
-      callback
-    );
+  subscribeToMyTrees(_uid: string, callback: (trees: MyTrees) => void): () => void {
+    return this.subscribeOnce(() => authedFetch<MyTrees>(this.client, "/api/trees"), callback);
   }
 
   // --------------------------- TreeDataProvider ---------------------------
 
   subscribeToTreeData(treeId: string, callback: (data: TreeData) => void): () => void {
-    return subscribeWithRealtime(
-      this.client,
-      `tree-data:${treeId}`,
-      [
-        { table: "people", filter: `tree_id=eq.${treeId}` },
-        { table: "families", filter: `tree_id=eq.${treeId}` },
-      ],
-      // Realtime only pings that something changed; the authoritative read
-      // goes through the API → repository (raw SQL), same as every other data path.
+    return this.subscribeOnce(
       () => authedFetch<TreeData>(this.client, `/api/tree/${treeId}/data`),
       callback
     );
@@ -114,23 +114,17 @@ export class ApiDataProvider implements DataProvider {
 
   subscribeToMembership(
     treeId: string,
-    uid: string,
+    _uid: string,
     callback: (membership: TreeMembership | null) => void
   ): () => void {
-    return subscribeWithRealtime(
-      this.client,
-      `membership:${treeId}:${uid}`,
-      [{ table: "tree_members", filter: `tree_id=eq.${treeId}` }],
+    return this.subscribeOnce(
       () => authedFetch<TreeMembership | null>(this.client, `/api/tree/${treeId}/membership`),
       callback
     );
   }
 
   subscribeToMembers(treeId: string, callback: (members: TreeMembership[]) => void): () => void {
-    return subscribeWithRealtime(
-      this.client,
-      `members:${treeId}`,
-      [{ table: "tree_members", filter: `tree_id=eq.${treeId}` }],
+    return this.subscribeOnce(
       () => authedFetch<TreeMembership[]>(this.client, `/api/tree/${treeId}/members`),
       callback
     );
@@ -190,10 +184,7 @@ export class ApiDataProvider implements DataProvider {
   }
 
   subscribeToInvites(treeId: string, callback: (invites: TreeInvite[]) => void): () => void {
-    return subscribeWithRealtime(
-      this.client,
-      `invites:${treeId}`,
-      [{ table: "tree_invites", filter: `tree_id=eq.${treeId}` }],
+    return this.subscribeOnce(
       () => authedFetch<TreeInvite[]>(this.client, `/api/tree/${treeId}/invites`),
       callback
     );
@@ -202,13 +193,7 @@ export class ApiDataProvider implements DataProvider {
   // -------------------------- SuggestionProvider --------------------------
 
   subscribeToSuggestions(callback: (suggestions: Suggestion[]) => void): () => void {
-    return subscribeWithRealtime(
-      this.client,
-      `suggestions`,
-      // RLS only pings a user about their own suggestions, so a site admin's
-      // live updates for other users' rows may lag until refresh — the initial
-      // fetch (via the API, which bypasses RLS for admins) still shows all.
-      [{ table: "suggestions" }],
+    return this.subscribeOnce(
       () => authedFetch<Suggestion[]>(this.client, "/api/suggestions"),
       callback
     );

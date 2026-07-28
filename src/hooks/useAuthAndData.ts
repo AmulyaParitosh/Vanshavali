@@ -1,9 +1,10 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import type { TreeData } from "../services/types";
 import { canEdit, canViewTree } from "../lib/access";
 import { formatError } from "../lib/formatError";
+import { withRefresh } from "../services/withRefresh";
 import { useProviders } from "./useProviders";
 import { useAuthUser } from "./useAuthUser";
 import { useUserProfile } from "./useUserProfile";
@@ -25,7 +26,17 @@ import { useTreeSubscription } from "./useTreeSubscription";
  * user's first owned tree as the active tree until the UI lets them choose.
  */
 export function useAuthAndData() {
-  const { auth: authProvider, data: dataProvider, storage: storageProvider } = useProviders();
+  const { auth: authProvider, data: rawDataProvider, storage: storageProvider } = useProviders();
+
+  // No live updates: mutations bump a nonce that every subscribe* hook depends
+  // on, so the user's own writes trigger a re-fetch. The wrapped provider does
+  // the bumping automatically for every mutating method.
+  const [refreshNonce, setRefreshNonce] = useState(0);
+  const bumpRefresh = useCallback(() => setRefreshNonce((n) => n + 1), []);
+  const dataProvider = useMemo(
+    () => withRefresh(rawDataProvider, bumpRefresh),
+    [rawDataProvider, bumpRefresh]
+  );
 
   const { user, isLoaded: authLoaded } = useAuthUser(authProvider);
   const {
@@ -33,7 +44,11 @@ export function useAuthAndData() {
     isLoaded: profileLoaded,
     refresh: refreshProfile,
   } = useUserProfile(user, dataProvider);
-  const { myTrees, isLoaded: myTreesLoaded } = useMyTrees(user?.uid ?? null, dataProvider);
+  const { myTrees, isLoaded: myTreesLoaded } = useMyTrees(
+    user?.uid ?? null,
+    dataProvider,
+    refreshNonce
+  );
 
   const [currentTreeId, setCurrentTreeId] = useState<string | null>(null);
   const [isProvisioningTree, setIsProvisioningTree] = useState(false);
@@ -112,11 +127,13 @@ export function useAuthAndData() {
   const { membership, isLoaded: membershipLoaded } = useTreeMembership(
     currentTreeId,
     user?.uid ?? null,
-    dataProvider
+    dataProvider,
+    refreshNonce
   );
   const { treeData, isLoaded: treeLoaded } = useTreeSubscription(
     canViewTree(membership?.role) ? currentTreeId : null,
-    dataProvider
+    dataProvider,
+    refreshNonce
   );
 
   const isLoading =
@@ -160,6 +177,7 @@ export function useAuthAndData() {
     handleLogout,
     onSave: handleSaveData,
     refreshProfile,
+    refreshNonce,
     auth: authProvider,
     data: dataProvider,
     storage: storageProvider,

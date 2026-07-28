@@ -14,7 +14,8 @@ export interface UseTreeSubscriptionResult {
  */
 export function useTreeSubscription(
   treeId: string | null,
-  treeProvider: TreeDataProvider
+  treeProvider: TreeDataProvider,
+  refreshNonce = 0
 ): UseTreeSubscriptionResult {
   const [treeData, setTreeData] = useState<TreeData | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -33,7 +34,7 @@ export function useTreeSubscription(
     });
 
     return () => unsubscribe();
-  }, [treeId, treeProvider]);
+  }, [treeId, treeProvider, refreshNonce]);
 
   return { treeData, isLoaded };
 }

@@ -24,6 +24,8 @@ interface AppContextType {
   treeData: TreeData | null;
   onSave: (data: TreeData) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  /** Bumped after any mutation; include in subscribe effects to re-fetch (no realtime). */
+  refreshNonce: number;
   handleLogout: () => void;
   dataProvider: DataProvider;
   authProvider: AuthProvider;

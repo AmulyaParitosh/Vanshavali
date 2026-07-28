@@ -21,9 +21,9 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
       "tsconfig.tsbuildinfo",
-      "db/migrations/**",
-      // Supabase CLI artifacts (.temp edge-runtime bundles etc.) — generated,
-      // gitignored, but ESLint traverses dot-dirs unless excluded here.
+      // Supabase migrations, declarative schemas, and CLI artifacts (.temp) —
+      // generated/SQL, gitignored where applicable; ESLint traverses dot-dirs
+      // unless excluded here.
       "supabase/**",
       "**/coverage/**",
     ],

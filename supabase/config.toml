@@ -22,11 +22,12 @@ max_rows = 1000
 # default. Set to `true` to keep the legacy behaviour of auto-exposing new entities; this is
 # deprecated and the field is removed on 2026-10-30 once the always-revoked behaviour is permanent.
 #
-# Our tables are created by the SQL migrations via `npm run db:setup` (as the `postgres` role), so
-# without this the API roles (anon/authenticated/service_role) can't reach them and every client
-# query 401s. Our RLS policies still gate row access on top. scripts/setup-extras.ts also issues
-# explicit GRANTs as a durable backstop for when this flag is removed.
-auto_expose_new_tables = true
+# The backend owns the tables completely: the app connects as the `postgres`
+# role through the repository layer (raw SQL over pg) and enforces access in the
+# service layer. The Data API roles (anon/authenticated/service_role) get NO
+# access to public tables — which also means the auto-generated REST API returns
+# permission-denied for them, by design. No RLS, no grants.
+auto_expose_new_tables = false
 
 [api.tls]
 # Enable HTTPS endpoints locally using a self-signed certificate.
@@ -66,7 +67,7 @@ max_client_conn = 100
 enabled = true
 # Specifies an ordered list of schema files, directories, or glob patterns that describe your database.
 # Supports paths relative to supabase directory: "./schemas/*.sql", "./database".
-schema_paths = []
+schema_paths = ["./schemas/*.sql"]
 
 [db.seed]
 # If enabled, seeds the database after migrations during a db reset.

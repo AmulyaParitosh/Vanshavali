@@ -4,8 +4,10 @@ node_modules
 build
 package-lock.json
 tsconfig.tsbuildinfo
-db/migrations
-# Raw SQL queries for the repository layer — no Prettier SQL parser, same as db/migrations.
+# Raw SQL — no Prettier SQL parser. Migrations, declarative schemas, and the
+# repository query files.
+supabase/migrations
+supabase/schemas
 src/repositories/sql
 public
 # Supabase CLI artifacts (generated, gitignored)

@@ -16,16 +16,16 @@ import type {
 
 /**
  * Members + invitations page for one tree. Owner-only operations (role
- * changes, removal, invite send/revoke) are gated client-side AND by RLS on
- * the server. Non-owners see a read-only list.
+ * changes, removal, invite/revoke) are gated client-side AND by the service
+ * layer on the server. Non-owners see a read-only list.
  *
- * `createInvite` writes the pending row and sends the invitation email (via
- * the /api/invite/send route → Resend).
+ * `createInvite` writes the pending row and sends the invitation email in one
+ * server step (POST /api/tree/[id]/invites → Resend).
  */
 export default function MembersPage() {
   const params = useParams<{ id: string }>();
   const treeId = params?.id ?? null;
-  const { dataProvider, membership, myTrees } = useAppContext();
+  const { dataProvider, membership, myTrees, refreshNonce } = useAppContext();
   const toast = useToast();
 
   const [members, setMembers] = useState<TreeMembership[]>([]);
@@ -44,7 +44,7 @@ export default function MembersPage() {
       unsubMembers();
       unsubInvites?.();
     };
-  }, [treeId, dataProvider, membership?.role]);
+  }, [treeId, dataProvider, membership?.role, refreshNonce]);
 
   if (!treeId) return <Loading />;
 
