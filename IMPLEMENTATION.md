@@ -70,9 +70,39 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
 - Tokens / Style Guide — **DONE** (see receipt below)
 - Assets — `banner.jpg` / `node_border_320.png` / `paper_texture.jpg` in `public/`; paper wash wired.
   **DONE** (see receipt; note reconstructed 2/3 — QUESTIONS Q7)
-- Shell (Spec 00 §02) — prior loop built a shell; needs audit vs spec. **NEXT** (also rewire chrome
-  banner → `/banner.jpg` and portrait ring → `--ornament-ring`, then remove the heavy source PNGs)
+- Shell (Spec 00 §02) — audited (see note below); **NEXT to implement**. Blocked on a Playwright
+  **auth fixture** (see below) since the shell only renders authenticated + in a tree.
 - Component library (`Vanshavali Components.dc.html`) — not started (fetch that spec next)
+
+### Shell audit (Spec 00 §02 vs current code) — architecture is sound, fidelity gaps remain
+
+Composition today: `AppProvider` renders `<div class="App"><Header/> <main>{routed}</main> {user&&<CommandSearch/>}</div>`
+(`src/providers/AppProvider.tsx:99`). `/tree/[id]/layout.tsx` adds `<div class="tree-shell"><TreeRail/>
+
+<div class="tree-shell-content">{children}</div></div>`.
+- **Contract §1 (no remount) already holds**: chrome bar is in AppProvider (never remounts); rail is in
+  the tree layout (persists across `/tree/[id]/*` sub-routes — same `[id]` ⇒ no Loading/remount).
+- Chrome bar (`src/components/Header.tsx`) gaps vs `_FOUNDATIONS.md` §Shell:
+  1. **Missing the 260px search trigger** (spec chrome = wordmark · switcher · **search** · you). `CommandSearch`
+     exists as the ⌘K palette in AppProvider — add a chrome-bar trigger button that opens it.
+  2. **Avatar uses `stringToColor(...)` hash — spec is leaf-green `#2e8b57`**, 34px, border 1.5px
+     rgba(255,255,255,.7), initial 14px/600 #fff. (Ground rule: green = "you" only.) Fix.
+  3. Banner div `.chrome-bar-banner` — verify/rewire to `/banner.jpg` with gradient
+     `linear-gradient(rgba(20,18,16,.76),rgba(20,18,16,.93))` + `background-position:0% 34%` (check globals.css).
+  4. Verify geometry: 60px, padding 0 20px, gap 24px; wordmark Yatra 22px #fff + वंशावली 13px/500 #ff8c00.
+- Rail (`src/components/TreeRail.tsx`) — not yet read; audit against §Shell (232px, #f8f2e4, 4 nav items
+  Tree/Members/Households/Settings with active/hover states, tree identity, generation jump, attention block).
+- After wiring: remove the heavy source PNGs (`madhubani_banner.png`, `node_border.png`, `canvas_background.png`)
+  once nothing references them.
+
+### PREREQUISITE for all in-tree tests — Playwright auth fixture (build first, next iteration)
+
+The token/asset tests run unauthenticated on `/`. Every shell/panel/page test needs a logged-in session in
+a seeded tree. Build a fixture that: seeds (or reuses) a user + tree via the local Supabase stack, logs in
+(email/password), saves `storageState`, and exposes a seeded tree id. Prior loop used
+`designreview2@local.test / password123` + tree `tree_e9PAKZi8KB`; confirm these still exist in the local DB
+(`PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres`) or re-seed. This is effectively the
+first slice of Wave 1 infra and unblocks waves 2–6 testing.
 
 Waves 1–7 — not started.
 
