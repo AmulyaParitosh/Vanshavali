@@ -212,6 +212,20 @@ test("shell metrics and the product motion tokens match", async ({ page }) => {
   expect(t["--dur-canvas"]).toBe("320ms");
 });
 
+test("the three painted assets are served at their spec paths", async ({ page }) => {
+  for (const path of ["/banner.jpg", "/node_border_320.png", "/paper_texture.jpg"]) {
+    const res = await page.request.get(path);
+    expect(res.ok(), `${path} served`).toBeTruthy();
+    const body = await res.body();
+    expect(body.byteLength, `${path} is a real, non-empty file`).toBeGreaterThan(10000);
+  }
+});
+
+test("the paper wash is drawn from paper_texture.jpg", async ({ page }) => {
+  const bg = await page.evaluate(() => getComputedStyle(document.body, "::before").backgroundImage);
+  expect(bg).toContain("paper_texture.jpg");
+});
+
 test("heritage defaults to full, and plain drops rings, gradient and paper", async ({ page }) => {
   const full = await tokens(page, [
     "--heritage-paper",

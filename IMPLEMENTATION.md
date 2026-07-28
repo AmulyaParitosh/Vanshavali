@@ -68,10 +68,10 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
 - Spec mirror — `design-specs/` holds fetched specs + `extract-props.mjs`; distilled cited refs
   `_FOUNDATIONS.md` (Spec 00) + `_STYLE-GUIDE.md` (full token system). **DONE** (gitignored, on-disk durable)
 - Tokens / Style Guide — **DONE** (see receipt below)
-- Assets — copy `banner.jpg` / `node_border_320.png` / `paper_texture.jpg` into `public/`; wire the
-  paper wash + portrait ring + banner to the heritage tokens. **NEXT** (binary-copy mechanism TBD —
-  get_file returns base64; see QUESTIONS if it needs a workaround)
-- Shell (Spec 00 §02) — prior loop built a shell; needs audit vs spec — not started
+- Assets — `banner.jpg` / `node_border_320.png` / `paper_texture.jpg` in `public/`; paper wash wired.
+  **DONE** (see receipt; note reconstructed 2/3 — QUESTIONS Q7)
+- Shell (Spec 00 §02) — prior loop built a shell; needs audit vs spec. **NEXT** (also rewire chrome
+  banner → `/banner.jpg` and portrait ring → `--ornament-ring`, then remove the heavy source PNGs)
 - Component library (`Vanshavali Components.dc.html`) — not started (fetch that spec next)
 
 Waves 1–7 — not started.
@@ -103,6 +103,20 @@ legacy `--font-size-*` re-pointed onto it as aliases). Fixed heritage: paper was
 with the restrained + plain overrides so one `data-heritage` value drives all four painted surfaces
 (integration §4 groundwork). Added the product motion tokens `--ease cubic-bezier(.32,.72,0,1)`,
 `--dur-panel 180ms` / `--dur-dialog 140ms` / `--dur-canvas 320ms`; kept legacy `--duration-*`.
-deviations: `--ornament-ring` points at `/node_border_320.png`, not yet copied into `public/` (the
-Assets unit, next). Paper wash still uses the prior loop's `/canvas_background.png` in `body::before`
-— swap to `paper_texture.jpg` in the Assets unit. Neither affects the token values under test.
+deviations: `--ornament-ring` points at `/node_border_320.png`, and the paper wash still used the
+prior loop's `/canvas_background.png` — both resolved in the Assets unit below.
+
+## Assets — the three painted surfaces — DONE
+
+spec: Vanshavali Style Guide.dc.html (§assets); Spec 00 §heritage
+files: public/banner.jpg, public/node_border_320.png, public/paper_texture.jpg; src/app/globals.css
+(body::before → paper_texture.jpg); tests/e2e/foundations.spec.ts
+tests: tests/e2e/foundations.spec.ts — 9/9 passing (added: assets served; paper wash asset)
+consumes: heritage tokens (`--heritage-paper`, `--ornament-ring`)
+decisions: `paper_texture.jpg` is the real fetched file (151 KB, whole). `banner.jpg` (418 KB) and
+`node_border_320.png` (236 KB) were reconstructed with `sips` from the design team's confirmed source
+paintings (`madhubani_banner.png` 2.0 MB, `node_border.png` 1.9 MB) because `get_file` truncates at
+256 KiB — same paintings, same optimization. Full rationale in QUESTIONS Q7.
+deviations: banner/ring not byte-identical to the design originals (fetch cap). The heavy source PNGs
+(`madhubani_banner.png`, `node_border.png`, `canvas_background.png`) remain in `public/` until the
+shell + node components are rewired off them (Shell unit), then removed.

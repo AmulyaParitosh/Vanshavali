@@ -35,6 +35,20 @@ in the Claude Design project `dd87d264-b5d2-4737-8e4c-9233afb2398d`, read via `D
 That is the "file read" primitive. Not mirrored to disk (get_file cannot be piped to disk without
 re-emitting content). Re-fetch per unit. Mechanism recorded in `IMPLEMENTATION.md`.
 
+## Q7 — Optimized assets exceed the DesignSync 256 KiB fetch cap — RESOLVED (self)
+
+`DesignSync get_file` caps content at 256 KiB, so `assets/banner.jpg` (377 KB) and
+`assets/node_border_320.png` (243 KB) come back truncated/corrupt; only `paper_texture.jpg` (151 KB)
+fetches whole. The repo already carries the design team's ORIGINAL source paintings from the prior
+loop, and the Style Guide's "Was X MB" notes confirm them exactly: `madhubani_banner.png` = 2.0 MB
+(banner source), `node_border.png` = 1.9 MB (ring source), `canvas_background.png` = 8.3 MB (paper
+source). **Resolution:** wrote the real fetched `paper_texture.jpg`; reconstructed the other two from
+their confirmed sources with `sips` (banner 1024² JPEG q68 → 418 KB; node ring downscaled 2048²→320²
+PNG → 236 KB) — same paintings, same optimization the design team did, sizes within ~10% of spec. Not
+byte-identical to the design originals; if exact bytes matter, drop `banner.jpg` + `node_border_320.png`
+into `public/` manually. The heavy source PNGs stay in `public/` until the shell + node components are
+rewired off them, then they get removed.
+
 ## Q6 — Missing-data colour: #a89f8c vs #b22222 — RESOLVED (self)
 
 Spec 00 convention c4, system-acceptance a8, and integration contract §8 all say missing data renders
