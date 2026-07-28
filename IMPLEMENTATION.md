@@ -70,8 +70,9 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
 - Tokens / Style Guide — **DONE** (see receipt below)
 - Assets — `banner.jpg` / `node_border_320.png` / `paper_texture.jpg` in `public/`; paper wash wired.
   **DONE** (see receipt; note reconstructed 2/3 — QUESTIONS Q7)
-- Shell (Spec 00 §02) — audited (see note below); **NEXT to implement**. Blocked on a Playwright
-  **auth fixture** (see below) since the shell only renders authenticated + in a tree.
+- Auth fixture — Playwright `setup` project logs in via the UI and persists `storageState`; chromium
+  reuses it (signed in as the seeded tree keeper). Seed constants in `tests/e2e/fixtures.ts`. **DONE**
+- Shell (Spec 00 §02) — audited (see note below); **NEXT to implement**.
 - Component library (`Vanshavali Components.dc.html`) — not started (fetch that spec next)
 
 ### Shell audit (Spec 00 §02 vs current code) — architecture is sound, fidelity gaps remain
@@ -150,3 +151,15 @@ paintings (`madhubani_banner.png` 2.0 MB, `node_border.png` 1.9 MB) because `get
 deviations: banner/ring not byte-identical to the design originals (fetch cap). The heavy source PNGs
 (`madhubani_banner.png`, `node_border.png`, `canvas_background.png`) remain in `public/` until the
 shell + node components are rewired off them (Shell unit), then removed.
+
+## Auth fixture — E2E infrastructure — DONE
+
+spec: — (test infra; prerequisite for all in-tree specs)
+files: tests/e2e/fixtures.ts, tests/e2e/auth.setup.ts, playwright.config.ts, tests/e2e/foundations.spec.ts
+tests: runs as the `setup` project; foundations opted anonymous — full suite 10/10
+consumes: local Supabase seed (designreview2@local.test owns tree_e9PAKZi8KB)
+decisions: Log in through the real LoginScreen UI (not token injection) so the flow is exercised;
+persist storageState to `.playwright/auth/user.json`; chromium project depends on `setup` and reuses it.
+Seed password set deterministically via `crypt('password123', gen_salt('bf'))` on auth.users. Public
+specs (landing/sign-in) opt out with `test.use({ storageState: { cookies:[], origins:[] } })`.
+deviations: none.

@@ -10,6 +10,9 @@ import { test, expect, type Page } from "@playwright/test";
  * values compare exactly and composite values (shadows, easing, url) by substring.
  */
 
+// The token/asset layer is global — test it signed out, independent of the seed.
+test.use({ storageState: { cookies: [], origins: [] } });
+
 async function tokens(page: Page, names: string[]): Promise<Record<string, string>> {
   return page.evaluate((ns) => {
     const cs = getComputedStyle(document.documentElement);
