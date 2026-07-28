@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { GraphNode } from "../types/graph";
 import type { Person } from "../types/person";
 import { TREE_CONFIG } from "../constants";
@@ -22,7 +23,12 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
   const { treeData, membership, currentTreeId, user } = useAppContext();
-  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  // A ?person= param (e.g. a click from the Members table) opens that record on
+  // mount — set as the initial selection so it doesn't take a state write in an
+  // effect; the effect below only pans it into view.
+  const personParam = searchParams.get("person");
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(personParam);
 
   const canEdit = canEditRole(membership?.role);
   const layout = useTreeLayout(data);
@@ -40,15 +46,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     ? (people.find((p) => p.id === selectedPersonId) ?? null)
     : null;
 
-  /**
-   * Open a person's record. A direct node click doesn't pan — the tree keeps
-   * its coordinates so the person you clicked doesn't jump out from under the
-   * cursor (§07). Selecting from search or a relation chip does pan, since the
-   * target may be off-screen.
-   */
-  const handleSelect = (personId: string, pan = false) => {
-    setSelectedPersonId(personId);
-    if (!pan) return;
+  /** Center the canvas on a person (their couple offset accounted for). */
+  const panToPerson = (personId: string) => {
     const target = findContainingNode(layout.nodes, personId);
     if (!target) return;
     let xOffset = 0;
@@ -58,6 +57,24 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     }
     panTo(target.x + xOffset, target.y);
   };
+
+  /**
+   * Open a person's record. A direct node click doesn't pan — the tree keeps
+   * its coordinates so the person you clicked doesn't jump out from under the
+   * cursor (§07). Selecting from search or a relation chip does pan, since the
+   * target may be off-screen.
+   */
+  const handleSelect = (personId: string, pan = false) => {
+    setSelectedPersonId(personId);
+    if (pan) panToPerson(personId);
+  };
+
+  // Bring a ?person= target into view once the layout is ready (its selection
+  // is already the initial state above, so this effect writes no state).
+  useEffect(() => {
+    if (personParam) panToPerson(personParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={`tree-canvas-container${selectedPerson ? " inspector-open" : ""}`}>
