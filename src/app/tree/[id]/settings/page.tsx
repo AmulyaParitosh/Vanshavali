@@ -8,11 +8,12 @@ import Loading from "../../../../components/Loading";
 import { isOwner } from "../../../../lib/access";
 
 /**
- * Per-tree settings — rename, delete. Owner-only; other roles get a read-only
- * view with the current tree name.
+ * Tree settings (§7) — name, tree info, and the danger zone, as cards on the
+ * content canvas. Keeper-only actions are gated here and in the service layer.
  *
- * Transfer-ownership is a Phase 10+ concern (need a confirmation flow that
- * involves the receiving member).
+ * The mockup also sketches settings without a backend yet (rename, name-order,
+ * per-invitation defaults, export/print, transfer). Those are omitted rather
+ * than shipped as controls that don't persist; they land as the backend grows.
  */
 export default function TreeSettingsPage() {
   const params = useParams<{ id: string }>();
@@ -23,7 +24,6 @@ export default function TreeSettingsPage() {
 
   const ownerCanManage = isOwner(membership?.role);
   const tree = [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])].find((t) => t.id === treeId);
-
   const [isDeleting, setIsDeleting] = useState(false);
 
   if (!treeId) return <Loading />;
@@ -37,7 +37,7 @@ export default function TreeSettingsPage() {
 
   const handleDelete = () => {
     toast.confirm(
-      `Delete "${tree.name}"? This permanently removes the tree, all people, families, and members. This cannot be undone.`,
+      `Delete "${tree.name}"? This permanently removes the tree, all people, households, and members. This cannot be undone.`,
       async () => {
         setIsDeleting(true);
         try {
@@ -46,8 +46,7 @@ export default function TreeSettingsPage() {
           setCurrentTreeId(null);
           router.push("/");
         } catch (error: unknown) {
-          const message = error instanceof Error ? error.message : "Delete failed";
-          toast.error(message);
+          toast.error(error instanceof Error ? error.message : "Delete failed");
         } finally {
           setIsDeleting(false);
         }
@@ -57,30 +56,34 @@ export default function TreeSettingsPage() {
 
   return (
     <div className="settings-page">
-      <header className="settings-header">
+      <header>
         <h1>Tree settings</h1>
+        <p className="settings-sub">
+          {ownerCanManage
+            ? "Only you, as keeper, can change these."
+            : "Only the keeper can change these — you're seeing them read-only."}
+        </p>
       </header>
 
-      <section className="section-card">
-        <h2>Name</h2>
-        {/* Rename needs an updateTreeMeta provider method + route/service.
-            Until then the name is display-only rather than a form that can't save. */}
-        <div className="rename-form">
-          <input type="text" value={tree.name} disabled readOnly aria-label="Tree name" />
+      <section className="settings-card">
+        <div className="settings-card-head">
+          <h2>What this tree is called</h2>
+          <p>Relatives see this name in their tree list and in every invitation.</p>
         </div>
+        <div className="settings-name-value">{tree.name}</div>
         <p className="settings-note">
-          Rename will land alongside the per-tree settings backend work.
+          Renaming lands with the per-tree settings backend; the name is read-only for now.
         </p>
       </section>
 
-      <section className="section-card">
-        <h2>Tree info</h2>
-        <dl className="info-list">
+      <section className="settings-card">
+        <h2>About this tree</h2>
+        <dl className="settings-info">
           <dt>Tree ID</dt>
           <dd>
             <code>{tree.id}</code>
           </dd>
-          <dt>Owner</dt>
+          <dt>Keeper</dt>
           <dd>
             <code>{tree.ownerUid}</code>
           </dd>
@@ -92,80 +95,29 @@ export default function TreeSettingsPage() {
       </section>
 
       {ownerCanManage && (
-        <section className="section-card danger-zone">
-          <h2>Danger zone</h2>
-          <p>
-            Deleting the tree removes all of its people, families, members, and invitations. Cannot
-            be undone.
-          </p>
-          <button
-            type="button"
-            className="btn btn-danger"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting ? "Deleting..." : "Delete this tree"}
-          </button>
+        <section className="settings-card settings-danger">
+          <div className="settings-card-head">
+            <h2>Careful with this</h2>
+            <p>Deleting a tree cannot be undone from inside Vanshavali.</p>
+          </div>
+          <div className="settings-danger-row">
+            <div className="settings-danger-copy">
+              <span className="title">Delete {tree.name}</span>
+              <span className="sub">
+                Removes every person, household, member and invitation in this tree.
+              </span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting…" : "Delete tree"}
+            </button>
+          </div>
         </section>
       )}
-
-      <style jsx>{`
-        .settings-page {
-          padding: var(--space-10);
-          max-width: 900px;
-          margin: 0 auto;
-          height: 100%;
-          overflow-y: auto;
-          box-sizing: border-box;
-        }
-        .settings-header h1 {
-          font-family: var(--font-heading);
-          font-size: var(--font-size-2xl);
-          margin: 0 0 var(--space-6);
-          color: var(--color-text);
-        }
-        .rename-form {
-          display: flex;
-          gap: var(--space-3);
-          align-items: center;
-        }
-        .rename-form input {
-          flex: 1;
-        }
-        .settings-note {
-          color: var(--color-neutral-600);
-          font-size: var(--font-size-sm);
-          margin: var(--space-3) 0 0;
-        }
-        .info-list {
-          display: grid;
-          grid-template-columns: auto 1fr;
-          gap: var(--space-2) var(--space-4);
-          margin: 0;
-        }
-        .info-list dt {
-          font-weight: 600;
-          color: var(--color-neutral-600);
-        }
-        .info-list dd {
-          margin: 0;
-          color: var(--color-text);
-          word-break: break-all;
-        }
-        .info-list code {
-          font-family: monospace;
-          background: var(--color-neutral-50);
-          padding: 2px var(--space-2);
-          border-radius: var(--radius-xs);
-          font-size: var(--font-size-sm);
-        }
-        .danger-zone {
-          border-color: var(--color-danger);
-        }
-        .danger-zone h2 {
-          color: var(--color-danger);
-        }
-      `}</style>
     </div>
   );
 }

@@ -3013,3 +3013,129 @@ main {
   color: var(--text-meta);
   flex-shrink: 0;
 }
+
+/* ============================================================================
+ * Tree settings (§7) — cards on the content canvas.
+ * ========================================================================== */
+.settings-page {
+  padding: var(--space-8) var(--space-10);
+  max-width: 820px;
+  margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.settings-page > header {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.settings-page h1 {
+  font-family: var(--font-display);
+  font-size: var(--font-size-3xl);
+  font-weight: 400;
+  margin: 0;
+  color: var(--text-primary);
+}
+.settings-sub {
+  font-size: 14.5px;
+  color: var(--text-meta);
+  margin: 0;
+}
+.settings-card {
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-16);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.settings-card h2 {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+.settings-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.settings-card-head p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-meta);
+}
+.settings-name-value {
+  padding: 11px 14px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-12);
+  background: var(--surface-paper);
+  font-size: 15.5px;
+  color: var(--text-primary);
+}
+.settings-note {
+  font-size: 13px;
+  color: var(--text-meta);
+  margin: 0;
+}
+.settings-info {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  margin: 0;
+}
+.settings-info dt {
+  padding: 9px 0;
+  font-size: 14px;
+  color: var(--text-meta);
+  border-bottom: 1px solid var(--line-row);
+}
+.settings-info dd {
+  padding: 9px 0;
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--line-row);
+  word-break: break-all;
+}
+.settings-info dt:last-of-type,
+.settings-info dd:last-of-type {
+  border-bottom: none;
+}
+.settings-info code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-strong);
+}
+.settings-danger {
+  background: var(--color-red-wash);
+  border-color: #e8c9c9;
+}
+.settings-danger h2 {
+  color: var(--color-red-deep);
+}
+.settings-danger-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.settings-danger-row .settings-danger-copy {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.settings-danger-row .title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.settings-danger-row .sub {
+  font-size: 13.5px;
+  color: #8a5a5a;
+}
