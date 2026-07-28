@@ -433,62 +433,67 @@ main {
   gap: 15px;
 }
 
-/* --- Screens --- */
+/* --- Sign-in screen — heritage-quiet: wordmark lockup on a calm paper card,
+ * one primary action, one focus treatment. --- */
 .login-screen {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: calc(100vh - var(--header-height));
-  text-align: center;
-  padding: 20px;
+  min-height: calc(100vh - var(--header-height));
+  padding: var(--space-8);
+  box-sizing: border-box;
 }
 
 .login-content {
   position: relative;
-  background-color: var(--color-neutral-0);
-  padding: var(--space-10) var(--space-12);
-  border: 4px double var(--color-primary-500);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  max-width: 500px;
   width: 100%;
+  max-width: 440px;
   box-sizing: border-box;
+  padding: var(--space-10) var(--space-10) var(--space-8);
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-26);
+  box-shadow: var(--shadow-frame);
+  text-align: left;
 }
 
-/* Inner Madhubani secondary border — same trick the tree details-card uses. */
-.login-content::after {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border: 1px solid var(--color-secondary-500);
-  border-radius: calc(var(--radius-xl) - 4px);
-  opacity: 0.4;
-  pointer-events: none;
+/* Wordmark lockup — the one place the two scripts stack as a pair. Marigold
+ * would fail contrast on cream, so the Devanagari mark sits in brand red. */
+.login-wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+}
+.login-wordmark .mark {
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
+  line-height: 1;
+  letter-spacing: 0.4px;
+  color: var(--text-primary);
+}
+.login-wordmark .script {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-red);
 }
 
-.login-content h2 {
-  font-family: var(--font-heading);
-  font-size: 2.5em;
-  color: var(--color-secondary);
-  margin-top: 0;
-  margin-bottom: 20px;
-}
-
-.login-content p {
-  font-size: 1.1em;
+.login-lede {
+  margin: 0 0 var(--space-6);
+  font-size: var(--font-size-base);
   line-height: 1.6;
-  margin-bottom: 30px;
+  color: var(--text-prose);
 }
 
-/* --- Auth form (login screen tabs + inputs) --- */
+/* --- Auth form: segmented switch + fields --- */
 .auth-tabs {
   display: flex;
   gap: var(--space-1);
   margin: 0 0 var(--space-5);
   padding: var(--space-1);
-  background: var(--color-neutral-100);
-  border-radius: var(--radius-md);
+  background: var(--surface-quiet);
+  border-radius: var(--radius-10);
 }
 
 .auth-tab {
@@ -496,11 +501,11 @@ main {
   padding: var(--space-2) var(--space-4);
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-9);
   font-family: var(--font-body);
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  color: var(--color-neutral-700);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-meta);
   cursor: pointer;
   transition:
     background var(--duration-base) var(--ease-standard),
@@ -508,9 +513,9 @@ main {
 }
 
 .auth-tab.active {
-  background: var(--color-neutral-0);
-  color: var(--color-primary-700);
-  box-shadow: var(--shadow-xs);
+  background: var(--surface-paper);
+  color: var(--color-red-deep);
+  box-shadow: var(--shadow-pill);
 }
 
 .auth-form {
@@ -529,45 +534,54 @@ main {
   margin-bottom: var(--space-1);
   font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--color-neutral-700);
+  color: var(--text-strong);
 }
 
 .auth-form input {
   width: 100%;
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-neutral-0);
-  border: 1px solid var(--color-neutral-200);
-  border-radius: var(--radius-md);
+  box-sizing: border-box;
+  padding: 10px 14px;
+  background: var(--surface-paper);
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-12);
   font-family: var(--font-body);
   font-size: var(--font-size-base);
-  color: var(--color-text);
-  box-sizing: border-box;
-  transition: border-color var(--duration-base) var(--ease-standard);
+  color: var(--text-primary);
+  transition:
+    border-color var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
 }
 
-.auth-form input:focus {
+.auth-form input::placeholder {
+  color: var(--text-meta);
+}
+
+.auth-form input:focus,
+.auth-form input:focus-visible {
   outline: none;
-  border-color: var(--color-primary-500);
+  border-color: var(--color-red);
+  box-shadow: var(--shadow-focus);
 }
 
 .auth-submit {
+  width: 100%;
   margin-top: var(--space-2);
 }
 
 .auth-link {
+  align-self: center;
   background: none;
   border: none;
   padding: 0;
   margin: var(--space-2) 0 0;
-  color: var(--color-primary-500);
+  color: var(--color-red);
   font-size: var(--font-size-sm);
-  text-align: center;
   cursor: pointer;
   text-decoration: underline;
 }
 
 .auth-link:hover {
-  color: var(--color-primary-700);
+  color: var(--color-red-deep);
 }
 
 .auth-divider {
@@ -575,7 +589,7 @@ main {
   align-items: center;
   gap: var(--space-3);
   margin: var(--space-6) 0 var(--space-4);
-  color: var(--color-neutral-500);
+  color: var(--text-meta);
   font-size: var(--font-size-sm);
 }
 
@@ -584,11 +598,76 @@ main {
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--color-neutral-200);
+  background: var(--line-structure);
 }
 
 .auth-google {
   width: 100%;
+}
+
+/* --- Tree picker (authenticated landing, > 1 tree) --- */
+.trees-landing {
+  padding: var(--space-10);
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+.trees-landing-header {
+  margin-bottom: var(--space-8);
+}
+.trees-landing-header .eyebrow {
+  display: block;
+  margin-bottom: var(--space-2);
+}
+.trees-landing-header h1 {
+  font-family: var(--font-display);
+  font-size: var(--font-size-3xl);
+  font-weight: 400;
+  margin: 0;
+  color: var(--text-primary);
+}
+.trees-section {
+  margin-bottom: var(--space-10);
+}
+.trees-section > .eyebrow {
+  display: block;
+  margin: 0 0 var(--space-4);
+}
+.tree-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+.tree-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-5);
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-16);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
+}
+.tree-card:hover {
+  border-color: var(--color-red);
+  box-shadow: var(--shadow-pill);
+}
+.tree-card h3 {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  margin: 0;
+  color: var(--text-primary);
 }
 
 /* --- Onboarding: welcome modal + empty tree banner --- */

@@ -54,12 +54,13 @@ export default function LandingPage() {
   return (
     <div className="trees-landing">
       <header className="trees-landing-header">
-        <h1>My Trees</h1>
+        <span className="eyebrow">Your family trees</span>
+        <h1>My trees</h1>
       </header>
 
       {myTrees.owned.length > 0 && (
         <section className="trees-section">
-          <h2>Owned by me</h2>
+          <span className="eyebrow">Owned by me</span>
           <ul className="tree-grid">
             {myTrees.owned.map((tree) => (
               <li key={tree.id}>
@@ -72,7 +73,7 @@ export default function LandingPage() {
 
       {myTrees.member.length > 0 && (
         <section className="trees-section">
-          <h2>Shared with me</h2>
+          <span className="eyebrow">Shared with me</span>
           <ul className="tree-grid">
             {myTrees.member.map((tree) => (
               <li key={tree.id}>
@@ -82,91 +83,19 @@ export default function LandingPage() {
           </ul>
         </section>
       )}
-
-      <style jsx>{`
-        .trees-landing {
-          padding: var(--space-10);
-          max-width: 1200px;
-          margin: 0 auto;
-          height: 100%;
-          overflow-y: auto;
-          box-sizing: border-box;
-        }
-        .trees-landing-header h1 {
-          font-family: var(--font-heading);
-          font-size: var(--font-size-3xl);
-          margin: 0 0 var(--space-8);
-          color: var(--color-text);
-        }
-        .trees-section {
-          margin-bottom: var(--space-10);
-        }
-        .trees-section h2 {
-          font-family: var(--font-heading);
-          font-size: var(--font-size-xl);
-          color: var(--color-text);
-          margin: 0 0 var(--space-4);
-        }
-        .tree-grid {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: var(--space-4);
-        }
-      `}</style>
     </div>
   );
 }
 
 function TreeCard({ tree, role }: { tree: TreeMeta; role: "owner" | "member" }) {
+  // Owner holds the record (keeper chip); a shared tree reads as neutral until
+  // the specific per-tree role is resolved on the tree itself.
+  const chipClass = role === "owner" ? "chip--keeper" : "chip--read";
+  const label = role === "owner" ? "Keeper" : "Member";
   return (
     <Link href={`/tree/${tree.id}`} className="tree-card">
       <h3>{tree.name}</h3>
-      <span className={`tree-card-role tree-card-role--${role}`}>{role}</span>
-      <style jsx>{`
-        .tree-card {
-          display: block;
-          padding: var(--space-5);
-          background: var(--color-neutral-0);
-          border: 1px solid var(--color-neutral-200);
-          border-radius: var(--radius-lg);
-          color: inherit;
-          text-decoration: none;
-          transition:
-            transform var(--duration-base) var(--ease-standard),
-            box-shadow var(--duration-base) var(--ease-standard);
-        }
-        .tree-card:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-md);
-          border-color: var(--color-primary-500);
-        }
-        .tree-card h3 {
-          font-family: var(--font-heading);
-          font-size: var(--font-size-lg);
-          margin: 0 0 var(--space-2);
-          color: var(--color-text);
-        }
-        .tree-card-role {
-          display: inline-block;
-          padding: var(--space-1) var(--space-2);
-          border-radius: var(--radius-xs);
-          font-size: var(--font-size-xs);
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-        .tree-card-role--owner {
-          background: var(--color-primary-50);
-          color: var(--color-primary-700);
-        }
-        .tree-card-role--member {
-          background: var(--color-neutral-100);
-          color: var(--color-neutral-700);
-        }
-      `}</style>
+      <span className={`chip ${chipClass}`}>{label}</span>
     </Link>
   );
 }

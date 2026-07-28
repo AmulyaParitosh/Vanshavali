@@ -65,8 +65,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ authProvider }) => {
   return (
     <div className="login-screen">
       <div className="login-content">
-        <h2>Welcome to Vanshavali</h2>
-        <p>Sign in to your family tree, or create a new one in a minute.</p>
+        <div className="login-wordmark">
+          <span className="mark">Vanshavali</span>
+          <span className="script" lang="hi">
+            वंशावली
+          </span>
+        </div>
+        <p className="login-lede">
+          The record of a lineage, kept by the whole family. Sign in, or start your tree in a
+          minute.
+        </p>
 
         <div role="tablist" aria-label="Authentication mode" className="auth-tabs">
           <button
