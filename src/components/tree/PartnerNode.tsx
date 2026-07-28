@@ -6,10 +6,8 @@ import PersonNode from "./PersonNode";
 interface PartnerNodeProps {
   node: GraphNode;
   depth: number;
-  lockedPersonId: string | null;
-  canEdit: boolean;
-  treeId: string | null;
-  onLock: (personId: string) => void;
+  selectedPersonId: string | null;
+  onSelect: (personId: string) => void;
 }
 
 /**
@@ -21,14 +19,7 @@ interface PartnerNodeProps {
  * order. We render the non-lineage partner first so the lineage partner's
  * details card renders above when their cards overlap.
  */
-const PartnerNode: React.FC<PartnerNodeProps> = ({
-  node,
-  depth,
-  lockedPersonId,
-  canEdit,
-  treeId,
-  onLock,
-}) => {
+const PartnerNode: React.FC<PartnerNodeProps> = ({ node, depth, selectedPersonId, onSelect }) => {
   const { PARTNER_OFFSET, PILL } = TREE_CONFIG;
   const { husband, wife, lineageMemberId } = node;
   const isWifeLineage = lineageMemberId === wife?.id;
@@ -40,11 +31,8 @@ const PartnerNode: React.FC<PartnerNodeProps> = ({
       <PersonNode
         person={husband}
         isLineage={lineageMemberId === husband.id && depth > 0}
-        isLocked={lockedPersonId === husband.id}
-        cardSide="left"
-        canEdit={canEdit}
-        treeId={treeId}
-        onLock={onLock}
+        isSelected={selectedPersonId === husband.id}
+        onSelect={onSelect}
       />
     </g>
   ) : null;
@@ -54,11 +42,8 @@ const PartnerNode: React.FC<PartnerNodeProps> = ({
       <PersonNode
         person={wife}
         isLineage={lineageMemberId === wife.id && depth > 0}
-        isLocked={lockedPersonId === wife.id}
-        cardSide="right"
-        canEdit={canEdit}
-        treeId={treeId}
-        onLock={onLock}
+        isSelected={selectedPersonId === wife.id}
+        onSelect={onSelect}
       />
     </g>
   ) : null;

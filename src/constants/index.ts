@@ -60,10 +60,6 @@ export const TREE_CONFIG = {
     // Single: a 90px circle (radius 45).
     SINGLE_RADIUS: 45,
   },
-  DETAILS_CARD: {
-    WIDTH: 280,
-    HEIGHT: 300,
-  },
   // Still used by the not-yet-redesigned family editor + search rows. The tree
   // node itself now renders tint + initials (PersonAvatar), not this.
   PLACEHOLDER_IMAGE_URL: (color: string, text: string) =>

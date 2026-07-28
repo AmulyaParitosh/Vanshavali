@@ -1,36 +1,12 @@
 import React from "react";
 import type { Person } from "../../types/person";
 import { TREE_CONFIG } from "../../constants";
+import { portraitTint, personInitials } from "../../utils/portrait";
 
 interface PersonAvatarProps {
   person: Person;
   /** Lineage members get the red (born-in) ring; spouses get the marigold (married-in) ring. */
   isLineage: boolean;
-}
-
-// The eight portrait tints (§01). Assigned per person from a stable hash of the
-// id and never re-picked, so the same face keeps the same colour everywhere.
-const TINTS = [
-  "var(--tint-1)",
-  "var(--tint-2)",
-  "var(--tint-3)",
-  "var(--tint-4)",
-  "var(--tint-5)",
-  "var(--tint-6)",
-  "var(--tint-7)",
-  "var(--tint-8)",
-];
-
-function tintFor(id: string): string {
-  let h = 0;
-  for (let i = 0; i < id.length; i += 1) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return TINTS[h % TINTS.length]!;
-}
-
-/** First one or two graphemes of the primary name — white initials on the tint. */
-function initialsOf(name: string): string {
-  const first = name.trim().split(/\s+/)[0] ?? "";
-  return Array.from(first).slice(0, 2).join("");
 }
 
 /**
@@ -67,7 +43,7 @@ const PersonAvatar: React.FC<PersonAvatarProps> = ({ person, isLineage }) => {
         />
       ) : (
         <>
-          <circle r={NODE_RADIUS} style={{ fill: tintFor(person.id) }} />
+          <circle r={NODE_RADIUS} style={{ fill: portraitTint(person.id) }} />
           <text
             textAnchor="middle"
             dominantBaseline="central"
@@ -78,7 +54,7 @@ const PersonAvatar: React.FC<PersonAvatarProps> = ({ person, isLineage }) => {
               fontFamily: "var(--font-body)",
             }}
           >
-            {initialsOf(person.name.official_name)}
+            {personInitials(person.name.official_name)}
           </text>
         </>
       )}
