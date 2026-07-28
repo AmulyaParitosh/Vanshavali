@@ -114,3 +114,23 @@ Three tables share ONE row + header. Fixed column grid: 40 · flex · 46 · 100 
 - **`.panel-footer`** — 68px · hairline top `#e6ddc9` · Discard (quiet, left) + Save (filled, right).
   Rendered only when dirty — behaviour wired in Spec 13 (Wave 1).
 - Numbered-step eyebrow reuses `.eyebrow` (10px mono .14em caps).
+
+## Overlays (Components §Overlays)
+
+Overlays never stack — a dialog closes any open overlay first; two scrims never coexist. Visual
+primitives here; Spec 13 (Wave 1) wires behaviour (12s-undo toast, consequence flow) and retires the
+legacy `.confirm-dialog`.
+
+- **`.dialog-scrim`** — fixed inset 0, `rgba(20,18,16,.42)` (no blur), grid-centres its card, 140ms fade.
+- **`.dialog`** — bg `#fffdf9` · radius 22 · padding 30/32 · shadow `0 32px 80px rgba(0,0,0,.28)` ·
+  `min(460px,100%)` up to 768 · 140ms fade + 8px rise (`prefers-reduced-motion` → 0s).
+- **`.dialog-eyebrow`** (10 mono caps; `.dialog--danger` → deep red), **`.dialog-heading`** (Yatra 23),
+  **`.dialog-actions`** (flex end, gap 14; Cancel outline + destructive-pill action).
+- **`.consequence`** — traces a destructive action before asking: red wash `#fff5f5` · border `#f0dcd8`
+  · radius 14 · 13.5/1.6 `#55504a`. Esc/scrim cancel — except a destructive confirm.
+- **`.toast`** + `.toast-glyph` / `.toast-body` / `.toast-primary` / `.toast-consequence` / `.toast-action`
+  — bg `#fffdf9` · border `#e6ddc9` · radius 12 · shadow `0 12px 32px rgba(0,0,0,.16)` · max-width 560 ·
+  ✧ glyph green `#1f6a3e` (save) / `.toast--warn` amber `#8a5300` (conflict) · primary 14.5/600 ·
+  consequence 13 `#8a8377` · action 13.5/600 `#b22222`. Confirms writes only; one at a time; 3.5s / 12s
+  with Undo (timings in Spec 13). The current `ToastSystem` (react-hot-toast, legacy inline) adopts this
+  in Wave 1. Search palette (`.cmdk-*`) is Spec 09.

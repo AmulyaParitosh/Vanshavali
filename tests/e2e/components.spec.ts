@@ -543,3 +543,110 @@ test.describe("Components — Containers & lists", () => {
     });
   });
 });
+
+test.describe("Components — Overlays", () => {
+  test("Dialog scrim: rgba(20,18,16,.42), centres its card", async ({ page }) => {
+    const c = await computed(page, '<div class="dialog-scrim"></div>', ".dialog-scrim", [
+      "background-color",
+      "position",
+      "place-items",
+    ]);
+    expect(c["background-color"]).toBe("rgba(20, 18, 16, 0.42)");
+    expect(c.position).toBe("fixed");
+    expect(c["place-items"]).toContain("center");
+  });
+
+  test("Dialog card: radius 22, 30/32, the dialog shadow", async ({ page }) => {
+    const c = await computed(page, '<div class="dialog">x</div>', ".dialog", [
+      "background-color",
+      "border-radius",
+      "padding",
+      "box-shadow",
+    ]);
+    expect(c).toMatchObject({
+      "background-color": "rgb(255, 253, 249)",
+      "border-radius": "22px",
+      padding: "30px 32px",
+    });
+    expect(c["box-shadow"]).toContain("32px 80px");
+  });
+
+  test("Dialog heading is Yatra 23; destructive eyebrow is deep red", async ({ page }) => {
+    const heading = await computed(
+      page,
+      '<div class="dialog"><h2 class="dialog-heading">Remove?</h2></div>',
+      ".dialog-heading",
+      ["font-size", "font-family"]
+    );
+    expect(heading["font-size"]).toBe("23px");
+    expect(heading["font-family"]).toContain("Yatra One");
+    const eyebrow = await computed(
+      page,
+      '<div class="dialog dialog--danger"><span class="dialog-eyebrow">Cannot be undone</span></div>',
+      ".dialog-eyebrow",
+      ["color", "text-transform"]
+    );
+    expect(eyebrow).toMatchObject({ color: "rgb(139, 0, 0)", "text-transform": "uppercase" });
+  });
+
+  test("Consequence inset: red wash, #f0dcd8 border, radius 14", async ({ page }) => {
+    const c = await computed(
+      page,
+      '<div class="consequence">Her record leaves this tree.</div>',
+      ".consequence",
+      ["background-color", "border-top-color", "border-radius", "font-size"]
+    );
+    expect(c).toMatchObject({
+      "background-color": "rgb(255, 245, 245)",
+      "border-top-color": "rgb(240, 220, 216)",
+      "border-radius": "14px",
+      "font-size": "13.5px",
+    });
+  });
+
+  test("Toast: paper, hairline, radius 12, toast shadow; green glyph, amber on warn", async ({
+    page,
+  }) => {
+    const c = await computed(
+      page,
+      '<div class="toast"><span class="toast-glyph">✧</span><div class="toast-body"><span class="toast-primary">Saved</span></div></div>',
+      ".toast",
+      ["background-color", "border-top-color", "border-radius", "box-shadow", "max-width"]
+    );
+    expect(c).toMatchObject({
+      "background-color": "rgb(255, 253, 249)",
+      "border-top-color": "rgb(230, 221, 201)",
+      "border-radius": "12px",
+      "max-width": "560px",
+    });
+    expect(c["box-shadow"]).toContain("12px 32px");
+    const glyph = await computed(
+      page,
+      '<div class="toast"><span class="toast-glyph">✧</span></div>',
+      ".toast-glyph",
+      ["color"]
+    );
+    expect(glyph.color).toBe("rgb(31, 106, 62)");
+    const warn = await computed(
+      page,
+      '<div class="toast toast--warn"><span class="toast-glyph">✧</span></div>',
+      ".toast-glyph",
+      ["color"]
+    );
+    expect(warn.color).toBe("rgb(138, 83, 0)");
+  });
+
+  test("Toast action is 13.5/600 red", async ({ page }) => {
+    const c = await computed(
+      page,
+      '<div class="toast"><button class="toast-action">Undo</button></div>',
+      ".toast-action",
+      ["font-size", "font-weight", "color"]
+    );
+    expect(c).toMatchObject({
+      "font-size": "13.5px",
+      "font-weight": "600",
+      color: "rgb(178, 34, 34)",
+    });
+  });
+});

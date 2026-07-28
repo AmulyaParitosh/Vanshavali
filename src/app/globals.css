@@ -1118,6 +1118,143 @@ main {
   justify-content: flex-end;
 }
 
+/* --- Overlays (Components §Overlays). Overlays never stack — a dialog closes any
+ * open overlay first; the inspector may stay behind a dialog (context, not an
+ * overlay), but two scrims never coexist. The canonical visual primitives; Spec 13
+ * (Wave 1) wires their behaviour and retires the legacy .confirm-dialog. --- */
+
+/* Scrim — one scrim treatment. rgba(20,18,16,.42), no blur. Centres its dialog. */
+.dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6);
+  background: rgba(20, 18, 16, 0.42);
+  animation: dialog-fade var(--dur-dialog) var(--ease);
+}
+.dialog {
+  box-sizing: border-box;
+  width: min(460px, 100%);
+  max-width: 768px;
+  background: var(--surface-paper);
+  border-radius: var(--radius-22);
+  box-shadow: var(--shadow-dialog);
+  padding: 30px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: dialog-rise var(--dur-dialog) var(--ease);
+}
+.dialog-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-meta);
+}
+/* A destructive dialog names the thing being destroyed; its eyebrow is deep red. */
+.dialog--danger .dialog-eyebrow {
+  color: var(--color-red-deep);
+}
+.dialog-heading {
+  font-family: var(--font-display);
+  font-size: var(--fs-23);
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--text-primary);
+  margin: 0;
+}
+/* Consequence inset — traces what a destructive action will do before asking. */
+.consequence {
+  background: var(--color-red-wash);
+  border: 1px solid #f0dcd8;
+  border-radius: var(--radius-14);
+  padding: 13px 15px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-strong);
+}
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+@keyframes dialog-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes dialog-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog-scrim,
+  .dialog {
+    animation-duration: 0s;
+  }
+}
+
+/* Toast — confirms writes only, bottom-centre, one at a time. */
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  box-sizing: border-box;
+  max-width: 560px;
+  padding: 12px 18px;
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-12);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+}
+.toast-glyph {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--chip-write-fg); /* save-confirm green; conflict variant overrides */
+}
+.toast--warn .toast-glyph {
+  color: var(--chip-invited-fg); /* amber, e.g. a conflict */
+}
+.toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.toast-primary {
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.toast-consequence {
+  font-size: 13px;
+  color: var(--text-meta);
+  line-height: 1.35;
+}
+.toast-action {
+  flex-shrink: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-red);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
 /* Household pill behind the portrait(s) — paper surface, hairline control
  * border, the soft node-pill shadow. */
 .node-pill {
