@@ -500,52 +500,85 @@ main {
   box-sizing: border-box;
 }
 
+/* The sign-in card keeps the heritage double-border frame (a deliberate
+ * entry-screen moment) — but the heading is ink, never marigold on cream,
+ * which was the old contrast failure. The wordmark lives in the chrome bar. */
 .login-content {
   position: relative;
   width: 100%;
-  max-width: 440px;
+  max-width: 452px;
   box-sizing: border-box;
-  padding: var(--space-10) var(--space-10) var(--space-8);
+  padding: 38px 40px;
   background: var(--surface-paper);
-  border: 1px solid var(--line-structure);
+  border: 3px double var(--color-red);
   border-radius: var(--radius-26);
-  box-shadow: var(--shadow-frame);
+  box-shadow: 0 16px 48px rgba(178, 34, 34, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   text-align: left;
 }
-
-/* Wordmark lockup — the one place the two scripts stack as a pair. Marigold
- * would fail contrast on cream, so the Devanagari mark sits in brand red. */
-.login-wordmark {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-2);
+.login-content::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid var(--color-marigold);
+  border-radius: 20px;
+  opacity: 0.35;
+  pointer-events: none;
 }
-.login-wordmark .mark {
+
+.login-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+.login-title {
   font-family: var(--font-display);
-  font-size: var(--font-size-2xl);
-  line-height: 1;
-  letter-spacing: 0.4px;
+  font-size: 29px;
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0;
   color: var(--text-primary);
 }
-.login-wordmark .script {
-  font-size: var(--font-size-lg);
-  font-weight: 500;
-  color: var(--color-red);
-}
-
 .login-lede {
-  margin: 0 0 var(--space-6);
-  font-size: var(--font-size-base);
-  line-height: 1.6;
-  color: var(--text-prose);
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-strong);
+}
+.login-google-g {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-circle);
+  background: var(--surface-quiet);
+  border: 1px solid var(--line-control);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.login-privacy {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-meta);
+  text-align: center;
+  margin: 0;
+}
+.login-privacy a {
+  color: var(--color-red);
+  text-decoration: underline;
 }
 
 /* --- Auth form: segmented switch + fields --- */
 .auth-tabs {
   display: flex;
   gap: var(--space-1);
-  margin: 0 0 var(--space-5);
+  margin: 0;
   padding: var(--space-1);
   background: var(--surface-quiet);
   border-radius: var(--radius-10);
@@ -643,7 +676,7 @@ main {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  margin: var(--space-6) 0 var(--space-4);
+  margin: 0;
   color: var(--text-meta);
   font-size: var(--font-size-sm);
 }

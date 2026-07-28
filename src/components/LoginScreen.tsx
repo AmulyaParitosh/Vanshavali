@@ -61,20 +61,24 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ authProvider }) => {
 
   const submitLabel =
     mode === "sign-in" ? "Sign in" : mode === "sign-up" ? "Create account" : "Send reset link";
+  const title =
+    mode === "sign-in"
+      ? "Welcome back"
+      : mode === "sign-up"
+        ? "Start your family record"
+        : "Reset your password";
+  const subtitle =
+    mode === "reset"
+      ? "We'll email you a link to set a new password."
+      : "Open your family's record, or start one in a minute.";
 
   return (
     <div className="login-screen">
       <div className="login-content">
-        <div className="login-wordmark">
-          <span className="mark">Vanshavali</span>
-          <span className="script" lang="hi">
-            वंशावली
-          </span>
+        <div className="login-head">
+          <h2 className="login-title">{title}</h2>
+          <p className="login-lede">{subtitle}</p>
         </div>
-        <p className="login-lede">
-          The record of a lineage, kept by the whole family. Sign in, or start your tree in a
-          minute.
-        </p>
 
         <div role="tablist" aria-label="Authentication mode" className="auth-tabs">
           <button
@@ -171,8 +175,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ authProvider }) => {
         </div>
 
         <button type="button" className="btn btn-secondary auth-google" onClick={handleGoogle}>
+          <span className="login-google-g" aria-hidden="true">
+            G
+          </span>
           Continue with Google
         </button>
+
+        <p className="login-privacy">
+          Nothing you add is public. <a href="/about">How we handle your family&apos;s data</a>
+        </p>
       </div>
     </div>
   );
