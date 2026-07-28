@@ -16,9 +16,11 @@ interface AppProviderProps {
 /**
  * Routes that don't require an active tree to be selected. `/invite/[id]` is
  * the canonical example — an invited user lands on it before they're a member
- * of any tree, so we must let it render past the auth gate.
+ * of any tree, so we must let it render past the auth gate. `/auth/*` covers
+ * the password-recovery landing (the reset link signs the user in, but they
+ * may own no tree yet).
  */
-const TREE_OPTIONAL_PREFIXES = ["/invite/", "/about", "/user/profile", "/user/suggestions"];
+const TREE_OPTIONAL_PREFIXES = ["/invite/", "/about", "/user/", "/auth/"];
 
 function isTreeOptional(pathname: string | null): boolean {
   if (!pathname) return false;
@@ -37,7 +39,6 @@ export default function AppProvider({ children }: AppProviderProps) {
     membership,
     treeData,
     isLoading,
-    handleLogin,
     handleLogout,
     onSave,
     refreshProfile,
@@ -48,7 +49,7 @@ export default function AppProvider({ children }: AppProviderProps) {
 
   const renderContent = () => {
     if (isLoading) return <Loading />;
-    if (!user) return <LoginScreen authProvider={authProvider} onLoginRequest={handleLogin} />;
+    if (!user) return <LoginScreen authProvider={authProvider} />;
     // Tree-optional routes (landing, invite accept, profile, etc.) render
     // without requiring a current tree or membership. Tree-scoped routes have
     // their own gating in `src/app/tree/[id]/layout.tsx`.
@@ -94,7 +95,7 @@ export default function AppProvider({ children }: AppProviderProps) {
   return (
     <AppContext.Provider value={contextValue}>
       <div className="App">
-        <Header user={user} membership={membership} onLogout={handleLogout} />
+        <Header user={user} membership={membership} />
         <main>{renderContent()}</main>
       </div>
     </AppContext.Provider>

@@ -79,11 +79,6 @@ export default function FamilyPage() {
     }
   };
 
-  const getPersonName = (personId: string) => {
-    const person = data.people.find((p) => p.id === personId);
-    return person ? person.name.official_name : "?";
-  };
-
   const handleAddNewFamily = () => {
     if (!canEdit) return;
     setSelectedFamily({ id: "", husband: "", wife: "", children: [] });
@@ -96,10 +91,7 @@ export default function FamilyPage() {
         renderItem={(f: Family) => <SearchItem type="family" item={f} people={data.people} />}
         filterItem={(f: Family, query: string) => {
           const q = query.toLowerCase();
-          const { husbandId, wifeId } = inferHusbandWife(
-            f,
-            (id) => data.people.find((p) => p.id === id)?.sex
-          );
+          const { husbandId, wifeId } = inferHusbandWife(f);
           const matchesPerson = (id: string | undefined) => {
             if (!id) return false;
             const person = data.people.find((p) => p.id === id);
@@ -240,27 +232,24 @@ const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelet
     setFormData({ ...formData, children: items });
   };
 
+  // Success/error toasts fire in the page-level handlers (which await the
+  // actual save) — toasting here too would announce success before the write
+  // lands, even when it then fails and rolls back.
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData) {
-      onSave(formData);
-      toast.success("Family saved successfully");
-    }
+    if (formData) onSave(formData);
   };
 
   const handleDelete = () => {
     toast.confirm(
       "Are you sure you want to delete this family? This will not delete the individuals but will remove their connections as a family unit.",
       () => {
-        if (family.id) {
-          onDelete(family.id);
-          toast.success("Family deleted");
-        }
+        if (family.id) onDelete(family.id);
       }
     );
   };
 
-  const inferred = inferHusbandWife(formData, (id) => people.find((p) => p.id === id)?.sex);
+  const inferred = inferHusbandWife(formData);
   const husbandId = inferred.husbandId || "";
   const wifeId = inferred.wifeId || "";
   const currentChildrenIds = formData.children || [];

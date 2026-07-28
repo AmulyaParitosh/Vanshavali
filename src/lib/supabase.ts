@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { getPublicSupabaseConfig, getSupabaseTarget } from "./supabaseEnv";
+import { getPublicSupabaseConfig } from "./supabaseEnv";
 
 /**
  * Browser-side Supabase client. Uses the public anon key — RLS policies in the
@@ -33,16 +33,3 @@ export function getSupabaseClient(): SupabaseClient {
   });
   return cached;
 }
-
-/**
- * True when the active Supabase target is usable. ProviderFactory uses this to
- * decide whether to wire up the Supabase providers or fall back to local (JSON)
- * mode. The local stack always resolves (via defaults), so this is only false
- * when targeting cloud with the cloud env vars unset.
- */
-export function isSupabaseConfigured(): boolean {
-  return getPublicSupabaseConfig() !== null;
-}
-
-/** Re-exported for callers that want to branch on the active target. */
-export { getSupabaseTarget };

@@ -2,11 +2,7 @@ import {
   ROLES_WITH_EDIT_ACCESS,
   ROLES_WITH_OWNER_PRIVILEGES,
   ROLES_WITH_TREE_ACCESS,
-  TREE_ROLES,
-  type TreeRoleValue,
 } from "../constants";
-
-export type { TreeRoleValue };
 
 /** Whether the role can read tree data. */
 export function canViewTree(role: string | null | undefined): boolean {
@@ -28,9 +24,16 @@ export function canInvite(role: string | null | undefined): boolean {
   return isOwner(role);
 }
 
-/** Convenience predicate — has any role at all (not signed out / unjoined). */
-export function isMember(role: string | null | undefined): boolean {
-  return canViewTree(role);
+/**
+ * Whether the uid is on the site-admin allowlist (comma-separated
+ * NEXT_PUBLIC_SITE_ADMIN_UIDS). Gates the global suggestions inbox — both the
+ * sidebar link and the page itself use this so they can't drift apart.
+ */
+export function isSiteAdmin(uid: string | null | undefined): boolean {
+  if (!uid) return false;
+  const allowlist = (process.env.NEXT_PUBLIC_SITE_ADMIN_UIDS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return allowlist.includes(uid);
 }
-
-export { TREE_ROLES };

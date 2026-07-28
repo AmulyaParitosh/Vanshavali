@@ -1,20 +1,18 @@
 "use client";
 import { createContext, useContext } from "react";
-import type { Person } from "../types/person";
-import type { Family } from "../types/family";
 import type { MyTrees, TreeMembership } from "../types/tree";
 import type {
   AuthProvider,
   AuthUser,
   DataProvider,
   StorageProvider,
+  TreeData,
   UserProfile,
 } from "../services/types";
 
-export interface TreeData {
-  people: Person[];
-  families: Family[];
-}
+// Re-exported so pages can import TreeData from context without reaching into
+// services/types; the definition lives there (single source).
+export type { TreeData };
 
 interface AppContextType {
   user: AuthUser | null;

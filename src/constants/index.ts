@@ -41,8 +41,6 @@ export const SUGGESTION_STATUS = {
   PRIORITIZED: "prioritized",
 } as const;
 
-export type SuggestionStatusValue = (typeof SUGGESTION_STATUS)[keyof typeof SUGGESTION_STATUS];
-
 export const TREE_CONFIG = {
   NODE_WIDTH: 500,
   NODE_HEIGHT: 300,
@@ -53,18 +51,10 @@ export const TREE_CONFIG = {
     HEIGHT: 300,
   },
   STYLES: {
-    STROKE_WIDTH: {
-      LINEAGE: "6px",
-      DEFAULT: "4px",
-    },
+    // Node visuals otherwise live in globals.css; this is the one value the
+    // SVG needs programmatically (PersonAvatar's circle fill).
     COLORS: {
-      PRIMARY: "var(--color-primary)",
-      NODE_BORDER: "var(--color-primary-dark)",
-      SPOUSE_BORDER: "var(--color-accent)",
       FILL: "var(--color-bg)",
-    },
-    TEXT: {
-      FONT_SIZE: "12px",
     },
   },
   PLACEHOLDER_IMAGE_URL: (color: string, text: string) =>
@@ -90,20 +80,14 @@ export const UI_CONFIG = {
 };
 
 /**
- * Local-mode storage layout under `.local_data/db/`:
+ * Collection layout used by the LocalDataProvider unit-test double (the JSON
+ * runtime mode was retired; these names shape the in-memory store the tests
+ * stub):
  *
- *   global collections (no tree scope):
- *     users.json, suggestions.json, trees.json, my_trees_index.json
- *
- *   per-tree collections (under `trees/{treeId}/`):
- *     people.json, families.json, members.json, invites.json
- *
- * The "global" set is keyed at the root; tree-scoped data lives under the
- * `trees/{treeId}/` prefix and is requested with `?tree=<id>&collection=<name>`.
+ *   global collections (no tree scope):  users, trees, suggestions
+ *   per-tree collections:                people, families, members, invites
  */
 export const LOCAL_DATA_CONFIG = {
-  DB_DIR: ".local_data/db",
-  STORAGE_DIR: ".local_data/storage",
   GLOBAL_COLLECTIONS: {
     USERS: "users",
     TREES: "trees",
@@ -115,14 +99,5 @@ export const LOCAL_DATA_CONFIG = {
     MEMBERS: "members",
     INVITES: "invites",
   },
-  MOCK_USER: {
-    UID: process.env.NEXT_PUBLIC_LOCAL_USER_UID || "local-admin-uid",
-  },
   POLLING_INTERVAL: 5000,
 };
-
-/** All collection names — used for endpoint allowlisting. */
-export const ALL_LOCAL_COLLECTIONS = [
-  ...Object.values(LOCAL_DATA_CONFIG.GLOBAL_COLLECTIONS),
-  ...Object.values(LOCAL_DATA_CONFIG.TREE_COLLECTIONS),
-];

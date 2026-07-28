@@ -91,25 +91,13 @@ describe("GraphManager.findPath", () => {
     expect(path!.map((step) => step.relation)).toEqual(["Start", "Parent"]);
   });
 
-  // Regression: the prior implementation only edged familyPartners[0] and
-  // familyPartners[1] as spouses, missing relationships in families with 3+
-  // partners (husband + wife + legacy `partners[]` entry).
-  it("edges every pair of partners as Spouse, not just the first two", () => {
+  it("edges husband and wife as Spouse", () => {
     const gm = new GraphManager(
-      [person("h"), person("w", { sex: "F" }), person("p3")],
-      [
-        family("f", {
-          husband: "h",
-          wife: "w",
-          partners: ["p3"],
-          children: [],
-        }),
-      ]
+      [person("h"), person("w", { sex: "F" })],
+      [family("f", { husband: "h", wife: "w", children: [] })]
     );
-    // Each pair-wise spouse edge must exist.
     expect(gm.findPath("h", "w")?.at(-1)?.relation).toBe("Spouse");
-    expect(gm.findPath("h", "p3")?.at(-1)?.relation).toBe("Spouse");
-    expect(gm.findPath("w", "p3")?.at(-1)?.relation).toBe("Spouse");
+    expect(gm.findPath("w", "h")?.at(-1)?.relation).toBe("Spouse");
   });
 
   it("returns null when no path exists", () => {

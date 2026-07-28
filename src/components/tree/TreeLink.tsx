@@ -1,8 +1,6 @@
 import React from "react";
-import type { LaidOutLink } from "./useTreeLayout";
 
 interface TreeLinkProps {
-  link: LaidOutLink;
   d: string | null;
 }
 

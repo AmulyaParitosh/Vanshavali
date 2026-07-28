@@ -133,11 +133,6 @@ describe("LocalDataProvider — TreeMetaProvider", () => {
     expect(result.member.map((t) => t.id)).toEqual([theirs.id]);
   });
 
-  it("getTreeMeta returns null when the tree doesn't exist", async () => {
-    const provider = new LocalDataProvider();
-    expect(await provider.getTreeMeta("does-not-exist")).toBeNull();
-  });
-
   it("listMyTrees excludes an owned tree whose members file is missing (orphan)", async () => {
     // Regression for the "Setting up your tree…" stall: a tree where the global
     // trees blob still references it but the per-tree dir was removed must NOT
@@ -169,7 +164,8 @@ describe("LocalDataProvider — TreeMetaProvider", () => {
 
     await provider.deleteTree(meta.id);
     expect(db.trees[meta.id]).toBeUndefined();
-    expect(await provider.getTreeMeta(meta.id)).toBeNull();
+    const trees = db.global[GLOBAL_COLLECTIONS.TREES] as Record<string, unknown>;
+    expect(trees[meta.id]).toBeUndefined();
   });
 });
 
@@ -329,8 +325,6 @@ describe("LocalDataProvider — SuggestionProvider", () => {
     const provider = new LocalDataProvider();
     await provider.addSuggestion({
       userId: "uid_sender",
-      userName: "Sender",
-      userEmail: "s@x.com",
       message: "hi",
       status: SUGGESTION_STATUS.UNREAD,
     });

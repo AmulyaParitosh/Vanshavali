@@ -4,9 +4,9 @@ import { ProviderFactory } from "../services/ProviderFactory";
 import type { ProviderConfig } from "../services/types";
 
 /**
- * Resolves the active provider set (Firebase or local file-backed) from the
- * factory and memoizes it for the component's lifetime. Stable identity means
- * downstream hooks' effect deps see the same reference across renders.
+ * Resolves the Supabase provider set from the factory and memoizes it for the
+ * component's lifetime. Stable identity means downstream hooks' effect deps
+ * see the same reference across renders.
  */
 export function useProviders(): ProviderConfig {
   return useMemo(() => ProviderFactory.getProviders(), []);

@@ -6,3 +6,5 @@ package-lock.json
 tsconfig.tsbuildinfo
 db/migrations
 public
+# Supabase CLI artifacts (generated, gitignored)
+supabase/.temp

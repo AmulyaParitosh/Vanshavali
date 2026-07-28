@@ -74,6 +74,13 @@ export class SupabaseAuthProvider implements AuthProvider {
     if (error) throw error;
   }
 
+  async updatePassword(newPassword: string): Promise<void> {
+    // Requires an active session — the recovery link signs the user in via
+    // detectSessionInUrl before /auth/reset-password renders.
+    const { error } = await this.client.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  }
+
   async signOut(): Promise<void> {
     const { error } = await this.client.auth.signOut();
     if (error) throw error;

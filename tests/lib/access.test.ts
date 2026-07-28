@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { canEdit, canInvite, canViewTree, isOwner, isMember } from "@/lib/access";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { canEdit, canInvite, canViewTree, isOwner, isSiteAdmin } from "@/lib/access";
 import { TREE_ROLES } from "@/constants";
 
 describe("canViewTree", () => {
@@ -40,12 +40,22 @@ describe("isOwner / canInvite", () => {
   });
 });
 
-describe("isMember", () => {
-  it.each([TREE_ROLES.OWNER, TREE_ROLES.EDITOR, TREE_ROLES.VIEWER])("%s is a member", (role) => {
-    expect(isMember(role)).toBe(true);
+describe("isSiteAdmin", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  it.each([null, undefined])("%s is not a member", (role) => {
-    expect(isMember(role)).toBe(false);
+  it("matches uids on the comma-separated allowlist (whitespace tolerated)", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_ADMIN_UIDS", "uid_a, uid_b");
+    expect(isSiteAdmin("uid_a")).toBe(true);
+    expect(isSiteAdmin("uid_b")).toBe(true);
+    expect(isSiteAdmin("uid_c")).toBe(false);
+  });
+
+  it("denies everyone when the allowlist is unset or empty", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_ADMIN_UIDS", "");
+    expect(isSiteAdmin("uid_a")).toBe(false);
+    expect(isSiteAdmin(null)).toBe(false);
+    expect(isSiteAdmin(undefined)).toBe(false);
   });
 });

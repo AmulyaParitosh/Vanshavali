@@ -13,7 +13,7 @@ When the two disagree, follow Part 2 for new work and treat the gap as cleanup d
 
 ## 1.1 Brand
 
-Vanshavali is a family-tree app rooted in **Mithila / Madhubani** visual heritage. The identity is currently strongest on the home tree (`/`) — Madhubani banner header, "Old Lace" paper-textured background wash, double-bordered ornamental tooltip cards, and circular nodes wrapped in painted Madhubani border imagery (`/node_border.png`). The rest of the app (forms, admin pages, modals) reverts to a generic light Material/Bootstrap visual language. **Most interactive surfaces do not currently carry the heritage motif.**
+Vanshavali is a family-tree app rooted in **Mithila / Madhubani** visual heritage. The identity is currently strongest on the tree view (`/tree/[id]`) — Madhubani banner header, "Old Lace" paper-textured background wash, double-bordered ornamental tooltip cards, and circular nodes wrapped in painted Madhubani border imagery (`/node_border.png`). The rest of the app (forms, admin pages, modals) reverts to a generic light Material/Bootstrap visual language. **Most interactive surfaces do not currently carry the heritage motif.**
 
 ## 1.2 Tokens (current)
 
@@ -158,7 +158,7 @@ Per page load: **~12-14 MB of decorative imagery**.
 | `public/canvas_background.png` | 8.3 MB | body::before texture wash at 0.2 opacity       |
 | `public/madhubani_banner.png`  | 2.0 MB | header background                              |
 | `public/node_border.png`       | 1.9 MB | per-node decorative frame (~50 nodes per tree) |
-| `public/screenshot.jpeg`       | 1.7 MB | **unused — orphan**                            |
+| `public/screenshot.jpeg`       | 1.7 MB | **unused — orphan; since deleted**             |
 | `public/developer.png`         | 888 KB | single 150×150 profile image on About page     |
 | `public/favicon.ico`           | 4.2 KB | tab favicon                                    |
 
@@ -405,7 +405,7 @@ Target: ≤ 500 KB total decorative payload per page.
 | `madhubani_banner.png`  | 2.0 MB  | < 200 KB   | Optimized WebP @ 2x density. Or hand-authored SVG for crisp scaling.                                         |
 | `node_border.png`       | 1.9 MB  | < 30 KB    | Hand-authored SVG. Repeats ~50 times in the DOM but is a single cached request.                              |
 | `developer.png`         | 888 KB  | < 30 KB    | Optimized WebP, 150 × 150 with 2x retina.                                                                    |
-| `screenshot.jpeg`       | 1.7 MB  | **delete** | Orphan asset.                                                                                                |
+| `screenshot.jpeg`       | 1.7 MB  | **delete** | Orphan asset. **Done — deleted.**                                                                            |
 
 Use Next.js `<Image>` for all non-decorative photography (lazy load, responsive sizes, automatic AVIF/WebP).
 

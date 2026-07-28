@@ -22,10 +22,6 @@ const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
     onChange(newFields);
   };
 
-  const addField = () => {
-    onChange([...customFields, { key: "", value: "" }]);
-  };
-
   const removeField = (index: number) => {
     const newFields = customFields.filter((_, i) => i !== index);
     onChange(newFields);

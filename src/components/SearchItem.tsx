@@ -5,16 +5,14 @@ import { getPersonPlaceholderUrl } from "../utils/imageUtils";
 import { inferHusbandWife } from "../lib/family";
 
 type SearchItemProps =
-  | { type: "person"; item: Person; people?: Person[]; onClick?: () => void }
-  | { type: "family"; item: Family; people: Person[]; onClick?: () => void };
+  | { type: "person"; item: Person }
+  | { type: "family"; item: Family; people: Person[] };
 
 const SearchItem: React.FC<SearchItemProps> = (props) => {
-  const { type, item, people = [], onClick } = props;
-
-  if (type === "person") {
-    const person = item;
+  if (props.type === "person") {
+    const person = props.item;
     return (
-      <div className="search-item" onClick={onClick}>
+      <div className="search-item">
         <div className="search-item-image-container">
           <img
             src={person.image_url || getPersonPlaceholderUrl(person)}
@@ -47,17 +45,14 @@ const SearchItem: React.FC<SearchItemProps> = (props) => {
     );
   }
 
-  if (type === "family") {
-    const family = item;
-    const { husbandId, wifeId } = inferHusbandWife(
-      family,
-      (id) => people.find((p) => p.id === id)?.sex
-    );
+  if (props.type === "family") {
+    const { item: family, people } = props;
+    const { husbandId, wifeId } = inferHusbandWife(family);
     const husband = husbandId ? people.find((p) => p.id === husbandId) : undefined;
     const wife = wifeId ? people.find((p) => p.id === wifeId) : undefined;
 
     return (
-      <div className="search-item" onClick={onClick}>
+      <div className="search-item">
         <div className="search-item-family-images">
           <img
             src={

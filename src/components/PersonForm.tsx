@@ -79,12 +79,12 @@ const PersonForm: React.FC<PersonFormProps> = ({
     });
   };
 
+  // Success/error toasts fire in the page-level handlers (which await the
+  // actual save) — toasting here too would announce success before the write
+  // lands, even when it then fails and rolls back.
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData) {
-      onSave(formData);
-      toast.success(isProfile ? "Profile updated successfully!" : "Person saved successfully!");
-    }
+    if (formData) onSave(formData);
   };
 
   const handleDelete = () => {
@@ -92,10 +92,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
     const personId = person.id;
     toast.confirm(
       "Are you sure you want to delete this person? This action cannot be undone.",
-      () => {
-        onDelete(personId);
-        toast.success("Person deleted.");
-      }
+      () => onDelete(personId)
     );
   };
 

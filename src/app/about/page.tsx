@@ -21,8 +21,6 @@ export default function AboutPage() {
     try {
       await dataProvider.addSuggestion({
         userId: user?.uid || "anonymous",
-        userName: user?.displayName || "Anonymous",
-        userEmail: user?.email || "anonymous",
         message: suggestion,
         status: SUGGESTION_STATUS.UNREAD as SuggestionStatus,
       });

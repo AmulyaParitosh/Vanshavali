@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Direction (June 2026)
 
-This project is being **migrated to multi-tenancy and off Firebase entirely** for public release. See `docs/ARCHITECTURE.md` for the target architecture, data model, and phased migration plan. See `docs/SUPABASE-SETUP.md` for the end-to-end provisioning checklist (manual steps the migrations can't do — storage policies, realtime publication, OAuth config). See `docs/DESIGN-LANGUAGE.md` for the visual identity. See `docs/BACKLOG.md` for deferred design / refactor work that's been scoped but not picked up. See `CONTRIBUTING.md` for dev workflow.
+This project was **migrated to multi-tenancy and off Firebase entirely** for public release. See `docs/ARCHITECTURE.md` for the target architecture, data model, and phased migration plan. See `docs/SUPABASE-SETUP.md` for the end-to-end provisioning checklist (manual steps the migrations can't do — storage policies, realtime publication, OAuth config). See `docs/DESIGN-LANGUAGE.md` for the visual identity. See `docs/BACKLOG.md` for deferred design / refactor work that's been scoped but not picked up. See `CONTRIBUTING.md` for dev workflow.
 
 Locked-in decisions (do not re-litigate without a strong reason):
 
@@ -18,7 +18,7 @@ Locked-in decisions (do not re-litigate without a strong reason):
 - **Quality tooling**: ESLint, Prettier, Vitest + React Testing Library. No Playwright in v1.
 - **Hosting**: parked — decide before launch.
 
-**While the migration is in progress**, the current code still uses Firebase. Do not write new Firebase code; write against the upcoming Supabase provider implementations (or refactor in pure-domain code that's backend-agnostic). The provider abstraction (`AuthProvider`, `DataProvider`, `StorageProvider`) survives the migration.
+**The migration is complete** — the app runs entirely on Supabase. The provider abstraction (`AuthProvider`, `DataProvider`, `StorageProvider`) remains the seam for all backend access: never import `supabase-js` directly in components — go through the providers.
 
 ## Commands
 
@@ -63,11 +63,11 @@ Backend resolution: the app always uses the Supabase providers (`ProviderFactory
 All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts`. `DataProvider` is split per ISP into focused sub-interfaces — `UserProvider`, `TreeMetaProvider`, `TreeDataProvider`, `MembershipProvider`, `InvitationProvider`, `SuggestionProvider`. Consumers should type their dependencies against the narrowest one they need. Two implementations:
 
 - `src/services/supabase/` — the real implementation, used at runtime for both `local` and `prod` (same code, different target URL/keys). Backs onto the schema + RLS policies in `db/migrations/*.sql`.
-- `src/services/local/` — file-backed providers hitting Next.js API routes under `src/app/api/local/` (`.local_data/db/…json`). **Retired as a runtime mode** — no longer wired by `ProviderFactory`. Kept only as the unit-test double (`LocalDataProvider.test.ts` stubs `fetch` against it), so the interface has a fast in-memory implementation to test contract behavior without a live backend.
+- `src/services/local/` — `LocalDataProvider`, a file-backed provider that talked to (since-deleted) local API routes (`.local_data/db/…json`). **Retired as a runtime mode** — no longer wired by `ProviderFactory`. Kept only as the unit-test double (`LocalDataProvider.test.ts` stubs `fetch` against it), so the interface has a fast in-memory implementation to test contract behavior without a live backend.
 
 `ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) always returns the Supabase providers and memoizes them. **Any new backend operation must be added to the interface and implemented in _both_ the Supabase provider and the local (test-double) provider** — otherwise the unit tests and the real backend drift.
 
-Local-mode subscriptions are 5s-polled (`LOCAL_DATA_CONFIG.POLLING_INTERVAL`) and dedupe via JSON string comparison so the callback only fires when content actually changes. Supabase will use Realtime channels.
+Supabase subscriptions use Realtime channels (`src/services/supabase/realtime.ts`): an initial fetch, then live `postgres_changes` events. The retained test double's subscriptions are 5s-polled (`LOCAL_DATA_CONFIG.POLLING_INTERVAL`) and dedupe via JSON string comparison so the callback only fires when content actually changes.
 
 ### App bootstrap, tenancy, and auth gating
 
@@ -80,7 +80,7 @@ Local-mode subscriptions are 5s-polled (`LOCAL_DATA_CONFIG.POLLING_INTERVAL`) an
 - `useTreeMembership(treeId, uid, provider)` — subscribes to the user's role + linked person in the active tree.
 - `useTreeSubscription(treeId, provider)` — subscribes to people / families of the active tree.
 
-First-sign-in auto-provisions a tree for the user as owner, seeded with one root Person representing them. `currentTreeId` defaults to the user's first owned tree; Phase 9 makes it sourceable from the URL.
+First-sign-in auto-provisions a tree for the user as owner, seeded with one root Person representing them. `currentTreeId` defaults to the user's first owned tree; on `/tree/[id]` routes the layout binds it from the URL param.
 
 `AppProvider` renders one of `Loading`, `LoginScreen`, or `children`. The pending/denied screens are gone — under multi-tenancy a new user goes straight to their own tree, and access to other trees is gated per-membership.
 
@@ -91,7 +91,7 @@ Role gating uses the predicates in `src/lib/access.ts`: `canViewTree(role)`, `ca
 Domain types in `src/types/`:
 
 - `Person` — `id`, `name.official_name`, `sex: 'M'|'F'`, optional `events`, `custom_fields`, `image_url`, `userId` (link to the auth user that represents this person _in this tree_), `root: true` on exactly one person _per tree_.
-- `Family` — `husband?`, `wife?`, `children: string[]`. The legacy `partners?: string[]` field is removed at the schema level but still tolerated in pure-domain code via the `familyPartners(family)` helper — use the helper.
+- `Family` — `husband?`, `wife?`, `children: string[]`. The legacy `partners` field is fully removed; `familyPartners(family)` remains the canonical helper for `[husband, wife]`.
 - `Tree`, `TreeMeta`, `TreeMembership`, `TreeInvite` types in `src/types/tree.ts`.
 
 Per-tree uniqueness:
@@ -121,25 +121,28 @@ The D3 visualization is decomposed in `src/components/tree/`: `useTreeLayout` (p
 
 ### Routing
 
-App router under `src/app/`. All non-`/api` routes currently operate on `currentTreeId` from `AppContext`; Phase 9 introduces `/tree/[id]/*` route scoping.
+App router under `src/app/`. Tree-scoped pages live under `/tree/[id]/*`; the `[id]` layout binds `currentTreeId` in `AppContext` from the URL param.
 
-- `/` — tree visualization (gated by membership in the active tree)
-- `/family` — family editor
-- `/people` — searchable list of people
+- `/` — tree picker listing the user's owned + member trees; redirects straight into the tree when there's exactly one
+- `/tree/[id]` — tree visualization (gated by membership)
+- `/tree/[id]/people` — searchable list of people
+- `/tree/[id]/family` — family editor
+- `/tree/[id]/members` — members & invitations management (changes are owner-only)
+- `/tree/[id]/settings` — owner-only: rename placeholder (name is read-only today) + delete tree
 - `/about` — static info page
 - `/user/profile` — global user profile (name/email/photo) + per-tree linked-person editor
-- `/user/suggestions` — site-level feedback inbox; gated by the `NEXT_PUBLIC_SITE_ADMIN_UIDS` allowlist
+- `/user/suggestions` — site-level feedback inbox; gated by the `NEXT_PUBLIC_SITE_ADMIN_UIDS` allowlist via `isSiteAdmin` (`src/lib/access.ts`)
 - `/invite/[id]` — invite-acceptance landing; calls `/api/invite/accept` after the user is signed in
+- `/auth/reset-password` — password-recovery landing
+- `/api/tree/create` — server route; service-role creation of the tree + owner membership
 - `/api/invite/send` — server route; sends the invitation email via Resend after the owner creates an invite
 - `/api/invite/accept` — server route; uses the service-role client to atomically validate the invite + create the `tree_members` row + mark the invite accepted (RLS blocks the invitee from doing this client-side)
-- `/api/local/db` — local-mode database; supports `?collection=...` for global, `?collection=...&tree=...` for tree-scoped, and `DELETE ?tree=...` for tree deletion
-- `/api/local/storage` — local-mode file storage
 
 ## Conventions
 
 - Strict TypeScript everywhere. Imports must use `import type` for type-only imports (`verbatimModuleSyntax` is on).
 - `'use client'` is required at the top of any component that uses hooks or browser APIs.
-- Constants and string literals for roles, suggestion statuses, and local-mode config live in `src/constants/index.ts` — reuse `TREE_ROLES`, `SUGGESTION_STATUS`, `LOCAL_DATA_CONFIG.GLOBAL_COLLECTIONS` / `TREE_COLLECTIONS` instead of inlining strings.
+- Constants and string literals for roles, suggestion statuses, and test-double config live in `src/constants/index.ts` — reuse `TREE_ROLES`, `SUGGESTION_STATUS`, `LOCAL_DATA_CONFIG.GLOBAL_COLLECTIONS` / `TREE_COLLECTIONS` instead of inlining strings.
 - Styling: single global stylesheet at `src/app/globals.css` with the token system documented in `docs/DESIGN-LANGUAGE.md`; no CSS-in-JS or modules in new code.
 - Tests live under `tests/`, mirroring `src/` (e.g. `tests/lib/access.test.ts` for `src/lib/access.ts`), and import via the `@/*` → `src/*` alias (`tsconfig.json` + `vitest.config.ts`). Vitest only picks up `tests/**/*.test.ts`. App code uses relative imports; the `@/` alias is for test imports.
 

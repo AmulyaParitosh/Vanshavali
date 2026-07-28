@@ -10,7 +10,7 @@ If you're an AI agent reading this: also read `CLAUDE.md` (project-wide context)
 
 ### Prerequisites
 
-- **Node.js**: v18.18 or later (Next.js 15 requirement).
+- **Node.js**: v20 or later.
 - **npm**: bundled with Node. (We don't use Yarn or pnpm.)
 - A code editor with TypeScript support — VS Code is what most of us use.
 
@@ -61,7 +61,7 @@ npm run dev           # with NEXT_PUBLIC_ENV=local in .env
 
 Sign up with any email/password — email confirmation is off locally, so you get a session immediately. Browse local data at Supabase Studio (`http://127.0.0.1:54323`). Full details + troubleshooting in `docs/SUPABASE-SETUP.md`.
 
-> The old file-backed JSON mock (`NEXT_PUBLIC_APP_ENV=local`, `.local_data/`) was retired as a runtime mode once the local stack landed. Its provider classes survive only as the unit-test double.
+> The old file-backed JSON mock (`NEXT_PUBLIC_APP_ENV=local`, `.local_data/`) was retired as a runtime mode once the local stack landed. Its `LocalDataProvider` survives only as the unit-test double.
 
 ### Tests, lint, types
 
@@ -69,7 +69,7 @@ Sign up with any email/password — email confirmation is off locally, so you ge
 npm run typecheck         # tsc --noEmit
 npm run lint              # ESLint
 npm run format            # Prettier write
-npm run format:check      # Prettier check (CI runs this)
+npm run format:check      # Prettier check (a good pre-PR check; no CI is wired up yet)
 npm test                  # Vitest (run once)
 npm run test:watch        # Vitest in watch mode
 ```
@@ -85,21 +85,23 @@ src/
   app/                    Next.js App Router pages + API routes
   components/             React components
   context/                React context providers (AppContext)
-  hooks/                  Custom React hooks (useAuthAndData, useCanEdit, etc.)
+  hooks/                  Custom React hooks (useAuthAndData, composed of useAuthUser /
+                          useUserProfile / useMyTrees / useTreeMembership /
+                          useTreeSubscription / useProviders)
   lib/                    Pure-domain logic (graph manager, validators, helpers)
   providers/              Composing context providers for the app root
   services/               Backend provider abstractions
-    firebase/             Firebase implementations (being removed)
-    supabase/             Supabase implementations (being added)
-    local/                File-backed local implementations (retained)
-  constants/              Project-wide constants — USER_ROLES, etc.
+    supabase/             Supabase implementations (the runtime backend)
+    local/                File-backed LocalDataProvider (the unit-test double)
+  constants/              Project-wide constants — TREE_ROLES, etc.
   types/                  Shared TypeScript types
   utils/                  Pure utility functions
 
-scripts/                  One-off / dev scripts (sync-firebase, migrations, seed)
+scripts/                  DB setup tooling (env.ts, apply-rls-policies.ts,
+                          setup-extras.ts, db-setup.ts) — env-aware via NEXT_PUBLIC_ENV
 docs/                     Architecture, design language, decision records
 public/                   Static assets (images, icons)
-.local_data/              Local-mode database + storage (gitignored)
+.local_data/              Scratch data for the retained test double (gitignored)
 ```
 
 When adding new domain logic, put it in `src/lib/` (pure, no React, no provider awareness). When adding new components, default to `src/components/`. Page-only logic stays inside the `src/app/` page file unless it grows past ~150 lines.
@@ -153,7 +155,7 @@ When adding new domain logic, put it in `src/lib/` (pure, no React, no provider 
 
 > **Any new backend operation must be added to the interface in `src/services/types.ts` and implemented in _both_ the Supabase and local providers.**
 
-If you only add the Supabase implementation, local mode breaks silently. If you only add the local one, production breaks. Both must land in the same PR.
+If you only add one implementation, the unit tests and the real backend drift apart. Both must land in the same PR.
 
 The pure-domain layer (`src/lib/graph/`, `src/utils/`) must remain **provider-unaware** — no Firebase, no Supabase, no React imports. Domain code is the easiest to test and the slowest to rot. Keep it clean.
 
@@ -161,14 +163,14 @@ The pure-domain layer (`src/lib/graph/`, `src/utils/`) must remain **provider-un
 
 ## 5. Multi-tenancy invariants
 
-The codebase is mid-migration from single-tenant to multi-tenant. While that migration is ongoing:
+The single-tenant → multi-tenant migration has landed. These invariants still hold:
 
 - New tree-scoped methods on the data provider **must** take a `treeId` parameter.
 - New components consuming tree data **must** read `currentTreeId` from `useAppContext()` — don't assume a global tree.
 - `Person.userId` and `Person.root` are **tree-scoped semantics** (per-tree uniqueness). Don't write code that scans all people globally for a `userId` match.
 - Image storage paths **must** be tree-scoped: `images/trees/{treeId}/people/{personId}/...`.
 
-See `docs/ARCHITECTURE.md` §9 for the migration phase you're in and what's expected to land next.
+`docs/ARCHITECTURE.md` §9 records the (completed) migration plan.
 
 ---
 
@@ -302,15 +304,15 @@ A reviewer should check (and an author should self-check before requesting revie
 
 ## 8. Where to find things
 
-| Question                                                    | File                                         |
-| ----------------------------------------------------------- | -------------------------------------------- |
-| Project goals, locked-in decisions, contributor onboarding  | `CLAUDE.md`, this file                       |
-| Current architecture + target architecture + migration plan | `docs/ARCHITECTURE.md`                       |
-| Visual identity, tokens, component spec                     | `docs/DESIGN-LANGUAGE.md`                    |
-| What every backend op contractually does                    | `src/services/types.ts`                      |
-| Domain logic that has no provider awareness                 | `src/lib/`                                   |
-| Project-wide constants (roles, statuses, etc.)              | `src/constants/index.ts`                     |
-| Mock backend for offline dev                                | `src/services/local/` + `src/app/api/local/` |
+| Question                                                    | File                      |
+| ----------------------------------------------------------- | ------------------------- |
+| Project goals, locked-in decisions, contributor onboarding  | `CLAUDE.md`, this file    |
+| Current architecture + target architecture + migration plan | `docs/ARCHITECTURE.md`    |
+| Visual identity, tokens, component spec                     | `docs/DESIGN-LANGUAGE.md` |
+| What every backend op contractually does                    | `src/services/types.ts`   |
+| Domain logic that has no provider awareness                 | `src/lib/`                |
+| Project-wide constants (roles, statuses, etc.)              | `src/constants/index.ts`  |
+| Unit-test double for the provider interfaces                | `src/services/local/`     |
 
 ---
 

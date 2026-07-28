@@ -22,7 +22,9 @@ const eslintConfig = [
       "next-env.d.ts",
       "tsconfig.tsbuildinfo",
       "db/migrations/**",
-      "scripts/**",
+      // Supabase CLI artifacts (.temp edge-runtime bundles etc.) — generated,
+      // gitignored, but ESLint traverses dot-dirs unless excluded here.
+      "supabase/**",
       "**/coverage/**",
     ],
   },
@@ -74,12 +76,12 @@ const eslintConfig = [
     },
   },
 
-  // Legacy Firebase provider is being removed in Phase 5/6/7 — don't churn it
-  // to satisfy strict typing.
+  // The DB tooling scripts run in Node, not the browser — console output is
+  // their UI.
   {
-    files: ["src/services/firebase/**/*.ts"],
+    files: ["scripts/**/*.ts"],
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      "no-console": "off",
     },
   },
 ];

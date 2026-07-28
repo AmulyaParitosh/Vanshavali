@@ -236,7 +236,7 @@ describe("rowToTreeInvite", () => {
 });
 
 describe("rowToSuggestion", () => {
-  it("maps uid → userId and leaves userName/userEmail blank (filled by route layer)", () => {
+  it("maps uid → userId and created_at → millis", () => {
     const row: SuggestionRow = {
       id: "s_1",
       uid: "uid_sender",
@@ -248,8 +248,6 @@ describe("rowToSuggestion", () => {
     expect(sugg).toEqual({
       id: "s_1",
       userId: "uid_sender",
-      userName: "",
-      userEmail: "",
       message: "Hello",
       status: "unread",
       timestamp: new Date("2026-06-16T12:00:00.000Z").getTime(),

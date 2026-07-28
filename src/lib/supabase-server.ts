@@ -61,7 +61,7 @@ export function getServiceClient(): SupabaseClient {
   return cachedServiceClient;
 }
 
-export function getUserClient(accessToken: string): SupabaseClient {
+function getUserClient(accessToken: string): SupabaseClient {
   const { url, anonKey } = resolveServerConfig();
   if (!url || !anonKey) {
     throw new Error("Supabase env missing on the server.");

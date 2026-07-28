@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useAppContext } from "../../../../context/AppContext";
 import { useToast } from "../../../../components/ToastSystem";
 import Loading from "../../../../components/Loading";
-import { canInvite, isOwner } from "../../../../lib/access";
+import { canInvite } from "../../../../lib/access";
 import { INVITABLE_ROLES, TREE_ROLES } from "../../../../constants";
 import type {
   TreeMembership,
@@ -19,7 +19,8 @@ import type {
  * changes, removal, invite send/revoke) are gated client-side AND by RLS on
  * the server. Non-owners see a read-only list.
  *
- * Email send is Phase 10 — for now `createInvite` just writes the pending row.
+ * `createInvite` writes the pending row and sends the invitation email (via
+ * the /api/invite/send route → Resend).
  */
 export default function MembersPage() {
   const params = useParams<{ id: string }>();
@@ -182,8 +183,8 @@ export default function MembersPage() {
               </button>
             </form>
             <p className="members-note">
-              Email delivery lands in Phase 10. For now the invite is created and the recipient can
-              accept it once that flow ships.
+              The recipient gets an email with an accept link. Invites can be revoked below until
+              they&apos;re accepted.
             </p>
           </section>
 

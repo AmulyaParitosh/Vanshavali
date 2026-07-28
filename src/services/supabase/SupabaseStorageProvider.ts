@@ -34,9 +34,4 @@ export class SupabaseStorageProvider implements StorageProvider {
     const { data: urlData } = this.client.storage.from(BUCKET).getPublicUrl(fullPath);
     return { url: urlData.publicUrl, fullPath };
   }
-
-  async getDownloadURL(path: string): Promise<string> {
-    const { data } = this.client.storage.from(BUCKET).getPublicUrl(path);
-    return data.publicUrl;
-  }
 }

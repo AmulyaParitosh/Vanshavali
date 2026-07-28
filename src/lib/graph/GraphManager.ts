@@ -7,13 +7,11 @@ export class GraphManager {
   private people: Person[];
   private families: Family[];
   private personMap: Map<string, Person>;
-  private familyMap: Map<string, Family>;
 
   constructor(people: Person[], families: Family[]) {
     this.people = people || [];
     this.families = families || [];
     this.personMap = new Map(this.people.map((p) => [p.id, p]));
-    this.familyMap = new Map(this.families.map((f) => [f.id, f]));
   }
 
   getPerson(id: string): Person | undefined {
@@ -26,10 +24,6 @@ export class GraphManager {
 
   getAllFamilies(): Family[] {
     return this.families;
-  }
-
-  getFamily(id: string): Family | undefined {
-    return this.familyMap.get(id);
   }
 
   /**
@@ -82,7 +76,7 @@ export class GraphManager {
       if (visited.has(currentId)) continue;
       visited.add(currentId);
 
-      // Find families where this person is a partner (husband, wife, or legacy partners)
+      // Find families where this person is a partner (husband or wife)
       const familiesAsPartner = this.families.filter((f) => familyPartners(f).includes(currentId));
 
       familiesAsPartner.forEach((family) => {
@@ -123,8 +117,7 @@ export class GraphManager {
     this.families.forEach((family) => {
       const partners = familyPartners(family);
 
-      // 1. Spouses — all pairs, not just the first two (the legacy code missed
-      // edges when a family had 3+ entries via legacy `partners[]`).
+      // 1. Spouses — pairwise over the partner list.
       for (let i = 0; i < partners.length; i++) {
         for (let j = i + 1; j < partners.length; j++) {
           const p1 = partners[i]!;
@@ -200,7 +193,7 @@ export class GraphManager {
 
     // 1. Create Partner Nodes for all families
     this.families.forEach((family) => {
-      const { husbandId, wifeId } = inferHusbandWife(family, (id) => this.getPerson(id)?.sex);
+      const { husbandId, wifeId } = inferHusbandWife(family);
 
       const husband = husbandId ? this.getPerson(husbandId) : undefined;
       const wife = wifeId ? this.getPerson(wifeId) : undefined;

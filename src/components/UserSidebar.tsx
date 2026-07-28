@@ -2,18 +2,24 @@
 
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAppContext } from "../context/AppContext";
+import { isSiteAdmin } from "../lib/access";
 import { Sidebar, SidebarContent } from "./Sidebar";
 
 /**
  * Sidebar shown under `/user/*` pages. Pre-multi-tenancy this had an admin
  * section linking to global user management / access requests; those routes
- * are gone, replaced (in Phase 9) by per-tree members management.
+ * are gone, replaced by per-tree members management. The suggestions inbox
+ * link only shows for allowlisted site admins (same gate as the page itself).
  */
 const UserSidebar: React.FC = () => {
   const { user, handleLogout } = useAppContext();
+  const pathname = usePathname();
 
   if (!user) return null;
+
+  const linkClass = (href: string) => `sidebar-link${pathname === href ? " active" : ""}`;
 
   return (
     <Sidebar
@@ -27,12 +33,14 @@ const UserSidebar: React.FC = () => {
       <SidebarContent>
         <nav className="sidebar-nav">
           <span className="sidebar-divider">Account</span>
-          <Link href="/user/profile" className="sidebar-link">
+          <Link href="/user/profile" className={linkClass("/user/profile")}>
             My Profile
           </Link>
-          <Link href="/user/suggestions" className="sidebar-link">
-            Feature Requests
-          </Link>
+          {isSiteAdmin(user.uid) && (
+            <Link href="/user/suggestions" className={linkClass("/user/suggestions")}>
+              Suggestions Inbox
+            </Link>
+          )}
         </nav>
       </SidebarContent>
     </Sidebar>

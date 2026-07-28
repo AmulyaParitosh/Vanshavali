@@ -2,6 +2,8 @@
 
 This document describes both the **current** architecture (as audited in 2026-06) and the **target** architecture that the codebase is being migrated to for the public release. When the two diverge, the section is split with **Current** and **Target** sub-sections. All file paths are relative to the repo root.
 
+> **Status (July 2026):** the migration this document planned is **complete** — the app runs multi-tenant on Supabase. The §2/§4/§5/§6 "Current" sections describe the pre-migration app and are retained as historical context; the "Target" sections describe what shipped.
+
 ## 1. Product
 
 Vanshavali is a multi-tenant family-tree application. Each authenticated user can own one or more family trees and invite specific family members to view or edit specific trees. Permissions are per-tree, not global. The visual identity is rooted in Madhubani / Mithila heritage and is carried by the tree visualization, decorative borders, and key surfaces — the bulk of interactive UI stays clean and accessible.
@@ -27,7 +29,7 @@ Roles are scoped to a single tree. The same user can be an Owner of one tree and
 
 ## 2. Tech stack
 
-### Current
+### Current (pre-migration, historical)
 
 - **Framework**: Next.js 15 (App Router) on React 18, TypeScript with `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`.
 - **Backend (data + auth + storage)**: Firebase Realtime Database, Firebase Auth (Google only), Firebase Storage. Project config hardcoded in `src/lib/firebase.ts`.
@@ -59,8 +61,8 @@ The single most important architectural pattern in the codebase. All backend acc
 
 Two implementations of each:
 
-- **Firebase** (`src/services/firebase/`) — being removed.
-- **Local** (`src/services/local/`) — file-backed, hits `src/app/api/local/db` and `src/app/api/local/storage` which read/write `.local_data/db/*.json` and `.local_data/storage/`. **Retained** as the dev/test double for the migrated codebase.
+- **Firebase** (`src/services/firebase/`) — removed; the directory no longer exists.
+- **Local** (`src/services/local/`) — file-backed `LocalDataProvider`, which read/wrote `.local_data/db/*.json` through local API routes (since deleted). **Retained** as the unit-test double for the migrated codebase.
 
 After migration:
 
@@ -71,11 +73,11 @@ After migration:
 
 ### Invariant
 
-> **Any new backend operation must be added to the interface and implemented in _both_ the Supabase and local providers** — otherwise local mode silently breaks. This applies during and after the migration.
+> **Any new backend operation must be added to the interface and implemented in _both_ the Supabase and local providers** — otherwise the unit tests and the real backend drift. This applies during and after the migration.
 
 ### Interface split (target)
 
-The current `DataProvider` mixes tree data, user profiles, admin user list, suggestions, and link operations into one interface (ISP violation flagged in the code audit). Target split:
+The pre-migration `DataProvider` mixed tree data, user profiles, admin user list, suggestions, and link operations into one interface (ISP violation flagged in the code audit). The split below has since shipped — `src/services/types.ts` defines these six sub-interfaces:
 
 - `TreeDataProvider` — `subscribeToTreeData(treeId)`, `saveTreeData(treeId, ...)`, `linkUserToPerson(treeId, ...)`.
 - `UserProvider` — `getUserProfile(uid)`, `createUserProfile(uid, ...)`.
@@ -204,7 +206,7 @@ suggestions (
 
 ## 5. Auth & multi-tenancy bootstrap
 
-### Current (`src/hooks/useAuthAndData.ts`)
+### Current (pre-migration, historical — `src/hooks/useAuthAndData.ts`)
 
 Single source of truth for `AuthUser`, the user's global role (`pending | denied | viewer | editor | admin`), `personId`, and the global `TreeData` subscription. Auto-creates the user profile with `role: 'pending'` on first sign-in. Role-gates the tree behind `viewer | editor | admin`; `editor | admin` may call `onSave`.
 
@@ -253,7 +255,7 @@ The context value is memoized so consumers don't cascade-rerender on unrelated s
 
 ## 6. Routing
 
-### Current
+### Current (pre-migration, historical)
 
 ```
 /                       — tree (single global)
@@ -273,7 +275,7 @@ The context value is memoized so consumers don't cascade-rerender on unrelated s
 
 ```
 /                       — landing: list of "My trees" (owned + member). If exactly one tree, redirect to it.
-/trees                  — alias of / for explicit access (optional)
+/trees                  — alias of / for explicit access (not built — the tree picker is /)
 /tree/[id]              — visual tree (the visualization)
 /tree/[id]/family       — family editor (split view)
 /tree/[id]/people       — people editor (split view)
@@ -283,12 +285,12 @@ The context value is memoized so consumers don't cascade-rerender on unrelated s
 /user/profile           — global user info: name, photo, email, list of trees, account deletion
 /user/suggestions       — site-admin only (env-var allowlisted UID); replaces the global admin page
 /invite/[id]            — accept-invite landing
-/auth/sign-in           — sign-in screen (Google + email/password)
-/auth/sign-up           — sign-up screen
-/auth/reset-password    — password reset flow
+/auth/sign-in           — sign-in screen (not built — auth is the LoginScreen component)
+/auth/sign-up           — sign-up screen (not built — LoginScreen handles sign-up too)
+/auth/reset-password    — password reset flow (built — the password-recovery landing exists)
 /api/invite/send        — server route, calls Resend
-/api/local/db           — kept, accepts `?tree=<id>&collection=...`
-/api/local/storage      — kept, paths under `images/trees/{treeId}/...`
+/api/local/db           — was kept for the JSON local mode; since deleted (mode retired)
+/api/local/storage      — was kept for the JSON local mode; since deleted (mode retired)
 ```
 
 Deleted: `/user/access_requests`, `/user/management`, `/api/send-access-request`. Their per-tree replacements are `/tree/[id]/members`.
@@ -297,9 +299,9 @@ Deleted: `/user/access_requests`, `/user/management`, `/api/send-access-request`
 
 ## 7. Security model
 
-### Current
+### Current (pre-migration, historical)
 
-- All role gating is **client-side**. Any authenticated user can write to `users/{uid}.role` and self-promote unless Realtime DB security rules forbid it. There are **no security rules in the repo** (audit critical finding).
+- All role gating was **client-side**. Any authenticated user could write to `users/{uid}.role` and self-promote unless Realtime DB security rules forbade it. There were **no security rules in the repo** (audit critical finding). _Resolved: server-side RLS now lives in `db/migrations/0001_initial.sql`, with recursion fixes in `0003`/`0004`._
 - API keys hardcoded in `src/lib/firebase.ts`. Web API keys aren't secret per se but enable abuse if rules are loose.
 
 ### Target (Supabase Row-Level Security)
@@ -338,8 +340,8 @@ The Next.js app talks to Supabase using the user's JWT. The anon key is public (
 
 ### Other security work
 
-- **XSS in `Tree.tsx`**: the `createDetailsHtml` function (lines 23-53) builds HTML strings from raw user data and renders via D3 `.html(string)`. Editors can inject scripts that run for all viewers. Fix: render details cards as React components inside `<foreignObject>` (no string interpolation).
-- **Local-mode endpoints** (`src/app/api/local/db/route.ts`, `storage/route.ts`) accept arbitrary `collection` / `path` strings. Allowlist collections, and verify `path.join(...)` resolves inside the storage root (prevent traversal).
+- **XSS in `Tree.tsx`** — **fixed**: the old `createDetailsHtml` function built HTML strings from raw user data and rendered via D3 `.html(string)`, so editors could inject scripts that ran for all viewers. Details cards are now React components inside `<foreignObject>` (`<DetailsCard>` — no string interpolation).
+- **Local-mode endpoints** — **resolved by deletion**: the `/api/local/*` routes accepted arbitrary `collection` / `path` strings; they were removed along with the retired local runtime mode.
 - **Image upload**: validate `file.size` and `file.type` client-side (rejected to spare network) and again server-side (Supabase Storage policies).
 - **Suggestions**: enforce `userId === auth.uid()` via RLS — the client cannot submit suggestions impersonating another user.
 
@@ -363,7 +365,7 @@ The migration runs in **non-breaking ground-prep** → **breaking schema swap** 
 
 ### Phase A — Ground-prep (non-breaking, can land before Supabase exists)
 
-1. **Refactor pass 1**: lift the repeated patterns out — `familyPartners(family)` helper, `canEdit(role)` predicate, `getPlaceholderUrl(person)` util, `useAdminUsers()` hook, replace all role string literals with `USER_ROLES` constants, eliminate `@ts-ignore` and `as any` in favor of proper types. **No behavior change.** All findings in audit Section 3 (DRY) and Section 5 (Type safety).
+1. **Refactor pass 1**: lift the repeated patterns out — `familyPartners(family)` helper, `canEdit(role)` predicate, `getPlaceholderUrl(person)` util, `useAdminUsers()` hook, replace all role string literals with `TREE_ROLES` constants, eliminate `@ts-ignore` and `as any` in favor of proper types. **No behavior change.** All findings in audit Section 3 (DRY) and Section 5 (Type safety).
 2. **Refactor pass 2**: split `useAuthAndData` into `useAuthUser` + `useUserProfile` + `useTreeSubscription`; memoize `AppProvider` context value; split `DataProvider` interface into the smaller-purpose interfaces from §3. **No behavior change.**
 3. **Tree.tsx refactor**: split into `<TreeNode>`, `<PartnerNode>`, `<DetailsCard>` React components rendered inside `<foreignObject>`; D3 used only for hierarchy and zoom math. **Closes the XSS surface as a side effect.** Visual parity required.
 4. **Add `treeId` parameter to all tree-scoped `DataProvider` methods**, with both implementations treating any non-default value as a no-op for now (a constant `"legacy"`). Plumb `currentTreeId` through `AppContext`. This is the seam that later phases turn into the real multi-tenancy.
@@ -442,8 +444,8 @@ The biggest unknown is Phase G — design polish is open-ended and the audit fou
 - **Email-domain restriction for v1**: do we want to soft-restrict signup to specific email providers (to prevent spam during early launch)? TBD.
 - **Account deletion / data export**: required for GDPR. Scope for v1 is "delete on request via support email"; automated self-service in v1.5.
 - **Site-admin identity**: the deleted global admin role is replaced by a single env-var allowlisted UID for moderating `/user/suggestions`. Mechanism is TBD — env-var allowlist is simplest.
-- **Person.userId collision policy**: under multi-tenancy, the same uid can be the linked identity for different Person rows in different trees. This is intentional. We should validate that a single (`tree_id`, `user_id`) pair is unique inside one tree, to prevent two People claiming the same user inside one tree. Already enforced via `linkUserToPerson` transactional check; should also be a Postgres unique index `(tree_id, user_id) where user_id is not null`.
+- **Person.userId collision policy**: under multi-tenancy, the same uid can be the linked identity for different Person rows in different trees. This is intentional. We should validate that a single (`tree_id`, `user_id`) pair is unique inside one tree, to prevent two People claiming the same user inside one tree. Already enforced via `linkUserToPerson` transactional check. **Resolved**: `0001_initial.sql` adds the `people_tree_user_unique` partial unique index on `(tree_id, user_id) where user_id is not null`.
 
 ---
 
-_Last updated: 2026-06. Maintained alongside CLAUDE.md. When this document and the code disagree, the code is canonical and this document is wrong — open a PR to fix it._
+_Last updated: 2026-07. Maintained alongside CLAUDE.md. When this document and the code disagree, the code is canonical and this document is wrong — open a PR to fix it._

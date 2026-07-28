@@ -57,11 +57,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   return (
     <div className="tree-canvas-container">
       <TreeSearch people={treeData?.people || []} onSelectPerson={handleSelectPerson} />
-      <svg
-        ref={svgRef}
-        className="tree-canvas"
-        style={{ width: "100%", height: "100%", display: "block", cursor: "grab" }}
-      >
+      {/* Sizing/cursor live on .tree-canvas in globals.css. */}
+      <svg ref={svgRef} className="tree-canvas">
         <g ref={gRef}>
           <BackgroundOrnaments />
 
@@ -69,7 +66,6 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             {layout.links.map((link) => (
               <TreeLink
                 key={`${link.source.data.id}-${link.target.data.id}`}
-                link={link}
                 d={layout.linkPath(link)}
               />
             ))}

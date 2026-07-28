@@ -21,10 +21,3 @@ export const SidebarContent: React.FC<{ children: React.ReactNode; className?: s
 }) => {
   return <div className={`sidebar-content ${className}`}>{children}</div>;
 };
-
-export const SidebarHeader: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = "",
-}) => {
-  return <div className={`sidebar-search ${className}`}>{children}</div>; // Reusing sidebar-search style for header padding
-};

@@ -224,15 +224,19 @@ Walk through:
 
 | Error / symptom                                                                                          | Cause                                                  | Fix                                                                        |
 | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------- |
-| Sign-up returns 429 `over_email_send_rate_limit`                                                         | Hit Supabase default SMTP cap (3–4/hour)               | Step 7 — disable confirm email OR configure Resend SMTP                    |
-| Post-login `[realtime my-trees:<uid>] fetch failed` with empty `{}` payload                              | `tree_members` RLS infinite recursion                  | Step 3 — apply `0003_fix_member_select_recursion.sql`                      |
-| `apply-rls-policies` errors with `must be owner of table objects`                                        | Trying to apply storage policies via direct connection | Step 5 — use the Storage UI; script now skips this file with a warning     |
-| Live updates never arrive (initial fetch works, no realtime events)                                      | Tables not in `supabase_realtime` publication          | Step 6                                                                     |
-| `Bucket not found` on upload                                                                             | `images` bucket missing                                | Step 4                                                                     |
-| `new row violates row-level security policy` on upload                                                   | Storage policies missing or wrong path                 | Step 5 — policies expect `trees/{treeId}/...` prefix                       |
+| Sign-up returns 429 `over_email_send_rate_limit`                                                         | Hit Supabase default SMTP cap (3–4/hour)               | Step 6 — disable confirm email OR configure Resend SMTP                    |
+| Post-login `[realtime my-trees:<uid>] fetch failed` with empty `{}` payload                              | `tree_members` RLS infinite recursion                  | Step 2 — apply `0003_fix_member_select_recursion.sql`                      |
+| `apply-rls-policies` errors with `must be owner of table objects`                                        | Trying to apply storage policies via direct connection | Step 4 — use the Storage UI; script now skips this file with a warning     |
+| Live updates never arrive (initial fetch works, no realtime events)                                      | Tables not in `supabase_realtime` publication          | Step 5                                                                     |
+| `Bucket not found` on upload                                                                             | `images` bucket missing                                | Step 3                                                                     |
+| `new row violates row-level security policy` on upload                                                   | Storage policies missing or wrong path                 | Step 4 — policies expect `trees/{treeId}/...` prefix                       |
 | `permission denied to set role "supabase_storage_admin"`                                                 | Direct connection role lacks storage-admin grant       | Expected; storage policies cannot be applied this way on hardened projects |
 | `infinite recursion detected in policy for relation "tree_members"`                                      | `0003` not applied                                     | Re-run `npm run db:apply-policies`                                         |
 | `infinite recursion detected in policy for relation "trees"` (or `people` / `families` / `tree_invites`) | Cross-table policy loop — `0004` not applied           | Re-run `npm run db:apply-policies`                                         |
+
+### JWT signing keys (`auth.uid()` returns null)
+
+If every authenticated write fails RLS while the `whoami` diagnostic (`db/migrations/0005_whoami_diagnostic.sql`) shows `auth_role: "anon"`, the project's Auth signing key doesn't match what PostgREST validates — the token's `kid` isn't in the JWKS. Fix it in Dashboard → **Authentication** → **JWT Keys**: either promote the ES256 key to be the current signing key, or revert to the legacy HS256 secret. Then sign out and back in to mint a fresh token. Verify with `supabase.rpc('whoami')` — `auth_uid` should equal your user id.
 
 ## Re-running this on a second environment
 

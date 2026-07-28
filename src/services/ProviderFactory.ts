@@ -12,8 +12,8 @@ import type { ProviderConfig } from "./types";
  *
  * The file-backed JSON mock (`src/services/local/`) was retired as a runtime
  * mode once the local Supabase stack landed — local dev now exercises the exact
- * same provider code as prod. Those classes are retained only as the unit-test
- * double (see their `*.test.ts`); nothing wires them at runtime.
+ * same provider code as prod. `LocalDataProvider` is retained only as the
+ * unit-test double (tests/services/local/); nothing wires it at runtime.
  */
 export class ProviderFactory {
   private static instance: ProviderConfig | null = null;
@@ -27,10 +27,5 @@ export class ProviderFactory {
       storage: new SupabaseStorageProvider(client),
     };
     return this.instance;
-  }
-
-  /** Test hook — discards the memoized instance. */
-  static reset(): void {
-    this.instance = null;
   }
 }

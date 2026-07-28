@@ -3,22 +3,12 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "../../../context/AppContext";
 import { useToast } from "../../../components/ToastSystem";
+import { isSiteAdmin } from "../../../lib/access";
 import type { Suggestion, SuggestionStatus } from "../../../types/suggestion";
 
-/**
- * Site-level feedback inbox. Pre-multi-tenancy this was gated by the global
- * `admin` role. Post-Phase-8 the global admin is gone; this page is currently
- * accessible to any signed-in user and shows their own suggestions. Phase 15
- * will gate it again behind an env-var allowlisted "site admin" uid.
- */
-const SITE_ADMIN_UIDS: string[] = (process.env.NEXT_PUBLIC_SITE_ADMIN_UIDS ?? "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-
-function isSiteAdmin(uid: string | undefined): boolean {
-  return !!uid && SITE_ADMIN_UIDS.includes(uid);
-}
+// Site-level feedback inbox, gated by the NEXT_PUBLIC_SITE_ADMIN_UIDS
+// allowlist (see isSiteAdmin). UserSidebar hides the link with the same
+// predicate; non-admins who hit the URL directly are bounced home below.
 
 const STATUS_CONFIG: Record<SuggestionStatus, { label: string; color: string; bgColor: string }> = {
   unread: {
@@ -110,8 +100,9 @@ export default function SuggestionsPage() {
               <div key={s.id} className="suggestion-card">
                 <div className="card-header">
                   <div className="user-info">
-                    <span className="user-name">{s.userName}</span>
-                    <span className="user-email">{s.userEmail}</span>
+                    {/* Only the uid is persisted; resolving it to a name/email
+                        needs a server-side lookup (RLS) — BACKLOG. */}
+                    <span className="user-name">{s.userId}</span>
                   </div>
                   <div className="meta-info">
                     <span className="timestamp">{new Date(s.timestamp).toLocaleString()}</span>
@@ -218,10 +209,6 @@ export default function SuggestionsPage() {
           font-weight: bold;
           color: var(--color-primary);
           font-size: 1.1em;
-        }
-        .user-email {
-          font-size: 0.9em;
-          color: #666;
         }
         .meta-info {
           display: flex;

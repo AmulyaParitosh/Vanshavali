@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import type { TreeData } from "../services/types";
-import type { TreeMembership } from "../types/tree";
 import { canEdit, canViewTree } from "../lib/access";
 import { formatError } from "../lib/formatError";
 import { useProviders } from "./useProviders";
@@ -39,8 +38,8 @@ export function useAuthAndData() {
   const [currentTreeId, setCurrentTreeId] = useState<string | null>(null);
   const [isProvisioningTree, setIsProvisioningTree] = useState(false);
 
-  // Auto-select the user's first owned tree as the active one. Once Phase 9
-  // lands real routing, currentTreeId will come from the URL instead.
+  // Auto-select the user's first owned tree as the active one. On /tree/[id]
+  // routes the layout overrides this from the URL param.
   useEffect(() => {
     if (!myTreesLoaded || !myTrees) return;
     if (!currentTreeId && myTrees.owned.length > 0) {
@@ -128,14 +127,6 @@ export function useAuthAndData() {
     (!!user && !!currentTreeId && !membershipLoaded) ||
     (!!user && !!currentTreeId && canViewTree(membership?.role) && !treeLoaded);
 
-  const handleLogin = useCallback(() => {
-    authProvider.signInWithGoogle().catch((error: unknown) => {
-      console.error("Auth error:", error);
-      const message = error instanceof Error ? error.message : "Sign-in failed";
-      toast.error(message);
-    });
-  }, [authProvider]);
-
   const handleLogout = useCallback(() => {
     authProvider.signOut().catch((error: unknown) => {
       console.error("Sign out error:", error);
@@ -166,7 +157,6 @@ export function useAuthAndData() {
     membership,
     treeData,
     isLoading,
-    handleLogin,
     handleLogout,
     onSave: handleSaveData,
     refreshProfile,
@@ -175,6 +165,3 @@ export function useAuthAndData() {
     storage: storageProvider,
   };
 }
-
-// Re-export the membership type so consumers don't have to dig into types/tree.
-export type { TreeMembership };

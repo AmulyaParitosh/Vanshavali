@@ -39,6 +39,8 @@ export interface AuthProvider {
   signInWithEmail(email: string, password: string): Promise<void>;
   signUpWithEmail(email: string, password: string, displayName?: string): Promise<void>;
   sendPasswordReset(email: string): Promise<void>;
+  /** Set a new password for the signed-in user (the /auth/reset-password flow). */
+  updatePassword(newPassword: string): Promise<void>;
   signOut(): Promise<void>;
 }
 
@@ -54,11 +56,10 @@ export interface UserProvider {
   createUserProfile(uid: string, profile: UserProfile): Promise<void>;
 }
 
-/** Tree lifecycle — creation, deletion, metadata, and the user→tree relation. */
+/** Tree lifecycle — creation, deletion, and the user→tree relation. */
 export interface TreeMetaProvider {
   createTree(ownerUid: string, name: string): Promise<TreeMeta>;
   deleteTree(treeId: string): Promise<void>;
-  getTreeMeta(treeId: string): Promise<TreeMeta | null>;
   listMyTrees(uid: string): Promise<MyTrees>;
   subscribeToMyTrees(uid: string, callback: (trees: MyTrees) => void): () => void;
 }
@@ -114,7 +115,6 @@ export interface DataProvider
 
 export interface StorageProvider {
   uploadImage(file: File, path: string): Promise<{ url: string; fullPath: string }>;
-  getDownloadURL(path: string): Promise<string>;
 }
 
 export interface ProviderConfig {

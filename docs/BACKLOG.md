@@ -16,12 +16,12 @@ Work that's been identified and scoped but deferred from its parent phase. When 
 
 - **Status**: not started — domain/helper tests are in place; component tests aren't.
 - **Audit ref**: explicitly deferred from Phase 14 by user choice.
-- **Scope**: smoke tests for `Tree.tsx` (renders a hierarchy without crashing), `<MembersPage>` (lists members, role dropdown updates), `<LoginScreen>` (form switches between modes). Vitest + RTL infrastructure is already configured under `vitest.config.ts` — the components are still excluded.
+- **Scope**: smoke tests for `Tree.tsx` (renders a hierarchy without crashing), `<MembersPage>` (lists members, role dropdown updates), `<LoginScreen>` (form switches between modes). Vitest is configured under `vitest.config.ts`; RTL/jsdom is not set up yet (deferred), so this item starts with that wiring.
 
 ### Playwright e2e
 
 - **Status**: not started — explicitly deferred from Phase 14 by user choice.
-- **Scope**: critical-flow smoke tests against a running Supabase or local-mode env — sign-up + auto-provision, invite-send + accept, create person, delete tree. Worth picking up before public launch.
+- **Scope**: critical-flow smoke tests against the local Supabase stack — sign-up + auto-provision, invite-send + accept, create person, delete tree. Worth picking up before public launch.
 
 ### Heritage motif: error & 404 pages
 
@@ -30,8 +30,22 @@ Work that's been identified and scoped but deferred from its parent phase. When 
 
 ### Tree visualization performance (large data)
 
-- **Status**: not started — works fine for ≤200 person trees; D3 selectAll rebuilds on every data change.
+- **Status**: not started — works fine for ≤200 person trees; the tree is React-rendered, so the perf work is React reconciliation tuning + virtualization for ≥500-person trees.
 - **Scope**: switch the React tree decomposition to use proper `key`-based reconciliation so only changed nodes re-render. Add virtualization (windowing) for trees > 500 people. Both useful when public users start importing large GEDCOM files.
+
+### Suggestions inbox: resolve uid → name/email
+
+- **Status**: not started — the inbox at `/user/suggestions` currently shows the raw submitter uid.
+- **Scope**: resolve uid → name/email server-side (RLS blocks the client from looking up other users' profiles) and render it in the inbox.
+
+### Tree rename
+
+- **Status**: not started — the settings page shows the tree name read-only today.
+- **Scope**: add `updateTreeMeta` to the provider interface (both implementations) + a rename form on the settings page.
+
+### Storage-policy expression duplication
+
+- **Status**: standing hazard — the legacy `db/migrations/0002_storage_policies.sql` and `scripts/setup-extras.ts` carry duplicated policy expressions that must be kept in sync by hand.
 
 ### CLAUDE.md / docs maintenance
 
@@ -42,21 +56,21 @@ Work that's been identified and scoped but deferred from its parent phase. When 
 
 ## Resolved
 
-| Item                                                                          | Resolved in   | Notes                                                                                                                                                                                                                                                                   |
-| ----------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Storage bucket RLS policies                                                   | Phase 10      | `db/migrations/0002_storage_policies.sql` — bucket policies gated on `tree_members`.                                                                                                                                                                                    |
-| `acceptInvite` server flow                                                    | Phase 10      | `/api/invite/accept` route + Resend wiring.                                                                                                                                                                                                                             |
-| Firebase `subscribeToTreeData` dedupe                                         | Phase 8       | Firebase deleted entirely; moot.                                                                                                                                                                                                                                        |
-| Atomic save in `LocalDataProvider.saveTreeData`                               | Backlog sweep | `/api/local/db` accepts `{ writes: [...] }`; the route writes temp files then renames so all-or-nothing.                                                                                                                                                                |
-| `TreeSearch` glassmorphic dropdown unification                                | Backlog sweep | Migrated to shared `.search-dropdown` styling; backdrop-filter dropped.                                                                                                                                                                                                 |
-| Three sidebar implementations                                                 | Backlog sweep | `TextListSidebar` now uses the shared `<Sidebar>` primitive — same active-item styling everywhere.                                                                                                                                                                      |
-| Mobile responsive (header + sidebar collapse + forms stack)                   | Backlog sweep | Breakpoint tokens added; layouts collapse at `<=1024px` and `<=768px`; sidebars become full-width with max-height. Pinch-to-zoom via `touch-action: none` on the tree canvas.                                                                                           |
-| Real `<dialog>` for ConfirmToast                                              | Backlog sweep | `ConfirmDialog` component (native `<dialog>`) with focus trap, Escape to cancel, async confirm state. `useToast().confirm()` drives it via a global pub/sub.                                                                                                            |
-| D3 tree keyboard navigation                                                   | Backlog sweep | `<PersonNode>` gets `tabIndex={0}`, `role="button"`, Enter/Space to toggle lock, `:focus-visible` outline, focus-raises-node-to-front for the details card to clear siblings.                                                                                           |
-| Heritage motif on sign-in card                                                | Backlog sweep | Double Madhubani border + inner secondary ring on `.login-content` via `::after`.                                                                                                                                                                                       |
-| Empty-state CTAs (tree, people, family)                                       | Phase 12      | `EmptyTreeBanner` + welcome modal + first-person/first-family CTAs on the editor pages.                                                                                                                                                                                 |
-| Button base modifiers (`btn-block`, `btn-sm`, `btn-outline-danger`, `btn-lg`) | Phase 11      | Added in the design-tokens pass. Note: full button-variant consolidation (single `.btn` base + `--primary/--secondary/--danger/--ghost/--icon` modifiers, dropping `.btn-approve`/`.btn-deny`/etc.) **was not done** — see "Still open" below if you want to finish it. |
-| Orphan `screenshot.jpeg`                                                      | Backlog sweep | Deleted from `public/`.                                                                                                                                                                                                                                                 |
+| Item                                                                          | Resolved in   | Notes                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storage bucket RLS policies                                                   | Phase 10      | `db/migrations/0002_storage_policies.sql` — bucket policies gated on `tree_members`.                                                                                                                                                                          |
+| `acceptInvite` server flow                                                    | Phase 10      | `/api/invite/accept` route + Resend wiring.                                                                                                                                                                                                                   |
+| Firebase `subscribeToTreeData` dedupe                                         | Phase 8       | Firebase deleted entirely; moot.                                                                                                                                                                                                                              |
+| Atomic save in `LocalDataProvider.saveTreeData`                               | Backlog sweep | `/api/local/db` accepts `{ writes: [...] }`; the route writes temp files then renames so all-or-nothing.                                                                                                                                                      |
+| `TreeSearch` glassmorphic dropdown unification                                | Backlog sweep | Migrated to shared `.search-dropdown` styling; backdrop-filter dropped.                                                                                                                                                                                       |
+| Three sidebar implementations                                                 | Backlog sweep | `TextListSidebar` now uses the shared `<Sidebar>` primitive — same active-item styling everywhere.                                                                                                                                                            |
+| Mobile responsive (header + sidebar collapse + forms stack)                   | Backlog sweep | Breakpoint tokens added; layouts collapse at `<=1024px` and `<=768px`; sidebars become full-width with max-height. Pinch-to-zoom via `touch-action: none` on the tree canvas.                                                                                 |
+| Real `<dialog>` for ConfirmToast                                              | Backlog sweep | `ConfirmDialog` component (native `<dialog>`) with focus trap, Escape to cancel, async confirm state. `useToast().confirm()` drives it via a global pub/sub.                                                                                                  |
+| D3 tree keyboard navigation                                                   | Backlog sweep | `<PersonNode>` gets `tabIndex={0}`, `role="button"`, Enter/Space to toggle lock, `:focus-visible` outline, focus-raises-node-to-front for the details card to clear siblings.                                                                                 |
+| Heritage motif on sign-in card                                                | Backlog sweep | Double Madhubani border + inner secondary ring on `.login-content` via `::after`.                                                                                                                                                                             |
+| Empty-state CTAs (tree, people, family)                                       | Phase 12      | `EmptyTreeBanner` + welcome modal + first-person/first-family CTAs on the editor pages.                                                                                                                                                                       |
+| Button base modifiers (`btn-block`, `btn-sm`, `btn-outline-danger`, `btn-lg`) | Phase 11      | Added in the design-tokens pass. Note: full button-variant consolidation (single `.btn` base + `--primary/--secondary/--danger/--ghost/--icon` modifiers, dropping `.btn-approve`/`.btn-deny`/etc.) **was not done** — it's an explicit non-goal (see below). |
+| Orphan `screenshot.jpeg`                                                      | Backlog sweep | Deleted from `public/`.                                                                                                                                                                                                                                       |
 
 ---
 

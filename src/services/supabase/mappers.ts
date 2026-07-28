@@ -141,8 +141,6 @@ export function rowToSuggestion(row: SuggestionRow): Suggestion {
   return {
     id: row.id,
     userId: row.uid,
-    userName: "",
-    userEmail: "",
     message: row.message,
     status: row.status as SuggestionStatus,
     timestamp: toMillis(row.created_at),

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAppContext } from "../../../../context/AppContext";
 import { useToast } from "../../../../components/ToastSystem";
@@ -24,13 +24,7 @@ export default function TreeSettingsPage() {
   const ownerCanManage = isOwner(membership?.role);
   const tree = [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])].find((t) => t.id === treeId);
 
-  const [name, setName] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    if (tree) setName(tree.name);
-  }, [tree]);
 
   if (!treeId) return <Loading />;
   if (!tree) {
@@ -40,26 +34,6 @@ export default function TreeSettingsPage() {
       </div>
     );
   }
-
-  // Rename uses `updateTreeMeta` — not on the interface yet. For Phase 9 the
-  // rename surface is read-only-ish: tracked in BACKLOG. Show the form but
-  // disable the save until the provider gains the method.
-  const renameSupported = false;
-
-  const handleSaveName = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!renameSupported) {
-      toast.error("Rename is not implemented yet — backlog.");
-      return;
-    }
-    setIsSaving(true);
-    try {
-      // Placeholder for future updateTreeMeta call.
-      toast.success("Saved");
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleDelete = () => {
     toast.confirm(
@@ -89,27 +63,14 @@ export default function TreeSettingsPage() {
 
       <section className="section-card">
         <h2>Name</h2>
-        <form onSubmit={handleSaveName} className="rename-form">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={!ownerCanManage || !renameSupported}
-            aria-label="Tree name"
-          />
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={!ownerCanManage || !renameSupported || isSaving}
-          >
-            {isSaving ? "Saving..." : "Save"}
-          </button>
-        </form>
-        {!renameSupported && (
-          <p className="settings-note">
-            Rename will land alongside the per-tree settings backend work.
-          </p>
-        )}
+        {/* Rename needs an updateTreeMeta provider method — tracked in BACKLOG.
+            Until then the name is display-only rather than a form that can't save. */}
+        <div className="rename-form">
+          <input type="text" value={tree.name} disabled readOnly aria-label="Tree name" />
+        </div>
+        <p className="settings-note">
+          Rename will land alongside the per-tree settings backend work.
+        </p>
       </section>
 
       <section className="section-card">

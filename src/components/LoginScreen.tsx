@@ -13,8 +13,6 @@ interface LoginScreenProps {
    * context guarantees don't yet hold.
    */
   authProvider: AuthProvider;
-  /** Optional legacy entry point — invokes Google sign-in (kept for callers that pre-date the tabbed form). */
-  onLoginRequest?: () => void;
 }
 
 /**
@@ -22,7 +20,7 @@ interface LoginScreenProps {
  * reset; Google OAuth always available below the form. Errors surface via
  * toast — the user gets a single ergonomic feedback channel.
  */
-const LoginScreen: React.FC<LoginScreenProps> = ({ authProvider, onLoginRequest }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ authProvider }) => {
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,10 +51,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ authProvider, onLoginRequest 
   };
 
   const handleGoogle = async () => {
-    if (onLoginRequest) {
-      onLoginRequest();
-      return;
-    }
     try {
       await authProvider.signInWithGoogle();
     } catch (error: unknown) {

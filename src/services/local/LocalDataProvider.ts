@@ -106,11 +106,6 @@ export class LocalDataProvider implements DataProvider {
     await this.deleteTreeDir(treeId);
   }
 
-  async getTreeMeta(treeId: string): Promise<TreeMeta | null> {
-    const trees = ((await this.fetchDb<TreesBlob>(GLOBAL_COLLECTIONS.TREES)) || {}) as TreesBlob;
-    return trees[treeId] || null;
-  }
-
   async listMyTrees(uid: string): Promise<MyTrees> {
     const trees = ((await this.fetchDb<TreesBlob>(GLOBAL_COLLECTIONS.TREES)) || {}) as TreesBlob;
     const allTrees = Object.values(trees);
@@ -274,7 +269,7 @@ export class LocalDataProvider implements DataProvider {
       treeId,
       email: email.toLowerCase(),
       role,
-      invitedBy: "", // populated by caller in a future iteration when needed
+      invitedBy: "", // parity gap vs Supabase (which records the session uid); fine for a test double
       status: "pending",
       createdAt: Date.now(),
     };
@@ -285,8 +280,8 @@ export class LocalDataProvider implements DataProvider {
   }
 
   async acceptInvite(inviteId: string, uid: string): Promise<TreeMembership> {
-    // Local mode walks every tree's invites since we don't index by inviteId.
-    // Acceptable for dev; Supabase will look up by primary key.
+    // Walks every tree's invites since the store doesn't index by inviteId.
+    // Fine for a test double; the Supabase impl looks up by primary key.
     const trees = ((await this.fetchDb<TreesBlob>(GLOBAL_COLLECTIONS.TREES)) || {}) as TreesBlob;
     for (const tree of Object.values(trees)) {
       const invites = ((await this.fetchDb<InvitesBlob>(TREE_COLLECTIONS.INVITES, tree.id)) ||

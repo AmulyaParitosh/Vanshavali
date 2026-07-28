@@ -8,13 +8,12 @@ import { useAppContext } from "../context/AppContext";
 import type { AuthUser } from "../services/types";
 import type { TreeMembership } from "../types/tree";
 import { APP_CONFIG } from "../constants";
-import { canViewTree } from "../lib/access";
+import { canViewTree, isOwner } from "../lib/access";
 import { stringToColor } from "../utils/colorUtils";
 
 interface HeaderProps {
   user: AuthUser | null;
   membership: TreeMembership | null;
-  onLogout: () => void;
 }
 
 /**
@@ -126,6 +125,14 @@ export default function Header({ user, membership }: HeaderProps) {
               >
                 Members
               </Link>
+              {isOwner(membership?.role) && (
+                <Link
+                  href={`/tree/${currentTreeId}/settings`}
+                  className={`nav-link ${isActive(`/tree/${currentTreeId}/settings`) ? "active" : ""}`}
+                >
+                  Settings
+                </Link>
+              )}
               <Link href="/about" className={`nav-link ${isActive("/about") ? "active" : ""}`}>
                 About
               </Link>

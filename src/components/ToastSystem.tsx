@@ -207,7 +207,6 @@ export const ToastSystem = () => {
 
 export const useToast = () => {
   return {
-    show: (msg: string) => toast(msg),
     success: (msg: string) => toast.success(msg),
     error: (msg: string) => toast.error(msg),
     loading: (msg: string) => toast.loading(msg),

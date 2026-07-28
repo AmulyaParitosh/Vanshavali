@@ -35,8 +35,9 @@ import { subscribeWithRealtime } from "./realtime";
  *
  * Queries go through the supabase-js client (there's no ORM) because most
  * operations are client-side and need to go through RLS with the user's JWT.
- * Server-side flows (e.g. invite accept) will live in `/api/*` route handlers
- * with the service role — Phase 10.
+ * Server-side flows (tree create, invite send/accept) live in `/api/*` route
+ * handlers with the service role; this class calls them with the user's
+ * bearer token where RLS can't express the operation.
  *
  * Realtime subscriptions follow the "initial fetch + watch postgres_changes"
  * pattern from `realtime.ts` so a subscribed callback fires once with current
@@ -120,16 +121,6 @@ export class SupabaseDataProvider implements DataProvider {
   async deleteTree(treeId: string): Promise<void> {
     const { error } = await this.client.from("trees").delete().eq("id", treeId);
     if (error) throw error;
-  }
-
-  async getTreeMeta(treeId: string): Promise<TreeMeta | null> {
-    const { data, error } = await this.client
-      .from("trees")
-      .select("*")
-      .eq("id", treeId)
-      .maybeSingle<TreeRow>();
-    if (error) throw error;
-    return data ? rowToTreeMeta(data) : null;
   }
 
   async listMyTrees(uid: string): Promise<MyTrees> {

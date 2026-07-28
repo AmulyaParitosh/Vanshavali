@@ -7,7 +7,6 @@ export interface PersonEvent {
   type: string;
   date?: string;
   place?: string;
-  description?: string;
 }
 
 export interface Person {
