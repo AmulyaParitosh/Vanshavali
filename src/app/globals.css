@@ -1654,56 +1654,51 @@ main {
 /* --- Forms --- */
 
 .form-container {
-  background-color: rgba(255, 255, 255, 0.95); /* Slight transparency for texture to hint through */
-  padding: 30px;
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-strong);
+  background: transparent;
+  padding: 0;
 }
 
 .form-container h2 {
-  font-family: var(--font-heading);
-  font-size: 2.2em;
-  color: var(--color-primary);
-  text-align: center;
-  margin-bottom: 30px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: var(--space-6);
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--text-strong);
 }
 
 .form-group input[type="text"],
 .form-group select {
   box-sizing: border-box;
   width: 100%;
-  padding: 14px 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 16px; /* Soft rounded corners for inputs */
-  background-color: #fcfcfc;
+  padding: 11px 14px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-12);
+  background-color: var(--surface-paper);
   font-family: var(--font-body);
-  font-size: 1em;
-  color: var(--color-text);
-  transition: all 0.25s ease;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  transition:
+    border-color var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
 }
 
 .form-group input[type="text"]:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--color-primary);
-  background-color: var(--color-surface);
-  box-shadow:
-    0 0 0 4px rgba(178, 34, 34, 0.1),
-    inset 0 1px 2px rgba(0, 0, 0, 0.02);
+  border-color: var(--color-red);
+  box-shadow: var(--shadow-focus);
 }
 
 .form-group select {
@@ -1740,14 +1735,13 @@ main {
 }
 
 .dynamic-list .item {
-  background-color: var(--color-surface);
-  padding: 24px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: var(--border-radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  background: var(--surface-paper);
+  padding: var(--space-5);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-12);
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: var(--space-5);
   align-items: flex-start; /* Aligns form inputs and buttons to top */
 }
 
@@ -1774,15 +1768,14 @@ main {
 .child-item {
   display: flex;
   align-items: center;
-  background-color: var(--color-surface);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: var(--border-radius-md);
-  margin-bottom: 10px;
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-12);
+  margin-bottom: var(--space-2);
   /* overflow: hidden; -- REMOVED to allow search dropdown to pop out */
   position: relative; /* Ensure proper stacking context but allow overflow */
   width: 100%; /* Ensure full width */
   padding: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .order-controls {
@@ -1792,8 +1785,8 @@ main {
   justify-content: center;
   width: 30px;
   align-self: stretch;
-  background-color: rgba(0, 0, 0, 0.03);
-  border-right: 1px solid var(--color-node-border);
+  background: var(--surface-quiet);
+  border-right: 1px solid var(--line-structure);
   padding: 2px 0;
   gap: 2px;
   flex-shrink: 0;
@@ -1843,26 +1836,30 @@ main {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  /* Match .form-group select styles */
-  padding: 0px 0px;
-  border: 1px solid #e0e0e0;
-  border-radius: 16px;
-  background-color: #fcfcfc;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  padding: 5px 7px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-12);
+  background: var(--surface-paper);
   cursor: text;
-  transition: all 0.25s ease;
+  transition:
+    border-color var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
+}
+.aliases-input-container:focus-within {
+  border-color: var(--color-red);
+  box-shadow: var(--shadow-focus);
 }
 
 .aliases-input-container .alias-tag {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary-dark);
-  padding: 5px 10px;
-  border-radius: 15px;
+  background: var(--color-red-wash);
+  color: var(--color-red-deep);
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
-  font-size: 0.9em;
+  font-size: 14px;
   font-weight: 500;
-  margin: 5px;
+  margin: 3px;
   gap: 6px; /* Prevent overlap between text and remove button */
 }
 
@@ -1887,13 +1884,13 @@ main {
 .image-preview {
   width: 180px;
   height: 180px;
-  border: 2px dashed var(--color-node-border);
-  border-radius: 50%;
+  border: 2px dashed var(--line-control);
+  border-radius: var(--radius-circle);
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  background-color: var(--color-bg);
+  background-color: var(--surface-quiet);
   position: relative; /* For overlay actions */
 }
 

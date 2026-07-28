@@ -114,12 +114,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
         </div>
         <div className="profile-header-info">
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label
-              htmlFor="person-name"
-              style={{ fontSize: "0.9em", color: "var(--color-text-light)" }}
-            >
-              Official Name
-            </label>
+            <label htmlFor="person-name">Official name</label>
             <input
               type="text"
               id="person-name"
@@ -132,17 +127,7 @@ const PersonForm: React.FC<PersonFormProps> = ({
               }
               required
               disabled={!canEdit}
-              style={{
-                fontSize: "1.5em",
-                fontWeight: 600,
-                padding: "10px 0",
-                border: "none",
-                borderBottom: "2px solid rgba(0,0,0,0.1)",
-                borderRadius: 0,
-                background: "transparent",
-                width: "100%",
-              }}
-              placeholder="Enter Name"
+              placeholder="Enter name"
             />
           </div>
 
