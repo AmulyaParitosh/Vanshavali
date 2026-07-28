@@ -1,66 +1,133 @@
-/* --- Google Font --- */
-@import url("https://fonts.googleapis.com/css2?family=Hind:wght@300;400;600&family=Yatra+One&display=swap");
+/* --- Google Fonts: Yatra One (display) + Hind (body/UI) --- */
+@import url("https://fonts.googleapis.com/css2?family=Hind:wght@300;400;500;600;700&family=Yatra+One&display=swap");
 
 /* ===========================================================================
- * Design tokens — see docs/DESIGN-LANGUAGE.md for the prescriptive system.
- * Legacy names (--color-primary, --shadow-strong, etc.) are kept as aliases so
- * existing rules continue to work while components migrate to the new
- * semantic / scale-based names. Eventually the legacy aliases get retired.
+ * THE VANSHAVALI SYSTEM — single source of truth for tokens.
+ * Mirrors docs/DESIGN-LANGUAGE.md (the style guide). Every value here was
+ * measured out of the built screens, not invented.
+ *
+ * Four colour groups that never mix roles: brand red carries action and
+ * lineage, marigold is ornament only, the cream ramp is every surface, the
+ * warm greys are every piece of text. Legacy names (--color-primary,
+ * --shadow-strong, …) remain as thin aliases onto the system so screens that
+ * predate the redesign keep working and re-tint to the warm palette; they are
+ * retired screen-by-screen as each is rebuilt.
  * =========================================================================== */
 :root {
-  /* --- Type --- */
-  --font-heading: "Yatra One", "Georgia", serif;
+  /* ---- Type: three faces, hard boundaries -------------------------------- */
+  --font-display: "Yatra One", "Georgia", serif; /* display only — names, never explains */
   --font-body:
     "Hind", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", monospace; /* labels + data */
+  --font-heading: var(--font-display); /* legacy alias */
 
-  --font-size-xs: 0.75rem; /* 12px */
-  --font-size-sm: 0.875rem; /* 14px */
-  --font-size-base: 1rem; /* 16px */
-  --font-size-lg: 1.125rem; /* 18px */
-  --font-size-xl: 1.5rem; /* 24px */
-  --font-size-2xl: 2rem; /* 32px */
-  --font-size-3xl: 2.5rem; /* 40px */
+  /* Type ladder — named rungs mapped to the guide's jobs (px). A new size
+   * needs a job before it gets a token. */
+  --font-size-xs: 0.75rem; /* 12px — chips, badges, dense meta */
+  --font-size-sm: 0.875rem; /* 14px — button labels, table cells, subtitles */
+  --font-size-base: 1rem; /* 16px — reading base / em anchor */
+  --font-size-lg: 1.125rem; /* 18px — settings card titles, leads */
+  --font-size-xl: 1.25rem; /* 20px — inspector record name */
+  --font-size-2xl: 1.6875rem; /* 27px — dialog / onboarding headings */
+  --font-size-3xl: 1.875rem; /* 30px — the one h1 per screen */
+  --font-size-display: 2.625rem; /* 42px — document title only */
 
-  /* --- Color: brand --- */
-  --color-primary-50: #fff5f5;
-  --color-primary-500: #b22222; /* Madhubani Red */
-  --color-primary-700: #8b0000;
+  /* Eyebrow label — every section head, column head and context line is this
+   * one object. Use the .eyebrow class. */
+  --eyebrow-size: 10px;
+  --eyebrow-tracking: 0.14em;
 
-  --color-secondary-500: #ff8c00; /* Marigold */
-  --color-accent-500: #2e8b57; /* Leaf green */
+  /* ---- Colour · Brand (5) — action, lineage, one ornament, one "you" ----- */
+  --color-red: #b22222; /* Madhubani red — every action, lineage ring, focus */
+  --color-red-deep: #8b0000; /* hover / pressed; the name of a selected person */
+  --color-red-wash: #fff5f5; /* selected row, hover fill, keeper chip */
+  --color-marigold: #ff8c00; /* ornament only — rings, glyphs, the wordmark */
+  --color-green: #2e8b57; /* your own avatar, and nothing else */
 
-  /* --- Color: neutral scale --- */
-  --color-neutral-0: #ffffff;
-  --color-neutral-50: #f8f9fa;
-  --color-neutral-100: #f0f0f0;
-  --color-neutral-200: #e0e0e0;
-  --color-neutral-500: #888888;
-  --color-neutral-600: #666666;
-  --color-neutral-700: #555555;
-  --color-neutral-900: #1a1a1a;
+  /* ---- Colour · Surfaces (6) — cream ramp, every surface ----------------- */
+  --surface-desk: #e6e0d2; /* behind the frames — never inside the product */
+  --surface-canvas: #fdf5e6; /* page under the tree and every content area */
+  --surface-paper: #fffdf9; /* cards, rail, inspector, controls at rest */
+  --surface-tablehead: #f8f2e4; /* column headers and quiet inset panels */
+  --surface-quiet: #f4ede0; /* read chip, disabled swatch, dividers */
+  --surface-chrome: #1a1a1a; /* the top bar, under the banner gradient */
 
-  /* --- Color: heritage background --- */
-  --color-bg: #fdf5e6; /* Old Lace handmade-paper wash */
+  /* ---- Colour · Lines (4) — one hair lighter each step down -------------- */
+  --line-structure: #e6ddc9; /* card edge, rail edge, inspector edge */
+  --line-control: #d8cdb4; /* button and input borders at rest */
+  --line-inner: #f0e9da; /* dividers inside a card or rail section */
+  --line-row: #f4ede0; /* between table rows */
+
+  /* ---- Colour · Text (6) — warm greys, every piece of text --------------- */
+  --text-primary: #1a1a1a; /* names, headings, anything you came to read */
+  --text-rail: #33302b; /* navigation items at rest */
+  --text-strong: #55504a; /* body prose in a card, spec values */
+  --text-prose: #6b6455; /* explanatory copy and annotations */
+  --text-meta: #8a8377; /* eyebrows, secondary names, counts, placeholders */
+  --text-absent: #a89f8c; /* only for data nobody has recorded yet */
+
+  /* ---- Portrait tints (8) — assigned per person, never re-picked. All sit
+   * dark enough for white initials at 15px/600. ---------------------------- */
+  --tint-1: #8a5b3c;
+  --tint-2: #7c9bb5;
+  --tint-3: #c58fa5;
+  --tint-4: #6f9a7b;
+  --tint-5: #c9885a;
+  --tint-6: #96849f;
+  --tint-7: #5f9295;
+  --tint-8: #b58f5e;
+
+  /* ---- Rings — two meanings ---------------------------------------------- */
+  --ring-born: var(--color-red); /* born into this line — the blood thread */
+  --ring-married: var(--color-marigold); /* married in — ornament with meaning */
+
+  /* ---- Access-chip palettes (label / bg / border) ------------------------ */
+  --chip-write-fg: #1f6a3e;
+  --chip-write-bg: #eaf4ee;
+  --chip-write-bc: #c9e0d2;
+  --chip-invited-fg: #8a5300;
+  --chip-invited-bg: #fdf1e2;
+  --chip-invited-bc: #eed9b6;
+  --chip-keeper-bc: #e8c9c6;
+  --chip-read-bc: #e2d7bf;
+
+  /* ---- Semantic roles ---------------------------------------------------- */
+  --color-danger: var(--color-red); /* destructive AND brand — one red */
+  --color-success: var(--color-green);
+  --color-warning: var(--color-marigold);
+
+  /* ---- Legacy colour aliases (retired screen-by-screen) ------------------ */
+  --color-primary-50: var(--color-red-wash);
+  --color-primary-500: var(--color-red);
+  --color-primary-700: var(--color-red-deep);
+  --color-secondary-500: var(--color-marigold);
+  --color-accent-500: var(--color-green);
+  --color-primary: var(--color-red);
+  --color-primary-light: var(--color-red-wash);
+  --color-primary-dark: var(--color-red-deep);
+  --color-secondary: var(--color-marigold);
+  --color-accent: var(--color-green);
+  --color-node-border: var(--color-red);
+  --color-bg: var(--surface-canvas);
   --color-bg-overlay: rgba(253, 245, 230, 0.95);
   --color-link-stroke: #221005;
+  --color-surface: var(--surface-paper);
+  --color-text: var(--text-primary);
+  --color-text-light: var(--text-meta);
+  /* Warm-neutral ramp — the old cool greys re-pointed onto the cream/warm system */
+  --color-neutral-0: var(--surface-paper);
+  --color-neutral-50: var(--surface-tablehead);
+  --color-neutral-100: var(--surface-quiet);
+  --color-neutral-200: var(--line-structure);
+  --color-neutral-300: var(--line-control);
+  --color-neutral-400: var(--text-absent);
+  --color-neutral-500: var(--text-meta);
+  --color-neutral-600: var(--text-prose);
+  --color-neutral-700: var(--text-strong);
+  --color-neutral-800: var(--text-rail);
+  --color-neutral-900: var(--text-primary);
 
-  /* --- Color: semantic roles --- */
-  --color-danger: var(--color-primary-500);
-  --color-success: var(--color-accent-500);
-  --color-warning: var(--color-secondary-500);
-
-  /* --- Legacy aliases (do not introduce new uses; migrate to the names above) --- */
-  --color-primary: var(--color-primary-500);
-  --color-primary-light: var(--color-primary-50);
-  --color-primary-dark: var(--color-primary-700);
-  --color-secondary: var(--color-secondary-500);
-  --color-accent: var(--color-accent-500);
-  --color-node-border: var(--color-primary-500);
-  --color-surface: var(--color-neutral-0);
-  --color-text: var(--color-neutral-900);
-  --color-text-light: var(--color-neutral-600);
-
-  /* --- Spacing scale (4px base) --- */
+  /* ---- Spacing scale (4px base) ------------------------------------------ */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -70,46 +137,88 @@
   --space-8: 32px;
   --space-10: 40px;
   --space-12: 48px;
+  --space-16: 64px;
 
-  /* --- Radius --- */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 32px;
-  --radius-pill: 9999px;
-  --radius-circle: 50%;
-  /* Legacy aliases */
-  --border-radius-sm: var(--radius-md);
-  --border-radius-md: var(--radius-lg);
-  --border-radius-lg: var(--radius-xl);
+  /* ---- Radius — scales with the object. Two overrides beat the scale:
+   * anything you press is a pill; anything that is a person is a circle. ---- */
+  --radius-pill: 999px; /* anything you press, and every chip */
+  --radius-circle: 50%; /* anything that is a person */
+  --radius-26: 26px; /* side panels 460–500px — and the couple pill */
+  --radius-22: 22px; /* dialogs and full-width overlays ≥ 700px */
+  --radius-18: 18px; /* large inset panels inside a page */
+  --radius-16: 16px; /* cards — the default container of content */
+  --radius-14: 14px; /* small containers and photo thumbnails */
+  --radius-12: 12px; /* controls and panels inside a card */
+  --radius-10: 10px; /* rail items, small insets, glyph tiles */
+  --radius-9: 9px; /* segments inside a switch */
+  --radius-8: 8px; /* micro tiles at 26px square */
+  --radius-4: 4px; /* key caps and the smallest badge */
+  /* Semantic + legacy aliases */
+  --radius-xs: var(--radius-4);
+  --radius-sm: var(--radius-8);
+  --radius-md: var(--radius-12);
+  --radius-lg: var(--radius-18);
+  --radius-xl: var(--radius-26);
+  --border-radius-sm: var(--radius-12);
+  --border-radius-md: var(--radius-16);
+  --border-radius-lg: var(--radius-26);
 
-  /* --- Elevation --- */
+  /* ---- Elevation — seven shadows, each tied to one job. Red-tinted shadows
+   * belong to red objects only. ------------------------------------------- */
+  --shadow-frame: 0 24px 64px rgba(0, 0, 0, 0.16); /* the desktop frame */
+  --shadow-primary: 0 2px 8px rgba(178, 34, 34, 0.22); /* primary button */
+  --shadow-node: 0 3px 12px rgba(178, 34, 34, 0.24); /* raised / open node */
+  --shadow-inspector: -8px 0 24px rgba(0, 0, 0, 0.04); /* inspector edge */
+  --shadow-focus: 0 0 0 3px rgba(178, 34, 34, 0.1); /* focus halo */
+  --shadow-pill: 0 2px 10px rgba(0, 0, 0, 0.07); /* node pill */
+  --shadow-dialog: 0 32px 80px rgba(0, 0, 0, 0.28); /* dialog */
+  /* Legacy elevation aliases */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: var(--shadow-pill);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 12px 36px rgba(178, 34, 34, 0.12);
-  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.16);
+  --shadow-lg: var(--shadow-frame);
+  --shadow-xl: var(--shadow-dialog);
+  --shadow-strong: var(--shadow-frame);
   --color-shadow: rgba(0, 0, 0, 0.08);
-  --shadow-strong: var(--shadow-lg);
 
-  /* --- Motion --- */
+  /* ---- Motion ------------------------------------------------------------ */
+  --duration-fast: 150ms;
   --duration-base: 200ms;
+  --duration-slow: 300ms;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-emphasis: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-  /* --- Layout constants --- */
+  /* ---- Shell metrics — fixed; the rail and inspector are furniture ------- */
+  --shell-chrome-h: 60px;
+  --shell-rail-w: 232px;
+  --shell-inspector-w: 384px;
+  /* Legacy alias: the pre-redesign header still renders ~100px. Kept at its
+   * real height so layout calcs (calc(100vh - header), sticky offsets) don't
+   * glitch; re-point to --shell-chrome-h when the chrome bar is rebuilt. */
   --header-height: 100px;
 
-  /* Breakpoints used by the responsive blocks below (CSS can't consume custom
-   * properties inside media-query conditions, so the values are literal there):
-   * 600px / 768px / 1024px. */
+  /* ---- Heritage — one setting drives all four ornament surfaces. Override
+   * with data-heritage="restrained" | "plain" on <html>. ------------------- */
+  --heritage-paper: 0.06; /* paper-wash opacity under canvases */
+
+  /* Breakpoints referenced by the responsive blocks below (CSS can't read
+   * custom properties inside media-query conditions — literal there):
+   * 640px / 768px / 1024px / 1280px. */
+}
+
+:root[data-heritage="restrained"] {
+  --heritage-paper: 0.03;
+}
+:root[data-heritage="plain"] {
+  --heritage-paper: 0;
 }
 
 /* Global focus-visible base — every interactive element shows the same ring.
- * Components that want a different ring override this rule, but the default
- * means keyboard users never lose where they are. */
+ * One focus treatment across the product: brand red at 2px with a 2px offset.
+ * Inputs upgrade this to the red border + 3px halo (--shadow-focus). Never a
+ * browser default outline; never a colour change alone. */
 :focus-visible {
-  outline: 2px solid var(--color-primary-500);
+  outline: 2px solid var(--color-red);
   outline-offset: 2px;
 }
 /* Disable focus ring for non-keyboard focus (mouse/touch) — matches platform
@@ -141,7 +250,10 @@ body::before {
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
-  opacity: 0.2;
+  /* Heritage paper wash — one of the four ornament surfaces. Driven by the
+   * --heritage-paper setting so the whole product can be turned down for a
+   * projector or print without touching a screen. */
+  opacity: var(--heritage-paper);
   z-index: -1;
   pointer-events: none;
 }
@@ -814,88 +926,198 @@ main {
   color: var(--color-neutral-0);
 }
 
-/* --- Button Styles --- */
-.btn {
-  padding: 12px 28px;
-  border: 1px solid transparent; /* Cleaner default border */
-  border-radius: 9999px; /* Pill shape */
-  cursor: pointer;
-  font-size: 0.95em;
-  font-weight: 600;
+/* ============================================================================
+ * PRIMITIVES — the parts the style guide defines. Everything below is the
+ * canonical implementation; screen CSS should compose these, not re-invent
+ * them. (See §02 Type, §05 Controls, §06 Data surfaces.)
+ * ========================================================================== */
+
+/* --- Eyebrow label (§02) — every section head, column head and context line
+ * is this one object. It reads as furniture; it never competes with a name.
+ * Never sentence-case it, never make it a link, never put a non-count number
+ * in it. --- */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--eyebrow-size);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: var(--eyebrow-tracking);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--color-primary);
-  background-color: var(--color-surface);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+  color: var(--text-meta);
+}
+
+/* --- Buttons (§05) — exactly four. One filled button per screen, and it is
+ * the thing the page exists to do; everything else is outlined or quiet. No
+ * star, no emoji, no lift. --- */
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 7px;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  /* Default (bare .btn) is the Outline control. */
+  padding: 10px 18px;
+  color: var(--text-rail);
+  background: var(--surface-paper);
+  border: 1px solid var(--line-control);
+  transition:
+    background var(--duration-base) var(--ease-standard),
+    color var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
 }
-
 .btn:hover {
-  background-color: var(--color-primary);
-  color: var(--color-surface);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(178, 34, 34, 0.25);
+  border-color: var(--color-red);
+  color: var(--color-red);
+}
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: default;
+  pointer-events: none;
 }
 
-.btn::before {
-  content: "\2727"; /* Star symbol */
-  margin-right: 8px;
-  font-size: 0.8em;
-  opacity: 0.7;
-}
-
+/* Primary — filled red. Exactly one per screen. */
 .btn-primary {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  padding: 11px 20px;
+  color: #fff;
+  background: var(--color-red);
+  border-color: var(--color-red);
+  box-shadow: var(--shadow-primary);
 }
 .btn-primary:hover {
-  background-color: var(--color-primary);
-  color: var(--color-surface);
+  color: #fff;
+  background: var(--color-red-deep);
+  border-color: var(--color-red-deep);
 }
 
+/* Secondary — the neutral Outline. Every other real action. */
 .btn-secondary {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  padding: 10px 18px;
+  color: var(--text-rail);
+  background: var(--surface-paper);
+  border-color: var(--line-control);
 }
 .btn-secondary:hover {
-  background-color: var(--color-accent);
-  color: var(--color-surface);
+  color: var(--color-red);
+  border-color: var(--color-red);
+  background: var(--surface-paper);
 }
 
-.btn-danger {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
+/* Quiet — guidance the reader cannot act on. Never the loudest thing on a
+ * page. */
+.btn-quiet {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-prose);
+  background: var(--surface-paper);
+  border-color: var(--line-control);
 }
-.btn-danger:hover {
-  background-color: var(--color-danger);
-  color: var(--color-neutral-0);
+.btn-quiet:hover {
+  color: var(--text-strong);
+  border-color: var(--line-control);
 }
 
-/* Outline danger — used on destructive secondary actions (logout, etc.).
- * Same shape as .btn-danger but renders with a subtler hover. */
+/* Destructive — red text on the red wash. Never a filled red button (that is
+ * the primary). */
+.btn-danger,
 .btn-outline-danger {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-  background-color: transparent;
+  padding: 10px 18px;
+  color: var(--color-red);
+  background: var(--color-red-wash);
+  border-color: #f0dcd8;
 }
+.btn-danger:hover,
 .btn-outline-danger:hover {
-  background-color: var(--color-primary-50);
-  color: var(--color-primary-700);
+  color: var(--color-red-deep);
+  background: var(--color-red-wash);
+  border-color: #e8c9c6;
 }
 
-/* Size modifiers — usable on any .btn-* variant. */
+/* Size / width modifiers — usable on any variant. */
 .btn-block {
-  display: block;
+  display: flex;
   width: 100%;
 }
 .btn-sm {
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--font-size-sm);
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+/* --- Access chips (§05) — bordered pills, the only place permission is
+ * expressed. 12px/600 so a row can be scanned without reading a word. --- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.chip--keeper {
+  background: var(--color-red-wash);
+  color: var(--color-red-deep);
+  border-color: var(--chip-keeper-bc);
+}
+.chip--write {
+  background: var(--chip-write-bg);
+  color: var(--chip-write-fg);
+  border-color: var(--chip-write-bc);
+}
+.chip--read {
+  background: var(--surface-quiet);
+  color: var(--text-strong);
+  border-color: var(--chip-read-bc);
+}
+.chip--invited {
+  background: var(--chip-invited-bg);
+  color: var(--chip-invited-fg);
+  border-color: var(--chip-invited-bc);
+}
+
+/* --- Card (§03/§06) — the default container of content. --- */
+.card {
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-16);
+}
+
+/* --- Input (§05) — one text-entry treatment. Rest: control border on paper.
+ * Focus: border to red + a 3px halo at 10% red. --- */
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 13px;
+  background: var(--surface-paper);
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-12);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  transition:
+    border-color var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
+}
+.input::placeholder {
+  color: var(--text-meta);
+}
+.input:focus,
+.input:focus-visible {
+  outline: none;
+  border-color: var(--color-red);
+  box-shadow: var(--shadow-focus);
 }
 
 .btn-icon-remove {
@@ -1414,21 +1636,22 @@ main {
 }
 
 .section-card {
-  background-color: var(--color-surface);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: var(--border-radius-md);
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-16);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
 }
 
 .section-card h3 {
   margin-top: 0;
-  margin-bottom: 20px;
-  font-size: 1.25em;
-  color: var(--color-text);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  padding-bottom: 12px;
+  margin-bottom: var(--space-5);
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--line-inner);
+  padding-bottom: var(--space-3);
 }
 
 .form-row {

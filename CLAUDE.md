@@ -17,7 +17,7 @@ Locked-in decisions (do not re-litigate without a strong reason):
 - **Existing Firebase data**: archived, not migrated. Clean slate on launch.
 - **Invitations**: email-based, auto-link on signup.
 - **Tree visualization**: React + D3 hybrid — D3 for layout math only, nodes as React components inside `<foreignObject>` (closes the current XSS surface).
-- **Visual identity**: Madhubani / Mithila heritage as **surface accents** (banner, decorative borders, key surfaces). Generic UI stays clean and accessible.
+- **Visual identity**: the **Vanshavali System** — see `docs/DESIGN-LANGUAGE.md` (the codebase mirror of the Claude Design "Vanshavali Style Guide", the source of truth). Madhubani / Mithila heritage is confined to **four ornament surfaces** (chrome banner, portrait ring, 3px inspector bar, paper wash) driven by one `data-heritage` setting; everything else stays quiet, cream, and readable. Tokens live in `:root` in `src/app/globals.css`; compose the primitives (`.btn*`, `.input`, `.chip*`, `.card`, `.eyebrow`), never raw hex.
 - **Quality tooling**: ESLint, Prettier, Vitest + React Testing Library. No Playwright in v1.
 - **Hosting**: parked — decide before launch.
 
