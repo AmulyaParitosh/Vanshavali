@@ -73,7 +73,24 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
 - Auth fixture — Playwright `setup` project logs in via the UI and persists `storageState`; chromium
   reuses it (signed in as the seeded tree keeper). Seed constants in `tests/e2e/fixtures.ts`. **DONE**
 - Shell (Spec 00 §02) — **DONE** (see receipt). Chrome + rail brought to spec; contract §1 green.
-- Component library (`Vanshavali Components.dc.html`) — **NEXT** (the longest Wave 0 unit; fetch that spec)
+- Component library (`Vanshavali Components.dc.html`) — **IN PROGRESS** (mirror at
+  `design-specs/Vanshavali-Components.html`; test `tests/e2e/components.spec.ts`). Sub-units by section:
+  - Actions (buttons) — **DONE** (L275–343).
+  - Inputs (L348–441) — **NEXT**: search pill (250×38, radius 999, 9/13, 14px, glyph 14) · data field
+    (radius 12, 11/14, 15.5 value, label 12.5/600 #55504a, focus border #b22222 + halo, error msg 12.5
+    #8b0000 at 6px) · suggested chip (10.5/600 #8a8377) · segmented switch (track #f8f2e4 border #e6ddc9
+    radius 12 pad 3; segment radius 9 pad 7; selected bg #fffdf9 border #d8cdb4 600) · toggle (40×22,
+    knob 18, off #d8cdb4 / on #b22222) · radio row (16px circle, 8px dot, selected bg #fff5f5 border
+    #f0dcd8 radius 12, 2nd consequence line, "now" tag) · alias chip (5/11 radius 999 #f8f2e4 border
+    #e6ddc9 13.5, ✕ 11 #8a8377) · place suggestion row (9/13, selected #fff5f5, reason 12.5 #8a8377,
+    "new" tag 10.5 on #fdf1e2/#8a5300). Focus = border #b22222 + `0 0 0 3px rgba(178,34,34,.1)`;
+    validate on blur/submit, never keystroke.
+  - Status (chips/badges/generation marker) — L448–484.
+  - Containers & lists (card, list row 40·flex·46·100·112, table header) — L484–559.
+  - Overlays (dialog, toast, search palette) — L559–622.
+  - Empty & loading (empty state, skeleton) — L622–654.
+  - A person (portrait/avatar 40px, name pair, node) — L157–275.
+    Then generate/refresh COMPONENTS.md and run the whole components + integration suite.
 
 ### Shell audit (Spec 00 §02 vs current code) — architecture is sound, fidelity gaps remain
 

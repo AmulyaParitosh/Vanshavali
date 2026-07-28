@@ -1664,21 +1664,25 @@ main {
   border-radius: var(--radius-16);
 }
 
-/* --- Input (§05) — one text-entry treatment. Rest: control border on paper.
- * Focus: border to red + a 3px halo at 10% red. --- */
+/* --- Inputs (Components §Inputs) — data entry is a rounded rectangle, search is
+ * a pill: the shape tells you whether typing writes or filters. One focus
+ * treatment product-wide: border → #b22222 + a 3px halo at 10%. Validation fires
+ * on blur and submit, never on keystroke. --- */
+
+/* Data field — radius 12 · padding 11/14 · 15.5px value. */
 .input {
   width: 100%;
   box-sizing: border-box;
-  padding: 9px 13px;
+  padding: 11px 14px;
   background: var(--surface-paper);
   border: 1px solid var(--line-control);
   border-radius: var(--radius-12);
   font-family: var(--font-body);
-  font-size: var(--font-size-base);
+  font-size: var(--fs-155);
   color: var(--text-primary);
   transition:
-    border-color var(--duration-base) var(--ease-standard),
-    box-shadow var(--duration-base) var(--ease-standard);
+    border-color var(--dur-panel) var(--ease),
+    box-shadow var(--dur-panel) var(--ease);
 }
 .input::placeholder {
   color: var(--text-meta);
@@ -1688,6 +1692,186 @@ main {
   outline: none;
   border-color: var(--color-red);
   box-shadow: var(--shadow-focus);
+}
+/* Error: red border + a message below at 6px, 12.5px #8b0000. */
+.input.is-error,
+.input[aria-invalid="true"] {
+  border-color: var(--color-red);
+}
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.field-error {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--color-red-deep);
+}
+/* "suggested" — marks a value the product guessed (live transliteration); it
+ * disappears the moment the user edits. 10.5px/600 meta. */
+.suggested {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-meta);
+}
+
+/* Search pill — radius 999 · padding 9/13 · 14px · leading glyph. Typing filters. */
+.search-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 9px 13px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-paper);
+  border: 1px solid var(--line-control);
+  transition:
+    border-color var(--dur-panel) var(--ease),
+    box-shadow var(--dur-panel) var(--ease);
+}
+.search-pill:focus-within {
+  border-color: var(--color-red);
+  box-shadow: var(--shadow-focus);
+}
+.search-pill svg {
+  flex-shrink: 0;
+  color: var(--text-meta);
+}
+.search-pill input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+.search-pill input::placeholder {
+  color: var(--text-meta);
+}
+
+/* Segmented switch — 2–3 short options. Track #f8f2e4/#e6ddc9, radius 12, pad 3;
+ * segment radius 9, pad 7; selected raised paper + 600. */
+.segmented {
+  display: inline-flex;
+  box-sizing: border-box;
+  padding: 3px;
+  background: var(--surface-tablehead);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-12);
+}
+.segmented-option {
+  flex: 1;
+  padding: 7px 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-9);
+  background: none;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-meta);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.segmented-option.selected,
+.segmented-option[aria-selected="true"] {
+  background: var(--surface-paper);
+  border-color: var(--line-control);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Toggle — one boolean with a stated effect. 40×22, knob 18. Off #d8cdb4, on #b22222. */
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--line-control);
+  cursor: pointer;
+  transition: background var(--dur-panel) var(--ease);
+}
+.toggle.on,
+.toggle[aria-checked="true"] {
+  background: var(--color-red);
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform var(--dur-panel) var(--ease);
+}
+.toggle.on::after,
+.toggle[aria-checked="true"]::after {
+  transform: translateX(18px);
+}
+
+/* Radio row — 4+ options with explanations. 16px circle, 8px dot; selected wash. */
+.radio-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  box-sizing: border-box;
+  padding: 11px 13px;
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-12);
+  background: var(--surface-paper);
+  cursor: pointer;
+  text-align: left;
+}
+.radio-row.selected,
+.radio-row[aria-checked="true"] {
+  background: var(--color-red-wash);
+  border-color: #f0dcd8;
+}
+.radio-dot {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-red);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.radio-row:not(.selected):not([aria-checked="true"]) .radio-dot {
+  border-color: var(--line-control);
+}
+.radio-dot::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-red);
+  opacity: 0;
+}
+.radio-row.selected .radio-dot::after,
+.radio-row[aria-checked="true"] .radio-dot::after {
+  opacity: 1;
+}
+/* "now" — the stored value, so a change reads as a change. 10.5px mono on quiet fill. */
+.radio-now {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: var(--radius-4);
+  background: var(--surface-quiet);
+  color: var(--text-meta);
 }
 
 .btn-icon-remove {
@@ -2041,14 +2225,17 @@ main {
   box-shadow: var(--shadow-focus);
 }
 
+/* Alias chip (Components §Inputs) — neutral pill: bg #f8f2e4, border #e6ddc9,
+ * 13.5px, removable. NOT red — red is action/lineage. */
 .aliases-input-container .alias-tag {
-  background: var(--color-red-wash);
-  color: var(--color-red-deep);
+  background: var(--surface-tablehead);
+  color: var(--text-primary);
   padding: 5px 11px;
+  border: 1px solid var(--line-structure);
   border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 500;
   margin: 3px;
   gap: 6px; /* Prevent overlap between text and remove button */

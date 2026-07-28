@@ -191,3 +191,145 @@ test.describe("Components — Actions (buttons)", () => {
     expect(c).toMatchObject({ opacity: "0.45", cursor: "default" });
   });
 });
+
+test.describe("Components — Inputs", () => {
+  test("Data field: rounded rectangle, radius 12, 11/14, 15.5px value, control border", async ({
+    page,
+  }) => {
+    const c = await computed(page, '<input class="input" value="Devendra Mishra" />', ".input", [
+      "padding",
+      "border-radius",
+      "font-size",
+      "border-top-color",
+    ]);
+    expect(c).toMatchObject({
+      padding: "11px 14px",
+      "border-radius": "12px",
+      "font-size": "15.5px",
+      "border-top-color": "rgb(216, 205, 180)",
+    });
+  });
+
+  test("Search pill: radius 999, 9/13, 14px field — typing filters, not writes", async ({
+    page,
+  }) => {
+    const html = '<div class="search-pill"><input placeholder="Name or alias" /></div>';
+    const pill = await computed(page, html, ".search-pill", ["border-radius", "padding"]);
+    expect(pill).toMatchObject({ "border-radius": "999px", padding: "9px 13px" });
+    const field = await computed(page, html, ".search-pill input", ["font-size"]);
+    expect(field["font-size"]).toBe("14px");
+  });
+
+  test("Field label / error / suggested carry their exact type", async ({ page }) => {
+    const label = await computed(page, '<label class="field-label">Latin</label>', ".field-label", [
+      "font-size",
+      "font-weight",
+      "color",
+    ]);
+    expect(label).toMatchObject({
+      "font-size": "12.5px",
+      "font-weight": "600",
+      color: "rgb(85, 80, 74)",
+    });
+    const err = await computed(
+      page,
+      '<span class="field-error">There is no thirteenth month.</span>',
+      ".field-error",
+      ["font-size", "color", "margin-top"]
+    );
+    expect(err).toMatchObject({
+      "font-size": "12.5px",
+      color: "rgb(139, 0, 0)",
+      "margin-top": "6px",
+    });
+    const sug = await computed(page, '<span class="suggested">suggested</span>', ".suggested", [
+      "font-size",
+      "font-weight",
+      "color",
+    ]);
+    expect(sug).toMatchObject({
+      "font-size": "10.5px",
+      "font-weight": "600",
+      color: "rgb(138, 131, 119)",
+    });
+  });
+
+  test("Segmented switch: quiet track, raised selected segment at 600", async ({ page }) => {
+    const html =
+      '<div class="segmented"><button class="segmented-option selected">Male</button><button class="segmented-option">Female</button></div>';
+    const track = await computed(page, html, ".segmented", [
+      "background-color",
+      "border-radius",
+      "padding",
+    ]);
+    expect(track).toMatchObject({
+      "background-color": "rgb(248, 242, 228)",
+      "border-radius": "12px",
+      padding: "3px",
+    });
+    const sel = await computed(page, html, ".segmented-option.selected", [
+      "background-color",
+      "font-weight",
+      "border-radius",
+    ]);
+    expect(sel).toMatchObject({
+      "background-color": "rgb(255, 253, 249)",
+      "font-weight": "600",
+      "border-radius": "9px",
+    });
+    const un = await computed(page, html, ".segmented-option:not(.selected)", [
+      "color",
+      "font-weight",
+    ]);
+    expect(un).toMatchObject({ color: "rgb(138, 131, 119)", "font-weight": "500" });
+  });
+
+  test("Toggle: 40×22, track #d8cdb4 off and #b22222 on", async ({ page }) => {
+    const off = await computed(page, '<button class="toggle"></button>', ".toggle", [
+      "width",
+      "height",
+      "background-color",
+    ]);
+    expect(off).toMatchObject({
+      width: "40px",
+      height: "22px",
+      "background-color": "rgb(216, 205, 180)",
+    });
+    const on = await computed(page, '<button class="toggle on"></button>', ".toggle", [
+      "background-color",
+    ]);
+    expect(on["background-color"]).toBe("rgb(178, 34, 34)");
+  });
+
+  test("Radio row: selected takes the red wash and the red hairline", async ({ page }) => {
+    const sel = await computed(
+      page,
+      '<button class="radio-row selected"><span class="radio-dot"></span>Write</button>',
+      ".radio-row.selected",
+      ["background-color", "border-top-color", "border-radius"]
+    );
+    expect(sel).toMatchObject({
+      "background-color": "rgb(255, 245, 245)",
+      "border-top-color": "rgb(240, 220, 216)",
+      "border-radius": "12px",
+    });
+  });
+
+  test("Alias chip: neutral pill (#f8f2e4 / #e6ddc9), 5/11, 13.5px — never red", async ({
+    page,
+  }) => {
+    const c = await computed(
+      page,
+      '<div class="aliases-input-container"><span class="alias-tag">“Ani”</span></div>',
+      ".alias-tag",
+      ["padding", "background-color", "border-top-color", "font-size", "border-radius"]
+    );
+    expect(c).toMatchObject({
+      padding: "5px 11px",
+      "background-color": "rgb(248, 242, 228)",
+      "border-top-color": "rgb(230, 221, 201)",
+      "font-size": "13.5px",
+      "border-radius": "999px",
+    });
+  });
+});

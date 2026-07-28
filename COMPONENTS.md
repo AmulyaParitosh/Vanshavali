@@ -49,3 +49,27 @@ All in `src/app/globals.css`. The rule: exactly one filled (Primary) button per 
 ### `.key-cap` — a label, never a button
 
 - 11px mono · radius 4px · bg `#f4ede0` · border 1px `#e2d7bf` · text `#55504a`.
+
+## Inputs (Components §Inputs)
+
+All in `src/app/globals.css`. Focus product-wide = border `#b22222` + `0 0 0 3px rgba(178,34,34,.1)`.
+Validation on blur/submit, never keystroke. Shape signals intent: pill = filter, rectangle = write.
+
+- **`.input`** — data field: radius 12 · padding 11/14 · 15.5px · bg `#fffdf9` · border 1px `#d8cdb4`;
+  focus red border + halo; `.is-error`/`[aria-invalid]` → red border.
+- **`.field-label`** — 12.5/600 `#55504a`, 6px above the field.
+- **`.field-error`** — 12.5px `#8b0000`, 6px below the field.
+- **`.suggested`** — 10.5/600 `#8a8377`; marks a guessed value; the consumer removes it on first edit.
+- **`.search-pill`** (wrapper + `input`) — radius 999 · padding 9/13 · 14px · leading glyph `#8a8377`;
+  `:focus-within` red border + halo. Typing filters.
+- **`.segmented`** + **`.segmented-option`** (`.selected`/`[aria-selected]`) — track `#f8f2e4`/`#e6ddc9`
+  radius 12 pad 3; segment radius 9 pad 7, unselected 14/500 `#8a8377`, selected raised `#fffdf9` +
+  border `#d8cdb4` + 600. 2–3 short options.
+- **`.toggle`** (`.on`/`[aria-checked]`) — 40×22, 18px knob; off `#d8cdb4`, on `#b22222`. One boolean.
+- **`.radio-row`** (`.selected`/`[aria-checked]`) + **`.radio-dot`** + **`.radio-now`** — 4+ options with
+  a consequence line; 16px circle / 8px dot; selected wash `#fff5f5` + border `#f0dcd8`; stored value
+  tagged `.radio-now` (10.5 mono on `#f4ede0`).
+- **`.aliases-input-container .alias-tag`** — alias chip: neutral pill `#f8f2e4` / border `#e6ddc9` /
+  13.5px, removable (✕ 11px `#8a8377`). Canonical alias chip.
+- _Deferred to page waves_: place-suggestion row (`#fff5f5` selected, reason 12.5 `#8a8377`, "new" tag
+  on `#fdf1e2`/`#8a5300`) — built with Search/onboarding.
