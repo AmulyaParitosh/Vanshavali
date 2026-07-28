@@ -5,6 +5,8 @@ build
 package-lock.json
 tsconfig.tsbuildinfo
 db/migrations
+# Raw SQL queries for the repository layer — no Prettier SQL parser, same as db/migrations.
+src/repositories/sql
 public
 # Supabase CLI artifacts (generated, gitignored)
 supabase/.temp

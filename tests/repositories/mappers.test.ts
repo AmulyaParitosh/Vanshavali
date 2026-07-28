@@ -14,7 +14,7 @@ import {
   type TreeInviteRow,
   type TreeMemberRow,
   type TreeRow,
-} from "@/services/supabase/mappers";
+} from "@/repositories/mappers";
 import type { Person } from "@/types/person";
 import type { Family } from "@/types/family";
 

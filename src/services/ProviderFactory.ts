@@ -1,19 +1,20 @@
 import { getSupabaseClient } from "../lib/supabase";
 import { SupabaseAuthProvider } from "./supabase/SupabaseAuthProvider";
-import { SupabaseDataProvider } from "./supabase/SupabaseDataProvider";
+import { ApiDataProvider } from "./ApiDataProvider";
 import { SupabaseStorageProvider } from "./supabase/SupabaseStorageProvider";
 import type { ProviderConfig } from "./types";
 
 /**
- * Resolves the backend provider implementations. The app always runs on
- * Supabase now — `NEXT_PUBLIC_ENV` (`local` | `prod`) only chooses *which*
- * Supabase the client points at (the local `supabase start` stack vs the cloud
- * project); that selection lives in `src/lib/supabaseEnv.ts`, not here.
+ * Resolves the backend provider implementations and memoizes them.
  *
- * The file-backed JSON mock (`src/services/local/`) was retired as a runtime
- * mode once the local Supabase stack landed — local dev now exercises the exact
- * same provider code as prod. `LocalDataProvider` is retained only as the
- * unit-test double (tests/services/local/); nothing wires it at runtime.
+ * - Auth + Storage go directly through supabase-js (Supabase Auth + Storage).
+ * - Data goes through `ApiDataProvider`, which calls the `/api/*` routes
+ *   (→ service → repository → raw SQL). It still receives the Supabase client
+ *   for the bearer token and realtime change-pings.
+ *
+ * `NEXT_PUBLIC_ENV` (`local` | `prod`) only chooses *which* Supabase/Postgres
+ * everything points at; that selection lives in `src/lib/supabaseEnv.ts` (and
+ * `src/repositories/db.ts` for the server-side connection), not here.
  */
 export class ProviderFactory {
   private static instance: ProviderConfig | null = null;
@@ -23,7 +24,7 @@ export class ProviderFactory {
     const client = getSupabaseClient();
     this.instance = {
       auth: new SupabaseAuthProvider(client),
-      data: new SupabaseDataProvider(client),
+      data: new ApiDataProvider(client),
       storage: new SupabaseStorageProvider(client),
     };
     return this.instance;

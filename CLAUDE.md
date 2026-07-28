@@ -48,26 +48,38 @@ Copy `.env.sample` → `.env` (gitignored) and fill values. Key vars:
 - `NEXT_PUBLIC_ENV` — **the single backend switch**: `local` (local Supabase stack) or `prod` (cloud project). Drives both the app and the `db:*` CLI tooling. Resolved for the client in `src/lib/supabaseEnv.ts`, for server routes in `src/lib/supabase-server.ts`, and for scripts in `scripts/env.ts`. For `local`, the URL + demo keys are built in — no other Supabase vars needed. Unset → cloud.
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — cloud Supabase client config (used when `NEXT_PUBLIC_ENV=prod`).
 - `NEXT_PUBLIC_SUPABASE_URL_LOCAL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY_LOCAL` / `SUPABASE_SERVICE_ROLE_KEY_LOCAL` — optional overrides for the local stack if your CLI mints non-default keys.
-- `SUPABASE_SERVICE_ROLE_KEY` — server-only; for routes that bypass RLS (cloud).
-- `DATABASE_URL` — cloud Postgres connection string for the policy/setup scripts (used when `NEXT_PUBLIC_ENV=prod`). The local stack uses `postgresql://postgres:postgres@127.0.0.1:54322/postgres` automatically.
+- `SUPABASE_SERVICE_ROLE_KEY` — server-only; reserved for the setup scripts. The app's data path no longer uses a service-role Supabase client (it uses `pg` + service-layer authz).
+- `DATABASE_URL` — cloud Postgres connection string (used when `NEXT_PUBLIC_ENV=prod`) for **both** the setup scripts and the app's server-side repository layer (`src/repositories/db.ts`). The local stack uses `postgresql://postgres:postgres@127.0.0.1:54322/postgres` automatically.
 - `RESEND_API_KEY` / `RESEND_FROM_EMAIL` — transactional email (invitations).
 - `NEXT_PUBLIC_SITE_URL` — canonical site origin used to build invite-acceptance URLs in outbound email. Defaults to request origin when unset.
 - `NEXT_PUBLIC_SITE_ADMIN_UIDS` — comma-separated allowlist for the global suggestions inbox.
 
-Backend resolution: the app always uses the Supabase providers (`ProviderFactory`); `NEXT_PUBLIC_ENV` only chooses which Supabase they point at (local stack vs cloud), via `src/lib/supabaseEnv.ts`. The file-backed JSON mock under `src/services/local/` was retired as a runtime mode and is kept only as the unit-test double.
+Backend resolution: `NEXT_PUBLIC_ENV` chooses which backend everything points at (local stack vs cloud) — for the client via `src/lib/supabaseEnv.ts` and for the server-side repository connection via `src/repositories/db.ts`. The file-backed JSON mock under `src/services/local/` was retired as a runtime mode and is kept only as the unit-test double.
 
 ## Architecture
 
 ### Provider abstraction (the central pattern)
 
-All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts`. `DataProvider` is split per ISP into focused sub-interfaces — `UserProvider`, `TreeMetaProvider`, `TreeDataProvider`, `MembershipProvider`, `InvitationProvider`, `SuggestionProvider`. Consumers should type their dependencies against the narrowest one they need. Two implementations:
+All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts`. `DataProvider` is split per ISP into focused sub-interfaces — `UserProvider`, `TreeMetaProvider`, `TreeDataProvider`, `MembershipProvider`, `InvitationProvider`, `SuggestionProvider`. Consumers should type their dependencies against the narrowest one they need. Data implementations:
 
-- `src/services/supabase/` — the real implementation, used at runtime for both `local` and `prod` (same code, different target URL/keys). Backs onto the schema + RLS policies in `db/migrations/*.sql`.
-- `src/services/local/` — `LocalDataProvider`, a file-backed provider that talked to (since-deleted) local API routes (`.local_data/db/…json`). **Retired as a runtime mode** — no longer wired by `ProviderFactory`. Kept only as the unit-test double (`LocalDataProvider.test.ts` stubs `fetch` against it), so the interface has a fast in-memory implementation to test contract behavior without a live backend.
+- `src/services/ApiDataProvider.ts` — the runtime `DataProvider`. It is a **thin HTTP client**: every read/write calls a `/api/*` route (via `authedFetch`, attaching the user's Supabase access token as a bearer). It holds a supabase-js client for exactly two things — minting that token and opening Realtime channels. It contains **no SQL and no row-shape knowledge**.
+- `src/services/local/` — `LocalDataProvider`, the file-backed unit-test double. **Not wired at runtime**; `LocalDataProvider.test.ts` stubs `fetch` against it so the interface has a fast in-memory implementation to test contract behavior without a live backend.
 
-`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) always returns the Supabase providers and memoizes them. **Any new backend operation must be added to the interface and implemented in _both_ the Supabase provider and the local (test-double) provider** — otherwise the unit tests and the real backend drift.
+`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) returns `{ auth, data, storage }` and memoizes them: auth + storage go straight through supabase-js; data goes through `ApiDataProvider`.
 
-Supabase subscriptions use Realtime channels (`src/services/supabase/realtime.ts`): an initial fetch, then live `postgres_changes` events. The retained test double's subscriptions are 5s-polled (`LOCAL_DATA_CONFIG.POLLING_INTERVAL`) and dedupe via JSON string comparison so the callback only fires when content actually changes.
+**Never import `supabase-js` for data in a component or hook — go through the providers.** And the real data logic never lives in the provider: it lives server-side. See the next section.
+
+Realtime: the `subscribe*` methods open a `postgres_changes` channel (`src/services/supabase/realtime.ts`) purely as a **change ping** — the ping triggers a re-fetch through the API (→ repository → raw SQL), so the authoritative read always goes through the server. RLS still gates which pings the anon client receives (defense in depth). The retained test double's subscriptions are 5s-polled (`LOCAL_DATA_CONFIG.POLLING_INTERVAL`).
+
+### Server data layer: routes → services → repositories (raw SQL)
+
+All data reads/writes happen server-side, in three layers under `src/`:
+
+- **`app/api/*` route handlers** — thin HTTP glue. Each verifies the caller (`requireCaller` in `src/lib/api.ts` → bearer token → uid), parses/validates the body, calls a service, and maps thrown `HttpError`s to status codes via `handle`. No business logic.
+- **`services/*-service.ts`** — business logic + **authorization** (`src/services/authz.ts`: `requireView` / `requireEdit` / `requireOwner` / `requireInvite`). Services own transaction boundaries (`transaction()` in `db.ts`) so multi-statement writes are atomic.
+- **`repositories/*Repository.ts`** — data access only. Each method loads a raw `.sql` file via `sql("name.sql")` (`src/repositories/sql.ts`), runs it through `query(db, text, params)` over a `pg` pool (`src/repositories/db.ts`), and maps rows to domain types via `src/repositories/mappers.ts`. **No ORM, no query builder** — queries are plain SQL in `src/repositories/sql/<entity>/*.sql`. No authorization here.
+
+The `pg` connection uses the Postgres owner role, so it **bypasses RLS** — which is why authorization is the service layer's job, not RLS's (see the Database section). Adding a data operation = add the interface method (`types.ts`) + the `ApiDataProvider` HTTP call + the route + the service + the repository method (+ its `.sql`), and mirror it in the `LocalDataProvider` test double so the contract tests don't drift.
 
 ### App bootstrap, tenancy, and auth gating
 
@@ -103,9 +115,11 @@ Per-tree uniqueness:
 
 The schema lives entirely in SQL migrations under `db/migrations/` — there's no ORM. `0001_initial.sql` is the single source of truth: it defines all tables (`users`, `trees`, `tree_members`, `people`, `families`, `tree_invites`, `suggestions`), indexes, RLS policies, triggers, and the SECURITY DEFINER helper functions. Later files (`0003`–`0005`) are follow-up fixes; `0002` is the storage policies. See `docs/ARCHITECTURE.md` §4 for the full shape.
 
-Apply with `npm run db:setup` (migrations + grants/realtime/storage extras) or `npm run db:apply-policies` (migrations only). RLS is what actually enforces per-tree access; the client uses the anon key. **Schema changes = add a new `db/migrations/000N_*.sql` file** (same workflow as the RLS changes), then re-run `db:setup`.
+Apply with `npm run db:setup` (migrations + grants/realtime/storage extras) or `npm run db:apply-policies` (migrations only). **Schema changes = add a new `db/migrations/000N_*.sql` file**, then re-run `db:setup`.
 
-`scripts/env.ts` resolves which database the scripts target from `NEXT_PUBLIC_ENV`; `pg` (not an ORM) is the connection driver.
+**Access control lives in the service layer, not RLS.** The app's data path connects as the Postgres owner (`src/repositories/db.ts`), which bypasses RLS, and authorization is enforced by `src/services/authz.ts`. RLS is kept as **defense in depth** and to gate which Realtime `postgres_changes` pings the anon client receives — it is no longer the primary gate. (This is a deliberate change from the earlier "RLS is the enforcement" design; see `docs/ARCHITECTURE.md`.)
+
+`scripts/env.ts` and `src/repositories/db.ts` both resolve which database to target from `NEXT_PUBLIC_ENV`; `pg` (not an ORM) is the connection driver in both.
 
 ### Tree rendering and graph logic
 

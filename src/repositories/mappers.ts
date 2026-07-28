@@ -3,10 +3,13 @@
  * `db/migrations/0001_initial.sql`) and the domain types the rest of the
  * codebase uses (camelCase). Keep the rest of the code free of snake_case
  * knowledge.
+ *
+ * These are the serialization half of the repository pattern: every repository
+ * runs raw SQL and hands the rows through the `rowTo*` functions here.
  */
 
-import type { Person } from "../../types/person";
-import type { Family } from "../../types/family";
+import type { Person } from "../types/person";
+import type { Family } from "../types/family";
 import type {
   TreeMeta,
   TreeMembership,
@@ -14,8 +17,9 @@ import type {
   TreeRole,
   InvitableTreeRole,
   InviteStatus,
-} from "../../types/tree";
-import type { Suggestion, SuggestionStatus } from "../../types/suggestion";
+} from "../types/tree";
+import type { Suggestion, SuggestionStatus } from "../types/suggestion";
+import type { UserProfile } from "../services/types";
 
 // ---------------------------------------------------------------------------
 // Row shapes (db column names)
@@ -86,6 +90,14 @@ export interface SuggestionRow {
 // ---------------------------------------------------------------------------
 // Row → Domain
 // ---------------------------------------------------------------------------
+
+export function rowToUserProfile(row: UserRow): UserProfile {
+  return {
+    email: row.email,
+    name: row.name,
+    photoURL: row.photo_url,
+  };
+}
 
 export function rowToTreeMeta(row: TreeRow): TreeMeta {
   return {

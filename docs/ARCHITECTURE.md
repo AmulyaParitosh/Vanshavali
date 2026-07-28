@@ -42,7 +42,7 @@ Roles are scoped to a single tree. The same user can be an Owner of one tree and
 
 - **Framework**: Next.js 15 / React / TypeScript — unchanged.
 - **Backend**: **Supabase** — managed Postgres + Auth (Google + email/password) + Storage. Real-time tree subscriptions via Supabase Realtime channels. Replaces Firebase entirely (per project owner decision: no GCP/Google services).
-- **Schema**: plain SQL migrations under `db/migrations/` (no ORM). `supabase-js` is the runtime query layer; RLS enforces access.
+- **Schema**: plain SQL migrations under `db/migrations/` (no ORM). Data reads/writes go through a **repository layer of raw SQL over `pg`** (`src/repositories/`), called by `/api/*` routes → services; `supabase-js` handles only Auth, Storage, and Realtime. Authorization is enforced in the **service layer** (`src/services/authz.ts`); RLS is defense-in-depth + Realtime gating (see §7).
 - **Visualization**: D3 retained for hierarchy/layout math only; nodes and ornaments rendered as **React components inside `<foreignObject>`** (closes the current XSS surface and makes the tree testable).
 - **Styling**: same global stylesheet model. New design tokens for spacing, type scale, semantic color roles (`--color-danger`, `--color-success`, etc.) and elevation. Heritage motifs as **surface accents** — banner, decorative borders, key empty/login/error states — not on every button.
 - **Email**: Resend for transactional invites. SMTP creds in `.env` only (never committed).
@@ -66,10 +66,11 @@ Two implementations of each:
 
 After migration:
 
-- **Supabase** (`src/services/supabase/`, new) — replaces Firebase.
-- **Local** — kept, schema mirrored: `.local_data/db/trees/{treeId}/people.json` (per-tree paths replace the flat layout).
+- **Supabase auth/storage** (`src/services/supabase/`) — `SupabaseAuthProvider`, `SupabaseStorageProvider`, and the Realtime helper (`realtime.ts`).
+- **`ApiDataProvider`** (`src/services/ApiDataProvider.ts`) — the runtime `DataProvider`. A **thin HTTP client** over the `/api/*` routes; it holds a supabase-js client only for the bearer token and Realtime change-pings. The real data logic lives server-side in `src/services/*-service.ts` (business logic + authz) → `src/repositories/*` (raw SQL over `pg`) → `src/repositories/mappers.ts` (row↔domain).
+- **Local** — file-backed `LocalDataProvider`, kept only as the unit-test double.
 
-`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) returns the Supabase providers and memoizes them. `NEXT_PUBLIC_ENV` (`local` | `prod`) selects which Supabase they target — the local `supabase start` stack or the cloud project — via `src/lib/supabaseEnv.ts`. The file-backed local provider was retired as a runtime mode; it survives only as the unit-test double.
+`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) returns `{ auth, data, storage }` and memoizes them: auth + storage go through supabase-js; data goes through `ApiDataProvider`. `NEXT_PUBLIC_ENV` (`local` | `prod`) selects which backend everything targets — the local `supabase start` stack or the cloud project — via `src/lib/supabaseEnv.ts` (client) and `src/repositories/db.ts` (server-side `pg` connection).
 
 ### Invariant
 
@@ -304,9 +305,11 @@ Deleted: `/user/access_requests`, `/user/management`, `/api/send-access-request`
 - All role gating was **client-side**. Any authenticated user could write to `users/{uid}.role` and self-promote unless Realtime DB security rules forbade it. There were **no security rules in the repo** (audit critical finding). _Resolved: server-side RLS now lives in `db/migrations/0001_initial.sql`, with recursion fixes in `0003`/`0004`._
 - API keys hardcoded in `src/lib/firebase.ts`. Web API keys aren't secret per se but enable abuse if rules are loose.
 
-### Target (Supabase Row-Level Security)
+### Target (server-side authorization + RLS defense-in-depth)
 
-Every table has RLS enabled. The policies enforce per-tree access on the server, not in the client.
+> **Update (post-migration):** the primary access control is now the **service layer** (`src/services/authz.ts`), not RLS. All data flows through `/api/*` → services → repositories, and the repository `pg` connection uses the Postgres owner role (bypasses RLS). RLS is retained as **defense in depth** and to gate which Realtime `postgres_changes` pings the anon client receives. The policies below (and in `db/migrations/0001_initial.sql`) still describe the per-tree rules — they're just no longer the only enforcement. The service guards mirror them: `requireView` (member), `requireEdit` (owner/editor), `requireOwner`.
+
+Every table has RLS enabled. The policies express per-tree access on the server (the real query examples live in `0001_initial.sql`, which routes cross-table checks through SECURITY DEFINER helpers to avoid policy recursion):
 
 ```sql
 -- people: read if you're a member of the tree; write if you're owner or editor
@@ -336,7 +339,7 @@ create policy "self_user_read_write" on users for select, update using (uid = au
 -- Insert handled by a trigger on Supabase auth.users (no direct insert from client).
 ```
 
-The Next.js app talks to Supabase using the user's JWT. The anon key is public (it's designed to be), but RLS is the actual access control. There is no client-side trust assumption.
+The client talks to the server using the user's JWT (bearer token on every `/api/*` call, verified by `getUserFromRequest`). The anon key is public by design; the `/api/*` → service layer is the actual access control, with RLS as a second line. There is no client-side trust assumption.
 
 ### Other security work
 
