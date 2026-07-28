@@ -73,3 +73,20 @@ Validation on blur/submit, never keystroke. Shape signals intent: pill = filter,
   13.5px, removable (✕ 11px `#8a8377`). Canonical alias chip.
 - _Deferred to page waves_: place-suggestion row (`#fff5f5` selected, reason 12.5 `#8a8377`, "new" tag
   on `#fdf1e2`/`#8a5300`) — built with Search/onboarding.
+
+## Status (Components §Status)
+
+Chips never rely on colour alone — the word is always present. An absence is never a badge.
+
+- **`.chip`** + **`.chip--keeper` / `--write` / `--read` / `--invited`** — 4/11 · radius 999 · 12/600 ·
+  bordered. keeper `#fff5f5`/`#8b0000`/`#e8c9c6` · write `#eaf4ee`/`#1f6a3e`/`#c9e0d2` · read
+  `#f4ede0`/`#55504a`/`#e2d7bf` · invited `#fdf1e2`/`#8a5300`/`#eed9b6`. "no account" is NOT a chip —
+  bare 13px `#6b6455` text. Read by every role; changed only by a keeper, only from the record panel.
+- **`.absent`** — absence in words, `#a89f8c` (size contextual, 14px in rows). Never a blank/em-dash.
+  This colour is integration contract §8.
+- **`.count-badge`** — 12/600 `#8a8377`, right-aligned (rail uses its own `.tree-rail-badge`).
+- **`.dirty-dot`** — 6px `#b22222` dot before a changed field's label (Spec 13 dirty tracking).
+- **`.check-mark`** + **`--done` / `--current` / `--later`** — 16px getting-started checklist markers:
+  done filled `#b22222` + white ✓ (9px), current open red ring, later open quiet `#d8cdb4` ring.
+- `.suggested` and `.radio-now` (the "now" tag) also live under Inputs; they double as Status markers.
+- Generation marker (I/II/III) is typography, not a component: Yatra One 15px (type ladder).

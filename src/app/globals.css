@@ -1657,6 +1657,55 @@ main {
   border-color: var(--chip-invited-bc);
 }
 
+/* --- Status markers (Components §Status). An absence is never a badge; it is
+ * stated in words. Chips never rely on colour alone — the word is always there. --- */
+
+/* Absence in words — never a blank cell, never an em dash. #a89f8c. */
+.absent {
+  color: var(--text-absent);
+}
+
+/* Count badge — right-aligned, 12px/600 meta (e.g. "62"). */
+.count-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-meta);
+}
+
+/* Dirty-field dot — a 6px red dot before a field label marks a change (Spec 13). */
+.dirty-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-red);
+}
+
+/* Getting-started checklist markers — 16px circles: done filled + ✓, current an
+ * open red ring, later an open quiet ring. */
+.check-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+.check-mark--done {
+  background: var(--color-red);
+  color: #fff;
+  font-size: 9px;
+}
+.check-mark--current {
+  border: 1.5px solid var(--color-red);
+}
+.check-mark--later {
+  border: 1.5px solid var(--line-control);
+}
+
 /* --- Card (§03/§06) — the default container of content. --- */
 .card {
   background: var(--surface-paper);

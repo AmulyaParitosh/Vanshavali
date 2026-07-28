@@ -333,3 +333,118 @@ test.describe("Components — Inputs", () => {
     });
   });
 });
+
+test.describe("Components — Status", () => {
+  const chipCases = [
+    ["keeper", "Keeper", "rgb(255, 245, 245)", "rgb(139, 0, 0)", "rgb(232, 201, 198)"],
+    ["write", "Write", "rgb(234, 244, 238)", "rgb(31, 106, 62)", "rgb(201, 224, 210)"],
+    ["read", "Read", "rgb(244, 237, 224)", "rgb(85, 80, 74)", "rgb(226, 215, 191)"],
+    ["invited", "Invited", "rgb(253, 241, 226)", "rgb(138, 83, 0)", "rgb(238, 217, 182)"],
+  ] as const;
+
+  for (const [mod, label, bg, fg, bc] of chipCases) {
+    test(`Access chip ${label}: 4/11 · 999 · 12/600, bordered, word always present`, async ({
+      page,
+    }) => {
+      const c = await computed(
+        page,
+        `<span class="chip chip--${mod}">${label}</span>`,
+        `.chip--${mod}`,
+        [
+          "padding",
+          "border-radius",
+          "font-size",
+          "font-weight",
+          "background-color",
+          "color",
+          "border-top-color",
+        ]
+      );
+      expect(c).toMatchObject({
+        padding: "4px 11px",
+        "border-radius": "999px",
+        "font-size": "12px",
+        "font-weight": "600",
+        "background-color": bg,
+        color: fg,
+        "border-top-color": bc,
+      });
+    });
+  }
+
+  test("Absence is stated in words at #a89f8c — never a chip", async ({ page }) => {
+    const c = await computed(page, '<span class="absent">no date recorded</span>', ".absent", [
+      "color",
+      "background-color",
+    ]);
+    expect(c).toMatchObject({
+      color: "rgb(168, 159, 140)",
+      "background-color": "rgba(0, 0, 0, 0)",
+    });
+  });
+
+  test("Count badge: 12/600 meta", async ({ page }) => {
+    const c = await computed(page, '<span class="count-badge">62</span>', ".count-badge", [
+      "font-size",
+      "font-weight",
+      "color",
+    ]);
+    expect(c).toMatchObject({
+      "font-size": "12px",
+      "font-weight": "600",
+      color: "rgb(138, 131, 119)",
+    });
+  });
+
+  test("Dirty-field dot: 6px red", async ({ page }) => {
+    const c = await computed(page, '<span class="dirty-dot"></span>', ".dirty-dot", [
+      "width",
+      "height",
+      "background-color",
+      "border-radius",
+    ]);
+    expect(c).toMatchObject({
+      width: "6px",
+      height: "6px",
+      "background-color": "rgb(178, 34, 34)",
+      "border-radius": "50%",
+    });
+  });
+
+  test("Checklist markers: done filled red, current open red ring, later open quiet ring", async ({
+    page,
+  }) => {
+    const done = await computed(
+      page,
+      '<span class="check-mark check-mark--done">✓</span>',
+      ".check-mark--done",
+      ["width", "height", "background-color", "color"]
+    );
+    expect(done).toMatchObject({
+      width: "16px",
+      height: "16px",
+      "background-color": "rgb(178, 34, 34)",
+      color: "rgb(255, 255, 255)",
+    });
+    // (border-width read omitted — Chromium rounds 1.5px→1px in getComputedStyle
+    // at DSF 2; the CSS is 1.5px per spec. The ring COLOUR is what distinguishes
+    // current from later.)
+    const current = await computed(
+      page,
+      '<span class="check-mark check-mark--current"></span>',
+      ".check-mark--current",
+      ["border-top-color", "border-top-style"]
+    );
+    expect(current).toMatchObject({
+      "border-top-color": "rgb(178, 34, 34)",
+      "border-top-style": "solid",
+    });
+    const later = await computed(
+      page,
+      '<span class="check-mark check-mark--later"></span>',
+      ".check-mark--later",
+      ["border-top-color"]
+    );
+    expect(later["border-top-color"]).toBe("rgb(216, 205, 180)");
+  });
+});
