@@ -725,60 +725,140 @@ main {
   color: var(--text-primary);
 }
 
-/* --- Onboarding: welcome modal + empty tree banner --- */
-.welcome-modal {
-  position: absolute;
-  top: var(--space-6);
-  right: var(--space-6);
-  max-width: 360px;
+/* --- Onboarding: welcome modal (§ Welcome-in) + empty tree banner --- */
+.welcome-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(253, 245, 230, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: var(--space-6);
-  background: var(--color-neutral-0);
-  border: 4px double var(--color-primary-500);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  z-index: 900;
+  box-sizing: border-box;
 }
-
+.welcome-modal {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  background: var(--surface-paper);
+  border-radius: var(--radius-26);
+  box-shadow: var(--shadow-dialog);
+  overflow: hidden;
+}
+.welcome-bar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-red), var(--color-marigold));
+}
+.welcome-body {
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.welcome-head {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  text-align: center;
+}
+.welcome-ornament {
+  font-size: 17px;
+  color: var(--color-marigold);
+  letter-spacing: 6px;
+}
 .welcome-modal h2 {
-  font-family: var(--font-heading);
-  font-size: var(--font-size-xl);
-  margin: 0 0 var(--space-3);
-  color: var(--color-primary-700);
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  margin: 0;
+  color: var(--text-primary);
 }
-
-.welcome-modal p {
-  font-size: var(--font-size-base);
-  line-height: 1.5;
-  color: var(--color-text);
-  margin: 0 0 var(--space-5);
+.welcome-lead {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-strong);
+  margin: 0;
 }
-
 .welcome-modal-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 8px;
 }
-
+.welcome-action {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 15px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-14);
+  background: var(--surface-paper);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-base) var(--ease-standard),
+    background var(--duration-base) var(--ease-standard);
+}
+.welcome-action:hover {
+  border-color: var(--color-red);
+  background: var(--color-red-wash);
+}
+.welcome-action-glyph {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--radius-circle);
+  background: var(--color-red-wash);
+  color: var(--color-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+.welcome-action-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.welcome-action-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.welcome-action-sub {
+  font-size: 12.5px;
+  color: var(--text-meta);
+}
+.welcome-action-arrow {
+  color: var(--color-red);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.welcome-dismiss {
+  width: 100%;
+}
 .welcome-modal-close {
   position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
+  top: 14px;
+  right: 14px;
   width: 28px;
   height: 28px;
   background: transparent;
   border: none;
-  border-radius: var(--radius-circle);
-  color: var(--color-neutral-500);
-  font-size: var(--font-size-lg);
+  border-radius: var(--radius-8);
+  color: var(--text-meta);
+  font-size: 15px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background var(--duration-base) var(--ease-standard);
 }
-
 .welcome-modal-close:hover {
-  background: var(--color-neutral-100);
+  background: var(--surface-quiet);
+  color: var(--text-primary);
 }
 
 .empty-tree-banner {
@@ -822,16 +902,10 @@ main {
 }
 
 @media (max-width: 600px) {
-  .welcome-modal {
-    top: var(--space-4);
-    right: var(--space-4);
-    left: var(--space-4);
-    max-width: none;
-  }
   .empty-tree-banner {
     flex-direction: column;
     align-items: stretch;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-18);
     text-align: center;
   }
   .empty-tree-banner-actions {
