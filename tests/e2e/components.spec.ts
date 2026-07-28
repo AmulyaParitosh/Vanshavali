@@ -650,3 +650,49 @@ test.describe("Components — Overlays", () => {
     });
   });
 });
+
+test.describe("Components — Empty & loading", () => {
+  test("Empty state: dashed control border, radius 14; Yatra 27 heading; 16.5 lede", async ({
+    page,
+  }) => {
+    const html =
+      '<div class="empty-state"><h2 class="empty-heading">No marriages recorded yet</h2><p class="empty-lede">A household is two people…</p></div>';
+    const box = await computed(page, html, ".empty-state", [
+      "border-style",
+      "border-top-color",
+      "border-radius",
+    ]);
+    expect(box).toMatchObject({
+      "border-style": "dashed",
+      "border-top-color": "rgb(216, 205, 180)",
+      "border-radius": "14px",
+    });
+    const h = await computed(page, html, ".empty-heading", ["font-size", "font-family"]);
+    expect(h["font-size"]).toBe("27px");
+    expect(h["font-family"]).toContain("Yatra One");
+    const lede = await computed(page, html, ".empty-lede", ["font-size", "color"]);
+    expect(lede).toMatchObject({ "font-size": "16.5px", color: "rgb(85, 80, 74)" });
+  });
+
+  test("Skeleton: quiet fill, shimmer 1.4s — never a spinner; 40px avatar at real row height", async ({
+    page,
+  }) => {
+    const html =
+      '<div class="skeleton-row"><div class="skeleton-avatar"></div><div class="skeleton-bar" style="width:120px"></div></div>';
+    const avatar = await computed(page, html, ".skeleton-avatar", [
+      "width",
+      "height",
+      "background-color",
+      "animation-duration",
+    ]);
+    expect(avatar).toMatchObject({
+      width: "40px",
+      height: "40px",
+      "background-color": "rgb(244, 237, 224)",
+      "animation-duration": "1.4s",
+    });
+    const bar = await computed(page, html, ".skeleton-bar", ["height", "animation-name"]);
+    expect(bar.height).toBe("11px");
+    expect(bar["animation-name"]).toBe("skeleton-shimmer");
+  });
+});

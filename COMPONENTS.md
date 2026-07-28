@@ -134,3 +134,15 @@ legacy `.confirm-dialog`.
   consequence 13 `#8a8377` · action 13.5/600 `#b22222`. Confirms writes only; one at a time; 3.5s / 12s
   with Undo (timings in Spec 13). The current `ToastSystem` (react-hot-toast, legacy inline) adopts this
   in Wave 1. Search palette (`.cmdk-*`) is Spec 09.
+
+## Empty & loading (Components §Empty and loading)
+
+An empty state is a heading + one sentence + at most one action (a reader gets no button). Loading is
+skeleton rows at the real height — never a spinner over content. The no-match state echoes the query
+in curly quotes and offers the write action only if the viewer may write.
+
+- **`.empty-state`** — dashed `#d8cdb4` border · radius 14 · 26/22 · align-start gap 9. Action = `.btn-primary`.
+- **`.empty-heading`** — Yatra One 27/400. **`.empty-lede`** — 16.5/1.6 `#55504a`, max-width 340.
+- **`.skeleton`** / **`.skeleton-row`** (real row geometry, 10/18, gap 14) / **`.skeleton-avatar`** (40px) /
+  **`.skeleton-bar`** (11px; `--sub` 9px `#f8f2e4`) — quiet `#f4ede0` fill, `skeleton-shimmer` 1.4s
+  ease-in-out infinite; `prefers-reduced-motion` → 0s. Chrome + rail render immediately (no skeleton).

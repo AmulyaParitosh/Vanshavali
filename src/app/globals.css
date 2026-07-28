@@ -1255,6 +1255,82 @@ main {
   cursor: pointer;
 }
 
+/* --- Empty & loading (Components §Empty and loading). An empty state is a Yatra
+ * heading, one sentence, and exactly one action IF the viewer may act — never an
+ * illustration or a shrug. Loading is skeleton rows at the real height, never a
+ * spinner over content. --- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 26px 22px;
+  border: 1px dashed var(--line-control);
+  border-radius: var(--radius-14);
+}
+.empty-heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-27);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+.empty-lede {
+  margin: 0;
+  max-width: 340px;
+  font-size: var(--fs-165);
+  line-height: 1.6;
+  color: var(--text-strong);
+}
+
+/* Skeleton — real row height, quiet fill, gentle shimmer (never a spinner). */
+.skeleton {
+  background: var(--surface-quiet);
+  border-radius: var(--radius-4);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+}
+.skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--surface-quiet);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-bar {
+  height: 11px;
+  border-radius: var(--radius-4);
+  background: var(--surface-quiet);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-bar--sub {
+  height: 9px;
+  background: var(--surface-tablehead);
+}
+@keyframes skeleton-shimmer {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .skeleton-avatar,
+  .skeleton-bar {
+    animation-duration: 0s;
+  }
+}
+
 /* Household pill behind the portrait(s) — paper surface, hairline control
  * border, the soft node-pill shadow. */
 .node-pill {
