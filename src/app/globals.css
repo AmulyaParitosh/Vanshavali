@@ -902,16 +902,6 @@ main {
   justify-content: flex-end;
 }
 
-/* Floating tree search overlay (top-left of the tree visualization). */
-.tree-search {
-  position: absolute;
-  top: var(--space-3);
-  left: var(--space-3);
-  width: 320px;
-  max-width: calc(100vw - var(--space-8));
-  z-index: 800;
-}
-
 /* Household pill behind the portrait(s) — paper surface, hairline control
  * border, the soft node-pill shadow. */
 .node-pill {
@@ -2857,4 +2847,169 @@ main {
 }
 .hh-delete:hover {
   color: var(--color-red-deep);
+}
+
+/* ============================================================================
+ * ⌘K search palette (§5) — one keyboard-first index over people, places and
+ * events, opened from anywhere.
+ * ========================================================================== */
+.cmdk-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(26, 26, 16, 0.34);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 56px var(--space-4) var(--space-4);
+  box-sizing: border-box;
+}
+.cmdk-panel {
+  width: 760px;
+  max-width: 100%;
+  max-height: calc(100vh - 112px);
+  background: var(--surface-paper);
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-18);
+  box-shadow: var(--shadow-dialog);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.cmdk-input-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line-structure);
+  flex-shrink: 0;
+}
+.cmdk-input-row > svg {
+  color: var(--color-red);
+  flex-shrink: 0;
+}
+.cmdk-input-row input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 19px;
+  color: var(--text-primary);
+}
+.cmdk-input-row input::placeholder {
+  color: var(--text-meta);
+}
+.cmdk-esc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-meta);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-4);
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+.cmdk-results {
+  padding: 12px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+.cmdk-group {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-meta);
+  padding: 6px 20px;
+}
+.cmdk-sep {
+  height: 1px;
+  background: var(--line-row);
+  margin: 8px 20px;
+}
+.cmdk-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 9px 20px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.cmdk-row.active {
+  background: var(--color-red-wash);
+}
+.cmdk-row--static {
+  cursor: default;
+}
+.cmdk-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-circle);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fffdf9;
+}
+.cmdk-glyph {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-10);
+  flex-shrink: 0;
+  border: 1px solid var(--line-control);
+  background: var(--surface-canvas);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--color-red);
+}
+.cmdk-glyph--event {
+  color: var(--color-marigold);
+}
+.cmdk-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cmdk-row-primary {
+  font-size: 15.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cmdk-row-sub {
+  font-size: 12.5px;
+  color: var(--text-meta);
+}
+.cmdk-empty {
+  padding: 24px 20px;
+  color: var(--text-meta);
+  font-size: 14px;
+}
+.cmdk-foot {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 11px 20px;
+  border-top: 1px solid var(--line-structure);
+  background: var(--surface-tablehead);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-meta);
+  flex-shrink: 0;
 }

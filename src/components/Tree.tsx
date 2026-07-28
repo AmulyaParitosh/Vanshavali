@@ -3,11 +3,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { GraphNode } from "../types/graph";
-import type { Person } from "../types/person";
 import { TREE_CONFIG } from "../constants";
 import { canEdit as canEditRole } from "../lib/access";
 import { useAppContext } from "../context/AppContext";
-import TreeSearch from "./TreeSearch";
 import { useTreeLayout, type LaidOutNode } from "./tree/useTreeLayout";
 import { useTreeZoom } from "./tree/useTreeZoom";
 import PersonNode from "./tree/PersonNode";
@@ -79,8 +77,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   return (
     <div className={`tree-canvas-container${selectedPerson ? " inspector-open" : ""}`}>
       <div className="tree-stage">
-        <TreeSearch people={people} onSelectPerson={(p: Person) => handleSelect(p.id, true)} />
-        {/* Sizing/cursor live on .tree-canvas in globals.css. Background click clears the selection. */}
+        {/* Search is the ⌘K palette (CommandSearch); the canvas has no floating box.
+            Sizing/cursor live on .tree-canvas in globals.css; a background click clears the selection. */}
         <svg ref={svgRef} className="tree-canvas" onClick={() => setSelectedPersonId(null)}>
           <g ref={gRef}>
             <BackgroundOrnaments />

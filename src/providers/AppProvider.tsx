@@ -8,6 +8,7 @@ import { useAuthAndData } from "../hooks/useAuthAndData";
 import Header from "../components/Header";
 import LoginScreen from "../components/LoginScreen";
 import Loading from "../components/Loading";
+import CommandSearch from "../components/CommandSearch";
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -100,6 +101,7 @@ export default function AppProvider({ children }: AppProviderProps) {
       <div className="App">
         <Header user={user} membership={membership} />
         <main>{renderContent()}</main>
+        {user && <CommandSearch />}
       </div>
     </AppContext.Provider>
   );
