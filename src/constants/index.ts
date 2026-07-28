@@ -42,21 +42,30 @@ export const SUGGESTION_STATUS = {
 } as const;
 
 export const TREE_CONFIG = {
-  NODE_WIDTH: 500,
-  NODE_HEIGHT: 300,
-  NODE_RADIUS: 50,
-  PARTNER_OFFSET: 45,
+  // d3.tree nodeSize — the layout grid each node/couple is allotted.
+  NODE_WIDTH: 230,
+  NODE_HEIGHT: 240,
+  // §07: portrait = 78px painted-ring art box → 58px circle (radius 29), 3px ring.
+  NODE_RADIUS: 29,
+  ART_BOX: 78,
+  // Half-distance between the two portraits of a couple, so their art boxes sit
+  // side by side (nearly touching) inside one pill.
+  PARTNER_OFFSET: 40,
+  // The household pill behind the portrait(s).
+  PILL: {
+    // Couple: one rounded pill wrapping both portraits (radius 26).
+    COUPLE_WIDTH: 170,
+    COUPLE_HEIGHT: 90,
+    COUPLE_RADIUS: 26,
+    // Single: a 90px circle (radius 45).
+    SINGLE_RADIUS: 45,
+  },
   DETAILS_CARD: {
     WIDTH: 280,
     HEIGHT: 300,
   },
-  STYLES: {
-    // Node visuals otherwise live in globals.css; this is the one value the
-    // SVG needs programmatically (PersonAvatar's circle fill).
-    COLORS: {
-      FILL: "var(--color-bg)",
-    },
-  },
+  // Still used by the not-yet-redesigned family editor + search rows. The tree
+  // node itself now renders tint + initials (PersonAvatar), not this.
   PLACEHOLDER_IMAGE_URL: (color: string, text: string) =>
     `https://placehold.co/100x100/${color}/FFFFFF?text=${text}`,
 };

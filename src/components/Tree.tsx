@@ -89,6 +89,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                     isLineage={node.depth > 0}
                     isLocked={lockedPersonId === node.data.id}
                     cardSide="right"
+                    showPill
                     canEdit={canEdit}
                     treeId={currentTreeId}
                     onLock={toggleLock}

@@ -29,7 +29,7 @@ const PartnerNode: React.FC<PartnerNodeProps> = ({
   treeId,
   onLock,
 }) => {
-  const { PARTNER_OFFSET, NODE_RADIUS } = TREE_CONFIG;
+  const { PARTNER_OFFSET, PILL } = TREE_CONFIG;
   const { husband, wife, lineageMemberId } = node;
   const isWifeLineage = lineageMemberId === wife?.id;
 
@@ -42,7 +42,6 @@ const PartnerNode: React.FC<PartnerNodeProps> = ({
         isLineage={lineageMemberId === husband.id && depth > 0}
         isLocked={lockedPersonId === husband.id}
         cardSide="left"
-        labelOffsetY={NODE_RADIUS + 50}
         canEdit={canEdit}
         treeId={treeId}
         onLock={onLock}
@@ -57,7 +56,6 @@ const PartnerNode: React.FC<PartnerNodeProps> = ({
         isLineage={lineageMemberId === wife.id && depth > 0}
         isLocked={lockedPersonId === wife.id}
         cardSide="right"
-        labelOffsetY={NODE_RADIUS + 72}
         canEdit={canEdit}
         treeId={treeId}
         onLock={onLock}
@@ -67,6 +65,18 @@ const PartnerNode: React.FC<PartnerNodeProps> = ({
 
   return (
     <g className="partner-group">
+      {/* One household pill behind both portraits — a couple reads as a single
+          object, never two overlapping circles. */}
+      <rect
+        className="node-pill"
+        x={-PILL.COUPLE_WIDTH / 2}
+        y={-PILL.COUPLE_HEIGHT / 2}
+        width={PILL.COUPLE_WIDTH}
+        height={PILL.COUPLE_HEIGHT}
+        rx={PILL.COUPLE_RADIUS}
+      />
+      {/* Paint order: render the non-lineage partner first so the lineage
+          partner's details card sits above when the two cards overlap. */}
       {isWifeLineage ? (
         <>
           {husbandNode}

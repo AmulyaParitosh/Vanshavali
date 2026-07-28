@@ -12,8 +12,10 @@ interface PersonNodeProps {
   isLocked: boolean;
   /** Which side of the avatar the details card sits on. */
   cardSide: "left" | "right";
-  /** Y-offset for the name label (partner-group wife sits lower than husband). */
+  /** Y-offset for the name label, measured from the portrait centre. */
   labelOffsetY?: number;
+  /** Draw the single-person circle pill behind the portrait (couples get one pill from PartnerNode instead). */
+  showPill?: boolean;
   canEdit: boolean;
   /** Active treeId — threaded through to the EDIT INFO link inside DetailsCard. */
   treeId: string | null;
@@ -29,12 +31,13 @@ const PersonNode: React.FC<PersonNodeProps> = ({
   isLineage,
   isLocked,
   cardSide,
-  labelOffsetY = TREE_CONFIG.NODE_RADIUS + 50,
+  labelOffsetY = 52,
+  showPill = false,
   canEdit,
   treeId,
   onLock,
 }) => {
-  const { NODE_RADIUS, DETAILS_CARD } = TREE_CONFIG;
+  const { NODE_RADIUS, DETAILS_CARD, PILL } = TREE_CONFIG;
   const cardX = cardSide === "left" ? -NODE_RADIUS - DETAILS_CARD.WIDTH - 20 : NODE_RADIUS + 10;
   const cardY = -50;
 
@@ -76,6 +79,9 @@ const PersonNode: React.FC<PersonNodeProps> = ({
         el.parentNode?.appendChild(el);
       }}
     >
+      {/* Single-person household pill (a 90px circle) behind the portrait. */}
+      {showPill && <circle className="node-pill" r={PILL.SINGLE_RADIUS} />}
+
       <PersonAvatar person={person} isLineage={isLineage} />
 
       {/* Bridge area for hover continuity between avatar and details card */}
@@ -87,17 +93,15 @@ const PersonNode: React.FC<PersonNodeProps> = ({
         fill="transparent"
       />
 
-      {/* Name label (foreignObject lets the rounded background auto-size) */}
+      {/* Name label — name only; a column centred under this portrait (§07). */}
       <foreignObject
-        x={-100}
-        y={labelOffsetY - 18}
-        width={200}
-        height={36}
+        x={-46}
+        y={labelOffsetY}
+        width={92}
+        height={44}
         style={{ overflow: "visible", pointerEvents: "none" }}
       >
-        <div style={{ textAlign: "center" }}>
-          <span className="node-label">{person.name.official_name}</span>
-        </div>
+        <span className="node-label">{person.name.official_name}</span>
       </foreignObject>
 
       {/* Details card */}
