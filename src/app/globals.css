@@ -1468,7 +1468,7 @@ main {
 }
 .btn:disabled,
 .btn[aria-disabled="true"] {
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: default;
   pointer-events: none;
 }
@@ -1529,6 +1529,88 @@ main {
   color: var(--color-red-deep);
   background: var(--color-red-wash);
   border-color: #e8c9c6;
+}
+
+/* Destructive — text form. 13.5px/600 red, no border, no fill; sits far left of
+ * a footer, opposite the primary. Never a filled red button. (Components §Actions) */
+.btn-danger-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-red);
+  cursor: pointer;
+}
+.btn-danger-text:hover {
+  color: var(--color-red-deep);
+}
+
+/* Cell button — the ONLY control that ever lives inside a table row (keepers
+ * only). 4px 11px · 12.5px/600 on the red wash. Stops row-click propagation.
+ * (Components §Actions) */
+.cell-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--color-red-wash);
+  border: 1px solid #f0dcd8;
+  color: var(--color-red);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cell-btn:hover {
+  border-color: #e8c9c6;
+  color: var(--color-red-deep);
+}
+
+/* Close ✕ — 15px #8a8377 glyph in a 32px hit area; hover to red. One close
+ * treatment product-wide (inspector, dialogs). (Components §Actions) */
+.icon-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: var(--radius-8);
+  color: var(--text-meta);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.icon-close:hover {
+  color: var(--color-red);
+  background: var(--color-red-wash);
+}
+
+/* Key cap — a LABEL, never a button. 11px mono · radius 4px · quiet fill.
+ * (Components §Actions) */
+.key-cap {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: var(--radius-4);
+  background: var(--surface-quiet);
+  border: 1px solid #e2d7bf;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-strong);
+  line-height: 1;
 }
 
 /* Size / width modifiers — usable on any variant. */
