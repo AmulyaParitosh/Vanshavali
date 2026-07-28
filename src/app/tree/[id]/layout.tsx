@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useAppContext } from "../../../context/AppContext";
 import Loading from "../../../components/Loading";
+import TreeRail from "../../../components/TreeRail";
 
 /**
  * Layout for every `/tree/[id]/*` route.
@@ -53,5 +54,10 @@ export default function TreeLayout({ children }: { children: React.ReactNode }) 
     return <Loading text="Loading membership..." />;
   }
 
-  return <>{children}</>;
+  return (
+    <div className="tree-shell">
+      <TreeRail />
+      <div className="tree-shell-content">{children}</div>
+    </div>
+  );
 }

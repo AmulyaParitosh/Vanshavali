@@ -192,10 +192,8 @@
   --shell-chrome-h: 60px;
   --shell-rail-w: 232px;
   --shell-inspector-w: 384px;
-  /* Legacy alias: the pre-redesign header still renders ~100px. Kept at its
-   * real height so layout calcs (calc(100vh - header), sticky offsets) don't
-   * glitch; re-point to --shell-chrome-h when the chrome bar is rebuilt. */
-  --header-height: 100px;
+  /* Legacy alias — the chrome bar is now the system 60px. */
+  --header-height: var(--shell-chrome-h);
 
   /* ---- Heritage — one setting drives all four ornament surfaces. Override
    * with data-heritage="restrained" | "plain" on <html>. ------------------- */
@@ -275,84 +273,109 @@ main {
   flex-direction: column;
 }
 
-/* --- Header --- */
-.App-header {
-  width: 100%;
-  flex-shrink: 0; /* Header should not shrink */
-  padding: 20px 30px;
-  background-color: #1a1a1a;
-  /* Dark gradient overlay for "Dark Background" effect */
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.85)), url("/madhubani_banner.png");
-  background-size: cover;
-  background-position: 0% 27.5%;
-  background-repeat: no-repeat;
-  border-bottom: 7px solid var(--color-primary);
+/* --- Chrome bar (§04) — the one loud surface: 60px of darkened Madhubani
+ * banner, closed with a 2px red rule. Everything below it can be plain cream
+ * and the page still reads as Mithila. --- */
+.chrome-bar {
   position: relative;
   z-index: 1100;
+  flex-shrink: 0;
+  height: var(--shell-chrome-h);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: var(--space-6);
+  padding: 0 var(--space-5);
   box-sizing: border-box;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: var(--surface-chrome);
+  border-bottom: 2px solid var(--color-red);
+}
+.chrome-bar-banner {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(20, 18, 16, 0.76), rgba(20, 18, 16, 0.93)), url("/madhubani_banner.png");
+  background-size: cover;
+  background-position: 0% 34%;
+  pointer-events: none;
 }
 
-.App-header h1 {
-  font-family: var(--font-heading);
-  color: #ffffff; /* Light Foreground */
-  margin: 0;
-  font-size: 3em; /* Adjusted size */
-  font-weight: 400;
-  text-align: left; /* Left align */
-  flex-grow: 0; /* Removing grow */
-  /* Dark shadow for lift */
-  text-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.8),
-    0 0 20px rgba(0, 0, 0, 0.5);
-  letter-spacing: 1px;
-}
-
-.header-left-section {
-  display: flex;
-  align-items: center;
-  gap: var(--space-10);
-  flex: 1;
-}
-
-.header-title-link {
-  text-decoration: none;
-  color: inherit;
-}
-
-/* --- Tree switcher (dropdown in header for picking the active tree) --- */
-.tree-switcher {
+/* Wordmark lockup — the one place the two scripts stack, and the one place
+ * marigold sits on near-black and passes. */
+.chrome-wordmark {
   position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.chrome-wordmark .mark {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+.chrome-wordmark .script {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-marigold);
 }
 
-.tree-switcher-button {
+.chrome-treeswitcher {
+  position: relative;
+  flex-shrink: 0;
+}
+.chrome-treeswitcher-button {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: 6px 12px;
+  border-radius: var(--radius-10);
   background: rgba(255, 255, 255, 0.1);
-  color: var(--color-neutral-0);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
   font-family: var(--font-body);
-  font-size: var(--font-size-base);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: background var(--duration-base) var(--ease-standard);
 }
-
-.tree-switcher-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+.chrome-treeswitcher-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.chrome-treeswitcher-button .caret {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.tree-switcher-caret {
-  font-size: var(--font-size-sm);
-  opacity: 0.8;
+.chrome-spacer {
+  flex: 1;
 }
 
+.chrome-avatar-link {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: var(--radius-circle);
+}
+.chrome-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-circle);
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  box-sizing: border-box;
+}
+.chrome-avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Tree-switcher dropdown (opened from the chrome bar) */
 .tree-switcher-menu {
   position: absolute;
   top: calc(100% + var(--space-2));
@@ -361,76 +384,108 @@ main {
   list-style: none;
   margin: 0;
   padding: var(--space-2);
-  background: var(--color-neutral-0);
-  border: 1px solid var(--color-neutral-200);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-12);
+  box-shadow: var(--shadow-frame);
   z-index: 1200;
 }
-
 .tree-switcher-item {
   display: block;
   padding: var(--space-2) var(--space-3);
-  color: var(--color-text);
+  color: var(--text-rail);
   text-decoration: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
+  border-radius: var(--radius-8);
+  font-size: var(--font-size-sm);
 }
-
-.tree-switcher-item:hover {
-  background: var(--color-primary-50);
-  color: var(--color-primary-700);
-}
-
+.tree-switcher-item:hover,
 .tree-switcher-item.active {
-  background: var(--color-primary-50);
-  color: var(--color-primary-700);
+  background: var(--color-red-wash);
+  color: var(--color-red-deep);
+}
+.tree-switcher-item.active {
   font-weight: 600;
 }
-
 .tree-switcher-separator {
   height: 1px;
-  background: var(--color-neutral-200);
+  background: var(--line-inner);
   margin: var(--space-2) 0;
 }
 
-.header-nav {
+/* --- Tree shell: 232px rail + content canvas (§03 shell metrics) --- */
+.tree-shell {
+  flex: 1;
   display: flex;
-  gap: 25px;
-  align-items: center;
-  margin-top: 8px; /* Slight adjustment to align with title baseline visually */
+  min-height: 0;
+}
+.tree-shell-content {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.nav-link {
-  font-family: var(--font-body);
-  font-size: 1.1em;
+.tree-rail {
+  width: var(--shell-rail-w);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  background: var(--surface-paper);
+  border-right: 1px solid var(--line-structure);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.tree-rail-identity {
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-bottom: 1px solid var(--line-inner);
+}
+.tree-rail-name {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+.tree-rail-meta {
+  font-size: 13px;
+  color: var(--text-meta);
+}
+.tree-rail-nav {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-3) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tree-rail-item {
+  display: block;
+  padding: 9px 12px;
+  border-radius: var(--radius-10);
+  color: var(--text-rail);
+  font-size: 15px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: all 0.2s ease;
-  padding-bottom: 3px;
-  border-bottom: 2px solid transparent;
+  transition:
+    background var(--duration-base) var(--ease-standard),
+    color var(--duration-base) var(--ease-standard);
 }
-
-.nav-link:hover {
-  color: #ffffff;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+.tree-rail-item:hover {
+  background: var(--color-red-wash);
 }
-
-.nav-link.active {
-  color: #ffffff;
-  border-bottom-color: var(--color-secondary);
+.tree-rail-item.active {
+  background: var(--color-red-wash);
+  color: var(--color-red-deep);
   font-weight: 600;
 }
-
-.header-right {
-  flex: 0 0 auto;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 15px;
+.tree-rail-foot {
+  margin-top: auto;
+  padding: var(--space-2) var(--space-2) var(--space-4);
+  border-top: 1px solid var(--line-inner);
 }
 
 /* --- Sign-in screen — heritage-quiet: wordmark lockup on a calm paper card,
@@ -1757,40 +1812,8 @@ main {
 }
 
 @media (max-width: 768px) {
-  /* Header — drop the gigantic h1 and the long nav row down to a compact bar. */
-  :root {
-    --header-height: 64px;
-  }
-  .App-header {
-    padding: var(--space-3) var(--space-4);
-    flex-wrap: wrap;
-    row-gap: var(--space-2);
-  }
-  .App-header h1 {
-    font-size: var(--font-size-2xl);
-    letter-spacing: 0;
-  }
-  .header-left-section {
-    gap: var(--space-3);
-    min-width: 0;
-  }
-  .header-nav {
-    gap: var(--space-3);
-    flex-wrap: wrap;
-    width: 100%;
-  }
-  .nav-link {
-    font-size: var(--font-size-sm);
-    letter-spacing: 0.5px;
-  }
-  .tree-switcher-button {
-    max-width: 180px;
-  }
-  .tree-switcher-button > span:first-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  /* Full responsive (a mobile chrome bar + the rail as a drawer) is a later
+   * phase; for now, restack the multi-column editor and form layouts. */
 
   /* Split editor: sidebar above the panel as a horizontal scroll list. */
   .edit-screen {
@@ -1831,16 +1854,6 @@ main {
   }
 }
 
-@media (max-width: 600px) {
-  .App-header h1 {
-    font-size: var(--font-size-xl);
-  }
-  /* Hide the People/Family/Members text labels — switching to icon-style chips
-   * (with title attributes), and a mobile hamburger nav, are deferred. */
-  .header-nav .nav-link {
-    padding: var(--space-1) var(--space-2);
-  }
-}
 /* --- Loading Component --- */
 .loading-container {
   display: flex;

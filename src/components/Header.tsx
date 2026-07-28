@@ -7,8 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAppContext } from "../context/AppContext";
 import type { AuthUser } from "../services/types";
 import type { TreeMembership } from "../types/tree";
-import { APP_CONFIG } from "../constants";
-import { canViewTree, isOwner } from "../lib/access";
+import { canViewTree } from "../lib/access";
 import { stringToColor } from "../utils/colorUtils";
 
 interface HeaderProps {
@@ -17,11 +16,12 @@ interface HeaderProps {
 }
 
 /**
- * App header — logo + tree switcher + scoped nav + user avatar.
+ * The chrome bar — the one loud surface (§04). 60px of darkened Madhubani
+ * banner closed with a 2px red rule. Holds the wordmark lockup (the single
+ * place the two scripts stack, and the one place marigold sits on near-black
+ * and passes contrast), the tree switcher, and the signed-in avatar.
  *
- * Nav links resolve against `currentTreeId` so they always point at the active
- * tree (`/tree/{id}/family`, etc.). When the user has more than one tree the
- * tree name in the breadcrumb opens a dropdown to switch.
+ * Per-tree navigation lives in the rail (`TreeRail`), not here.
  */
 export default function Header({ user, membership }: HeaderProps) {
   const pathname = usePathname();
@@ -46,123 +46,75 @@ export default function Header({ user, membership }: HeaderProps) {
     setIsPickerOpen(false);
   }, [pathname]);
 
-  const showNav = !!user && canViewTree(membership?.role) && !!currentTreeId;
+  const showTreeSwitcher = !!user && canViewTree(membership?.role) && !!currentTreeId;
   const allTrees = myTrees ? [...myTrees.owned, ...myTrees.member] : [];
   const currentTree = allTrees.find((t) => t.id === currentTreeId);
 
-  const isActive = (path: string) => pathname === path;
-
   return (
-    <header className="App-header">
-      <div className="header-left-section">
-        <Link href="/" className="header-title-link">
-          <h1>{APP_CONFIG.NAME}</h1>
-        </Link>
+    <header className="chrome-bar">
+      <div className="chrome-bar-banner" aria-hidden="true" />
 
-        {showNav && currentTreeId && (
-          <>
-            {/* Tree breadcrumb + switcher */}
-            <div className="tree-switcher" ref={pickerRef}>
-              <button
-                type="button"
-                className="tree-switcher-button"
-                onClick={() => setIsPickerOpen((o) => !o)}
-                aria-haspopup="true"
-                aria-expanded={isPickerOpen}
-              >
-                <span>{currentTree?.name ?? "Tree"}</span>
-                <span aria-hidden="true" className="tree-switcher-caret">
-                  ▾
-                </span>
-              </button>
-              {isPickerOpen && (
-                <ul className="tree-switcher-menu" role="menu">
-                  {allTrees.map((tree) => (
-                    <li key={tree.id} role="none">
-                      <Link
-                        href={`/tree/${tree.id}`}
-                        className={`tree-switcher-item${
-                          tree.id === currentTreeId ? " active" : ""
-                        }`}
-                        role="menuitem"
-                      >
-                        {tree.name}
-                      </Link>
-                    </li>
-                  ))}
-                  <li role="none" className="tree-switcher-separator" />
-                  <li role="none">
-                    <Link href="/" className="tree-switcher-item" role="menuitem">
-                      All trees…
-                    </Link>
-                  </li>
-                </ul>
-              )}
-            </div>
+      <Link href="/" className="chrome-wordmark">
+        <span className="mark">Vanshavali</span>
+        <span className="script" lang="hi">
+          वंशावली
+        </span>
+      </Link>
 
-            <div className="header-nav">
-              <Link
-                href={`/tree/${currentTreeId}`}
-                className={`nav-link ${isActive(`/tree/${currentTreeId}`) ? "active" : ""}`}
-              >
-                Tree
-              </Link>
-              <Link
-                href={`/tree/${currentTreeId}/people`}
-                className={`nav-link ${isActive(`/tree/${currentTreeId}/people`) ? "active" : ""}`}
-              >
-                People
-              </Link>
-              <Link
-                href={`/tree/${currentTreeId}/family`}
-                className={`nav-link ${isActive(`/tree/${currentTreeId}/family`) ? "active" : ""}`}
-              >
-                Family
-              </Link>
-              <Link
-                href={`/tree/${currentTreeId}/members`}
-                className={`nav-link ${isActive(`/tree/${currentTreeId}/members`) ? "active" : ""}`}
-              >
-                Members
-              </Link>
-              {isOwner(membership?.role) && (
-                <Link
-                  href={`/tree/${currentTreeId}/settings`}
-                  className={`nav-link ${isActive(`/tree/${currentTreeId}/settings`) ? "active" : ""}`}
-                >
-                  Settings
+      {showTreeSwitcher && currentTreeId && (
+        <div className="chrome-treeswitcher" ref={pickerRef}>
+          <button
+            type="button"
+            className="chrome-treeswitcher-button"
+            onClick={() => setIsPickerOpen((o) => !o)}
+            aria-haspopup="true"
+            aria-expanded={isPickerOpen}
+          >
+            <span>{currentTree?.name ?? "Tree"}</span>
+            <span aria-hidden="true" className="caret">
+              ▾
+            </span>
+          </button>
+          {isPickerOpen && (
+            <ul className="tree-switcher-menu" role="menu">
+              {allTrees.map((tree) => (
+                <li key={tree.id} role="none">
+                  <Link
+                    href={`/tree/${tree.id}`}
+                    className={`tree-switcher-item${tree.id === currentTreeId ? " active" : ""}`}
+                    role="menuitem"
+                  >
+                    {tree.name}
+                  </Link>
+                </li>
+              ))}
+              <li role="none" className="tree-switcher-separator" />
+              <li role="none">
+                <Link href="/" className="tree-switcher-item" role="menuitem">
+                  All trees…
                 </Link>
-              )}
-              <Link href="/about" className={`nav-link ${isActive("/about") ? "active" : ""}`}>
-                About
-              </Link>
-            </div>
-          </>
-        )}
-      </div>
+              </li>
+            </ul>
+          )}
+        </div>
+      )}
 
-      <div className="header-right">
-        {user && (
-          <Link href="/user/profile" className="user-menu-link" aria-label="Profile">
-            {user.photoURL ? (
-              <img
-                src={user.photoURL}
-                alt={user.displayName || "User"}
-                className="header-user-avatar"
-              />
-            ) : (
-              <div
-                className="header-user-placeholder"
-                style={{
-                  backgroundColor: stringToColor(user.email || user.displayName || "User"),
-                }}
-              >
-                {user.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
-              </div>
-            )}
-          </Link>
-        )}
-      </div>
+      <div className="chrome-spacer" />
+
+      {user && (
+        <Link href="/user/profile" className="chrome-avatar-link" aria-label="Your profile">
+          {user.photoURL ? (
+            <img src={user.photoURL} alt={user.displayName || "You"} className="chrome-avatar" />
+          ) : (
+            <span
+              className="chrome-avatar chrome-avatar--placeholder"
+              style={{ backgroundColor: stringToColor(user.email || user.displayName || "You") }}
+            >
+              {user.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
+            </span>
+          )}
+        </Link>
+      )}
     </header>
   );
 }
