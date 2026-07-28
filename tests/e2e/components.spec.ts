@@ -696,3 +696,49 @@ test.describe("Components — Empty & loading", () => {
     expect(bar["animation-name"]).toBe("skeleton-shimmer");
   });
 });
+
+test.describe("Components — A person (portrait)", () => {
+  const sizes = [
+    ["table", "40px", "2px", "12px"],
+    ["panel", "44px", "3px", "14px"],
+    ["hero", "56px", "3px", "15px"],
+    ["node", "58px", "3px", "15px"],
+  ] as const;
+
+  for (const [mod, size, ring, initials] of sizes) {
+    test(`Portrait ${mod}: ${size} circle, ${ring} ring, ${initials} initials`, async ({
+      page,
+    }) => {
+      const c = await computed(
+        page,
+        `<span class="portrait portrait--${mod}">दे</span>`,
+        `.portrait--${mod}`,
+        ["width", "height", "border-top-width", "font-size", "border-radius"]
+      );
+      expect(c).toMatchObject({
+        width: size,
+        height: size,
+        "border-top-width": ring,
+        "font-size": initials,
+        "border-radius": "50%",
+      });
+    });
+  }
+
+  test("Ring meaning: default is red (born), --married is marigold", async ({ page }) => {
+    const born = await computed(
+      page,
+      '<span class="portrait portrait--panel">दे</span>',
+      ".portrait",
+      ["border-top-color"]
+    );
+    expect(born["border-top-color"]).toBe("rgb(178, 34, 34)");
+    const married = await computed(
+      page,
+      '<span class="portrait portrait--panel portrait--married">क</span>',
+      ".portrait",
+      ["border-top-color"]
+    );
+    expect(married["border-top-color"]).toBe("rgb(255, 140, 0)");
+  });
+});

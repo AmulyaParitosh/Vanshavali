@@ -146,3 +146,27 @@ in curly quotes and offers the write action only if the viewer may write.
 - **`.skeleton`** / **`.skeleton-row`** (real row geometry, 10/18, gap 14) / **`.skeleton-avatar`** (40px) /
   **`.skeleton-bar`** (11px; `--sub` 9px `#f8f2e4`) — quiet `#f4ede0` fill, `skeleton-shimmer` 1.4s
   ease-in-out infinite; `prefers-reduced-motion` → 0s. Chrome + rail render immediately (no skeleton).
+
+## A person — portrait (Components §A person)
+
+The most repeated object. Tint assigned once per person, set by the consumer, identical on every
+surface. Missing photo → initials on the tint, never a silhouette.
+
+- **`.portrait`** + **`--table`** (40 · 2px ring · 12) / **`--panel`** (44 · 3px · 14) / **`--hero`**
+  (56 · 3px · 15) / **`--node`** (58 · 3px · 15, the disc inside the 78px `--ornament-ring` box).
+  radius 50% · initials #fffdf9/600 over the tint. **Ring meaning:** default red `#b22222` = born into
+  the line; `.portrait--married` marigold `#ff8c00` = married in. The one place ornament colour means.
+- Name stack: the row variant is `.records-name-primary` (15/600) + `.records-name-secondary` (13/400
+  #8a8377), both line-height 1.3, alias in the secondary after a middle dot in curly quotes. Panel
+  variant (20/600 over 14 + relation 13 #b22222) and node variant (12.5/600 over 9) are built with the
+  record panel (Spec 07) and tree node (Spec 05).
+- **Household node & pair glyph** (couple pill 170×90 radius 26 / single 90×90 / pair glyph two 40px
+  circles overlapped −12px) — "05 owns it": built in Spec 05 (Wave 3), consuming `.portrait--node` +
+  `--ornament-ring`. A node is a household, not a person; never draw an empty second slot.
+- Migration: `.records-avatar` and `PersonAvatar` fold onto `.portrait` in Waves 2–3.
+
+---
+
+**Wave 0 component library COMPLETE** — every Components §section built + pinned by
+`tests/e2e/components.spec.ts` (44 tests). Page-owned pieces (household node, panel/node name stacks,
+place-suggestion row) are noted against their waves.

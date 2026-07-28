@@ -1331,6 +1331,52 @@ main {
   }
 }
 
+/* --- A person — portrait (Components §A person). The most repeated object.
+ * Four sizes; ring 2px in tables, 3px everywhere else. Tint (background) is
+ * assigned once per person and set by the consumer; the SAME face keeps the same
+ * tint on every surface. Red ring = born into this line, marigold = married in —
+ * the only place ornament colour carries meaning. A missing photo shows initials
+ * on the tint, never a silhouette. (The 78px canvas node + pair glyph are the
+ * tree's, Spec 05; .records-avatar is the table portrait and folds into this in
+ * Wave 3.) --- */
+.portrait {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 3px solid var(--ring-born); /* born into the line; consumer sets tint bg */
+  color: #fffdf9;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.portrait--married {
+  border-color: var(--ring-married); /* married in — marigold */
+}
+.portrait--table {
+  width: 40px;
+  height: 40px;
+  border-width: 2px;
+  font-size: 12px;
+}
+.portrait--panel {
+  width: 44px;
+  height: 44px;
+  font-size: 14px;
+}
+.portrait--hero {
+  width: 56px;
+  height: 56px;
+  font-size: 15px;
+}
+/* Canvas inner circle — the 58px disc that sits inside the 78px painted ring box
+ * (--ornament-ring) on a tree node. */
+.portrait--node {
+  width: 58px;
+  height: 58px;
+  font-size: 15px;
+}
+
 /* Household pill behind the portrait(s) — paper surface, hairline control
  * border, the soft node-pill shadow. */
 .node-pill {
