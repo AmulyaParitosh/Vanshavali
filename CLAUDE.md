@@ -32,8 +32,9 @@ The **app** and `db:extras` follow **`NEXT_PUBLIC_ENV`** (`local` | `prod`). The
 - `npm run start` — run the production build
 - `npm run typecheck` — `tsc --noEmit`
 - `npm run db:diff -- <name>` — generate a migration in `supabase/migrations/` from edits to the declarative schema (`supabase/schemas/*.sql`), via `supabase db diff`
-- `npm run db:reset` — drop + recreate the local DB, re-applying all migrations (+ seed); run after pulling new migrations
-- `npm run db:push` — apply pending migrations to the linked cloud project (`supabase link` first)
+- `npm run db:migrate` — apply **pending** migrations to the local DB **without wiping data** (`supabase migration up`); the everyday "apply the migration I just generated" command
+- `npm run db:reset` — drop + recreate the local DB (**wipes data**), re-applying all migrations (+ seed); use for a clean slate or after editing an already-applied migration
+- `npm run db:push` — apply pending migrations to the linked cloud project (`supabase link` first) — the deliberate deploy-to-cloud step
 - `npm run db:extras` — ensure the `images` storage bucket exists on the active env (the one setup step migrations can't express — buckets are created through the Storage API)
 
 Local Supabase stack lifecycle (Docker via the Supabase CLI — no cloud analog):
@@ -41,7 +42,7 @@ Local Supabase stack lifecycle (Docker via the Supabase CLI — no cloud analog)
 - `npm run stack:start` / `stack:stop` / `stack:status` — manage the local stack (`stack:start` auto-applies migrations)
 - `npm run stack:reset` — nuke + restart the containers with a fresh DB
 
-Typical first-time local setup: `npm run stack:start` (applies migrations) → `NEXT_PUBLIC_ENV=local npm run db:extras` (bucket) → `npm run dev` (with `NEXT_PUBLIC_ENV=local` in `.env`). **Schema change workflow**: edit `supabase/schemas/*.sql` → `npm run db:diff -- <name>` → review the generated migration → `npm run db:reset` to apply locally. See `docs/SUPABASE-SETUP.md`.
+Typical first-time local setup: `npm run stack:start` (applies migrations) → `NEXT_PUBLIC_ENV=local npm run db:extras` (bucket) → `npm run dev` (with `NEXT_PUBLIC_ENV=local` in `.env`). **Schema change workflow**: edit `supabase/schemas/*.sql` → `npm run db:diff -- <name>` → review the generated migration → `npm run db:migrate` to apply locally (data-preserving; use `db:reset` instead if you edited an already-applied migration and need a clean rebuild). See `docs/SUPABASE-SETUP.md`.
 
 The TypeScript config is strict (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`).
 

@@ -14,7 +14,7 @@ The **app** selects its backend with `NEXT_PUBLIC_ENV` = `local` | `prod`. The *
 - **There is no RLS**, no policies, no grants, no realtime publication. The backend owns the tables: the app connects as the Postgres owner and enforces access in the service layer (`src/services/authz.ts`). The Data API roles get nothing (`auto_expose_new_tables = false`).
 - The only thing migrations can't do is create the storage bucket — that's `npm run db:extras`.
 
-**Changing the schema:** edit `supabase/schemas/*.sql` → `npm run db:diff -- <name>` → review the generated migration in `supabase/migrations/` (delete any `GRANT … TO anon/authenticated/service_role` lines the diff adds — they're image defaults, carry no data access, and `db reset`/`db diff` won't reintroduce drift) → `npm run db:reset` to apply locally.
+**Changing the schema:** edit `supabase/schemas/*.sql` → `npm run db:diff -- <name>` → review the generated migration in `supabase/migrations/` (delete any `GRANT … TO anon/authenticated/service_role` lines the diff adds — they're image defaults, carry no data access, and `db reset`/`db diff` won't reintroduce drift) → `npm run db:migrate` to apply it locally (keeps your data). Use `npm run db:reset` instead only when you need a clean rebuild (e.g. you edited an already-applied migration) — it wipes data, so re-run `db:extras` after.
 
 ---
 
