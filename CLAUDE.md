@@ -18,7 +18,11 @@ Locked-in decisions (do not re-litigate without a strong reason):
 - **Invitations**: email-based, auto-link on signup.
 - **Tree visualization**: React + D3 hybrid — D3 for layout math only, nodes as React components inside `<foreignObject>` (closes the current XSS surface).
 - **Visual identity**: the **Vanshavali System** — see `docs/DESIGN-LANGUAGE.md` (the codebase mirror of the Claude Design "Vanshavali Style Guide", the source of truth). Madhubani / Mithila heritage is confined to **four ornament surfaces** (chrome banner, portrait ring, 3px inspector bar, paper wash) driven by one `data-heritage` setting; everything else stays quiet, cream, and readable. Tokens live in `:root` in `src/app/globals.css`; compose the primitives (`.btn*`, `.input`, `.chip*`, `.card`, `.eyebrow`), never raw hex.
-- **Quality tooling**: ESLint, Prettier, Vitest + React Testing Library. No Playwright in v1.
+- **Quality tooling**: ESLint, Prettier, Vitest for logic/permission/merge unit tests. The
+  `f/design-system` redesign branch **adopts Playwright** for DOM/acceptance tests and the twelve
+  cross-spec integration contracts (see `IMPLEMENTATION.md` / `QUESTIONS.md` Q1) — this supersedes the
+  earlier "no Playwright in v1" stance for that work. E2E specs live in `tests/e2e/*.spec.ts`
+  (`npm run test:e2e`); Vitest specs stay in `tests/**/*.test.ts` (`npm run test`).
 - **Hosting**: parked — decide before launch.
 
 **The migration is complete** — the app runs entirely on Supabase. The provider abstraction (`AuthProvider`, `DataProvider`, `StorageProvider`) remains the seam for all backend access: never import `supabase-js` directly in components — go through the providers.
