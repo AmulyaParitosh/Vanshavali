@@ -51,17 +51,15 @@ Never commit `.env`. Never put secrets in `NEXT_PUBLIC_*` variables — those ar
 
 ### Local mode (recommended for most dev work)
 
-`NEXT_PUBLIC_ENV=local` runs the app against a full **local Supabase stack** (real Postgres + Auth + Storage + Realtime in Docker) — the same provider code as prod, so RLS/auth/storage behave identically. One-time setup:
+`NEXT_PUBLIC_ENV=local` runs the app against a full **local Supabase stack** (real Postgres + Auth + Storage in Docker) — the same code as prod. One-time setup:
 
 ```bash
-npm run stack:start   # boot the Docker stack (pulls images on first run)
-npm run db:setup      # schema + RLS + realtime + storage bucket & policies (targets local)
+npm run stack:start   # boot the Docker stack (auto-applies migrations)
+npm run db:extras     # create the images storage bucket (NEXT_PUBLIC_ENV=local)
 npm run dev           # with NEXT_PUBLIC_ENV=local in .env
 ```
 
 Sign up with any email/password — email confirmation is off locally, so you get a session immediately. Browse local data at Supabase Studio (`http://127.0.0.1:54323`). Full details + troubleshooting in `docs/SUPABASE-SETUP.md`.
-
-> The old file-backed JSON mock (`NEXT_PUBLIC_APP_ENV=local`, `.local_data/`) was retired as a runtime mode once the local stack landed. Its `LocalDataProvider` survives only as the unit-test double.
 
 ### Tests, lint, types
 
@@ -90,18 +88,20 @@ src/
                           useTreeSubscription / useProviders)
   lib/                    Pure-domain logic (graph manager, validators, helpers)
   providers/              Composing context providers for the app root
-  services/               Backend provider abstractions
-    supabase/             Supabase implementations (the runtime backend)
-    local/                File-backed LocalDataProvider (the unit-test double)
+  services/               Provider interfaces + client HTTP providers (ApiDataProvider,
+                          ApiStorageProvider), server services (*-service.ts) + authz
+    supabase/             SupabaseAuthProvider (auth only)
+    api/                  authedFetch — the client's authed HTTP helper
+  repositories/           Raw-SQL data access (one *Repository.ts per entity) + mappers;
+                          sql/ holds the .sql query files
   constants/              Project-wide constants — TREE_ROLES, etc.
   types/                  Shared TypeScript types
   utils/                  Pure utility functions
 
-scripts/                  DB setup tooling (env.ts, apply-rls-policies.ts,
-                          setup-extras.ts, db-setup.ts) — env-aware via NEXT_PUBLIC_ENV
+scripts/                  Bucket setup (setup-extras.ts) + env resolver (env.ts)
+supabase/                 Declarative schemas (schemas/), generated migrations (migrations/), config.toml
 docs/                     Architecture, design language, decision records
 public/                   Static assets (images, icons)
-.local_data/              Scratch data for the retained test double (gitignored)
 ```
 
 When adding new domain logic, put it in `src/lib/` (pure, no React, no provider awareness). When adding new components, default to `src/components/`. Page-only logic stays inside the `src/app/` page file unless it grows past ~150 lines.
@@ -304,15 +304,16 @@ A reviewer should check (and an author should self-check before requesting revie
 
 ## 8. Where to find things
 
-| Question                                                    | File                      |
-| ----------------------------------------------------------- | ------------------------- |
-| Project goals, locked-in decisions, contributor onboarding  | `CLAUDE.md`, this file    |
-| Current architecture + target architecture + migration plan | `docs/ARCHITECTURE.md`    |
-| Visual identity, tokens, component spec                     | `docs/DESIGN-LANGUAGE.md` |
-| What every backend op contractually does                    | `src/services/types.ts`   |
-| Domain logic that has no provider awareness                 | `src/lib/`                |
-| Project-wide constants (roles, statuses, etc.)              | `src/constants/index.ts`  |
-| Unit-test double for the provider interfaces                | `src/services/local/`     |
+| Question                                                    | File                                                 |
+| ----------------------------------------------------------- | ---------------------------------------------------- |
+| Project goals, locked-in decisions, contributor onboarding  | `CLAUDE.md`, this file                               |
+| Current architecture + target architecture + migration plan | `docs/ARCHITECTURE.md`                               |
+| Visual identity, tokens, component spec                     | `docs/DESIGN-LANGUAGE.md`                            |
+| What every backend op contractually does                    | `src/services/types.ts`                              |
+| Domain logic that has no provider awareness                 | `src/lib/`                                           |
+| Project-wide constants (roles, statuses, etc.)              | `src/constants/index.ts`                             |
+| Raw-SQL data access + the `.sql` query files                | `src/repositories/`                                  |
+| Server business logic + authorization                       | `src/services/*-service.ts`, `src/services/authz.ts` |
 
 ---
 

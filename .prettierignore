@@ -1,6 +1,5 @@
 node_modules
 .next
-.local_data
 build
 package-lock.json
 tsconfig.tsbuildinfo

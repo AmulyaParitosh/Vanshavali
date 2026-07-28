@@ -59,22 +59,18 @@ The single most important architectural pattern in the codebase. All backend acc
 - `DataProvider` — tree data, users, suggestions, memberships, invites.
 - `StorageProvider` — file uploads.
 
-Two implementations of each:
+The runtime implementations:
 
-- **Firebase** (`src/services/firebase/`) — removed; the directory no longer exists.
-- **Local** (`src/services/local/`) — file-backed `LocalDataProvider`, which read/wrote `.local_data/db/*.json` through local API routes (since deleted). **Retained** as the unit-test double for the migrated codebase.
-
-After migration:
-
-- **Supabase auth** (`src/services/supabase/`) — `SupabaseAuthProvider` only (the Storage + Realtime helpers are gone).
+- **Supabase auth** (`src/services/supabase/`) — `SupabaseAuthProvider` only.
 - **`ApiDataProvider`** (`src/services/ApiDataProvider.ts`) + **`ApiStorageProvider`** — the runtime `DataProvider` / `StorageProvider`. **Thin HTTP clients** over the `/api/*` routes; they hold a supabase-js client only for the bearer token. The real data logic lives server-side in `src/services/*-service.ts` (business logic + authz) → `src/repositories/*` (raw SQL over `pg`) → `src/repositories/mappers.ts` (row↔domain). No live updates (see §7).
-- **Local** — file-backed `LocalDataProvider`, kept only as the unit-test double.
 
-`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) returns `{ auth, data, storage }` and memoizes them: auth + storage go through supabase-js; data goes through `ApiDataProvider`. `NEXT_PUBLIC_ENV` (`local` | `prod`) selects which backend everything targets — the local `supabase start` stack or the cloud project — via `src/lib/supabaseEnv.ts` (client) and `src/repositories/db.ts` (server-side `pg` connection).
+The legacy Firebase providers and the file-backed "local mode" (`src/services/local/`, `.local_data/`, `/api/local/*`) have been **removed entirely** — they no longer exist in the tree.
+
+`ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) returns `{ auth, data, storage }` and memoizes them: **auth** goes through supabase-js; **data** and **storage** go through the HTTP `Api*` providers. `NEXT_PUBLIC_ENV` (`local` | `prod`) selects which backend everything targets — the local `supabase start` stack or the cloud project — via `src/lib/supabaseEnv.ts` (client) and `src/repositories/db.ts` (server-side `pg` connection).
 
 ### Invariant
 
-> **Any new backend operation must be added to the interface and implemented in _both_ the Supabase and local providers** — otherwise the unit tests and the real backend drift. This applies during and after the migration.
+> **Any new backend operation is a single vertical slice**: add it to the interface (`src/services/types.ts`), the `ApiDataProvider` HTTP call, the `/api/*` route, the service (with authz), and the repository (+ its `.sql`). That keeps the client contract and the server implementation in step.
 
 ### Interface split (target)
 
@@ -82,7 +78,7 @@ The pre-migration `DataProvider` mixed tree data, user profiles, admin user list
 
 - `TreeDataProvider` — `subscribeToTreeData(treeId)`, `saveTreeData(treeId, ...)`, `linkUserToPerson(treeId, ...)`.
 - `UserProvider` — `getUserProfile(uid)`, `createUserProfile(uid, ...)`.
-- `TreeMetaProvider` — `createTree(...)`, `deleteTree(treeId)`, `listMyTrees(uid)`, `subscribeToMyTrees(uid)`, `getTreeMeta(treeId)`.
+- `TreeMetaProvider` — `createTree(...)`, `deleteTree(treeId)`, `listMyTrees(uid)`, `subscribeToMyTrees(uid)`.
 - `MembershipProvider` — `getMembership(treeId, uid)`, `subscribeToMembers(treeId)`, `updateMemberRole(...)`, `removeMember(...)`.
 - `InvitationProvider` — `createInvite(...)`, `acceptInvite(...)`, `revokeInvite(...)`, `subscribeToInvites(treeId)`.
 - `SuggestionProvider` — global site feedback only; unchanged signature.
@@ -289,9 +285,9 @@ The context value is memoized so consumers don't cascade-rerender on unrelated s
 /auth/sign-in           — sign-in screen (not built — auth is the LoginScreen component)
 /auth/sign-up           — sign-up screen (not built — LoginScreen handles sign-up too)
 /auth/reset-password    — password reset flow (built — the password-recovery landing exists)
-/api/invite/send        — server route, calls Resend
-/api/local/db           — was kept for the JSON local mode; since deleted (mode retired)
-/api/local/storage      — was kept for the JSON local mode; since deleted (mode retired)
+/api/*                  — all data reads/writes (route → service → repository): tree/create,
+                          tree/[id] (+ /data, /members, /invites, /link-person, /membership),
+                          trees, invite/accept, upload, suggestions, user/profile
 ```
 
 Deleted: `/user/access_requests`, `/user/management`, `/api/send-access-request`. Their per-tree replacements are `/tree/[id]/members`.
@@ -355,10 +351,9 @@ The migration runs in **non-breaking ground-prep** → **breaking schema swap** 
 ### Phase B — Supabase scaffold (parallel work; doesn't ship yet)
 
 6. **Create the Supabase project** (user action). Save URL + anon key in `.env`.
-7. **Author schema migrations** (`db/migrations/0001_initial.sql`) — tables from §4, RLS policies from §7.
-8. **Author `SupabaseDataProvider`, `SupabaseAuthProvider`, `SupabaseStorageProvider`** — implement the split interfaces against Supabase JS SDK. Real-time subscriptions via Supabase channels.
-9. **Update `LocalDataProvider`** to mirror the per-tree path layout (`.local_data/db/trees/{treeId}/people.json`). The local API route accepts `?tree=...`.
-10. **`ProviderFactory` always selects Supabase**; `NEXT_PUBLIC_ENV` (`local` | `prod`) chooses local stack vs cloud. (The JSON local mode was later retired as a runtime path — test-double only.)
+7. **Author the schema** — now declarative in `supabase/schemas/*.sql`, with migrations generated via `supabase db diff` into `supabase/migrations/`. (The original plan hand-wrote `db/migrations/` with RLS policies; RLS was later dropped entirely — see §7.)
+8. **Author the providers + server data layer** — `SupabaseAuthProvider` for auth; data/storage go through `ApiDataProvider` / `ApiStorageProvider` → `/api/*` routes → services → repositories (raw SQL). (The original plan had a single `SupabaseDataProvider`; it was later split into this repository/service architecture, and there are no realtime subscriptions.)
+9. **`ProviderFactory` wires the runtime providers**; `NEXT_PUBLIC_ENV` (`local` | `prod`) chooses local stack vs cloud. (The file-backed "local mode" from the pre-migration codebase was retired and then removed entirely.)
 
 ### Phase C — Critical bug fixes (lands with Phase B or earlier)
 
@@ -378,7 +373,7 @@ The migration runs in **non-breaking ground-prep** → **breaking schema swap** 
 
 ### Phase E — Invitations
 
-21. **`POST /api/invite/send`** server route — creates the `tree_invites` row, calls Resend with the email template.
+21. **`POST /api/tree/[id]/invites`** server route — creates the `tree_invites` row and sends the Resend email in one step (the original plan split this into a separate `/api/invite/send`; it was consolidated).
 22. **`/invite/[id]`** accept page — handles signed-in and not-signed-in cases.
 23. **Email template** — heritage-themed but accessible HTML/text email.
 

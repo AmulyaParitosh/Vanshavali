@@ -59,16 +59,15 @@ Copy `.env.sample` → `.env` (gitignored) and fill values. Key vars:
 - `NEXT_PUBLIC_SITE_URL` — canonical site origin used to build invite-acceptance URLs in outbound email. Defaults to request origin when unset.
 - `NEXT_PUBLIC_SITE_ADMIN_UIDS` — comma-separated allowlist for the global suggestions inbox.
 
-Backend resolution: `NEXT_PUBLIC_ENV` chooses which backend everything points at (local stack vs cloud) — for the client via `src/lib/supabaseEnv.ts` and for the server-side repository connection via `src/repositories/db.ts`. The file-backed JSON mock under `src/services/local/` was retired as a runtime mode and is kept only as the unit-test double.
+Backend resolution: `NEXT_PUBLIC_ENV` chooses which backend everything points at (local stack vs cloud) — for the client via `src/lib/supabaseEnv.ts` and for the server-side repository connection via `src/repositories/db.ts`.
 
 ## Architecture
 
 ### Provider abstraction (the central pattern)
 
-All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts`. `DataProvider` is split per ISP into focused sub-interfaces — `UserProvider`, `TreeMetaProvider`, `TreeDataProvider`, `MembershipProvider`, `InvitationProvider`, `SuggestionProvider`. Consumers should type their dependencies against the narrowest one they need. Data implementations:
+All backend access (auth, data, storage) goes through interfaces in `src/services/types.ts`. `DataProvider` is split per ISP into focused sub-interfaces — `UserProvider`, `TreeMetaProvider`, `TreeDataProvider`, `MembershipProvider`, `InvitationProvider`, `SuggestionProvider`. Consumers should type their dependencies against the narrowest one they need. The runtime implementation:
 
-- `src/services/ApiDataProvider.ts` — the runtime `DataProvider`. A **thin HTTP client**: every read/write calls a `/api/*` route (via `authedFetch`, attaching the user's Supabase access token as a bearer). It holds a supabase-js client only for that token. It contains **no SQL and no row-shape knowledge**. `src/services/ApiStorageProvider.ts` is the same idea for images (posts multipart to `/api/upload`).
-- `src/services/local/` — `LocalDataProvider`, the file-backed unit-test double. **Not wired at runtime**; `LocalDataProvider.test.ts` stubs `fetch` against it so the interface has a fast in-memory implementation to test contract behavior without a live backend.
+- `src/services/ApiDataProvider.ts` — the `DataProvider`. A **thin HTTP client**: every read/write calls a `/api/*` route (via `authedFetch`, attaching the user's Supabase access token as a bearer). It holds a supabase-js client only for that token. It contains **no SQL and no row-shape knowledge**. `src/services/ApiStorageProvider.ts` is the same idea for images (posts multipart to `/api/upload`).
 
 `ProviderFactory.getProviders()` (`src/services/ProviderFactory.ts`) returns `{ auth, data, storage }` and memoizes them: **auth** goes through supabase-js (`SupabaseAuthProvider`); **data** and **storage** go through `ApiDataProvider` / `ApiStorageProvider`, which hit the `/api/*` routes.
 
@@ -84,7 +83,7 @@ All data reads/writes happen server-side, in three layers under `src/`:
 - **`services/*-service.ts`** — business logic + **authorization** (`src/services/authz.ts`: `requireView` / `requireEdit` / `requireOwner` / `requireInvite`). Services own transaction boundaries (`transaction()` in `db.ts`) so multi-statement writes are atomic.
 - **`repositories/*Repository.ts`** — data access only. Each method loads a raw `.sql` file via `sql("name.sql")` (`src/repositories/sql.ts`), runs it through `query(db, text, params)` over a `pg` pool (`src/repositories/db.ts`), and maps rows to domain types via `src/repositories/mappers.ts`. **No ORM, no query builder** — queries are plain SQL in `src/repositories/sql/<entity>/*.sql`. No authorization here.
 
-The `pg` connection uses the Postgres owner role, so it **bypasses RLS** — which is why authorization is the service layer's job, not RLS's (see the Database section). Adding a data operation = add the interface method (`types.ts`) + the `ApiDataProvider` HTTP call + the route + the service + the repository method (+ its `.sql`), and mirror it in the `LocalDataProvider` test double so the contract tests don't drift.
+The `pg` connection uses the Postgres owner role, so it **bypasses RLS** — which is why authorization is the service layer's job, not RLS's (see the Database section). Adding a data operation = add the interface method (`types.ts`) + the `ApiDataProvider` HTTP call + the route + the service + the repository method (+ its `.sql`).
 
 ### App bootstrap, tenancy, and auth gating
 
@@ -154,15 +153,13 @@ App router under `src/app/`. Tree-scoped pages live under `/tree/[id]/*`; the `[
 - `/user/suggestions` — site-level feedback inbox; gated by the `NEXT_PUBLIC_SITE_ADMIN_UIDS` allowlist via `isSiteAdmin` (`src/lib/access.ts`)
 - `/invite/[id]` — invite-acceptance landing; calls `/api/invite/accept` after the user is signed in
 - `/auth/reset-password` — password-recovery landing
-- `/api/tree/create` — server route; service-role creation of the tree + owner membership
-- `/api/invite/send` — server route; sends the invitation email via Resend after the owner creates an invite
-- `/api/invite/accept` — server route; uses the service-role client to atomically validate the invite + create the `tree_members` row + mark the invite accepted (RLS blocks the invitee from doing this client-side)
+- `/api/*` — all data reads/writes, per the "Server data layer" section above (route → service → repository). Notable routes: `POST /api/tree/create`, `GET/PUT /api/tree/[id]/data`, `/api/tree/[id]/members` + `/api/tree/[id]/invites` (create also sends the Resend email), `POST /api/invite/accept`, `POST /api/upload`, `/api/suggestions`, `/api/user/profile`. Each verifies the bearer token and authorizes in the service layer.
 
 ## Conventions
 
 - Strict TypeScript everywhere. Imports must use `import type` for type-only imports (`verbatimModuleSyntax` is on).
 - `'use client'` is required at the top of any component that uses hooks or browser APIs.
-- Constants and string literals for roles, suggestion statuses, and test-double config live in `src/constants/index.ts` — reuse `TREE_ROLES`, `SUGGESTION_STATUS`, `LOCAL_DATA_CONFIG.GLOBAL_COLLECTIONS` / `TREE_COLLECTIONS` instead of inlining strings.
+- Constants and string literals for roles and suggestion statuses live in `src/constants/index.ts` — reuse `TREE_ROLES`, `SUGGESTION_STATUS` instead of inlining strings.
 - Styling: single global stylesheet at `src/app/globals.css` with the token system documented in `docs/DESIGN-LANGUAGE.md`; no CSS-in-JS or modules in new code.
 - Tests live under `tests/`, mirroring `src/` (e.g. `tests/lib/access.test.ts` for `src/lib/access.ts`), and import via the `@/*` → `src/*` alias (`tsconfig.json` + `vitest.config.ts`). Vitest only picks up `tests/**/*.test.ts`. App code uses relative imports; the `@/` alias is for test imports.
 

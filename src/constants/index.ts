@@ -78,26 +78,3 @@ export const UI_CONFIG = {
     },
   },
 };
-
-/**
- * Collection layout used by the LocalDataProvider unit-test double (the JSON
- * runtime mode was retired; these names shape the in-memory store the tests
- * stub):
- *
- *   global collections (no tree scope):  users, trees, suggestions
- *   per-tree collections:                people, families, members, invites
- */
-export const LOCAL_DATA_CONFIG = {
-  GLOBAL_COLLECTIONS: {
-    USERS: "users",
-    TREES: "trees",
-    SUGGESTIONS: "suggestions",
-  },
-  TREE_COLLECTIONS: {
-    PEOPLE: "people",
-    FAMILIES: "families",
-    MEMBERS: "members",
-    INVITES: "invites",
-  },
-  POLLING_INTERVAL: 5000,
-};
