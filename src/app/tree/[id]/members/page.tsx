@@ -9,8 +9,8 @@ import Loading from "../../../../components/Loading";
 import { canEdit as canEditRole, canInvite } from "../../../../lib/access";
 import { INVITABLE_ROLES, TREE_ROLES } from "../../../../constants";
 import { portraitTint, personInitials } from "../../../../utils/portrait";
+import { generationMap, roman, bornInLine } from "../../../../lib/generations";
 import type { Person } from "../../../../types/person";
-import type { Family } from "../../../../types/family";
 import type {
   TreeMembership,
   TreeInvite,
@@ -18,53 +18,12 @@ import type {
   TreeRole,
 } from "../../../../types/tree";
 
-const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-const roman = (n: number | undefined) => (n && ROMAN[n]) || (n ? String(n) : "");
-
 /** Access-chip presentation for a per-tree role. */
 const ROLE_CHIP: Record<TreeRole, { label: string; cls: string }> = {
   owner: { label: "Keeper", cls: "chip--keeper" },
   editor: { label: "Write", cls: "chip--write" },
   viewer: { label: "Read", cls: "chip--read" },
 };
-
-/** Generation number per person (root = I, spouses share it, children +1). */
-function generationMap(people: Person[], families: Family[]): Map<string, number> {
-  const gen = new Map<string, number>();
-  const root = people.find((p) => p.root);
-  if (!root) return gen;
-  gen.set(root.id, 1);
-  const queue = [root.id];
-  while (queue.length) {
-    const id = queue.shift()!;
-    const g = gen.get(id)!;
-    for (const f of families) {
-      if (f.husband === id || f.wife === id) {
-        const spouse = f.husband === id ? f.wife : f.husband;
-        if (spouse && !gen.has(spouse)) {
-          gen.set(spouse, g);
-          queue.push(spouse);
-        }
-        for (const c of f.children) {
-          if (!gen.has(c)) {
-            gen.set(c, g + 1);
-            queue.push(c);
-          }
-        }
-      }
-    }
-  }
-  return gen;
-}
-
-/** IDs born into the line (root + every child) — they carry the red ring. */
-function bornSet(people: Person[], families: Family[]): Set<string> {
-  const set = new Set<string>();
-  const root = people.find((p) => p.root);
-  if (root) set.add(root.id);
-  for (const f of families) f.children.forEach((c) => set.add(c));
-  return set;
-}
 
 const birthDate = (p: Person) => p.events?.find((e) => /birth|born/i.test(e.type))?.date;
 
@@ -105,7 +64,7 @@ export default function MembersPage() {
   const people = useMemo(() => treeData?.people ?? [], [treeData]);
   const families = useMemo(() => treeData?.families ?? [], [treeData]);
   const gens = useMemo(() => generationMap(people, families), [people, families]);
-  const born = useMemo(() => bornSet(people, families), [people, families]);
+  const born = useMemo(() => bornInLine(people, families), [people, families]);
   const membershipByPerson = useMemo(() => {
     const m = new Map<string, TreeMembership>();
     for (const mem of members) if (mem.personId) m.set(mem.personId, mem);

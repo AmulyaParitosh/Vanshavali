@@ -1,492 +1,432 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useAppContext } from "../../../../context/AppContext";
-import Loading from "../../../../components/Loading";
-import type { Family } from "../../../../types/family";
-import type { TreeData } from "../../../../context/AppContext";
-import type { Person } from "../../../../types/person";
 
-import TextListSidebar from "../../../../components/TextListSidebar";
-import { useToast } from "../../../../components/ToastSystem";
-import SearchItem from "../../../../components/SearchItem";
+import React, { useEffect, useMemo, useState } from "react";
+import { useAppContext } from "../../../../context/AppContext";
+import type { TreeData } from "../../../../context/AppContext";
+import Loading from "../../../../components/Loading";
 import PersonSearch from "../../../../components/PersonSearch";
-import { getPersonPlaceholderUrl } from "../../../../utils/imageUtils";
+import { useToast } from "../../../../components/ToastSystem";
 import { canEdit as canEditRole } from "../../../../lib/access";
 import { inferHusbandWife } from "../../../../lib/family";
-import { TREE_CONFIG } from "../../../../constants";
+import { generationMap, roman, bornInLine } from "../../../../lib/generations";
+import { portraitTint, personInitials } from "../../../../utils/portrait";
+import type { Family } from "../../../../types/family";
+import type { Person } from "../../../../types/person";
 
-export default function FamilyPage() {
+/**
+ * Households (§4) — every marriage in the record as a row (two portraits
+ * overlapped as one glyph, partners, children, generation), with the editor
+ * opening in the inspector on the right. A household is two people with the
+ * lineage side marked, not "Husband / Wife"; children are a reorderable list.
+ *
+ * Marriage date/place from the mockup aren't stored on the Family model yet;
+ * they land with a small additive migration in a follow-up.
+ */
+export default function HouseholdsPage() {
   const { treeData, membership, onSave } = useAppContext();
   const canEdit = canEditRole(membership?.role);
   const toast = useToast();
 
   const [data, setData] = useState<TreeData | null>(treeData);
-  const [selectedFamily, setSelectedFamily] = useState<Family | null>(null);
+  const [selected, setSelected] = useState<Family | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     setData(treeData);
   }, [treeData]);
 
-  if (!data) {
-    return <Loading />;
-  }
+  const people = useMemo(() => data?.people ?? [], [data]);
+  const families = useMemo(() => data?.families ?? [], [data]);
+  const gens = useMemo(() => generationMap(people, families), [people, families]);
+  const born = useMemo(() => bornInLine(people, families), [people, families]);
+  const personById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
+  const nameOf = (id: string | undefined) =>
+    (id && personById.get(id)?.name.official_name) || undefined;
 
-  const handleSaveFamily = async (family: Family) => {
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return families;
+    return families.filter((f) => {
+      const names = [f.husband, f.wife]
+        .map((id) => (id ? personById.get(id) : undefined))
+        .filter(Boolean)
+        .flatMap((p) => [p!.name.official_name, ...(p!.name.aliases ?? [])]);
+      return names.join(" ").toLowerCase().includes(q);
+    });
+  }, [families, query, personById]);
+
+  if (!data) return <Loading />;
+
+  const handleSave = async (family: Family) => {
     if (!canEdit) return;
-    const previousData = data;
-    let updatedFamilies: Family[];
-    let savedFamily = family;
+    const previous = data;
+    let saved = family;
+    let updated: Family[];
     if (family.id) {
-      updatedFamilies = data.families.map((f) => (f.id === family.id ? family : f));
+      updated = data.families.map((f) => (f.id === family.id ? family : f));
     } else {
-      const newFamilyId = `family_${family.husband || "none"}_${family.wife || "none"}_${Date.now()}`;
-      if (data.families.some((f) => f.id === newFamilyId)) {
-        toast.error("A family with these partners already exists.");
-        return;
-      }
-      savedFamily = { ...family, id: newFamilyId };
-      updatedFamilies = [...data.families, savedFamily];
-      setSelectedFamily(savedFamily);
+      saved = { ...family, id: `family_${Date.now()}` };
+      updated = [...data.families, saved];
     }
-    const newData = { ...data, families: updatedFamilies };
-    setData(newData);
+    const next = { ...data, families: updated };
+    setData(next);
+    setSelected(saved);
     try {
-      await onSave(newData);
-      toast.success("Family saved");
+      await onSave(next);
+      toast.success("Household saved");
     } catch (error: unknown) {
-      // Roll the local state back so the UI matches the server again.
-      setData(previousData);
-      if (!family.id) setSelectedFamily(null);
-      const message = error instanceof Error ? error.message : "Save failed";
-      toast.error(message);
+      setData(previous);
+      if (!family.id) setSelected(null);
+      toast.error(error instanceof Error ? error.message : "Save failed");
     }
   };
 
-  const handleDeleteFamily = async (familyId: string) => {
+  const handleDelete = async (familyId: string) => {
     if (!canEdit) return;
-    const previousData = data;
-    const updatedFamilies = data.families.filter((f) => f.id !== familyId);
-    const newData = { ...data, families: updatedFamilies };
-    setData(newData);
-    setSelectedFamily(null);
+    const previous = data;
+    const next = { ...data, families: data.families.filter((f) => f.id !== familyId) };
+    setData(next);
+    setSelected(null);
     try {
-      await onSave(newData);
-      toast.success("Family deleted");
+      await onSave(next);
+      toast.success("Household deleted");
     } catch (error: unknown) {
-      setData(previousData);
-      const message = error instanceof Error ? error.message : "Delete failed";
-      toast.error(message);
+      setData(previous);
+      toast.error(error instanceof Error ? error.message : "Delete failed");
     }
-  };
-
-  const handleAddNewFamily = () => {
-    if (!canEdit) return;
-    setSelectedFamily({ id: "", husband: "", wife: "", children: [] });
   };
 
   return (
-    <div className="edit-screen">
-      <TextListSidebar
-        items={data.families}
-        renderItem={(f: Family) => <SearchItem type="family" item={f} people={data.people} />}
-        filterItem={(f: Family, query: string) => {
-          const q = query.toLowerCase();
-          const { husbandId, wifeId } = inferHusbandWife(f);
-          const matchesPerson = (id: string | undefined) => {
-            if (!id) return false;
-            const person = data.people.find((p) => p.id === id);
-            if (!person) return false;
-            if (person.name.official_name.toLowerCase().includes(q)) return true;
-            return !!person.name.aliases?.some((alias) => alias.toLowerCase().includes(q));
-          };
-          return matchesPerson(husbandId) || matchesPerson(wifeId);
-        }}
-        onSelect={setSelectedFamily}
-        selectedItem={selectedFamily}
-        onAdd={canEdit ? handleAddNewFamily : undefined}
-        addButtonLabel="Add New Family"
-        canEdit={canEdit}
-      />
-      <main className="editor-panel">
-        {!selectedFamily &&
-          (data.families.length === 0 && canEdit ? (
-            <div className="welcome-message">
-              <h2>Create your first family</h2>
-              <p>
-                Families connect people. Pick a husband and wife, list their children, and the tree
-                starts taking shape.
-              </p>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleAddNewFamily}
-                style={{ marginTop: "var(--space-4)" }}
-              >
-                Create a family
-              </button>
+    <div className={`households-page${selected ? " inspector-open" : ""}`}>
+      <div className="households-main">
+        <div className="households-head">
+          <div>
+            <h1>Households</h1>
+            <div className="records-subtitle">
+              {families.length} marriage{families.length === 1 ? "" : "s"} recorded
+            </div>
+          </div>
+          <div className="records-header-spacer" />
+          {canEdit && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setSelected({ id: "", husband: "", wife: "", children: [] })}
+            >
+              + New household
+            </button>
+          )}
+        </div>
+
+        <label className="records-search">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            aria-hidden="true"
+            style={{ color: "var(--text-meta)" }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Either partner's name"
+            aria-label="Search households"
+          />
+        </label>
+
+        <div className="records-table">
+          <div className="records-thead">
+            <span style={{ width: 74, flexShrink: 0 }} />
+            <span style={{ flex: 1, minWidth: 0 }}>Partners</span>
+            <span className="hh-col-children">Children</span>
+            <span className="hh-col-gen">Gen</span>
+          </div>
+          {rows.length === 0 ? (
+            <div className="records-empty">
+              {families.length === 0 ? "No households yet." : `No household matches “${query}”.`}
             </div>
           ) : (
-            <div className="welcome-message">
-              <h2>Select a family to view details</h2>
-              {canEdit && (
-                <p>You can add a new family using the button at the bottom of the sidebar.</p>
-              )}
-            </div>
-          ))}
-        {selectedFamily && (
-          <FamilyForm
-            family={selectedFamily}
-            people={data.people}
-            onSave={handleSaveFamily}
-            onDelete={handleDeleteFamily}
-            canEdit={canEdit}
-          />
-        )}
-      </main>
+            rows.map((f) => {
+              const { husbandId, wifeId } = inferHusbandWife(f);
+              const partners = [husbandId, wifeId].filter(Boolean) as string[];
+              const childNames = f.children.map((id) => nameOf(id)).filter(Boolean);
+              const gen = partners.map((id) => gens.get(id)).find(Boolean);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  className="records-row"
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    border: "none",
+                    borderBottom: "1px solid var(--line-row)",
+                    background: "transparent",
+                    font: "inherit",
+                  }}
+                  onClick={() => setSelected(f)}
+                >
+                  <span className="couple-glyph">
+                    {partners.map((id) => (
+                      <span
+                        key={id}
+                        className="records-avatar"
+                        style={{
+                          background: portraitTint(id),
+                          border: `2.5px solid ${born.has(id) ? "var(--ring-born)" : "var(--ring-married)"}`,
+                        }}
+                      >
+                        {personInitials(personById.get(id)?.name.official_name ?? "?")}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="records-name" style={{ pointerEvents: "none" }}>
+                    <span className="records-name-primary">
+                      {partners.map((id) => nameOf(id)).join(" & ") || "Unnamed household"}
+                    </span>
+                  </span>
+                  <span className={`hh-col-children${childNames.length ? "" : " absent"}`}>
+                    {childNames.length
+                      ? `${childNames.length} · ${childNames.slice(0, 2).join(", ")}${childNames.length > 2 ? "…" : ""}`
+                      : "no children listed"}
+                  </span>
+                  <span className="hh-col-gen">{roman(gen)}</span>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {selected && (
+        <HouseholdEditor
+          key={selected.id || "new"}
+          family={selected}
+          people={people}
+          born={born}
+          gens={gens}
+          canEdit={canEdit}
+          onSave={handleSave}
+          onDelete={handleDelete}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   );
 }
 
-// ----------------------------------------------------------------------
-// Local Component: FamilyForm
-// ----------------------------------------------------------------------
-
-interface FamilyFormProps {
-  family: Family | null;
+interface HouseholdEditorProps {
+  family: Family;
   people: Person[];
-  onSave: (data: Family) => void;
-  onDelete: (id: string) => void;
+  born: Set<string>;
+  gens: Map<string, number>;
   canEdit: boolean;
+  onSave: (f: Family) => void;
+  onDelete: (id: string) => void;
+  onClose: () => void;
 }
 
-const FamilyForm: React.FC<FamilyFormProps> = ({ family, people, onSave, onDelete, canEdit }) => {
-  const [formData, setFormData] = useState<Family | null>(family);
-  const [selectedChild, setSelectedChild] = useState<string>("");
-  const [showAddChild, setShowAddChild] = useState(false);
+function HouseholdEditor({
+  family,
+  people,
+  born,
+  gens,
+  canEdit,
+  onSave,
+  onDelete,
+  onClose,
+}: HouseholdEditorProps) {
   const toast = useToast();
+  const [form, setForm] = useState<Family>(family);
+  const [addingChild, setAddingChild] = useState(false);
 
-  useEffect(() => {
-    setFormData(family);
-    setSelectedChild("");
-    setShowAddChild(false);
-  }, [family]);
+  const { husbandId, wifeId } = inferHusbandWife(form);
+  const personById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
+  const gen = [husbandId, wifeId].map((id) => (id ? gens.get(id) : undefined)).find(Boolean);
 
-  if (!formData || !family) return null;
-
-  const getPersonName = (personId: string) => {
-    const person = people.find((p) => p.id === personId);
-    return person ? person.name.official_name : "Unknown";
-  };
-
-  const handlePartnerChange = (name: string, value: string) => {
-    if (!formData) return;
-    if (name === "husband") {
-      setFormData({ ...formData, husband: value });
-    } else {
-      setFormData({ ...formData, wife: value });
-    }
-  };
-
-  const handleAddChild = (personId: string) => {
-    if (!formData || !personId) return;
-
-    // Check if child is already in the list
-    if (formData.children?.includes(personId)) {
-      toast.error("This person is already a child in this family.");
+  const setPartner = (which: "husband" | "wife", id: string) =>
+    setForm((f) => ({ ...f, [which]: id }));
+  const addChild = (id: string) => {
+    if (form.children.includes(id)) {
+      toast.error("Already a child in this household.");
       return;
     }
-
-    const currentChildren = formData?.children || [];
-    setFormData({ ...formData, children: [...currentChildren, personId] });
-    setShowAddChild(false); // Close the inline add row
-    toast.success("Child added to list");
+    setForm((f) => ({ ...f, children: [...f.children, id] }));
+    setAddingChild(false);
   };
+  const removeChild = (id: string) =>
+    setForm((f) => ({ ...f, children: f.children.filter((c) => c !== id) }));
+  const moveChild = (index: number, dir: -1 | 1) =>
+    setForm((f) => {
+      const next = [...f.children];
+      const j = index + dir;
+      if (j < 0 || j >= next.length) return f;
+      [next[index], next[j]] = [next[j]!, next[index]!];
+      return { ...f, children: next };
+    });
 
-  const handleRemoveChild = (childIdToRemove: string) => {
-    if (!formData) return;
-    const newChildren = (formData.children || []).filter(
-      (childId: string) => childId !== childIdToRemove
-    );
-    setFormData({ ...formData, children: newChildren });
-    toast.success("Child removed (unsaved)");
-  };
-
-  const handleMoveChild = (index: number, direction: "up" | "down") => {
-    if (!formData || !formData.children) return;
-    const items = [...formData.children];
-    if (direction === "up") {
-      if (index === 0) return;
-      const temp = items[index - 1];
-      if (typeof temp === "string" && typeof items[index] === "string") {
-        items[index - 1] = items[index] as string;
-        items[index] = temp;
-      }
-    } else {
-      if (index === items.length - 1) return;
-      const temp = items[index + 1];
-      if (typeof temp === "string" && typeof items[index] === "string") {
-        items[index + 1] = items[index] as string;
-        items[index] = temp;
-      }
-    }
-    setFormData({ ...formData, children: items });
-  };
-
-  // Success/error toasts fire in the page-level handlers (which await the
-  // actual save) — toasting here too would announce success before the write
-  // lands, even when it then fails and rolls back.
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData) onSave(formData);
-  };
-
-  const handleDelete = () => {
+  const confirmDelete = () =>
     toast.confirm(
-      "Are you sure you want to delete this family? This will not delete the individuals but will remove their connections as a family unit.",
+      "Delete this household? The people stay in the record; only their connection as a couple is removed.",
       () => {
-        if (family.id) onDelete(family.id);
+        if (form.id) onDelete(form.id);
       }
     );
+
+  const partnerCol = (which: "husband" | "wife", id: string | undefined) => {
+    const person = id ? personById.get(id) : undefined;
+    const lineage = id ? born.has(id) : which === "husband";
+    return (
+      <div className="hh-partner">
+        <span
+          className={`hh-portrait${person ? "" : " empty"}`}
+          style={
+            person
+              ? {
+                  background: portraitTint(id!),
+                  border: `3px solid ${lineage ? "var(--ring-born)" : "var(--ring-married)"}`,
+                }
+              : undefined
+          }
+        >
+          {person ? (
+            person.image_url ? (
+              <img src={person.image_url} alt={person.name.official_name} />
+            ) : (
+              personInitials(person.name.official_name)
+            )
+          ) : (
+            "+"
+          )}
+        </span>
+        {person && <span className="hh-partner-name">{person.name.official_name}</span>}
+        {person && (
+          <span className={`hh-tag ${lineage ? "lineage" : "married"}`}>
+            {lineage ? "lineage" : "married in"}
+          </span>
+        )}
+        {canEdit && (
+          <PersonSearch
+            people={people}
+            selectedPersonId={id ?? ""}
+            onSelect={(pid) => setPartner(which, pid)}
+            placeholder={person ? "Change…" : "Add a partner…"}
+            filterSex={which === "husband" ? "M" : "F"}
+          />
+        )}
+      </div>
+    );
   };
-
-  const inferred = inferHusbandWife(formData);
-  const husbandId = inferred.husbandId || "";
-  const wifeId = inferred.wifeId || "";
-  const currentChildrenIds = formData.children || [];
-
-  const availableChildren = people.filter(
-    (p) => p.id !== husbandId && p.id !== wifeId && !currentChildrenIds.includes(p.id)
-  );
 
   return (
-    <div
-      className="form-container"
-      style={{ backgroundColor: "transparent", boxShadow: "none", padding: 0 }}
-    >
-      <form onSubmit={handleSave}>
-        {/* Parents Section - Side by Side */}
-        <div className="section-card">
-          <h3>Parents</h3>
-          <div className="form-row">
-            <div className="form-col">
-              {(() => {
-                const husband = people.find((p) => p.id === husbandId);
-                return (
-                  <div style={{ display: "flex", justifyContent: "center", marginBottom: "10px" }}>
-                    <img
-                      src={
-                        husband?.image_url ||
-                        (husband
-                          ? getPersonPlaceholderUrl(husband)
-                          : TREE_CONFIG.PLACEHOLDER_IMAGE_URL("cccccc", "H"))
-                      }
-                      alt={husband?.name.official_name || "Husband"}
-                      style={{
-                        width: "150px",
-                        height: "150px",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                        border: "4px solid var(--color-primary)",
-                      }}
-                    />
-                  </div>
-                );
-              })()}
-              <div className="form-group">
-                <label htmlFor="family-husband">Husband (Male)</label>
-                <PersonSearch
-                  people={people}
-                  selectedPersonId={husbandId}
-                  onSelect={(id) => handlePartnerChange("husband", id)}
-                  placeholder="Search for husband..."
-                  filterSex="M"
-                  disabled={!canEdit}
-                />
-              </div>
-            </div>
-            <div className="form-col">
-              {(() => {
-                const wife = people.find((p) => p.id === wifeId);
-                return (
-                  <div style={{ display: "flex", justifyContent: "center", marginBottom: "10px" }}>
-                    <img
-                      src={
-                        wife?.image_url ||
-                        (wife
-                          ? getPersonPlaceholderUrl(wife)
-                          : TREE_CONFIG.PLACEHOLDER_IMAGE_URL("cccccc", "W"))
-                      }
-                      alt={wife?.name.official_name || "Wife"}
-                      style={{
-                        width: "150px",
-                        height: "150px",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                        border: "4px solid var(--color-primary)",
-                      }}
-                    />
-                  </div>
-                );
-              })()}
-              <div className="form-group">
-                <label htmlFor="family-wife">Wife (Female)</label>
-                <PersonSearch
-                  people={people}
-                  selectedPersonId={wifeId}
-                  onSelect={(id) => handlePartnerChange("wife", id)}
-                  placeholder="Search for wife..."
-                  filterSex="F"
-                  disabled={!canEdit}
-                />
-              </div>
-            </div>
-          </div>
+    <aside className="inspector" aria-label="Household editor">
+      <div className="inspector-bar" aria-hidden="true" />
+      <div className="inspector-body">
+        <div className="inspector-head">
+          <span className="eyebrow">Household{gen ? ` · Generation ${roman(gen)}` : ""}</span>
+          <button type="button" className="inspector-close" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
         </div>
 
-        {/* Children Section */}
-        <div className="section-card">
-          <div className="section-header-row">
-            <h3>Children</h3>
-            {canEdit && (
-              <button
-                type="button"
-                className="btn-icon-add"
-                onClick={() => setShowAddChild(!showAddChild)}
-                aria-label={showAddChild ? "Cancel adding child" : "Add child"}
-                title={showAddChild ? "Cancel adding" : "Add child"}
-                style={
-                  showAddChild
-                    ? {
-                        backgroundColor: "var(--color-neutral-500)",
-                        transform: "rotate(45deg)",
-                      }
-                    : {}
-                }
-              >
-                +
-              </button>
-            )}
+        <div className="hh-partners">
+          {partnerCol("husband", husbandId)}
+          <span className="hh-amp" aria-hidden="true">
+            ❀
+          </span>
+          {partnerCol("wife", wifeId)}
+        </div>
+
+        <div className="inspector-section">
+          <div className="inspector-section-head">
+            <span className="eyebrow">Children · eldest first</span>
+            <span className="inspector-rule" />
           </div>
-          <ul className="children-list">
-            {(formData.children || []).map((childId: string, index: number) => (
-              <li key={childId} className="child-item">
-                {canEdit && (
-                  <div className="order-controls">
-                    <button
-                      type="button"
-                      className="order-btn up"
-                      onClick={() => handleMoveChild(index, "up")}
-                      disabled={index === 0}
-                      aria-label="Move child up"
-                      title="Move up"
-                    >
-                      &#9650;
-                    </button>
-                    <button
-                      type="button"
-                      className="order-btn down"
-                      onClick={() => handleMoveChild(index, "down")}
-                      disabled={index === (formData.children?.length || 0) - 1}
-                      aria-label="Move child down"
-                      title="Move down"
-                    >
-                      &#9660;
-                    </button>
-                  </div>
-                )}
-                <div className="child-content" style={{ display: "flex", alignItems: "center" }}>
-                  {(() => {
-                    const child = people.find((p) => p.id === childId);
-                    return (
-                      <img
-                        src={
-                          child?.image_url ||
-                          (child
-                            ? getPersonPlaceholderUrl(child)
-                            : TREE_CONFIG.PLACEHOLDER_IMAGE_URL("cccccc", "C"))
-                        }
-                        alt={child?.name.official_name || "Child"}
-                        style={{
-                          width: "50px",
-                          height: "50px",
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          marginRight: "10px",
-                        }}
-                      />
-                    );
-                  })()}
-                  <span>{getPersonName(childId)}</span>
+          <div className="hh-children">
+            {form.children.map((childId, i) => {
+              const child = personById.get(childId);
+              return (
+                <div key={childId} className="hh-child">
+                  {canEdit && (
+                    <div className="hh-reorder">
+                      <button
+                        type="button"
+                        onClick={() => moveChild(i, -1)}
+                        disabled={i === 0}
+                        aria-label="Move up"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveChild(i, 1)}
+                        disabled={i === form.children.length - 1}
+                        aria-label="Move down"
+                      >
+                        ▼
+                      </button>
+                    </div>
+                  )}
+                  <span className="hh-child-avatar" style={{ background: portraitTint(childId) }}>
+                    {personInitials(child?.name.official_name ?? "?")}
+                  </span>
+                  <span className="hh-child-name">{child?.name.official_name ?? "Unknown"}</span>
                   {canEdit && (
                     <button
                       type="button"
-                      className="btn-icon-remove small"
-                      onClick={() => handleRemoveChild(childId)}
+                      className="hh-child-remove"
+                      onClick={() => removeChild(childId)}
                       aria-label="Remove child"
-                      title="Remove child"
                     >
-                      &times;
+                      ✕
                     </button>
                   )}
                 </div>
-              </li>
-            ))}
-
-            {/* Inline Add Child Row */}
-            {canEdit && showAddChild && (
-              <li
-                className="child-item new-child-input"
-                style={{
-                  border: "2px dashed var(--color-primary)",
-                  backgroundColor: "transparent",
-                  padding: "10px",
-                }}
-              >
-                <div style={{ width: "100%" }}>
-                  <PersonSearch
-                    people={people}
-                    selectedPersonId=""
-                    onSelect={(id) => {
-                      handleAddChild(id);
-                    }}
-                    placeholder="Search to add a child..."
-                    disabled={!canEdit}
-                    excludeIds={[husbandId, wifeId, ...currentChildrenIds]}
-                    autoFocus={true}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="btn-icon-remove"
-                  onClick={() => setShowAddChild(false)}
-                  aria-label="Cancel adding child"
-                  title="Cancel"
-                >
-                  &times;
+              );
+            })}
+            {canEdit &&
+              (addingChild ? (
+                <PersonSearch
+                  people={people}
+                  selectedPersonId=""
+                  onSelect={addChild}
+                  placeholder="Search to add a child…"
+                  excludeIds={[husbandId ?? "", wifeId ?? "", ...form.children]}
+                  autoFocus
+                />
+              ) : (
+                <button type="button" className="hh-add" onClick={() => setAddingChild(true)}>
+                  + Add a child — search or create
                 </button>
-              </li>
-            )}
-          </ul>
-        </div>
-
-        {canEdit && (
-          <div className="form-actions">
-            {family.id && (
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleDelete}
-                style={{ marginRight: "auto" }}
-              >
-                Delete Family
-              </button>
-            )}
-            <button type="submit" className="btn btn-primary">
-              Save Family
-            </button>
+              ))}
           </div>
-        )}
-      </form>
-    </div>
+        </div>
+      </div>
+
+      {canEdit && (
+        <div className="inspector-foot">
+          {form.id && (
+            <button type="button" className="hh-delete" onClick={confirmDelete}>
+              Delete household
+            </button>
+          )}
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="button" className="btn btn-primary" onClick={() => onSave(form)}>
+            Save
+          </button>
+        </div>
+      )}
+    </aside>
   );
-};
+}
