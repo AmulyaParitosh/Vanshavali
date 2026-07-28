@@ -1533,9 +1533,8 @@ main {
   .App-header h1 {
     font-size: var(--font-size-xl);
   }
-  /* Hide the People/Family/Members text labels — switch to icon-style chips
-   * (with title attributes) would be better but is out of scope here. For
-   * v1.5 the responsive nav is on the BACKLOG (mobile hamburger). */
+  /* Hide the People/Family/Members text labels — switching to icon-style chips
+   * (with title attributes), and a mobile hamburger nav, are deferred. */
   .header-nav .nav-link {
     padding: var(--space-1) var(--space-2);
   }

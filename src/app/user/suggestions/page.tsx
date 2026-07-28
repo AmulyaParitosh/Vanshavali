@@ -101,7 +101,7 @@ export default function SuggestionsPage() {
                 <div className="card-header">
                   <div className="user-info">
                     {/* Only the uid is persisted; resolving it to a name/email
-                        needs a server-side lookup (RLS) — BACKLOG. */}
+                        needs a server-side lookup. */}
                     <span className="user-name">{s.userId}</span>
                   </div>
                   <div className="meta-info">

@@ -19,8 +19,7 @@ interface WelcomeModalProps {
  * Tracks "seen" state in localStorage so it disappears on subsequent visits.
  *
  * Intentionally a banner card (not a `<dialog>`) — heritage-styled, dismissible
- * with one click, doesn't trap focus. The proper modal pattern is on the
- * BACKLOG (`<dialog>` for ConfirmToast) and applies here too once it lands.
+ * with one click, doesn't trap focus.
  */
 const WelcomeModal: React.FC<WelcomeModalProps> = ({ displayName, treeId, shouldShow }) => {
   const [dismissed, setDismissed] = useState(true);

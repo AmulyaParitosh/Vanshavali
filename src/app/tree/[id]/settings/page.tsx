@@ -63,7 +63,7 @@ export default function TreeSettingsPage() {
 
       <section className="section-card">
         <h2>Name</h2>
-        {/* Rename needs an updateTreeMeta provider method — tracked in BACKLOG.
+        {/* Rename needs an updateTreeMeta provider method + route/service.
             Until then the name is display-only rather than a form that can't save. */}
         <div className="rename-form">
           <input type="text" value={tree.name} disabled readOnly aria-label="Tree name" />

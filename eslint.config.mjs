@@ -57,8 +57,8 @@ const eslintConfig = [
       // doesn't work there. Off for this codebase.
       "@next/next/no-img-element": "off",
 
-      // A11y backlog (audit §10) — warn so they're visible but don't gate
-      // commits while we work through Phase 11 design pass.
+      // Deferred a11y rules — warn so they're visible but don't gate commits
+      // (revisit in the redesign).
       "jsx-a11y/click-events-have-key-events": "warn",
       "jsx-a11y/no-static-element-interactions": "warn",
 
