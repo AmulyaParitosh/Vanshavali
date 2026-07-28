@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import type { TreeData } from "../services/types";
 import { canEdit, canViewTree } from "../lib/access";
@@ -52,6 +52,10 @@ export function useAuthAndData() {
 
   const [currentTreeId, setCurrentTreeId] = useState<string | null>(null);
   const [isProvisioningTree, setIsProvisioningTree] = useState(false);
+  // One-shot latch guarding auto-provision against re-entry. A ref (not state)
+  // so setting it never re-runs the effect below — the previous state-based
+  // guard cancelled its own in-flight work the moment it flipped.
+  const hasProvisionedRef = useRef(false);
 
   // Auto-select the user's first owned tree as the active one. On /tree/[id]
   // routes the layout overrides this from the URL param.
@@ -70,20 +74,26 @@ export function useAuthAndData() {
   useEffect(() => {
     if (!user || !profile || !myTreesLoaded || !myTrees) return;
     if (myTrees.owned.length > 0 || myTrees.member.length > 0) return;
-    if (isProvisioningTree) return;
+    if (hasProvisionedRef.current) return;
 
+    // Latch synchronously so a concurrent effect run can't provision twice.
+    hasProvisionedRef.current = true;
     let cancelled = false;
     setIsProvisioningTree(true);
     (async () => {
       try {
         const meta = await dataProvider.createTree(user.uid, `${profile.name || "My"} family tree`);
-        if (cancelled) return;
 
         // Seed a single root person representing the user themselves. We leave
         // userId unset here and let linkUserToPerson set it, because that call
         // also populates the membership's personId — doing both in one atomic
         // step. (linkUserToPerson requires the person's user_id to still be
         // null, so we must NOT pre-set it above.)
+        //
+        // The whole sequence runs to completion even if the effect re-runs or
+        // unmounts mid-flight: `cancelled` only gates setState (below), it must
+        // never abort these writes — otherwise the tree is created without its
+        // root person and the owner gets bounced out of their own tree.
         const rootPersonId = `p_${user.uid}`;
         const rootPerson = {
           id: rootPersonId,
@@ -97,7 +107,6 @@ export function useAuthAndData() {
           people: [rootPerson],
           families: [],
         });
-        if (cancelled) return;
 
         // Link owner → root person so the tree view knows "this node is me"
         // and the membership carries personId. Non-fatal: if it fails, the
@@ -110,9 +119,10 @@ export function useAuthAndData() {
             formatError(linkError)
           );
         }
-        if (cancelled) return;
-        setCurrentTreeId(meta.id);
+        if (!cancelled) setCurrentTreeId(meta.id);
       } catch (error) {
+        // Failed before completion — release the latch so a later run can retry.
+        hasProvisionedRef.current = false;
         console.error("Auto-provision tree failed:", formatError(error));
         toast.error("Couldn't create your tree. Try refreshing.");
       } finally {
@@ -122,7 +132,7 @@ export function useAuthAndData() {
     return () => {
       cancelled = true;
     };
-  }, [user, profile, myTrees, myTreesLoaded, isProvisioningTree, dataProvider]);
+  }, [user, profile, myTrees, myTreesLoaded, dataProvider]);
 
   const { membership, isLoaded: membershipLoaded } = useTreeMembership(
     currentTreeId,
