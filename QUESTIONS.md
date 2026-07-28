@@ -35,6 +35,13 @@ in the Claude Design project `dd87d264-b5d2-4737-8e4c-9233afb2398d`, read via `D
 That is the "file read" primitive. Not mirrored to disk (get_file cannot be piped to disk without
 re-emitting content). Re-fetch per unit. Mechanism recorded in `IMPLEMENTATION.md`.
 
+## Q6 — Missing-data colour: #a89f8c vs #b22222 — RESOLVED (self)
+
+Spec 00 convention c4, system-acceptance a8, and integration contract §8 all say missing data renders
+as words at **`#a89f8c`**. But Spec 00's own §01 Members sample (`people[]`, L608) renders a missing
+`born` at `#b22222` (`bornFg: p.born ? "#33302b" : "#b22222"`). The rule/acceptance is the authority;
+the sample is illustrative. **Use `#a89f8c` for missing-data words everywhere.**
+
 ## Q5 — Routes: prompt vs current app — RESOLVED (self, provisional)
 
 The prompt's route table uses `/signin`, `/trees`, `/tree/[id]/members`, `/tree/[id]/families`,

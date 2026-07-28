@@ -64,10 +64,15 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
 
 **Wave 0 — Foundations** — IN PROGRESS
 
-- Tooling setup — Playwright adopted, progress files created. (this turn)
-- Tokens / Style Guide — not started
-- Shell (Spec 00 §02) — prior loop built a shell; needs audit vs spec
-- Component library (`Vanshavali Components.dc.html`) — not started
+- Tooling setup — Playwright adopted, progress files created. **DONE**
+- Spec mirror — `design-specs/` holds fetched specs + `extract-props.mjs`; distilled cited refs
+  `_FOUNDATIONS.md` (Spec 00) + `_STYLE-GUIDE.md` (full token system). **DONE** (gitignored, on-disk durable)
+- Tokens / Style Guide — **DONE** (see receipt below)
+- Assets — copy `banner.jpg` / `node_border_320.png` / `paper_texture.jpg` into `public/`; wire the
+  paper wash + portrait ring + banner to the heritage tokens. **NEXT** (binary-copy mechanism TBD —
+  get_file returns base64; see QUESTIONS if it needs a workaround)
+- Shell (Spec 00 §02) — prior loop built a shell; needs audit vs spec — not started
+- Component library (`Vanshavali Components.dc.html`) — not started (fetch that spec next)
 
 Waves 1–7 — not started.
 
@@ -85,4 +90,19 @@ decisions: <any spec ambiguity and how it was resolved>
 deviations: <anything not matching the spec, and why — should be empty>
 -->
 
-_None recorded yet._
+## Tokens — the theme layer — DONE
+
+spec: Vanshavali Style Guide.dc.html (§ colour/type/radius/shadow/heritage/motion), Spec 00 §08
+files: src/app/globals.css (`:root`), tests/e2e/foundations.spec.ts
+tests: tests/e2e/foundations.spec.ts — 7/7 passing
+consumes: — (foundation)
+decisions: The prior loop's colour/surface/line/text/tint/radius/shadow/shell-metric tokens were
+already spec-exact — kept as-is. Added the full 26-rung px type ladder (`--fs-*`, job-commented;
+legacy `--font-size-*` re-pointed onto it as aliases). Fixed heritage: paper wash `.05` page /
+`.07` tree (was a single `.06`), added `--ornament-ring` / `--ornament-bar` / `--heritage-border`
+with the restrained + plain overrides so one `data-heritage` value drives all four painted surfaces
+(integration §4 groundwork). Added the product motion tokens `--ease cubic-bezier(.32,.72,0,1)`,
+`--dur-panel 180ms` / `--dur-dialog 140ms` / `--dur-canvas 320ms`; kept legacy `--duration-*`.
+deviations: `--ornament-ring` points at `/node_border_320.png`, not yet copied into `public/` (the
+Assets unit, next). Paper wash still uses the prior loop's `/canvas_background.png` in `body::before`
+— swap to `paper_texture.jpg` in the Assets unit. Neither affects the token values under test.

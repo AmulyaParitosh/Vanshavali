@@ -21,16 +21,45 @@
   --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", monospace; /* labels + data */
   --font-heading: var(--font-display); /* legacy alias */
 
-  /* Type ladder — named rungs mapped to the guide's jobs (px). A new size
-   * needs a job before it gets a token. */
-  --font-size-xs: 0.75rem; /* 12px — chips, badges, dense meta */
-  --font-size-sm: 0.875rem; /* 14px — button labels, table cells, subtitles */
-  --font-size-base: 1rem; /* 16px — reading base / em anchor */
-  --font-size-lg: 1.125rem; /* 18px — settings card titles, leads */
-  --font-size-xl: 1.25rem; /* 20px — inspector record name */
-  --font-size-2xl: 1.6875rem; /* 27px — dialog / onboarding headings */
-  --font-size-3xl: 1.875rem; /* 30px — the one h1 per screen */
-  --font-size-display: 2.625rem; /* 42px — document title only */
+  /* Type ladder — every rung the Style Guide names, in literal px (all specs
+   * are measured at 1440×900). Each size has exactly one job; a new size needs
+   * a job before it earns a rung. Full ladder = Vanshavali Style Guide §02. */
+  --fs-42: 42px; /* Yatra — document title only */
+  --fs-32: 32px; /* Yatra — empty-state hero */
+  --fs-30: 30px; /* Yatra — the one h1 on every screen */
+  --fs-27: 27px; /* Yatra — dialog / guard / onboarding heading */
+  --fs-23: 23px; /* Yatra — confirm-dialog title; sign-in card wordmark */
+  --fs-22: 22px; /* Yatra — chrome wordmark (letter-spacing .5px) */
+  --fs-20: 20px; /* Hind 600 — record name at top of the inspector */
+  --fs-19: 19px; /* Yatra — tree name in the rail; card titles */
+  --fs-18: 18px; /* Hind 600 — settings card titles */
+  --fs-17: 17px; /* Hind 600 — section heading inside a card */
+  --fs-165: 16.5px; /* Hind — lead paragraph on onboarding / empty state */
+  --fs-16: 16px; /* Hind 600 — person name in a wide panel / search result */
+  --fs-155: 15.5px; /* Hind 600 — inspector field value; record name in a panel */
+  --fs-15: 15px; /* Hind 600 — list-row name, rail item; Yatra 400 gen numerals */
+  --fs-145: 14.5px; /* Hind 600 — every button label */
+  --fs-14: 14px; /* Hind — subtitles, placeholders, table cells */
+  --fs-135: 13.5px; /* Hind — prose and annotations */
+  --fs-13: 13px; /* Hind — the second name under every first name */
+  --fs-125: 12.5px; /* Hind — dense meta (hints, years in a card) */
+  --fs-12: 12px; /* Hind 600 — chips and badges */
+  --fs-115: 11.5px; /* Hind 500 — the tree legend, and nothing else */
+  --fs-11: 11px; /* Hind — carets and micro ornament */
+  --fs-105: 10.5px; /* Hind 600 — smallest chip ("suggested") */
+  --fs-10: 10px; /* Mono .14em caps — every eyebrow label and column head */
+  --fs-9: 9px; /* Hind — year line under a tree node (smallest type) */
+
+  /* Semantic aliases onto the ladder — legacy screens and readable component
+   * code. Each maps to the rung with the matching job. */
+  --font-size-xs: var(--fs-12); /* chips, badges, dense meta */
+  --font-size-sm: var(--fs-14); /* button labels, table cells, subtitles */
+  --font-size-base: var(--fs-16); /* reading base */
+  --font-size-lg: var(--fs-18); /* settings card titles, leads */
+  --font-size-xl: var(--fs-20); /* inspector record name */
+  --font-size-2xl: var(--fs-27); /* dialog / onboarding headings */
+  --font-size-3xl: var(--fs-30); /* the one h1 per screen */
+  --font-size-display: var(--fs-42); /* document title only */
 
   /* Eyebrow label — every section head, column head and context line is this
    * one object. Use the .eyebrow class. */
@@ -181,7 +210,14 @@
   --shadow-strong: var(--shadow-frame);
   --color-shadow: rgba(0, 0, 0, 0.08);
 
-  /* ---- Motion ------------------------------------------------------------ */
+  /* ---- Motion — the product curve and the three durations the specs name.
+   * Nothing animates on first paint; prefers-reduced-motion cuts duration to 0
+   * (never disables the state change). Convention §11. --------------------- */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1); /* panels, canvas pans — the product curve */
+  --dur-panel: 180ms; /* inspector slide + page-column width */
+  --dur-dialog: 140ms; /* dialog fade + 8px rise */
+  --dur-canvas: 320ms; /* canvas pan */
+  /* Legacy motion aliases (retired as screens are rebuilt onto the tokens above) */
   --duration-fast: 150ms;
   --duration-base: 200ms;
   --duration-slow: 300ms;
@@ -195,9 +231,15 @@
   /* Legacy alias — the chrome bar is now the system 60px. */
   --header-height: var(--shell-chrome-h);
 
-  /* ---- Heritage — one setting drives all four ornament surfaces. Override
-   * with data-heritage="restrained" | "plain" on <html>. ------------------- */
-  --heritage-paper: 0.06; /* paper-wash opacity under canvases */
+  /* ---- Heritage — one setting drives all four painted surfaces: the chrome
+   * banner, the portrait rings, the inspector 3px bar, and the paper wash.
+   * Default :root == "full"; override with data-heritage="restrained" | "plain"
+   * on <html>. Style Guide §heritage; Spec 00 appVals. --------------------- */
+  --heritage-paper: 0.05; /* page / content paper-wash opacity */
+  --heritage-paper-tree: 0.07; /* heavier wash under the tree canvas */
+  --ornament-ring: url("/node_border_320.png"); /* painted portrait ring art */
+  --ornament-bar: linear-gradient(90deg, #b22222, #ff8c00); /* inspector 3px top bar */
+  --heritage-border: #e8c9c6; /* heritage-warmed hairline (e.g. record card edge) */
 
   /* Breakpoints referenced by the responsive blocks below (CSS can't read
    * custom properties inside media-query conditions — literal there):
@@ -205,10 +247,17 @@
 }
 
 :root[data-heritage="restrained"] {
-  --heritage-paper: 0.03;
+  --heritage-paper: 0.025;
+  --heritage-paper-tree: 0.035;
+  --ornament-bar: #b22222; /* solid, gradient dropped */
+  --heritage-border: #e6ddc9;
 }
 :root[data-heritage="plain"] {
   --heritage-paper: 0;
+  --heritage-paper-tree: 0;
+  --ornament-ring: none; /* portrait rings removed */
+  --ornament-bar: #e6ddc9; /* hairline only */
+  --heritage-border: #e6ddc9;
 }
 
 /* Global focus-visible base — every interactive element shows the same ring.
