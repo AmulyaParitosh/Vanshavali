@@ -448,3 +448,98 @@ test.describe("Components — Status", () => {
     expect(later["border-top-color"]).toBe("rgb(216, 205, 180)");
   });
 });
+
+test.describe("Components — Containers & lists", () => {
+  test("Card: paper, structure hairline, radius 16", async ({ page }) => {
+    const c = await computed(page, '<div class="card">x</div>', ".card", [
+      "background-color",
+      "border-top-color",
+      "border-radius",
+    ]);
+    expect(c).toMatchObject({
+      "background-color": "rgb(255, 253, 249)",
+      "border-top-color": "rgb(230, 221, 201)",
+      "border-radius": "16px",
+    });
+  });
+
+  test("Table header: 42px, table-head fill, sticky, 10px mono caps", async ({ page }) => {
+    const c = await computed(page, '<div class="records-thead">Name</div>', ".records-thead", [
+      "min-height",
+      "background-color",
+      "position",
+      "font-size",
+      "text-transform",
+    ]);
+    expect(c).toMatchObject({
+      "min-height": "42px",
+      "background-color": "rgb(248, 242, 228)",
+      position: "sticky",
+      "font-size": "10px",
+      "text-transform": "uppercase",
+    });
+  });
+
+  test("Shared row: 40px avatar (2px-ring, 12/600 initials) → a 60px row, 10/18, gap 14", async ({
+    page,
+  }) => {
+    // Two rows so the measured (first) one isn't :last-child (which drops its divider).
+    const html =
+      '<div class="records-row"><span class="records-avatar">रघु</span><span class="records-name"><span class="records-name-primary">रघुनाथ मिश्र</span><span class="records-name-secondary">Raghunath Mishra</span></span></div><div class="records-row">next</div>';
+    const row = await computed(page, html, ".records-row", [
+      "padding",
+      "gap",
+      "border-bottom-color",
+    ]);
+    expect(row).toMatchObject({
+      padding: "10px 18px",
+      gap: "14px",
+      "border-bottom-color": "rgb(244, 237, 224)",
+    });
+    const av = await computed(page, html, ".records-avatar", ["width", "height", "font-size"]);
+    expect(av).toMatchObject({ width: "40px", height: "40px", "font-size": "12px" });
+    const name = await computed(page, html, ".records-name-primary", ["font-size", "font-weight"]);
+    expect(name).toMatchObject({ "font-size": "15px", "font-weight": "600" });
+    const sub = await computed(page, html, ".records-name-secondary", ["font-size"]);
+    expect(sub["font-size"]).toBe("13px");
+  });
+
+  test("Row — open state: red wash + name 700 #8b0000", async ({ page }) => {
+    const html =
+      '<div class="records-row open"><span class="records-name"><span class="records-name-primary">देवेन्द्र मिश्र</span></span></div>';
+    const row = await computed(page, html, ".records-row.open", ["background-color"]);
+    expect(row["background-color"]).toBe("rgb(255, 245, 245)");
+    const name = await computed(page, html, ".records-name-primary", ["font-weight", "color"]);
+    expect(name).toMatchObject({ "font-weight": "700", color: "rgb(139, 0, 0)" });
+  });
+
+  test("Preview block: quiet inset, radius 12, 13.5/1.55 strong-meta", async ({ page }) => {
+    const c = await computed(
+      page,
+      '<div class="preview-block">This will change…</div>',
+      ".preview-block",
+      ["background-color", "border-radius", "padding", "font-size", "color"]
+    );
+    expect(c).toMatchObject({
+      "background-color": "rgb(248, 242, 228)",
+      "border-radius": "12px",
+      padding: "14px 16px",
+      "font-size": "13.5px",
+      color: "rgb(85, 80, 74)",
+    });
+  });
+
+  test("Panel footer: 68px, hairline top, space-between", async ({ page }) => {
+    const c = await computed(
+      page,
+      '<div class="panel-footer"><span>Discard</span><span>Save</span></div>',
+      ".panel-footer",
+      ["min-height", "border-top-color", "justify-content"]
+    );
+    expect(c).toMatchObject({
+      "min-height": "68px",
+      "border-top-color": "rgb(230, 221, 201)",
+      "justify-content": "space-between",
+    });
+  });
+});

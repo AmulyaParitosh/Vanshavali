@@ -87,10 +87,10 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
     #e6ddc9 13.5, ✕ 11 #8a8377) · place suggestion row (9/13, selected #fff5f5, reason 12.5 #8a8377,
     "new" tag 10.5 on #fdf1e2/#8a5300). Focus = border #b22222 + `0 0 0 3px rgba(178,34,34,.1)`;
     validate on blur/submit, never keystroke.
-  - Status (chips/badges/generation marker) — **NEXT** (L448–484). Existing `.chip*` primitives already
-    largely spec-match (see globals.css ~L1546); audit vs Components §Status + add generation marker.
-  - Containers & lists (card, list row 40·flex·46·100·112, table header) — L484–559.
-  - Overlays (dialog, toast, search palette) — L559–622.
+  - Status (chips/badges + absence/count/dirty/checklist markers) — **DONE** (components.spec.ts 9).
+  - Containers & lists (card, shared row + header, preview block, panel footer) — **DONE**
+    (components.spec.ts 7). Row h-padding/columns deferred to Spec 06/08 (QUESTIONS Q8).
+  - Overlays (dialog, toast, search palette) — **NEXT** (L559–622).
   - Empty & loading (empty state, skeleton) — L622–654.
   - A person (portrait/avatar 40px, name pair, node) — L157–275.
     Then generate/refresh COMPONENTS.md and run the whole components + integration suite.

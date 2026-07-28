@@ -90,3 +90,27 @@ Chips never rely on colour alone — the word is always present. An absence is n
   done filled `#b22222` + white ✓ (9px), current open red ring, later open quiet `#d8cdb4` ring.
 - `.suggested` and `.radio-now` (the "now" tag) also live under Inputs; they double as Status markers.
 - Generation marker (I/II/III) is typography, not a component: Yatra One 15px (type ladder).
+
+## Containers & lists (Components §Containers)
+
+Three tables share ONE row + header. Fixed column grid: 40 · flex · 46 · 100 · 150 · 100 · 112.
+
+- **`.card`** — the default content container: bg `#fffdf9` · border 1px `#e6ddc9` · radius 16.
+- **`.records-table`** — bordered card wrapper (radius 16, clip). **`.records-thead`** — header, 42px,
+  sticky, `#f8f2e4`, 10px mono .13em caps `#8a8377`, hairline bottom.
+- **`.records-row`** — the shared row: 60px (40px avatar + 10/10) · padding 10/18 · gap 14 ·
+  border-bottom 1px `#f4ede0` (last row none). Hover + `.open`/`[aria-current]` → wash `#fff5f5`; open
+  also bolds `.records-name-primary` to 700 `#8b0000`. `:focus-visible` → inset 3px halo (keyboard nav).
+  The whole row opens the record; only the May cell stops propagation. Rows order by generation then
+  birth, never alphabetically.
+  - **`.records-avatar`** 40px · 2px ring (colour set per-person) · initials 12/600 `#fffdf9`.
+  - **`.records-name-primary`** 15/600 `#1a1a1a` · **`.records-name-secondary`** 13/400 `#8a8377`.
+  - **`.records-col-gen`** (46, Yatra 15) · `.records-col-born` · `.records-col-may`. Exact per-table
+    column widths reconciled at Spec 06 (QUESTIONS Q8: row h-padding 18 vs 32; col widths).
+  - ⚠️ `.records-select` (role `<select>` inside a row) is a Spec-06 "Do not" — remove in Wave 3;
+    role writes move to the record panel.
+- **`.preview-block`** — states what a Save will change: bg `#f8f2e4` · radius 12 · 14/16 · 13.5/1.55
+  `#55504a`. (Write panels; Spec 07/13.)
+- **`.panel-footer`** — 68px · hairline top `#e6ddc9` · Discard (quiet, left) + Save (filled, right).
+  Rendered only when dirty — behaviour wired in Spec 13 (Wave 1).
+- Numbered-step eyebrow reuses `.eyebrow` (10px mono .14em caps).

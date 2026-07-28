@@ -35,6 +35,14 @@ in the Claude Design project `dd87d264-b5d2-4737-8e4c-9233afb2398d`, read via `D
 That is the "file read" primitive. Not mirrored to disk (get_file cannot be piped to disk without
 re-emitting content). Re-fetch per unit. Mechanism recorded in `IMPLEMENTATION.md`.
 
+## Q8 — Shared list row: horizontal padding + column widths differ across sources — DEFERRED to Spec 06
+
+Style Guide rowSpecs says row padding `10px 18px` and columns `40 · flex · 46 · 100 · 112` (5);
+Components §Containers says row padding `10px 32px` and columns `40 · flex · 46 · 100 · 150 · 100 · 112`
+(7). Vertical rhythm agrees (row 60px, header 42px). **Kept the current `10px 18px` + existing column
+widths for now** (no churn); the authoritative per-surface geometry is in the page specs — reconcile
+when building **Members (Spec 06)** and **Households (Spec 08)**, which own the row's real columns.
+
 ## Q7 — Optimized assets exceed the DesignSync 256 KiB fetch cap — RESOLVED (self)
 
 `DesignSync get_file` caps content at 256 KiB, so `assets/banner.jpg` (377 KB) and
