@@ -2260,9 +2260,15 @@ main {
 
 /* User Layout & Sidebar */
 .user-layout {
+  flex: 1;
   display: flex;
-  min-height: calc(100vh - var(--header-height));
-  background-color: var(--color-bg);
+  min-height: 0;
+}
+.user-content {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
 }
 
 .sidebar.user-sidebar-override {
@@ -2286,12 +2292,6 @@ main {
   overflow-y: auto;
   padding: 10px;
   margin-bottom: 1rem;
-}
-
-.user-content {
-  flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
 }
 
 .sidebar-nav {
@@ -3138,4 +3138,238 @@ main {
 .settings-danger-row .sub {
   font-size: 13.5px;
   color: #8a5a5a;
+}
+
+/* ============================================================================
+ * Account (§8) — the account rail + the account page.
+ * ========================================================================== */
+.account-rail-identity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--line-inner);
+}
+.account-rail-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-circle);
+  border: 2px solid var(--ring-born);
+  background: var(--color-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fffdf9;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.account-rail-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.account-rail-idbody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.account-rail-name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.account-rail-email {
+  font-size: 12px;
+  color: var(--text-meta);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-page {
+  padding: var(--space-8) var(--space-10);
+  max-width: 820px;
+  margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.account-page > header {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.account-page h1 {
+  font-family: var(--font-display);
+  font-size: var(--font-size-3xl);
+  font-weight: 400;
+  margin: 0;
+  color: var(--text-primary);
+}
+.account-signin {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.account-avatar-lg {
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius-circle);
+  border: 3px solid var(--ring-born);
+  background: var(--color-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 600;
+  color: #fffdf9;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.account-avatar-lg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.account-fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.account-field .label {
+  font-size: 13px;
+  color: var(--text-meta);
+}
+.account-field .value {
+  padding: 11px 14px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-12);
+  background: var(--surface-paper);
+  font-size: 15.5px;
+  color: var(--text-primary);
+}
+.account-field .value.readonly {
+  background: var(--surface-tablehead);
+  color: var(--text-strong);
+  font-size: 15px;
+}
+.account-field-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+.account-field-row .account-field {
+  flex: 1;
+  min-width: 0;
+}
+.account-record-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 16px;
+  border-radius: var(--radius-12);
+  background: var(--surface-canvas);
+  border: 1px solid var(--line-structure);
+}
+.account-record-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-circle);
+  border: 2.5px solid var(--ring-born);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: #fffdf9;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.account-record-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.account-record-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.account-record-name {
+  font-size: 16.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.account-record-meta {
+  font-size: 13.5px;
+  color: var(--text-meta);
+}
+.account-trees {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.account-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 15px;
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-12);
+  background: var(--surface-paper);
+  text-decoration: none;
+  transition: border-color var(--duration-base) var(--ease-standard);
+}
+.account-tree-row:hover {
+  border-color: var(--color-red);
+}
+.account-tree-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fffdf9;
+  flex-shrink: 0;
+}
+.account-tree-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.account-tree-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.account-link-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }

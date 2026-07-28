@@ -1,228 +1,247 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useAppContext } from "../../../context/AppContext";
-import PersonForm from "../../../components/PersonForm";
 import PersonSearch from "../../../components/PersonSearch";
 import { useToast } from "../../../components/ToastSystem";
-import type { Person, DraftPerson } from "../../../types/person";
+import { portraitTint, personInitials } from "../../../utils/portrait";
+import type { Person } from "../../../types/person";
 
-export default function ProfilePage() {
+/**
+ * Your account (§8) — sign-in details, the person you're linked to in the
+ * active tree, and the trees your record appears in.
+ *
+ * The mockup's model is one global person record across every tree; the app's
+ * model links a *per-tree* Person to the auth user (the global profile is just
+ * name/email/photo). So "Your record" here is the active tree's linked person,
+ * edited via the tree inspector. A single global record + its own full-page
+ * editor is a data-model change, deferred.
+ */
+export default function AccountPage() {
   const {
     user,
     profile,
-    membership,
+    myTrees,
     currentTreeId,
     treeData,
+    authProvider,
     dataProvider,
     onSave,
     refreshProfile,
   } = useAppContext();
-  const [isLinking, setIsLinking] = useState(false);
   const toast = useToast();
+  const [isLinking, setIsLinking] = useState(false);
 
   if (!user) {
     return (
       <div className="welcome-message">
-        <h2>Please log in to view your profile</h2>
+        <h2>Please sign in to view your account</h2>
       </div>
     );
   }
 
-  const linkedPerson = treeData?.people.find((p) => p.userId === user.uid) || null;
+  const name = profile?.name || user.displayName || "You";
+  const email = profile?.email || user.email || "";
+  const linkedPerson = treeData?.people.find((p) => p.userId === user.uid) ?? null;
+  const allTrees = myTrees
+    ? [
+        ...myTrees.owned.map((t) => ({ tree: t, role: "owner" as const })),
+        ...myTrees.member.map((t) => ({ tree: t, role: "member" as const })),
+      ]
+    : [];
+  const currentTree = allTrees.find((t) => t.tree.id === currentTreeId)?.tree;
 
-  const handleLinkPerson = async (personId: string) => {
+  const handleChangePassword = async () => {
+    if (!email) return;
+    try {
+      await authProvider.sendPasswordReset(email);
+      toast.success(`Password reset link sent to ${email}`);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Couldn't send reset link");
+    }
+  };
+
+  const handleLinkPerson = (personId: string) => {
     if (!currentTreeId) {
       toast.error("No active tree.");
       return;
     }
     const person = treeData?.people.find((p) => p.id === personId);
-    const personName = person?.name.official_name || "selected person";
-
     toast.confirm(
-      `Link your account to ${personName}? This is permanent and cannot be changed.`,
+      `Link your account to ${person?.name.official_name ?? "this person"}? This is permanent.`,
       async () => {
         try {
           await dataProvider.linkUserToPerson(currentTreeId, personId, user.uid);
-          toast.success(`Linked to ${personName}`);
+          toast.success("Linked");
           setIsLinking(false);
           await refreshProfile();
         } catch (error: unknown) {
-          console.error("Error linking person:", error);
-          const message = error instanceof Error ? error.message : "Link failed";
-          toast.error(message);
+          toast.error(error instanceof Error ? error.message : "Link failed");
         }
       }
     );
   };
 
-  const generateProfilePersonId = (): string => {
-    const baseId = `p_${user.uid}`;
-    if (!treeData) return baseId;
-    let candidate = baseId;
-    let counter = 1;
-    while (treeData.people.some((p) => p.id === candidate)) {
-      candidate = `${baseId}_${counter++}`;
-    }
-    return candidate;
-  };
-
-  const handleCreateNewPerson = async () => {
+  const handleCreatePerson = async () => {
     if (!treeData) {
       toast.error("Tree data unavailable. Try again in a moment.");
       return;
     }
-
-    const newPerson: Person = {
-      id: generateProfilePersonId(),
-      name: { official_name: user.displayName || "New Person" },
+    let id = `p_${user.uid}`;
+    let n = 1;
+    while (treeData.people.some((p) => p.id === id)) id = `p_${user.uid}_${n++}`;
+    const person: Person = {
+      id,
+      name: { official_name: name },
       sex: "M",
       events: [],
       custom_fields: {},
       userId: user.uid,
     };
-
     try {
-      const newData = { ...treeData, people: [...treeData.people, newPerson] };
-      await onSave(newData);
-      toast.success("Created and linked to a new profile");
+      await onSave({ ...treeData, people: [...treeData.people, person] });
+      toast.success("Created and linked your record");
       await refreshProfile();
     } catch (error: unknown) {
-      console.error("Error creating profile:", error);
-      const message = error instanceof Error ? error.message : "Failed to create profile";
-      toast.error(message);
+      toast.error(error instanceof Error ? error.message : "Couldn't create your record");
     }
   };
-
-  const handleSaveProfile = async (updated: DraftPerson) => {
-    if (!treeData || !updated.id) return;
-    const personId = updated.id;
-    const updatedPeople = treeData.people.map((p) =>
-      p.id === personId ? ({ ...updated, id: personId } as Person) : p
-    );
-    try {
-      await onSave({ ...treeData, people: updatedPeople });
-      toast.success("Profile saved");
-    } catch (error: unknown) {
-      console.error("Error saving profile:", error);
-      const message = error instanceof Error ? error.message : "Failed to save profile";
-      toast.error(message);
-    }
-  };
-
-  const roleLabel = membership?.role ?? "no role";
 
   return (
-    <div className="profile-page-container">
-      <div className="section-card">
-        <h2>My Account</h2>
-        <div className="account-info">
-          <p>
-            <strong>Name:</strong> {profile?.name ?? user.displayName}
-          </p>
-          <p>
-            <strong>Email:</strong> {profile?.email ?? user.email}
-          </p>
-          <p>
-            <strong>Role in this tree:</strong>{" "}
-            <span className={`role-badge role-${roleLabel}`}>{roleLabel}</span>
-          </p>
-        </div>
-      </div>
+    <div className="account-page">
+      <header>
+        <h1>Your account</h1>
+        <p className="settings-sub">
+          Who you are to Vanshavali, and how you appear in each family record.
+        </p>
+      </header>
 
-      {linkedPerson ? (
-        <div className="profile-person-section">
-          <h2>Linked Identity in Tree</h2>
-          <PersonForm
-            person={linkedPerson}
-            onSave={handleSaveProfile}
-            canEdit={true}
-            isProfile={true}
-          />
-        </div>
-      ) : (
-        <div className="section-card linking-section">
-          <h2>Link to Tree</h2>
-          <p>You are not currently linked to a person in the family tree.</p>
-
-          {isLinking ? (
-            <div className="link-choice">
-              <div className="search-box-container">
-                <h3>Search for yourself in the tree:</h3>
-                <PersonSearch
-                  people={treeData?.people || []}
-                  onSelect={handleLinkPerson}
-                  hideLinked={true}
-                />
+      <section className="settings-card">
+        <h2>Sign-in details</h2>
+        <div className="account-signin">
+          <span className="account-avatar-lg">
+            {user.photoURL ? <img src={user.photoURL} alt={name} /> : name.charAt(0).toUpperCase()}
+          </span>
+          <div className="account-fields">
+            <div className="account-field">
+              <span className="label">Display name — how relatives see you</span>
+              <div className="value readonly">{name}</div>
+            </div>
+            <div className="account-field-row">
+              <div className="account-field">
+                <span className="label">Email</span>
+                <div className="value readonly">{email}</div>
               </div>
-              <button className="btn btn-secondary" onClick={() => setIsLinking(false)}>
-                Cancel
+              <button type="button" className="btn btn-secondary" onClick={handleChangePassword}>
+                Change password
               </button>
             </div>
-          ) : (
-            <div className="link-actions">
-              <button className="btn btn-primary" onClick={() => setIsLinking(true)}>
-                I already exist in the tree (Link)
-              </button>
-              <button className="btn btn-secondary" onClick={handleCreateNewPerson}>
-                I&apos;m not in the tree (Create New)
-              </button>
-            </div>
-          )}
+          </div>
         </div>
-      )}
+      </section>
 
-      <style jsx>{`
-        .profile-page-container {
-          padding: var(--space-10);
-          height: 100%;
-          overflow-y: auto;
-          box-sizing: border-box;
-          flex: 1;
-        }
-        .account-info p {
-          margin: var(--space-2) 0;
-        }
-        .role-badge {
-          display: inline-block;
-          padding: var(--space-1) var(--space-2);
-          border-radius: var(--radius-xs);
-          font-size: var(--font-size-sm);
-          text-transform: capitalize;
-          font-weight: 600;
-        }
-        .role-owner {
-          background: var(--color-primary-50);
-          color: var(--color-primary-700);
-        }
-        .role-editor {
-          background: #fff5e0;
-          color: #7a4400;
-        }
-        .role-viewer {
-          background: #e8f5ec;
-          color: #1f6a3e;
-        }
-        .role-no.role {
-          background: var(--color-neutral-100);
-          color: var(--color-neutral-700);
-        }
+      <section className="settings-card">
+        <div className="settings-card-head">
+          <h2>Your record{currentTree ? ` in ${currentTree.name}` : ""}</h2>
+          <p>You link to one person in each tree. The record itself is edited in the tree.</p>
+        </div>
+        {linkedPerson ? (
+          <div className="account-record-row">
+            <span
+              className="account-record-avatar"
+              style={{ background: portraitTint(linkedPerson.id) }}
+            >
+              {linkedPerson.image_url ? (
+                <img src={linkedPerson.image_url} alt={linkedPerson.name.official_name} />
+              ) : (
+                personInitials(linkedPerson.name.official_name)
+              )}
+            </span>
+            <div className="account-record-body">
+              <span className="account-record-name">{linkedPerson.name.official_name}</span>
+              <span className="account-record-meta">
+                {[
+                  linkedPerson.name.aliases?.filter((a) => a.trim()).join(", "),
+                  `${linkedPerson.events?.length ?? 0} life event${(linkedPerson.events?.length ?? 0) === 1 ? "" : "s"}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            </div>
+            {currentTreeId && (
+              <Link
+                href={`/tree/${currentTreeId}?person=${encodeURIComponent(linkedPerson.id)}`}
+                className="btn btn-primary"
+              >
+                Edit my record
+              </Link>
+            )}
+          </div>
+        ) : (
+          <>
+            <p className="settings-note">
+              You&apos;re not yet linked to a person in {currentTree?.name ?? "this tree"}.
+            </p>
+            {isLinking ? (
+              <>
+                <PersonSearch
+                  people={treeData?.people ?? []}
+                  onSelect={handleLinkPerson}
+                  hideLinked
+                  placeholder="Find yourself in the tree…"
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setIsLinking(false)}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <div className="account-link-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setIsLinking(true)}
+                >
+                  I&apos;m already in the tree — link me
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={handleCreatePerson}>
+                  Create my record
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
 
-        .linking-section {
-          text-align: center;
-          padding: var(--space-10);
-        }
-        .link-actions {
-          display: flex;
-          gap: var(--space-4);
-          justify-content: center;
-          margin-top: var(--space-6);
-        }
-        .search-box-container {
-          margin: var(--space-5) 0;
-          text-align: left;
-        }
-      `}</style>
+      <section className="settings-card">
+        <div className="settings-card-head">
+          <h2>Trees you&apos;re in</h2>
+          <p>Where your record appears.</p>
+        </div>
+        {allTrees.length === 0 ? (
+          <p className="settings-note">You&apos;re not in any tree yet.</p>
+        ) : (
+          <div className="account-trees">
+            {allTrees.map(({ tree, role }) => (
+              <Link key={tree.id} href={`/tree/${tree.id}`} className="account-tree-row">
+                <span className="account-tree-dot" style={{ background: portraitTint(tree.id) }}>
+                  {tree.name.charAt(0).toUpperCase()}
+                </span>
+                <div className="account-tree-body">
+                  <span className="account-tree-name">{tree.name}</span>
+                </div>
+                <span className={`chip ${role === "owner" ? "chip--keeper" : "chip--read"}`}>
+                  {role === "owner" ? "Keeper" : "Member"}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

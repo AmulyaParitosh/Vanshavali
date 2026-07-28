@@ -5,45 +5,54 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppContext } from "../context/AppContext";
 import { isSiteAdmin } from "../lib/access";
-import { Sidebar, SidebarContent } from "./Sidebar";
 
 /**
- * Sidebar shown under `/user/*` pages. Pre-multi-tenancy this had an admin
- * section linking to global user management / access requests; those routes
- * are gone, replaced by per-tree members management. The suggestions inbox
- * link only shows for allowlisted site admins (same gate as the page itself).
+ * The account rail shown under `/user/*` — mirrors the tree rail: an identity
+ * header, the account destinations, and Sign out pinned at the bottom.
  */
 const UserSidebar: React.FC = () => {
-  const { user, handleLogout } = useAppContext();
+  const { user, profile, handleLogout } = useAppContext();
   const pathname = usePathname();
 
   if (!user) return null;
 
-  const linkClass = (href: string) => `sidebar-link${pathname === href ? " active" : ""}`;
+  const name = profile?.name || user.displayName || "You";
+  const email = profile?.email || user.email || "";
+  const item = (href: string, label: string) => (
+    <li>
+      <Link
+        href={href}
+        className={`tree-rail-item${pathname === href ? " active" : ""}`}
+        aria-current={pathname === href ? "page" : undefined}
+      >
+        {label}
+      </Link>
+    </li>
+  );
 
   return (
-    <Sidebar
-      className="user-sidebar-override"
-      footer={
-        <button onClick={handleLogout} className="btn btn-outline-danger btn-block btn-sm">
-          Logout
+    <nav className="tree-rail" aria-label="Account navigation">
+      <div className="account-rail-identity">
+        <span className="account-rail-avatar">
+          {user.photoURL ? <img src={user.photoURL} alt={name} /> : name.charAt(0).toUpperCase()}
+        </span>
+        <div className="account-rail-idbody">
+          <span className="account-rail-name">{name}</span>
+          {email && <span className="account-rail-email">{email}</span>}
+        </div>
+      </div>
+
+      <ul className="tree-rail-nav">
+        {item("/user/profile", "Account")}
+        {isSiteAdmin(user.uid) && item("/user/suggestions", "Suggestions")}
+      </ul>
+
+      <div className="tree-rail-foot">
+        <button type="button" className="btn btn-secondary btn-block btn-sm" onClick={handleLogout}>
+          Sign out
         </button>
-      }
-    >
-      <SidebarContent>
-        <nav className="sidebar-nav">
-          <span className="sidebar-divider">Account</span>
-          <Link href="/user/profile" className={linkClass("/user/profile")}>
-            My Profile
-          </Link>
-          {isSiteAdmin(user.uid) && (
-            <Link href="/user/suggestions" className={linkClass("/user/suggestions")}>
-              Suggestions Inbox
-            </Link>
-          )}
-        </nav>
-      </SidebarContent>
-    </Sidebar>
+      </div>
+    </nav>
   );
 };
 
