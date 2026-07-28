@@ -62,7 +62,11 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
 
 ## Progress
 
-**Wave 0 — Foundations** — IN PROGRESS
+**Wave 0 — Foundations** — COMPLETE (all sub-units DONE + green; component library = 44 tests).
+Next: **Wave 1 — Data & write infrastructure** (Spec 00 §05 entities, §06 one-record rule, the
+permission matrix server-side, and all of Spec 13: dirty tracking, explicit save, save toast + 12s
+undo, itemised leaving guard, consequence dialog, conflict detection, offline). Then Wave 2 (record
+panel, Spec 07). Fetch Spec 13 first (`DesignSync get_file … "Spec 13 - Write states.dc.html"`).
 
 - Tooling setup — Playwright adopted, progress files created. **DONE**
 - Spec mirror — `design-specs/` holds fetched specs + `extract-props.mjs`; distilled cited refs
@@ -90,9 +94,11 @@ Invitation/Getting started) → 6 Landing → 7 Integration audit.
   - Status (chips/badges + absence/count/dirty/checklist markers) — **DONE** (components.spec.ts 9).
   - Containers & lists (card, shared row + header, preview block, panel footer) — **DONE**
     (components.spec.ts 7). Row h-padding/columns deferred to Spec 06/08 (QUESTIONS Q8).
-  - Overlays (dialog, toast, search palette) — **NEXT** (L559–622).
-  - Empty & loading (empty state, skeleton) — L622–654.
-  - A person (portrait/avatar 40px, name pair, node) — L157–275.
+  - Overlays (dialog, toast) — **DONE** (components.spec.ts 7); search palette = Spec 09.
+  - Empty & loading (empty state, skeleton) — **DONE** (components.spec.ts 2).
+  - A person (portrait 4 sizes + ring meaning) — **DONE** (components.spec.ts 6). Household node/pair
+    glyph = Spec 05; panel/node name stacks = Spec 07/05.
+    Component library **COMPLETE**: 44 tests. Page-owned pieces noted against their waves.
     Then generate/refresh COMPONENTS.md and run the whole components + integration suite.
 
 ### Shell audit (Spec 00 §02 vs current code) — architecture is sound, fidelity gaps remain
