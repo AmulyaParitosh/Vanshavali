@@ -873,3 +873,24 @@ files: src/components/Tree.tsx (Attention type + nodePersons/nodeHasAttention he
 **WAVE 3 TREE (Spec 05) — T-A..T-E complete.** Geometry (a6), orthogonal links (a1/g7), node redesign
 (a2/a3 + hover), centering/zoom/LOD (a4/a9/f7), controls + legend (g9/g10), generation rail (a7),
 attention filter (a8). Remaining: T-F acceptance audit (a5 tap/Esc, a10 no-write, a1 couple-pill).
+
+### Wave 3 Tree T-F — acceptance audit a1–a10 — DONE
+
+spec: `_SPEC-05.md` acceptance a1..a10
+Coverage:
+
+- a1 couple = one pill, children to the pill centre — TESTED (one .node-pill + two .node per partner
+  group) + orthogonalLink (parent-centre).
+- a2 right-hand label offset +26 — TESTED. a3 ring = lineageSide — TESTED.
+- a4 opens centred on the viewer's household — T-D (useTreeZoom initialCenter). a6 rows 24+n×222 —
+  unit-tested (computeTreeLayout). a9 zoom clamp 0.35–2.4 + Fit — T-D + controls tested.
+- a5 tap opens in place + Esc closes — TESTED (click node → .inspector, no route change; Esc closes).
+- a7 keyboard via the generation rail — TESTED. a8 attention dims-not-hides — TESTED.
+- a10 no canvas action writes to the record — architectural: the canvas has only reads (open/pan/zoom/
+  filter); every write goes through the record panel + its Save. No write path exists on the canvas.
+  files: tests/e2e/tree-canvas.spec.ts — 10 (a1, a5 added). Full spec 10/10.
+
+**WAVE 3 TREE (Spec 05) COMPLETE** — the household canvas: fixed generation rhythm, orthogonal lineage
+threads, meaning-coloured rings, name+year+you labels, viewer-framed at 1× with clamped zoom + Fit +
+LOD, legend, the keyboard generation rail, and the dim-not-hide attention filter. Remaining Wave 3:
+Spec 08 Households. Then Waves 4–7.

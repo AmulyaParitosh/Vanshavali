@@ -11,6 +11,26 @@ const node = (page: import("@playwright/test").Page, id: string) =>
   page.locator(`.node[data-id="${id}"]`);
 
 test.describe("Tree canvas — node visuals (Spec 05)", () => {
+  test("a couple renders as one pill, not two overlapping circles (a1)", async ({ page }) => {
+    await page.goto(treeRoute());
+    // The root couple (Ishaan + Meera) is a single partner group…
+    const group = page.locator(".partner-group");
+    await expect(group).toHaveCount(1);
+    // …with exactly one household pill behind both portraits, and two person nodes.
+    await expect(group.locator(".node-pill")).toHaveCount(1);
+    await expect(group.locator(".node")).toHaveCount(2);
+  });
+
+  test("tapping a node opens the record in place; Esc closes it (a5)", async ({ page }) => {
+    await page.goto(treeRoute());
+    await node(page, SEED.people.son.id).click();
+    await expect(page.locator(".inspector-name")).toHaveText("Arjun Verma");
+    // Opened without navigating.
+    expect(new URL(page.url()).pathname).toBe(treeRoute());
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".inspector")).toHaveCount(0);
+  });
+
   test("the ring colour reflects born-in vs married-in (a3)", async ({ page }) => {
     await page.goto(treeRoute());
     // Ishaan is the root (born into this line) → red ring.
