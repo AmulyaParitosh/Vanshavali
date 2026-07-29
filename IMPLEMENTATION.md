@@ -1046,3 +1046,20 @@ in ONE transaction, applyOwnFacts to every linked row + upsert; returns {trees})
   rows, so a4 holds here too. Own facts authoritative (cleared fact clears everywhere). Bulk upsert
   bumps each row's version. The end-to-end cross-tree e2e lands with the /user/record page (AC-B).
   deviations: /user/record page-editor = AC-B; /user overview + trees list + self-leave = AC-C.
+
+### Wave 4 Account AC-B — /user/record page-editor (a2/a3/a5) — DONE
+
+spec: `_SPEC-12.md` a2/a3/a5
+files: src/app/user/record/page.tsx (NEW — reuses the shared RecordEditor [a2]; onSave →
+dataProvider.updateOwnRecord → propagates + toast + returns to /user [a5]; "Where this appears"
+sidebar lists the trees [a3] + the "only you can change this" note [a4 read-back]); profile page's
+"Edit my record" now links to /user/record (was the tree inspector); globals.css .urec-_ (own prefix,
+no collision with the profile card's .account-record-_)
+tests: tests/e2e/account.spec.ts — 2 (reuses RecordEditor + names where it appears a2/a3; saving
+propagates the own facts to the linked record + returns to the overview a5, with pg restore).
+decisions: the page wraps the exact RecordEditor the inspector uses (a2 literal); saving goes through
+updateOwnRecord (AC-A2), so one save fans out to every linked tree (a5). Cross-tree fan-out with 2+
+trees is unit-tested (AC-A2); the seed user is linked in one tree, so the e2e asserts the single-tree
+persist + the overview return.
+deviations: the /user overview 3-card redesign + trees-list-with-self-leave = AC-C; chrome-has-no-
+switcher/search (a8) + counts/plurals (a7) + acceptance sweep = AC-D.

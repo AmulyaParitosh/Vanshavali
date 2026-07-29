@@ -4930,6 +4930,83 @@ main {
   flex: 1;
   min-width: 0;
 }
+/* Account · Your record page (Spec 12 /user/record). */
+.urec-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 32px 120px;
+}
+.urec-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line-structure);
+  margin-bottom: 26px;
+}
+.urec-head h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-30, 30px);
+  font-weight: 400;
+  margin: 0;
+  color: var(--text-primary);
+}
+.urec-lead {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-prose);
+  max-width: 620px;
+}
+.urec-empty {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-prose);
+}
+.urec-layout {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+.urec-main {
+  flex: 1;
+  max-width: 748px;
+  min-width: 0;
+}
+.urec-side {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 24px;
+}
+.urec-side-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-14);
+  background: var(--surface-paper);
+}
+.urec-side-trees {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-strong);
+}
+.urec-side-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-meta);
+}
 .account-record-row {
   display: flex;
   align-items: center;

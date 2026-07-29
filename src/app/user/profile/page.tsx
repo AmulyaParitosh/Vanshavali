@@ -169,14 +169,9 @@ export default function AccountPage() {
                   .join(" · ")}
               </span>
             </div>
-            {currentTreeId && (
-              <Link
-                href={`/tree/${currentTreeId}?person=${encodeURIComponent(linkedPerson.id)}`}
-                className="btn btn-primary"
-              >
-                Edit my record
-              </Link>
-            )}
+            <Link href="/user/record" className="btn btn-primary">
+              Edit my record
+            </Link>
           </div>
         ) : (
           <>
