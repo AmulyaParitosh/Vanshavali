@@ -35,19 +35,17 @@ in the Claude Design project `dd87d264-b5d2-4737-8e4c-9233afb2398d`, read via `D
 That is the "file read" primitive. Not mirrored to disk (get_file cannot be piped to disk without
 re-emitting content). Re-fetch per unit. Mechanism recorded in `IMPLEMENTATION.md`.
 
-## Q15 — a member deep-linking to a tree they do not OWN sits on "Loading…" — INVESTIGATE
+## Q15 — a member deep-linking to a tree they do not OWN sits on "Loading…" — RESOLVED (fixed)
 
-Signed in as a non-owner member (designreview3, a Write member of the seeded tree), navigating to
-`/tree/<other-owner-tree>/members` never leaves the AppProvider loading gate — the chrome shows the
-member's OWN default tree while the page stays `Loading…`. The keeper/owner path is fine (all the
-Members e2e run as the owner), and the picker at `/` redirects a member to their own current tree, so
-neither route reaches another owner's tree in a test. Likely the auth-boot default (currentTreeId →
-first OWNED tree) races the `[id]` layout's URL binding + the isLoading gate for a cross-user
-membership/data fetch. **Impact**: members reach shared trees today via invite-accept + the tree
-switcher, so this is not launch-blocking, but deep-links for members are broken. **Deferred**: the
-Spec 06 a2/a5 non-keeper VIEW e2e (`tests/e2e/members-roles.spec.ts`, written + `test.fixme`) is
-blocked on this; the a2/a5 gating LOGIC is already unit-tested (authz/access predicates). Investigate
-the cross-user tree boot in a focused pass (touches AppProvider/useAuthAndData — the well-tested boot).
+**RESOLVED (commit 7b9c287).** Root cause: `useAuthAndData`'s active-tree auto-select treated only
+`myTrees.owned` as accessible. When a member deep-linked to a tree they don't own, the `[id]` layout
+bound `currentTreeId` from the URL, this effect immediately reset it to the member's own tree (the URL
+tree wasn't in `owned`), the layout re-bound it, and the two thrashed forever behind the loading gate.
+Fix: the accessibility check now spans `owned + member`, so a member tree bound from the URL is left in
+place; re-selection still fires for a genuinely gone tree (deleted / role revoked), preferring an owned
+tree then any membership. Unblocked the reader-session e2e (`test.fixme` → real): members-roles a2/a5
+(writer/reader views) and settings a1 (read-only cards for a non-keeper), all green through a real
+cross-tree session.
 
 ## Q14 — e2e full-suite runs degrade the Next dev server (run per-suite, or against a prod build)
 
