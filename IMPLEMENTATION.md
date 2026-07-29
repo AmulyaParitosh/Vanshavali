@@ -1246,3 +1246,28 @@ files: src/components/tree/InvitePanel.tsx — new optional `defaultRole` prop p
 tests: tests/e2e/members.spec.ts — the invite panel's preselected role follows the tree's
 default_invite_role (set to viewer → "May read" comes up selected, "May write" not); afterEach resets
 the default to editor. Full members 15/15.
+
+### Wave 4 Settings ST-E — hand over the keeper role (a9) — DONE
+
+spec: `_SPEC-11.md` a9 (last keeper must hand over before demoting) + danger.hand + edge e4
+backend: supabase/schemas already had owner/editor/viewer; new tree/set-owner.sql + TreeRepository.setOwner;
+membership-service.handOverKeeper(treeId, actor, target) — requireOwner(actor), reject self + non-member,
+then ONE transaction: trees.owner_uid→target, target role→owner, actor role→editor. POST
+/api/tree/[id]/handover; MembershipProvider.handOverKeeper + ApiDataProvider + withRefresh MUTATIONS.
+(Self-demotion was already impossible — updateMemberRole/removeMember/leaveTree all refuse the owner —
+so hand-over is the only exit, satisfying a9's "hand over before demoting".)
+ui: src/app/tree/[id]/settings/page.tsx — danger zone gains "Make someone else the keeper" (quiet-red
+text, a8) EMPHASISED above Delete (a9), opening a HandOverDialog (reuses the .dialog shell): a radio
+picker of members-minus-self (names resolved from treeData.people via personId), confirm = the dialog's
+quiet-red .btn-danger. Members loaded via a keeper-only subscribeToMembers effect; the dialog
+auto-selects the first candidate once the list arrives (fixes a real disabled-confirm race).
+tests: tests/services/membership-service.test.ts — handOverKeeper 4 (moves owner_uid + both roles in one
+go; rejects a non-keeper actor / a non-member target / handing to yourself — repo untouched on every
+rejection). tests/e2e/settings.spec.ts — the keeper hands to Meera; owner_uid + both roles move
+(asserted on the DB); afterEach restores the seed keeper. Vitest 199/199; settings e2e 7/7 (prod build).
+verification note: the full settings file flaked under `next dev` (cold-compile degradation, Q14) but was
+100% green on a PRODUCTION build (npm run build + start) — which also caught a real strict-mode regression
+(the delete test's `.settings-danger-action` now matched two actions; scoped it to "Delete this record").
+deferred (Settings, documented): a5 Export archive job (queue + JSON/HTML/photos builder + email) and a6
+Print folio (Madhubani A2/A3) are large infra; a3 name-order cross-surface rendering needs a bilingual
+name model. Everything else in Spec 11 (a1, a2, a4, a7, a8, a9) is implemented + tested.

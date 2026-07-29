@@ -7,7 +7,13 @@ import { useToast } from "../../../../components/ToastSystem";
 import Loading from "../../../../components/Loading";
 import ConsequenceDialog from "../../../../components/tree/ConsequenceDialog";
 import { isOwner } from "../../../../lib/access";
-import type { TreeMeta, TreeSettingsPatch, NameOrder } from "../../../../types/tree";
+import type {
+  TreeMeta,
+  TreeSettingsPatch,
+  NameOrder,
+  TreeMembership,
+} from "../../../../types/tree";
+import type { Person } from "../../../../types/person";
 
 /**
  * Tree settings (Spec 11) — one 720px left-aligned column of cards: what the
@@ -19,7 +25,7 @@ import type { TreeMeta, TreeSettingsPatch, NameOrder } from "../../../../types/t
 export default function TreeSettingsPage() {
   const params = useParams<{ id: string }>();
   const treeId = params?.id ?? null;
-  const { dataProvider, membership, myTrees, treeData, setCurrentTreeId } = useAppContext();
+  const { dataProvider, membership, myTrees, treeData, setCurrentTreeId, user } = useAppContext();
   const toast = useToast();
   const router = useRouter();
 
@@ -27,6 +33,15 @@ export default function TreeSettingsPage() {
   const tree = [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])].find((t) => t.id === treeId);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [handoverOpen, setHandoverOpen] = useState(false);
+  const [handingOver, setHandingOver] = useState(false);
+  const [members, setMembers] = useState<TreeMembership[]>([]);
+
+  // The keeper's hand-over picker needs the member list (Spec 11 a9).
+  useEffect(() => {
+    if (!treeId || !keeper) return;
+    return dataProvider.subscribeToMembers(treeId, setMembers);
+  }, [treeId, keeper, dataProvider]);
 
   // Real counts for the About panel + delete warning (a7): people, households, photographs.
   const people = treeData?.people ?? [];
@@ -68,6 +83,26 @@ export default function TreeSettingsPage() {
     } finally {
       setIsDeleting(false);
       setDeleteOpen(false);
+    }
+  };
+
+  // Hand-over candidates (a9 / edge e4): every member but the keeper themselves.
+  const candidates = members.filter((m) => m.uid !== user?.uid);
+  const memberName = (m: TreeMembership): string => {
+    const p = m.personId ? people.find((pp: Person) => pp.id === m.personId) : undefined;
+    return p?.name.official_name ?? "A member";
+  };
+
+  const handleHandOver = async (targetUid: string) => {
+    setHandingOver(true);
+    try {
+      await dataProvider.handOverKeeper(treeId, targetUid);
+      toast.success("You've handed over the tree. You're now a writer.");
+      setHandoverOpen(false);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Hand-over failed");
+    } finally {
+      setHandingOver(false);
     }
   };
 
@@ -118,6 +153,21 @@ export default function TreeSettingsPage() {
             <h2>Danger zone</h2>
             <p>Deleting a tree cannot be undone from inside Vanshavali.</p>
           </div>
+          {/* Hand-over is emphasised above Delete (a9): a keeper steps down by
+              handing the tree on, never by leaving it keeper-less. */}
+          <div className="settings-danger-row">
+            <div className="settings-danger-copy">
+              <span className="title">Hand over the tree</span>
+              <span className="sub">They become keeper; you keep writing access.</span>
+            </div>
+            <button
+              type="button"
+              className="settings-danger-action"
+              onClick={() => setHandoverOpen(true)}
+            >
+              Make someone else the keeper
+            </button>
+          </div>
           <div className="settings-danger-row">
             <div className="settings-danger-copy">
               <span className="title">Delete this record</span>
@@ -156,6 +206,97 @@ export default function TreeSettingsPage() {
           onConfirm={handleDelete}
         />
       )}
+
+      {handoverOpen && (
+        <HandOverDialog
+          candidates={candidates}
+          nameOf={memberName}
+          busy={handingOver}
+          onConfirm={handleHandOver}
+          onCancel={() => setHandoverOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hand-over picker (a9): choose a member to become keeper. The confirm is the
+// dialog's quiet-red action (never a filled red button); only members with
+// accounts are listed (edge e4 — every tree_member has one).
+// ---------------------------------------------------------------------------
+
+function HandOverDialog({
+  candidates,
+  nameOf,
+  busy,
+  onConfirm,
+  onCancel,
+}: {
+  candidates: TreeMembership[];
+  nameOf: (m: TreeMembership) => string;
+  busy: boolean;
+  onConfirm: (targetUid: string) => void;
+  onCancel: () => void;
+}) {
+  const [selected, setSelected] = useState<string | null>(candidates[0]?.uid ?? null);
+  // The member list can arrive after the dialog opens (its own subscription);
+  // preselect the first candidate once it does so the action is reachable.
+  useEffect(() => {
+    if (selected === null && candidates[0]) setSelected(candidates[0].uid);
+  }, [candidates, selected]);
+  return (
+    <div className="dialog-scrim" onClick={busy ? undefined : onCancel}>
+      <div
+        className="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Make someone else the keeper"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span className="dialog-eyebrow">Hand over</span>
+        <h2 className="dialog-heading">Make someone else the keeper</h2>
+        <p className="consequence-line">
+          They become keeper; you keep writing access. Only they can hand it back.
+        </p>
+        {candidates.length === 0 ? (
+          <p className="consequence-line">No one to hand it to yet — invite a relative first.</p>
+        ) : (
+          <div className="settings-radiogroup" role="radiogroup" aria-label="Choose a new keeper">
+            {candidates.map((m) => (
+              <button
+                key={m.uid}
+                type="button"
+                role="radio"
+                aria-checked={selected === m.uid}
+                className={selected === m.uid ? "radio-row selected" : "radio-row"}
+                onClick={() => setSelected(m.uid)}
+              >
+                <span className="radio-dot" aria-hidden="true" />
+                <span className="settings-order-sample">
+                  <span className="settings-order-line1">{nameOf(m)}</span>
+                  <span className="settings-order-line2">
+                    {m.role === "editor" ? "Currently a writer" : "Currently a reader"}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="dialog-actions">
+          <button type="button" className="btn" onClick={onCancel} disabled={busy}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn-danger"
+            disabled={busy || !selected}
+            onClick={() => selected && onConfirm(selected)}
+          >
+            {busy ? "Working…" : "Make them the keeper"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

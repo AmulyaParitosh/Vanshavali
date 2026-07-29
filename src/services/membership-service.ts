@@ -1,7 +1,8 @@
 import type { TreeMembership, TreeRole } from "../types/tree";
 import { isOwner } from "../lib/access";
-import { getPool } from "../repositories/db";
+import { getPool, transaction } from "../repositories/db";
 import { MembershipRepository } from "../repositories/MembershipRepository";
+import { TreeRepository } from "../repositories/TreeRepository";
 import { requireView, requireOwner } from "./authz";
 import { HttpError } from "../lib/api";
 
@@ -50,6 +51,30 @@ export async function removeMember(
   if (!target) return; // already gone — treat as idempotent
   if (isOwner(target.role)) throw new HttpError("Can't remove the tree owner.", 400);
   await MembershipRepository.remove(getPool(), treeId, targetUid);
+}
+
+/**
+ * Hand over the keeper role (Spec 11 a9). The current keeper picks a member of
+ * the tree (edge e4: only real members — everyone in tree_members has an
+ * account); in ONE transaction the tree's owner_uid moves to them, they become
+ * `owner`, and the outgoing keeper steps down to `editor` (a writer). This is
+ * the only way to stop being keeper, so a tree is never left without one.
+ */
+export async function handOverKeeper(
+  treeId: string,
+  actorUid: string,
+  targetUid: string
+): Promise<void> {
+  await requireOwner(treeId, actorUid);
+  if (targetUid === actorUid) throw new HttpError("You are already the keeper.", 400);
+  const target = await MembershipRepository.find(getPool(), treeId, targetUid);
+  if (!target) throw new HttpError("Choose a member of this tree to hand over to.", 404);
+
+  await transaction(async (tx) => {
+    await TreeRepository.setOwner(tx, treeId, targetUid);
+    await MembershipRepository.updateRole(tx, treeId, targetUid, "owner");
+    await MembershipRepository.updateRole(tx, treeId, actorUid, "editor");
+  });
 }
 
 /**

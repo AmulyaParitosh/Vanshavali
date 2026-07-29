@@ -112,6 +112,8 @@ export interface MembershipProvider {
   removeMember(treeId: string, uid: string): Promise<void>;
   /** The caller leaves the tree — removes their own membership (Spec 12 a6). */
   leaveTree(treeId: string): Promise<void>;
+  /** Hand the keeper role to another member; the caller becomes a writer (Spec 11 a9). */
+  handOverKeeper(treeId: string, targetUid: string): Promise<void>;
 }
 
 /** Invitations to a tree. */

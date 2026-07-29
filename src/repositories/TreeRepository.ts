@@ -50,6 +50,11 @@ export const TreeRepository = {
     await query(db, sql("tree/delete.sql"), [treeId]);
   },
 
+  /** Reassign the keeper (Spec 11 a9). Call inside the hand-over transaction. */
+  async setOwner(db: Db, treeId: string, uid: string): Promise<void> {
+    await query(db, sql("tree/set-owner.sql"), [treeId, uid]);
+  },
+
   async listOwned(db: Db, uid: string): Promise<TreeMeta[]> {
     const rows = await query<TreeRow>(db, sql("tree/list-owned.sql"), [uid]);
     return rows.map(rowToTreeMeta);

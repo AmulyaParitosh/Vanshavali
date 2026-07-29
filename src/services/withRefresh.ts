@@ -16,6 +16,7 @@ const MUTATIONS: ReadonlySet<string> = new Set<keyof DataProvider>([
   "updateMemberRole",
   "removeMember",
   "leaveTree",
+  "handOverKeeper",
   "createInvite",
   "acceptInvite",
   "revokeInvite",

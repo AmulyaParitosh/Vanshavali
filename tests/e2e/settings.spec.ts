@@ -46,6 +46,33 @@ async function readNameOrder(): Promise<string> {
   }
 }
 
+async function withDb<T>(fn: (c: Client) => Promise<T>): Promise<T> {
+  const c = new Client({ connectionString: LOCAL_DB });
+  await c.connect();
+  try {
+    return await fn(c);
+  } finally {
+    await c.end();
+  }
+}
+
+const readOwner = () =>
+  withDb(async (c) => {
+    const r = await c.query<{ owner_uid: string }>("select owner_uid from trees where id=$1", [
+      SEED.tree.id,
+    ]);
+    return r.rows[0]?.owner_uid ?? "";
+  });
+
+const readRole = (uid: string) =>
+  withDb(async (c) => {
+    const r = await c.query<{ role: string }>(
+      "select role from tree_members where tree_id=$1 and uid=$2",
+      [SEED.tree.id, uid]
+    );
+    return r.rows[0]?.role ?? "";
+  });
+
 test.describe("Tree settings — cards (Spec 11 a2)", () => {
   // Always leave the seed's name order back at the default, however a test ends.
   test.afterEach(async () => setNameOrder("devanagari"));
@@ -108,8 +135,9 @@ test.describe("Tree settings — delete (Spec 11 a7/a8)", () => {
   test("delete needs the exact name + real counts, and no filled red (a7/a8)", async ({ page }) => {
     await page.goto(settingsRoute);
 
-    // a8: the danger action is quiet-red text, not a filled red button.
-    const trigger = page.locator(".settings-danger-action");
+    // a8: the danger action is quiet-red text, not a filled red button. (Two
+    // danger actions live here now — hand-over and delete; target delete.)
+    const trigger = page.locator(".settings-danger-action", { hasText: "Delete this record" });
     await expect(trigger).toBeVisible();
     await expect(page.locator(".settings-danger .btn-primary")).toHaveCount(0);
 
@@ -132,6 +160,53 @@ test.describe("Tree settings — delete (Spec 11 a7/a8)", () => {
     // Never actually delete the seed — cancel out.
     await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(page.locator(".dialog")).toHaveCount(0);
+  });
+});
+
+test.describe("Tree settings — hand over the keeper role (Spec 11 a9)", () => {
+  // Restore the seed's keeper however the test ends (this test really moves it).
+  test.afterEach(async () => {
+    await withDb(async (c) => {
+      await c.query("update trees set owner_uid=$1 where id=$2", [SEED.userId, SEED.tree.id]);
+      await c.query("update tree_members set role='owner' where tree_id=$1 and uid=$2", [
+        SEED.tree.id,
+        SEED.userId,
+      ]);
+      await c.query("update tree_members set role='editor' where tree_id=$1 and uid=$2", [
+        SEED.tree.id,
+        WRITER.uid,
+      ]);
+    });
+  });
+
+  test("the keeper hands the tree to a member; ownership + both roles move (a9/a8)", async ({
+    page,
+  }) => {
+    await page.goto(settingsRoute);
+    // Wait past the loading gate + first-hit route compiles (membership/members).
+    const handOver = page.getByRole("button", { name: "Make someone else the keeper" });
+    await expect(handOver).toBeVisible({ timeout: 25_000 });
+
+    // a8: quiet-red text, no filled red button anywhere in the danger zone.
+    await expect(page.locator(".settings-danger .btn-primary")).toHaveCount(0);
+    // a9: hand-over is emphasised ABOVE delete — it's the first danger action.
+    await expect(page.locator(".settings-danger-action").first()).toHaveText(
+      "Make someone else the keeper"
+    );
+
+    await handOver.click();
+    const dialog = page.locator(".dialog");
+    await expect(dialog).toBeVisible();
+    // The picker lists the writer member (Meera), not the keeper themselves.
+    await expect(dialog).toContainText("Meera Verma");
+    const confirm = dialog.getByRole("button", { name: "Make them the keeper" });
+    await expect(confirm).toBeEnabled({ timeout: 10_000 });
+    await confirm.click();
+
+    // Ownership and both roles moved together (one transaction).
+    await expect.poll(readOwner, { timeout: 15_000 }).toBe(WRITER.uid);
+    expect(await readRole(WRITER.uid)).toBe("owner");
+    expect(await readRole(SEED.userId)).toBe("editor");
   });
 });
 

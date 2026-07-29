@@ -193,6 +193,13 @@ export class ApiDataProvider implements DataProvider {
     await authedFetch(this.client, `/api/tree/${treeId}/membership`, { method: "DELETE" });
   }
 
+  async handOverKeeper(treeId: string, targetUid: string): Promise<void> {
+    await authedFetch(this.client, `/api/tree/${treeId}/handover`, {
+      method: "POST",
+      body: { targetUid },
+    });
+  }
+
   // -------------------------- InvitationProvider --------------------------
 
   async createInvite(
