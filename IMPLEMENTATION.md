@@ -296,3 +296,45 @@ the per-record patch model + record panel (Wave 2).
 **Wave 1 logic core COMPLETE** — permission matrix (26), dirty-tracking (11), merge/propagation (7),
 conflict (4 within the 15). Remaining Wave 1 = server patch/version wiring + Spec 13 UI, both built
 with the **record panel (Wave 2)** where they are consumed and testable end-to-end. Vitest total: 134.
+
+---
+
+## WAVE 2 — Record panel (Spec 07) — plan + audit
+
+Spec 07 distilled at `design-specs/_SPEC-07.md` (copy deck verbatim). The panel is the ONE shared
+inspector for specs 05/06/08/09; it opens in place via `?person=` (integration §2), never a route.
+
+### Current state — `src/components/tree/TreeInspector.tsx` (read-only) — audit vs Spec 07
+
+Has: ornament bar, header (eyebrow "The record" + close ✕), identity (portrait + name + aliases +
+b.date + "This is you" chip), Life (❀ events), Details (✧ custom), "In the family" relations as
+clickable avatars, footer "Edit record" → **navigates to `/tree/[id]/people?id=`**.
+Gaps vs Spec 07:
+
+- **Edit-in-place MISSING** — "Edit record" navigates away; spec a2/a9 require editing IN the panel
+  with the SAME form as Account. (Current editor = `src/app/tree/[id]/people/page.tsx` + `PersonForm.tsx`.)
+- **Access block MISSING entirely** — no role display for readers, no keeper radio set, no Remove access
+  (a3). The only write surface for roles is the panel (Members must not write roles from a table).
+- **Prose lineage** — currently avatar chips, not the prose sentence with inline name links (a7).
+- **Header** — eyebrow should be `Generation II · Mishra line`; add fact line `b. 1958, Madhubani ·
+living`, relation-to-viewer `your father` (compute via GraphManager.findPath), 44px `.portrait--panel`.
+- **Write infra** — no dirty footer / save toast+undo / leaving guard / consequence dialog (Spec 13).
+
+### Sub-units (each a commit; build in focused context)
+
+A. **Read mode to spec** — header (gen·line eyebrow, 44px portrait, fact line, relation-to-viewer),
+prose lineage builder (pure fn: person+people+families+viewer → sentence with name links; edges
+3/6: no-parents start, same-name gen disambiguation), Life, Details. Panel opens in place, Esc/close.
+B. **Access block** — read (chip + stated line for everyone; own-record + no-account variants) and
+keeper radio set (Read/Write/His-branch/Keeper with `now`) + Remove access. Role write is
+keeper-only, server-enforced, panel-only. ("His branch only" = a 4th scope with no repo role yet —
+log in QUESTIONS when built.)
+C. **Edit-in-place + shared PersonForm** — fields replace values (a9: the SAME component Account uses);
+`writeState` dirty tracking → `.dirty-dot` labels + `.panel-footer`; date precision `.segmented`.
+D. **Write infrastructure wiring** — per-record patch endpoint (base version → 409; replaces bulk
+`saveTreeData`), save toast + 12s undo (onto `.toast`), leaving guard (onto `.dialog` +
+`summarizeChanges`), consequence dialog for Remove access (type-to-confirm). Consumes Wave 1 logic
+(`writeState.ts`, `onerecord.ts`) + Wave 0 primitives. Retires `.confirm-dialog` + react-hot-toast.
+E. **Tests** `tests/e2e/record-panel.spec.ts` — one per Spec 07 acceptance a1–a10 (+ integration §2).
+
+The shared PersonForm (a9) is the hinge: build it once here, reuse on Account (Spec 12, Wave 4).
