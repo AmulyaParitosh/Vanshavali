@@ -21,7 +21,7 @@ interface AppProviderProps {
  * the password-recovery landing (the reset link signs the user in, but they
  * may own no tree yet).
  */
-const TREE_OPTIONAL_PREFIXES = ["/invite/", "/about", "/user/", "/auth/"];
+const TREE_OPTIONAL_PREFIXES = ["/invite/", "/about", "/user/", "/auth/", "/trees"];
 
 function isTreeOptional(pathname: string | null): boolean {
   if (!pathname) return false;

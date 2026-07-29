@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import type { MyTrees, TreeMeta, TreeSettingsPatch } from "../types/tree";
+import type { MyTrees, TreeMeta, TreeSettingsPatch, TreeCardSummary } from "../types/tree";
 import { getPool, transaction } from "../repositories/db";
 import { TreeRepository } from "../repositories/TreeRepository";
 import { MembershipRepository } from "../repositories/MembershipRepository";
@@ -62,4 +62,13 @@ export async function listMyTrees(uid: string): Promise<MyTrees> {
   const owned = await TreeRepository.listOwned(db, uid);
   const member = await TreeRepository.listMemberOnly(db, uid);
   return { owned, member };
+}
+
+/**
+ * The picker/switcher cards (Spec 03) — every tree the caller belongs to, with
+ * their role and a small summary. Self-scoped: the uid is the caller's token, so
+ * a user only ever sees their own memberships (perm p1).
+ */
+export async function listMyTreeCards(uid: string): Promise<TreeCardSummary[]> {
+  return TreeRepository.listSummariesByUser(getPool(), uid);
 }

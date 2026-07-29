@@ -77,3 +77,22 @@ export interface MyTrees {
   owned: TreeMeta[];
   member: TreeMeta[];
 }
+
+/** One person in a picker card's portrait cluster (Spec 03 card c1). */
+export interface TreePortrait {
+  id: string;
+  name: string;
+}
+
+/**
+ * A tree as the picker + switcher render it (Spec 03) — the tree, the viewer's
+ * role in it, its size, and the first few people for the portrait cluster.
+ */
+export interface TreeCardSummary {
+  id: string;
+  name: string;
+  place?: string;
+  role: TreeRole;
+  personCount: number;
+  portraits: TreePortrait[];
+}

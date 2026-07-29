@@ -866,6 +866,111 @@ main {
   cursor: default;
 }
 
+/* === My trees picker (Spec 03) — centred 760 column, 348×132 cards 2-up === */
+.picker {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px var(--space-8) var(--space-10);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.picker-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.picker-head h1 {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
+  margin: 0;
+  color: var(--text-primary);
+}
+.picker-sub {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-meta);
+}
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+}
+.picker-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 132px;
+  box-sizing: border-box;
+  padding: 18px 20px;
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-16);
+  text-decoration: none;
+}
+.picker-card:hover {
+  border-color: var(--color-red);
+}
+.picker-card:focus-visible {
+  outline: none;
+  border-color: var(--color-red);
+  box-shadow: var(--shadow-focus);
+}
+.picker-card-name {
+  font-family: var(--font-display);
+  font-size: 19px;
+  color: var(--text-primary);
+}
+.picker-portraits {
+  display: flex;
+  flex: 1;
+  align-items: center;
+}
+.picker-portrait {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--surface-paper);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fffdf9;
+}
+.picker-portrait + .picker-portrait {
+  margin-left: -8px;
+}
+.picker-card-meta {
+  font-size: 12.5px;
+  color: var(--text-meta);
+}
+/* The dashed "Start another tree" card. */
+.picker-card--new {
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1.5px dashed var(--line-control);
+  background: transparent;
+}
+.picker-new-plus {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-red);
+}
+.picker-new-label {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.picker-skeleton {
+  height: 132px;
+  border-radius: var(--radius-16);
+  background: var(--cream, #f4ede0);
+}
+
 /* --- Tree picker (authenticated landing, > 1 tree) --- */
 .trees-landing {
   padding: var(--space-10);

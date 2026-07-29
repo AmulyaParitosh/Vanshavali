@@ -48,10 +48,14 @@ export default function Header({ user, membership }: HeaderProps) {
     setIsPickerOpen(false);
   }, [pathname]);
 
-  // The Account routes are outside any tree — no tree switcher, no search (Spec 12 a8).
-  const onUserRoute = !!pathname && pathname.startsWith("/user");
+  // Routes that are outside any tree — the Account area (Spec 12 a8) and the
+  // tree picker (Spec 03 a4) — carry no tree switcher and no search: a control
+  // that needs a tree isn't drawn where there isn't one.
+  const treelessRoute =
+    !!pathname &&
+    (pathname === "/" || pathname.startsWith("/user") || pathname.startsWith("/trees"));
   const showTreeSwitcher =
-    !!user && canViewTree(membership?.role) && !!currentTreeId && !onUserRoute;
+    !!user && canViewTree(membership?.role) && !!currentTreeId && !treelessRoute;
   const allTrees = myTrees ? [...myTrees.owned, ...myTrees.member] : [];
   const currentTree = allTrees.find((t) => t.id === currentTreeId);
 

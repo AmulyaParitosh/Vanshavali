@@ -9,6 +9,7 @@ import type {
   InvitableTreeRole,
   MyTrees,
   TreeSettingsPatch,
+  TreeCardSummary,
 } from "../types/tree";
 
 export interface TreeData {
@@ -79,6 +80,8 @@ export interface TreeMetaProvider {
   deleteTree(treeId: string): Promise<void>;
   listMyTrees(uid: string): Promise<MyTrees>;
   subscribeToMyTrees(uid: string, callback: (trees: MyTrees) => void): () => void;
+  /** The picker/switcher cards — every tree the caller is in, with role + summary (Spec 03). */
+  listMyTreeCards(): Promise<TreeCardSummary[]>;
 }
 
 /** Tree-scoped people + families. */

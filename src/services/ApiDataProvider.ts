@@ -9,6 +9,7 @@ import type {
   InvitableTreeRole,
   MyTrees,
   TreeSettingsPatch,
+  TreeCardSummary,
 } from "../types/tree";
 import type { Suggestion, SuggestionStatus } from "../types/suggestion";
 import { authedFetch } from "./api/authedFetch";
@@ -95,6 +96,14 @@ export class ApiDataProvider implements DataProvider {
 
   listMyTrees(_uid: string): Promise<MyTrees> {
     return authedFetch<MyTrees>(this.client, "/api/trees");
+  }
+
+  async listMyTreeCards(): Promise<TreeCardSummary[]> {
+    const { trees } = await authedFetch<{ trees: TreeCardSummary[] }>(
+      this.client,
+      "/api/trees/summary"
+    );
+    return trees;
   }
 
   subscribeToMyTrees(_uid: string, callback: (trees: MyTrees) => void): () => void {

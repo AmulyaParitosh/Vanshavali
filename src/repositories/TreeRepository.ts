@@ -2,7 +2,16 @@ import type { Db } from "./db";
 import { query } from "./db";
 import { sql } from "./sql";
 import { rowToTreeMeta, type TreeRow } from "./mappers";
-import type { TreeMeta, TreeSettingsPatch } from "../types/tree";
+import type { TreeMeta, TreeSettingsPatch, TreeRole, TreeCardSummary } from "../types/tree";
+
+interface TreeSummaryRow {
+  id: string;
+  name: string;
+  place: string | null;
+  role: string;
+  person_count: string | number;
+  portraits: { id: string; name: string | null }[];
+}
 
 /**
  * Data access for the `trees` table. Owned vs member-only listing are two
@@ -63,5 +72,18 @@ export const TreeRepository = {
   async listMemberOnly(db: Db, uid: string): Promise<TreeMeta[]> {
     const rows = await query<TreeRow>(db, sql("tree/list-member.sql"), [uid]);
     return rows.map(rowToTreeMeta);
+  },
+
+  /** Picker/switcher cards (Spec 03): every tree the user is in, with role + summary. */
+  async listSummariesByUser(db: Db, uid: string): Promise<TreeCardSummary[]> {
+    const rows = await query<TreeSummaryRow>(db, sql("tree/summaries-by-user.sql"), [uid]);
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      ...(r.place ? { place: r.place } : {}),
+      role: r.role as TreeRole,
+      personCount: Number(r.person_count),
+      portraits: (r.portraits ?? []).map((p) => ({ id: p.id, name: p.name ?? "" })),
+    }));
   },
 };

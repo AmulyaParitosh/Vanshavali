@@ -1392,3 +1392,36 @@ rebuild of the working auth boot); /signin is the canonical public entry that in
 to. landing delegates to "/" (the existing picker already implements single/last-tree logic).
 **WAVE 5 SIGN IN (Spec 02) COMPLETE** — card (SI-A: a1–a7, a9) + route/reset (SI-B: a8, e3, p2/s5).
 Next Wave 5 units: Spec 03 My trees, Spec 04 Invitation, Spec 10 Getting started.
+
+## WAVE 5 — My trees (Spec 03) — plan + receipts
+
+Distilled `design-specs/_SPEC-03.md` (a1..a8). Picker (`/trees`) + create (`/trees/new`) + first run.
+Sub-units: MT-A picker, MT-B create + empty-inline + one-record reuse, MT-C first run.
+
+### Wave 5 My trees MT-A — the picker to Spec 03 (a1, a4, a5) — DONE
+
+spec: `_SPEC-03.md` — count-decided face; one ordered list; role in words; no switcher/search
+data: new per-tree summary read (d1) — tree/summaries-by-user.sql (role + person_count + first-4
+portraits via json_agg, one query); TreeCardSummary/TreePortrait types; TreeRepository.
+listSummariesByUser; tree-service.listMyTreeCards (self-scoped, perm p1); GET /api/trees/summary;
+TreeMetaProvider.listMyTreeCards + ApiDataProvider.
+ui: src/app/trees/page.tsx (NEW) — the picker. Count logic: 1 → redirect straight into the tree (a1);
+2+ → one list of cards + the dashed "Start another tree" card; 0 → empty state ("Start your family's
+record") with the create entry point (inline panel lands in MT-B). Card = name (Yatra 19px) +
+overlapped portrait cluster + meta "N people · place · role-in-words" where role is
+keeper→"kept by you" / editor→"you may add and correct" / viewer→"read only" (a5, never the raw role).
+Copy "Your family records" / "Open one, or start another." verbatim. src/app/page.tsx — `/` now just
+forwards to /trees (the picker owns the count routing); removed the old owned/member split + the
+multi-tree bounce-into-currentTreeId. AppProvider: /trees is tree-optional. Header: switcher + search
+suppressed on / and /trees too (a4, generalised the /user suppression to treelessRoute).
+tests: tests/e2e/trees.spec.ts — 4 (single-tree user skips to their tree a1 [designreview2];
+designreview3 with 2 trees sees one list + roles in words + new-tree card + NO switcher/search a4/a5;
+a card opens its tree). 4/4; regression: members-roles + account sign-in flows (which now land on
+/trees) still green. Vitest 199/199.
+deviations (Spec 03 remaining): a2 empty-INLINE create panel + a3 one-record reuse + create place field
+
+- /trees/new (MT-B); a7 first-run floating card over a one-node canvas (MT-C); a6 portraits are ordered
+  by created_at (stable, "don't change between visits" holds) not true generation (needs the graph);
+  a8 switcher-parity — the picker card isn't yet the same component the chrome switcher renders (the
+  card-is-one-link half holds); lastOpenedAt ordering not tracked (ordered by created_at). Auto-provision
+  in useAuthAndData still runs, so the 0-tree empty state rarely shows until MT-B replaces it.
