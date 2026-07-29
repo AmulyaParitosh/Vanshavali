@@ -35,6 +35,23 @@ in the Claude Design project `dd87d264-b5d2-4737-8e4c-9233afb2398d`, read via `D
 That is the "file read" primitive. Not mirrored to disk (get_file cannot be piped to disk without
 re-emitting content). Re-fetch per unit. Mechanism recorded in `IMPLEMENTATION.md`.
 
+## Q9 — One-record rule: shared canonical person vs per-tree persons — RESOLVED (self, §2)
+
+Spec 00 §06: "a user has exactly ONE person record, shared by every tree." The repo's schema is
+per-tree (`people(tree_id, data, user_id)`) — a user links to one person PER tree. A true shared
+canonical `persons` table is a large schema overhaul. Ground rule §2 (implement in the repo's idiom)
+
+- the fact that §06's consequences are OBSERVABLE behaviours (integration §6 "join → one row, links
+  intact"; §7 "edit own record on /user → changes in every tree") let me satisfy the rule WITHOUT the
+  overhaul: keep per-tree persons, and implement one-record BEHAVIOUR at the seams —
+  (a) editing your own record on `/user` **propagates** the person's own facts (name/dates/photo/
+  aliases/events) to every person row that person is linked to across the user's trees;
+  (b) accepting an invite **merges** — the tree's placeholder is replaced by the user's identity and
+  its household/child/sibling/event links re-point, ending with one row.
+  Tree-owned fields (role, positional, getting-started) never travel. **Decision: Option B (per-tree +
+  propagate/merge).** Merge + propagation LOGIC is unit-tested in Wave 1 (`tests/merge.test.ts`); the
+  UI seams are built with Account (Spec 12, Wave 4) and Invite (Spec 04, Wave 5).
+
 ## Q8 — Shared list row: horizontal padding + column widths differ across sources — DEFERRED to Spec 06
 
 Style Guide rowSpecs says row padding `10px 18px` and columns `40 · flex · 46 · 100 · 112` (5);
