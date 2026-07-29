@@ -46,6 +46,31 @@ function placeCountsLine(c: PlaceCount): string {
   return `${parts.join(" · ")} recorded here`;
 }
 
+/**
+ * Diacritic-insensitive fold for matching (Spec 09 §07): lower-case and strip
+ * combining marks. Precomposed accents map 1:1 to their base letter, so folded
+ * indices still line up with the original string for highlighting.
+ */
+function fold(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
+
+/** Render `text` with the folded query `q` highlighted where it occurs (§07). */
+function Highlight({ text, q }: { text: string; q: string }): React.ReactElement {
+  const i = q ? fold(text).indexOf(q) : -1;
+  if (i < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, i)}
+      <mark className="cmdk-highlight">{text.slice(i, i + q.length)}</mark>
+      {text.slice(i + q.length)}
+    </>
+  );
+}
+
 /** Whether a keyboard event landed in an editable control (so `/` shouldn't hijack it). */
 function isEditableTarget(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
@@ -105,7 +130,7 @@ export default function CommandSearch() {
     () => people.find((p) => !!user && p.userId === user.uid)?.id ?? null,
     [people, user]
   );
-  const q = query.trim().toLowerCase();
+  const q = fold(query.trim());
 
   // Every person result carries their relation to the viewer (a3); null (or self) → no label.
   const relationOf = (personId: string): string | null =>
@@ -119,7 +144,7 @@ export default function CommandSearch() {
     // The empty state suggests nothing (a9) — no query, no results.
     const ppl = q
       ? people.filter((p) =>
-          [p.name.official_name, ...(p.name.aliases ?? [])].join(" ").toLowerCase().includes(q)
+          fold([p.name.official_name, ...(p.name.aliases ?? [])].join(" ")).includes(q)
         )
       : [];
     const events: { personId: string; primary: string; sub: string }[] = [];
@@ -135,7 +160,7 @@ export default function CommandSearch() {
           c.total += 1;
           placeCounts.set(e.place, c);
         }
-        if (q && `${e.type} ${e.date ?? ""} ${e.place ?? ""}`.toLowerCase().includes(q)) {
+        if (q && fold(`${e.type} ${e.date ?? ""} ${e.place ?? ""}`).includes(q)) {
           events.push({
             personId: p.id,
             primary: `${e.type} · ${p.name.official_name}`,
@@ -146,7 +171,7 @@ export default function CommandSearch() {
     }
     const places = q
       ? [...placeCounts.entries()]
-          .filter(([place]) => place.toLowerCase().includes(q))
+          .filter(([place]) => fold(place).includes(q))
           .map(([place, counts]) => ({ place, line: placeCountsLine(counts) }))
       : [];
     return { peopleHits: ppl, placeHits: places, eventHits: events };
@@ -256,7 +281,9 @@ export default function CommandSearch() {
                 {personInitials(p.name.official_name)}
               </span>
               <span className="cmdk-row-body">
-                <span className="cmdk-row-primary">{p.name.official_name}</span>
+                <span className="cmdk-row-primary">
+                  <Highlight text={p.name.official_name} q={q} />
+                </span>
                 {personSub(p, gens.get(p.id)) && (
                   <span className="cmdk-row-sub">{personSub(p, gens.get(p.id))}</span>
                 )}
@@ -287,7 +314,9 @@ export default function CommandSearch() {
                 ⌖
               </span>
               <span className="cmdk-row-body">
-                <span className="cmdk-row-primary">{pl.place}</span>
+                <span className="cmdk-row-primary">
+                  <Highlight text={pl.place} q={q} />
+                </span>
                 <span className="cmdk-row-sub">{pl.line}</span>
               </span>
             </button>

@@ -4605,6 +4605,12 @@ main {
 .cmdk-row--place:hover {
   background: var(--color-red-wash);
 }
+/* Matched-substring highlight (Spec 09 §07) — #fdf1e2 behind the matched chars only. */
+.cmdk-highlight {
+  background: #fdf1e2;
+  color: inherit;
+  border-radius: 2px;
+}
 
 /* Place-filter chip on the canvas (Spec 09 a6) — names the active filter, dismissible. */
 .tree-place-filter {

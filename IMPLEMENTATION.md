@@ -1313,3 +1313,18 @@ deferred (Search S-C/S-D remaining): ⌘↵ focus-in-tree PAN (320ms) + ↵-on-c
 via ?person= on the canvas today); matched-substring highlight (#fdf1e2); diacritic-insensitive matching;
 80ms debounce; IME compositionend guard; prefix-before-substring + generation ordering; a marriage event
 opening the household editor (vs the person); members-side consumption of the carried ?q=.
+
+## Wave (Spec 09 Search) — S-D (partial): diacritic-insensitive matching + highlight — DONE
+
+spec: `_SPEC-09.md` §07 (diacritic-insensitive across scripts/aliases; matched-substring highlight #fdf1e2) + a4
+files: src/components/CommandSearch.tsx — a `fold(s)` helper (NFD + strip combining marks + lower-case)
+now normalises BOTH the query and every matched field (people name+aliases, place, event
+type/date/place), so "Méera" finds "Meera" (a4). A `<Highlight text q>` wraps the matched run in
+`<mark class="cmdk-highlight">` on person + place primary names; precomposed accents fold 1:1 so the
+folded index maps back onto the original string. globals.css: .cmdk-highlight (#fdf1e2 behind the
+matched chars only). Behaviour-preserving for plain ASCII queries (a3/a9/S-B/S-C unchanged).
+tests: tests/e2e/search.spec.ts — matching is diacritic-insensitive ("Méera" → "Meera Verma"); the
+matched substring is highlighted ("eer" → .cmdk-highlight "eer"). 2/2.
+deferred (Search remaining): ⌘↵ focus-in-tree PAN (320ms) + ↵-on-current-route; 80ms debounce; IME
+compositionend guard; prefix-before-substring + generation ordering; marriage event → household editor;
+members-side ?q= consumption. (Devanagari matching works via fold but is untested — seed is Latin-only.)

@@ -105,4 +105,18 @@ test.describe("Search palette — contract (Spec 09 S-B)", () => {
     await input.press("ArrowDown"); // wraps back to the first
     await expect(rows.first()).toHaveClass(/active/);
   });
+
+  test("matching is diacritic-insensitive (a4)", async ({ page }) => {
+    await openSearch(page);
+    // "Méera" (accented) still finds plain "Meera".
+    await page.locator(".cmdk-panel input").fill("Méera");
+    await expect(page.locator(".cmdk-row", { hasText: "Meera Verma" })).toBeVisible();
+  });
+
+  test("the matched substring is highlighted (§07)", async ({ page }) => {
+    await openSearch(page);
+    await page.locator(".cmdk-panel input").fill("eer"); // only Meera contains it
+    const row = page.locator(".cmdk-row", { hasText: "Meera Verma" });
+    await expect(row.locator(".cmdk-highlight")).toHaveText("eer");
+  });
 });
