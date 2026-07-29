@@ -338,3 +338,18 @@ D. **Write infrastructure wiring** — per-record patch endpoint (base version �
 E. **Tests** `tests/e2e/record-panel.spec.ts` — one per Spec 07 acceptance a1–a10 (+ integration §2).
 
 The shared PersonForm (a9) is the hinge: build it once here, reuse on Account (Spec 12, Wave 4).
+
+### Wave 2 sub-unit A (part 1) — read-mode logic core — DONE
+
+spec: Spec 07 (`_SPEC-07.md`) — header relation, prose lineage; edges 3/6
+files: src/lib/lineage.ts, tests/lib/lineage.test.ts
+tests: tests/lib/lineage.test.ts — 9/9
+consumes: GraphManager.findPath / getAllFamilies
+decisions: `describeRelation` walks the shortest kinship path → phrase (one-step by sex; grandparent
+
+- first-cousin collapses; else a possessive chain "father's brother's wife"), null for self/unrelated.
+  `buildLineage` gathers childOf (parents + birth ordinal) + unions (spouse + children) for the prose.
+  Gender from person.sex, never hard-coded (a10). Divergences found: Q10 two-script names (§3 deferred),
+  Q11 marriage date/place not on Family (deferred; prose reads "Married X" without place/year for now).
+  deviations: none in the logic. Wiring into TreeInspector (header + prose render + CSS), the access
+  block, edit-in-place, and write infra are the remaining Wave 2 sub-units (A part 2, B, C, D).

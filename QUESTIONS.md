@@ -35,6 +35,21 @@ in the Claude Design project `dd87d264-b5d2-4737-8e4c-9233afb2398d`, read via `D
 That is the "file read" primitive. Not mirrored to disk (get_file cannot be piped to disk without
 re-emitting content). Re-fetch per unit. Mechanism recorded in `IMPLEMENTATION.md`.
 
+## Q10 — Two-script names (integration §3) vs the repo's single `official_name` — DEFERRED
+
+Spec: every person has `nameDeva` + `nameLatin`, shown both, in `tree.nameOrder` order (integration
+§3). The repo's `Person.name` is a single `official_name` (+ aliases). Satisfying §3 needs a data-model
+change (add both name fields) + the person form + every display. **Deferred to a dedicated cross-cutting
+unit** (like one-record); until then surfaces show `official_name` as primary and no second script.
+Flagged so §3 isn't silently dropped. Best sequenced with the shared PersonForm (Wave 2/4).
+
+## Q11 — Marriage date/place not on `Family` — DEFERRED (additive)
+
+Spec Household has `marriage {value, precision, place}`; the repo's `Family` has only husband/wife/
+children. The record-panel prose ("Married X of Place in Year") and Households (Spec 08) need it.
+**Additive migration** (add marriage fields to families) done with Households (Spec 08, Wave 3); until
+then the prose reads "Married X" without place/year. (Was a deferral in the prior loop too.)
+
 ## Q9 — One-record rule: shared canonical person vs per-tree persons — RESOLVED (self, §2)
 
 Spec 00 §06: "a user has exactly ONE person record, shared by every tree." The repo's schema is
