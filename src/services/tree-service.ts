@@ -1,9 +1,10 @@
 import { nanoid } from "nanoid";
-import type { MyTrees, TreeMeta } from "../types/tree";
+import type { MyTrees, TreeMeta, TreeSettingsPatch } from "../types/tree";
 import { getPool, transaction } from "../repositories/db";
 import { TreeRepository } from "../repositories/TreeRepository";
 import { MembershipRepository } from "../repositories/MembershipRepository";
 import { UserRepository } from "../repositories/UserRepository";
+import { HttpError } from "../lib/api";
 import { requireOwner } from "./authz";
 
 /**
@@ -29,6 +30,31 @@ export async function createTree(
 export async function deleteTree(treeId: string, uid: string): Promise<void> {
   await requireOwner(treeId, uid);
   await TreeRepository.delete(getPool(), treeId);
+}
+
+/**
+ * Keeper-only settings edit (Spec 11). Every write on the settings page is
+ * server-enforced keeper-only; a name, if present, must be non-empty after trim
+ * (no uniqueness constraint — two families may share a name). Returns the fresh meta.
+ */
+export async function updateTreeSettings(
+  treeId: string,
+  uid: string,
+  patch: TreeSettingsPatch
+): Promise<TreeMeta> {
+  await requireOwner(treeId, uid);
+
+  const clean: TreeSettingsPatch = { ...patch };
+  if (clean.name !== undefined) {
+    const name = clean.name.trim();
+    if (!name) throw new HttpError("A tree needs a name.", 400);
+    clean.name = name;
+  }
+  if (clean.place !== undefined) clean.place = clean.place.trim();
+
+  const updated = await TreeRepository.patch(getPool(), treeId, clean);
+  if (!updated) throw new HttpError("Tree not found", 404);
+  return updated;
 }
 
 export async function listMyTrees(uid: string): Promise<MyTrees> {

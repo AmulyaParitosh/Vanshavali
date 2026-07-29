@@ -7,6 +7,7 @@ import type { DataProvider } from "./types";
  */
 const MUTATIONS: ReadonlySet<string> = new Set<keyof DataProvider>([
   "createTree",
+  "updateTree",
   "deleteTree",
   "saveTreeData",
   "patchPerson",

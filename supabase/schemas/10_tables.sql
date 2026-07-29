@@ -22,7 +22,21 @@ create table trees (
   name        text not null,
   owner_uid   text not null references users (uid) on delete restrict,
   visibility  text not null default 'private',
-  created_at  timestamptz not null default now()
+  -- Per-tree settings (Spec 11). All additive with defaults so existing rows
+  -- and the create path need no backfill:
+  --   place              — optional ancestral place, shown in the rail meta line.
+  --   name_order         — how names render tree-wide (card 2); belongs to the tree, not the user.
+  --   default_invite_role— role a new invitation grants unless overridden per person (card 3).
+  --   readers_see_dates  — false hides living relatives' exact dates from readers (card 3 / access-matrix row 4).
+  --   allow_own_children — readers may add descendants of their own household (card 3).
+  place               text,
+  name_order          text not null default 'devanagari'
+                      check (name_order in ('devanagari', 'latin', 'latin-only')),
+  default_invite_role text not null default 'editor'
+                      check (default_invite_role in ('editor', 'viewer')),
+  readers_see_dates   boolean not null default false,
+  allow_own_children  boolean not null default true,
+  created_at          timestamptz not null default now()
 );
 create index trees_owner_idx on trees (owner_uid);
 

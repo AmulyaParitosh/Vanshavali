@@ -26,12 +26,17 @@ import type { Family } from "@/types/family";
  */
 
 describe("rowToTreeMeta", () => {
-  it("maps owner_uid → ownerUid and parses created_at to millis", () => {
+  it("maps snake_case → camelCase, settings columns through, and created_at to millis", () => {
     const row: TreeRow = {
       id: "tree_a",
       name: "Sharma family",
       owner_uid: "uid_owner",
       visibility: "private",
+      place: "Rajnagar, Madhubani, Bihar",
+      name_order: "latin",
+      default_invite_role: "viewer",
+      readers_see_dates: true,
+      allow_own_children: false,
       created_at: "2026-06-16T12:00:00.000Z",
     };
     expect(rowToTreeMeta(row)).toEqual({
@@ -39,19 +44,36 @@ describe("rowToTreeMeta", () => {
       name: "Sharma family",
       ownerUid: "uid_owner",
       visibility: "private",
+      place: "Rajnagar, Madhubani, Bihar",
+      nameOrder: "latin",
+      defaultInviteRole: "viewer",
+      readersSeeDates: true,
+      allowOwnChildren: false,
       createdAt: new Date("2026-06-16T12:00:00.000Z").getTime(),
     });
   });
 
-  it("treats an unknown visibility string as the column value as-is (no silent default)", () => {
+  it("omits place when null and defaults the settings columns (Spec 11 defaults)", () => {
     const row: TreeRow = {
       id: "t",
       name: "n",
       owner_uid: "u",
       visibility: "something-new",
+      place: null,
+      name_order: "devanagari",
+      default_invite_role: "editor",
+      readers_see_dates: false,
+      allow_own_children: true,
       created_at: "2026-06-16T12:00:00.000Z",
     };
-    expect(rowToTreeMeta(row).visibility).toBe("something-new");
+    const meta = rowToTreeMeta(row);
+    // Unknown visibility passes through as-is (no silent default).
+    expect(meta.visibility).toBe("something-new");
+    expect(meta).not.toHaveProperty("place");
+    expect(meta.nameOrder).toBe("devanagari");
+    expect(meta.defaultInviteRole).toBe("editor");
+    expect(meta.readersSeeDates).toBe(false);
+    expect(meta.allowOwnChildren).toBe(true);
   });
 });
 

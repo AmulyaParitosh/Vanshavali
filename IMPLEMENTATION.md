@@ -1143,3 +1143,25 @@ deviations (Settings ST-A/B/D/E, not built): editable name + name-order + Sharin
 with per-card Save (a2/a3/a5/a6) + read-only for non-keepers (a1) need the additive `trees` columns
 (ST-A) + the cards (ST-B); readers-see-dates PROJECTION (a4) is the high-stakes Wave-1 deferred read
 redaction; hand-over keeper (a9) is an ownership model change. Delete itself is now to spec.
+
+### Wave 4 Settings ST-A — additive settings schema + full propagation — DONE
+
+spec: `_SPEC-11.md` §Data + Schema-gaps (the columns the editable cards read/write)
+schema: supabase/schemas/10_tables.sql — trees gains place, name_order
+(devanagari｜latin｜latin-only, default devanagari), default_invite_role (editor｜viewer, default
+editor = "May write"), readers_see_dates (bool, default false), allow_own_children (bool, default
+true). All additive w/ defaults → no backfill. Migration 20260729154202_tree_settings.sql (db:migrate,
+data-preserving).
+propagation: TreeMeta type + NameOrder + TreeSettingsPatch (types/tree.ts); TreeRow + rowToTreeMeta
+(mappers.ts, place omitted when null per exactOptionalPropertyTypes); tree SQL (insert/find/list-owned/
+list-member select the new cols; new patch.sql = coalesce-per-column so one card touches only its
+cols); TreeRepository.patch; tree-service.updateTreeSettings (requireOwner + name non-empty-after-trim,
+no uniqueness); PATCH /api/tree/[id] (parsePatch whitelists+validates the body); TreeMetaProvider.
+updateTree + ApiDataProvider.updateTree; withRefresh MUTATIONS += updateTree (re-fetch after save).
+tests: tests/services/tree-service.test.ts — 5 (keeper patches + returns fresh meta; editor rejected;
+viewer rejected; blank name rejected; name trimmed before write — repo untouched on every rejection,
+the server-enforced-keeper contract a1). mappers.test.ts updated (settings cols through; place omitted
+when null; Spec-11 defaults). Vitest 188/188.
+decisions: default_invite_role DB default = editor (mock "May write"). place clear-to-null isn't in
+a1–a9, so the coalesce patch keeps it (documented); everything else round-trips. heritage stays a
+client data-heritage setting (edge e7, deferred with the display-group card).

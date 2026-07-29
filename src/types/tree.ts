@@ -12,6 +12,9 @@ export type TreeRole = "owner" | "editor" | "viewer";
 /** Roles that can be assigned via invitation (owner is created, not invited). */
 export type InvitableTreeRole = Exclude<TreeRole, "owner">;
 
+/** How names render tree-wide (Spec 11 card 2). Belongs to the tree, not the user. */
+export type NameOrder = "devanagari" | "latin" | "latin-only";
+
 /** Tree-level metadata; doesn't include the people/families inside. */
 export interface TreeMeta {
   id: string;
@@ -19,6 +22,30 @@ export interface TreeMeta {
   ownerUid: string;
   createdAt: number;
   visibility: "private" | "public" | "unlisted";
+  /** Optional ancestral place, shown in the rail meta line (Spec 11 card 1). */
+  place?: string;
+  /** Name display order applied to every surface (Spec 11 card 2). */
+  nameOrder: NameOrder;
+  /** Role a new invitation grants unless overridden per person (Spec 11 card 3). */
+  defaultInviteRole: InvitableTreeRole;
+  /** False hides living relatives' exact dates from readers (Spec 11 card 3 / access-matrix row 4). */
+  readersSeeDates: boolean;
+  /** Readers may add descendants of their own household (Spec 11 card 3). */
+  allowOwnChildren: boolean;
+}
+
+/**
+ * A keeper's edit to a tree's settings — one patch per card (Spec 11 save
+ * model): only the fields the saved card touched are present; absent fields are
+ * left unchanged.
+ */
+export interface TreeSettingsPatch {
+  name?: string;
+  place?: string;
+  nameOrder?: NameOrder;
+  defaultInviteRole?: InvitableTreeRole;
+  readersSeeDates?: boolean;
+  allowOwnChildren?: boolean;
 }
 
 /** A user's role inside a specific tree. */

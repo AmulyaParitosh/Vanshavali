@@ -8,6 +8,7 @@ import type {
   TreeRole,
   InvitableTreeRole,
   MyTrees,
+  TreeSettingsPatch,
 } from "../types/tree";
 import type { Suggestion, SuggestionStatus } from "../types/suggestion";
 import { authedFetch } from "./api/authedFetch";
@@ -76,6 +77,14 @@ export class ApiDataProvider implements DataProvider {
     const { tree } = await authedFetch<{ tree: TreeMeta }>(this.client, "/api/tree/create", {
       method: "POST",
       body: { name },
+    });
+    return tree;
+  }
+
+  async updateTree(treeId: string, patch: TreeSettingsPatch): Promise<TreeMeta> {
+    const { tree } = await authedFetch<{ tree: TreeMeta }>(this.client, `/api/tree/${treeId}`, {
+      method: "PATCH",
+      body: patch,
     });
     return tree;
   }

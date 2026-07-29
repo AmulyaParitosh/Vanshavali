@@ -38,6 +38,11 @@ export interface TreeRow {
   name: string;
   owner_uid: string;
   visibility: string;
+  place: string | null;
+  name_order: string;
+  default_invite_role: string;
+  readers_see_dates: boolean;
+  allow_own_children: boolean;
   created_at: string;
 }
 
@@ -109,6 +114,11 @@ export function rowToTreeMeta(row: TreeRow): TreeMeta {
     name: row.name,
     ownerUid: row.owner_uid,
     visibility: (row.visibility as TreeMeta["visibility"]) ?? "private",
+    ...(row.place ? { place: row.place } : {}),
+    nameOrder: (row.name_order as TreeMeta["nameOrder"]) ?? "devanagari",
+    defaultInviteRole: (row.default_invite_role as InvitableTreeRole) ?? "editor",
+    readersSeeDates: row.readers_see_dates ?? false,
+    allowOwnChildren: row.allow_own_children ?? true,
     createdAt: toMillis(row.created_at),
   };
 }

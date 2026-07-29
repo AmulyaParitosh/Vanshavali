@@ -2,7 +2,7 @@ import type { Db } from "./db";
 import { query } from "./db";
 import { sql } from "./sql";
 import { rowToTreeMeta, type TreeRow } from "./mappers";
-import type { TreeMeta } from "../types/tree";
+import type { TreeMeta, TreeSettingsPatch } from "../types/tree";
 
 /**
  * Data access for the `trees` table. Owned vs member-only listing are two
@@ -25,6 +25,24 @@ export const TreeRepository = {
 
   async findMeta(db: Db, treeId: string): Promise<TreeMeta | null> {
     const rows = await query<TreeRow>(db, sql("tree/find.sql"), [treeId]);
+    return rows[0] ? rowToTreeMeta(rows[0]) : null;
+  },
+
+  /**
+   * Patch a tree's settings (Spec 11). Only the fields present in `patch` are
+   * written; the rest are coalesced to their current value, so a per-card Save
+   * touches only its own columns. Returns the fresh meta, or null if the tree is gone.
+   */
+  async patch(db: Db, treeId: string, patch: TreeSettingsPatch): Promise<TreeMeta | null> {
+    const rows = await query<TreeRow>(db, sql("tree/patch.sql"), [
+      treeId,
+      patch.name ?? null,
+      patch.place ?? null,
+      patch.nameOrder ?? null,
+      patch.defaultInviteRole ?? null,
+      patch.readersSeeDates ?? null,
+      patch.allowOwnChildren ?? null,
+    ]);
     return rows[0] ? rowToTreeMeta(rows[0]) : null;
   },
 
