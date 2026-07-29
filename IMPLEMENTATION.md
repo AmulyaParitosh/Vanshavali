@@ -627,3 +627,35 @@ decisions:
 - In-place inspector on the Members route (a1/a2 "never changes the route") = M-D; today a row
   navigates to the canvas ?person=. The record panel it lands on already carries the keeper role
   radio + Remove access (Wave 2 D3), so a3's write path is live.
+
+### Wave 3 Members M-B — the invite panel (row-fired) — DONE
+
+spec: `_SPEC-06.md` — invite panel + May "Invite"/"Invited"; a4 (+ edge e2), a8
+files:
+
+- schema: tree_invites.person_id (nullable FK → people, on delete cascade) + migration
+  20260729114150_add_invite_person_id.sql; invite/{insert,find,list-by-tree}.sql (+person_id);
+  TreeInvite.personId (type + mapper); InviteRepository.insert(personId); invite-service.createInvite
+  (personId param); POST /api/tree/[id]/invites (personId); DataProvider.createInvite(…, personId?)
+  - ApiDataProvider
+- UI: src/components/tree/InvitePanel.tsx (384px right drawer: eyebrow/heading, note, 3 steps —
+  who-you-picked confirmation / email / role radio [May read · May write, write default] — heritage
+  message preview [a8], Cancel/Send-the-invitation disabled until a valid email); Members page (per-row
+  keeper Invite pill on account-less non-deceased rows [a4], Invited chip via personId match, opens the
+  panel, retires the bottom invite form); globals.css .records-invite + .invite-panel/-heading/-note/
+  -step/-who/-roles/-role-card/-preview
+  tests: tests/e2e/members.spec.ts — 5 invite (a4 pill only on account-less; edge e2 never on the
+  deceased [death event via pg]; panel opens in place with the person fixed + steps + Send-disabled
+  validation; sending ties the invite to the person in the DB + the row then reads Invited). Vitest 155
+  (mappers/PersonRepository updated for version+updatedAt+person_id). All verified in small batches; the
+  full 5-test describe flakes on the dev server (Q14), each passes clean alone.
+  decisions:
+- Invites are now person-tied (Spec 06: fired from a row, invitee lands on their own branch). person_id
+  nullable for the legacy email-only path. The Invited chip matches invites to rows by personId.
+- Pronouns in the panel derive from person.sex (he/she/his/her), never hard-coded (a10). Two role
+  cards (repo viewer/editor = read/write); the "branch only" 3rd scope stays unmodelled (Q12).
+- Send writes the invite row THEN emails; the outbound email is env-gated (RESEND_FROM_EMAIL), so a
+  test env still creates the row — the test asserts the DB write + the Invited chip, not the email.
+  deviations / interim: Resend/Revoke move to the record panel (edge e6) — not built here; the bottom
+  form (with its revoke) is gone, so revoke has no UI until that lands (note for M-D/later). Add-person
+  panel + duplicate guard = M-C; in-place inspector on the Members route = M-D.

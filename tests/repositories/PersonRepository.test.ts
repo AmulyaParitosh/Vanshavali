@@ -23,6 +23,7 @@ describe("PersonRepository", () => {
         tree_id: "t1",
         data: { name: { official_name: "Asha" }, sex: "F" },
         user_id: null,
+        version: 2,
         created_at: "2020-01-01T00:00:00Z",
         updated_at: "2020-01-01T00:00:00Z",
       },
@@ -30,7 +31,15 @@ describe("PersonRepository", () => {
 
     const people = await PersonRepository.listByTree(db, "t1");
 
-    expect(people).toEqual([{ name: { official_name: "Asha" }, sex: "F", id: "p1" }]);
+    expect(people).toEqual([
+      {
+        name: { official_name: "Asha" },
+        sex: "F",
+        id: "p1",
+        version: 2,
+        updatedAt: new Date("2020-01-01T00:00:00Z").getTime(),
+      },
+    ]);
     const [text, params] = query.mock.calls[0]!;
     expect(text).toMatch(/from people/i);
     expect(params).toEqual(["t1"]);

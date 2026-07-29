@@ -73,6 +73,7 @@ export interface TreeInviteRow {
   id: string;
   tree_id: string;
   email: string;
+  person_id: string | null;
   role: string;
   invited_by: string;
   status: string;
@@ -144,6 +145,7 @@ export function rowToTreeInvite(row: TreeInviteRow): TreeInvite {
     id: row.id,
     treeId: row.tree_id,
     email: row.email,
+    ...(row.person_id ? { personId: row.person_id } : {}),
     role: row.role as InvitableTreeRole,
     invitedBy: row.invited_by,
     status: row.status as InviteStatus,

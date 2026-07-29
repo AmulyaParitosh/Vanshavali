@@ -173,7 +173,12 @@ export class ApiDataProvider implements DataProvider {
 
   // -------------------------- InvitationProvider --------------------------
 
-  async createInvite(treeId: string, email: string, role: InvitableTreeRole): Promise<TreeInvite> {
+  async createInvite(
+    treeId: string,
+    email: string,
+    role: InvitableTreeRole,
+    personId?: string
+  ): Promise<TreeInvite> {
     // The server route creates the row and sends the email in one step. A
     // non-empty emailError means the invite exists but the email didn't go out
     // — surface it the way the old flow did (the row still lands via realtime).
@@ -182,7 +187,7 @@ export class ApiDataProvider implements DataProvider {
       emailError?: string;
     }>(this.client, `/api/tree/${treeId}/invites`, {
       method: "POST",
-      body: { email, role },
+      body: { email, role, ...(personId ? { personId } : {}) },
     });
     if (emailError) {
       throw new Error(`Invite created but email failed to send: ${emailError}`);

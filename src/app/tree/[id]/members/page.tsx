@@ -6,8 +6,8 @@ import { useParams } from "next/navigation";
 import { useAppContext } from "../../../../context/AppContext";
 import { useToast } from "../../../../components/ToastSystem";
 import Loading from "../../../../components/Loading";
+import InvitePanel from "../../../../components/tree/InvitePanel";
 import { canEdit as canEditRole, canInvite } from "../../../../lib/access";
-import { INVITABLE_ROLES, TREE_ROLES } from "../../../../constants";
 import { portraitTint, personInitials } from "../../../../utils/portrait";
 import { generationMap, roman, bornInLine } from "../../../../lib/generations";
 import { GraphManager } from "../../../../lib/graph/GraphManager";
@@ -28,6 +28,10 @@ const ROLE_CHIP: Record<TreeRole, { label: string; cls: string }> = {
 };
 
 const birthDate = (p: Person) => p.events?.find((e) => /birth|born/i.test(e.type))?.date;
+
+/** A person is deceased if a death event is recorded — never invite the deceased (a4/edge e2). */
+const isDeceased = (p: Person): boolean =>
+  (p.events ?? []).some((e) => /death|died|passed|expired|d\./i.test(e.type));
 
 /** A birth instant for sorting; undated people sort last within their generation. */
 function birthValue(p: Person): number {
@@ -55,9 +59,9 @@ function relativeTime(ms?: number): string {
 /**
  * The Members page (Spec 06) — the ONE list of everyone in the record. Access is
  * a column ("May") in this list, read by everyone; roles are only ever changed in
- * the record panel (a3), never from the table. Every row opens that shared
- * inspector. Rows are ordered by generation then birth order, never alphabetically
- * (a10).
+ * the record panel (a3), never from the table. Keepers invite an account-less,
+ * living relative from their own row (a4) via the invite panel. Rows are ordered
+ * by generation then birth order, never alphabetically (a10).
  */
 export default function MembersPage() {
   const params = useParams<{ id: string }>();
@@ -68,9 +72,8 @@ export default function MembersPage() {
   const [members, setMembers] = useState<TreeMembership[]>([]);
   const [invites, setInvites] = useState<TreeInvite[]>([]);
   const [query, setQuery] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<InvitableTreeRole>(TREE_ROLES.EDITOR);
-  const [isSending, setIsSending] = useState(false);
+  const [invitingPerson, setInvitingPerson] = useState<Person | null>(null);
+  const [sendingInvite, setSendingInvite] = useState(false);
 
   const ownerCanManage = canInvite(membership?.role);
   const canAdd = canEditRole(membership?.role);
@@ -96,11 +99,21 @@ export default function MembersPage() {
     () => people.find((p) => !!user && p.userId === user.uid)?.id ?? null,
     [people, user]
   );
+  const familyName = useMemo(() => {
+    const root = people.find((p) => p.root)?.name.official_name ?? "";
+    return root.trim().split(/\s+/).pop() ?? "the";
+  }, [people]);
   const membershipByPerson = useMemo(() => {
     const m = new Map<string, TreeMembership>();
     for (const mem of members) if (mem.personId) m.set(mem.personId, mem);
     return m;
   }, [members]);
+  const pendingByPerson = useMemo(() => {
+    const m = new Map<string, TreeInvite>();
+    for (const inv of invites)
+      if (inv.status === "pending" && inv.personId) m.set(inv.personId, inv);
+    return m;
+  }, [invites]);
 
   // Generation, then birth order, then a stable original index — never alphabetical (a10).
   // Search filters but does not re-sort (a9); it matches the official name + every alias.
@@ -123,39 +136,28 @@ export default function MembersPage() {
     });
   }, [people, query, gens]);
 
-  const pendingInvites = invites.filter((i) => i.status === "pending");
+  const pendingCount = invites.filter((i) => i.status === "pending").length;
 
   if (!treeId) return <Loading />;
 
-  const handleSendInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteEmail.trim()) return;
-    setIsSending(true);
+  const handleSend = async (email: string, role: InvitableTreeRole) => {
+    if (!invitingPerson) return;
+    setSendingInvite(true);
     try {
-      await dataProvider.createInvite(treeId, inviteEmail.trim(), inviteRole);
-      toast.success(`Invitation sent to ${inviteEmail.trim()}`);
-      setInviteEmail("");
+      await dataProvider.createInvite(treeId, email, role, invitingPerson.id);
+      toast.success(`Invitation sent to ${email}`);
+      setInvitingPerson(null);
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Invite failed");
     } finally {
-      setIsSending(false);
+      setSendingInvite(false);
     }
   };
 
-  const handleRevoke = async (inviteId: string) => {
-    try {
-      await dataProvider.revokeInvite(treeId, inviteId);
-      toast.success("Invitation revoked");
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Revoke failed");
-    }
-  };
-
-  const withAccount = members.length;
   const sub =
-    `${people.length} in the record · ${withAccount} with an account` +
-    (pendingInvites.length > 0
-      ? ` · ${pendingInvites.length} invitation${pendingInvites.length === 1 ? "" : "s"} waiting`
+    `${people.length} in the record · ${members.length} with an account` +
+    (pendingCount > 0
+      ? ` · ${pendingCount} invitation${pendingCount === 1 ? "" : "s"} waiting`
       : "");
 
   return (
@@ -215,6 +217,7 @@ export default function MembersPage() {
         ) : (
           rows.map((p) => {
             const mem = membershipByPerson.get(p.id);
+            const pending = pendingByPerson.get(p.id);
             const bornOn = birthDate(p);
             const ring = born.has(p.id) ? "var(--ring-born)" : "var(--ring-married)";
             const isYou = viewerPersonId === p.id;
@@ -254,6 +257,20 @@ export default function MembersPage() {
                     <span className={`chip ${ROLE_CHIP[mem.role].cls}`}>
                       {ROLE_CHIP[mem.role].label}
                     </span>
+                  ) : pending ? (
+                    <span className="chip chip--invited">Invited</span>
+                  ) : ownerCanManage && !isDeceased(p) ? (
+                    <button
+                      type="button"
+                      className="records-invite"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setInvitingPerson(p);
+                      }}
+                    >
+                      Invite
+                    </button>
                   ) : (
                     <span className="records-noaccount">no account</span>
                   )}
@@ -271,61 +288,23 @@ export default function MembersPage() {
         Everyone can read the <strong>May</strong> column — a relative should be able to see who can
         change the record.{" "}
         {ownerCanManage
-          ? "Only you, as keeper, get the controls — open a record to change a role or invite."
+          ? "Only you, as keeper, get the controls — the caret that changes a role (open a record) and Invite on anyone still without an account."
           : "Only the keeper can change access."}
       </p>
 
-      {ownerCanManage && (
-        <section className="section-card records-manage">
-          <h3>Invite someone to an account</h3>
-          <form onSubmit={handleSendInvite} className="records-invite-form">
-            <input
-              className="input"
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="email@example.com"
-              required
-              aria-label="Email address to invite"
-              disabled={isSending}
-            />
-            <select
-              className="records-select"
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as InvitableTreeRole)}
-              aria-label="Access to grant"
-              disabled={isSending}
-            >
-              {INVITABLE_ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {ROLE_CHIP[r].label}
-                </option>
-              ))}
-            </select>
-            <button type="submit" className="btn btn-primary" disabled={isSending}>
-              {isSending ? "Sending…" : "Send invitation"}
-            </button>
-          </form>
-          {pendingInvites.length > 0 && (
-            <ul className="member-list">
-              {pendingInvites.map((invite) => (
-                <li key={invite.id} className="member-row">
-                  <span className="member-uid">{invite.email}</span>
-                  <span className="chip chip--invited">
-                    Invited · {ROLE_CHIP[invite.role].label}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-danger btn-sm"
-                    onClick={() => handleRevoke(invite.id)}
-                  >
-                    Revoke
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+      {invitingPerson && (
+        <InvitePanel
+          person={invitingPerson}
+          {...(() => {
+            const g = gens.get(invitingPerson.id);
+            return g !== undefined ? { generation: g } : {};
+          })()}
+          inviterName={user?.displayName || user?.email || "A family member"}
+          familyName={familyName}
+          sending={sendingInvite}
+          onClose={() => setInvitingPerson(null)}
+          onSend={handleSend}
+        />
       )}
     </div>
   );

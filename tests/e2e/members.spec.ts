@@ -85,6 +85,106 @@ test.describe("Members — the list (Spec 06)", () => {
   });
 });
 
+test.describe("Members — inviting (Spec 06 a4, invite panel)", () => {
+  const arjun = SEED.people.son.id;
+  const sara = SEED.people.daughter.id;
+
+  test.afterEach(async () => {
+    // Clean up any invites created + undo the deceased marker.
+    await withDb((c) => c.query("delete from tree_invites where tree_id=$1", [SEED.tree.id]));
+    await withDb((c) =>
+      c.query(
+        "update people set data = data - 'events' || jsonb_build_object('events','[]'::jsonb) where id=$1",
+        [sara]
+      )
+    );
+  });
+
+  test("Invite appears only on account-less rows, never on the linked (a4)", async ({ page }) => {
+    await page.goto(membersRoute);
+    // Linked people show a chip, not Invite.
+    await expect(
+      page.locator(".records-row", { hasText: "Ishaan Verma" }).locator(".records-invite")
+    ).toHaveCount(0);
+    // An account-less relative offers Invite to the keeper.
+    await expect(
+      page.locator(".records-row", { hasText: "Arjun Verma" }).locator(".records-invite")
+    ).toHaveText("Invite");
+  });
+
+  test("Invite never appears on a deceased person (a4 / edge e2)", async ({ page }) => {
+    await withDb((c) =>
+      c.query(
+        `update people set data = jsonb_set(data, '{events}', '[{"type":"death","date":"2020"}]'::jsonb, true) where id=$1`,
+        [sara]
+      )
+    );
+    await page.goto(membersRoute);
+    const saraRow = page.locator(".records-row", { hasText: "Sara Verma" });
+    await expect(saraRow.locator(".records-invite")).toHaveCount(0);
+    await expect(saraRow.locator(".records-noaccount")).toHaveText("no account");
+  });
+
+  test("the Invite pill opens the panel with that person fixed (steps + validation)", async ({
+    page,
+  }) => {
+    await page.goto(membersRoute);
+    await page
+      .locator(".records-row", { hasText: "Arjun Verma" })
+      .locator(".records-invite")
+      .click();
+    // Opened in place — no route change (a2), the panel names who is chosen.
+    expect(new URL(page.url()).pathname).toBe(membersRoute);
+    const panel = page.locator(".invite-panel");
+    await expect(panel.locator(".invite-heading")).toHaveText("Who are you inviting?");
+    await expect(panel.locator(".invite-who-primary")).toHaveText("Arjun Verma");
+    await expect(panel.locator(".invite-step-label").first()).toHaveText("1 · who you picked");
+    await expect(panel.locator(".invite-role-card")).toHaveCount(2);
+    // The message preview states what Send will do (a8).
+    await expect(panel.locator(".invite-preview-body")).toContainText("family record");
+    // Send is disabled until the email is valid.
+    const send = panel.getByRole("button", { name: "Send the invitation" });
+    await expect(send).toBeDisabled();
+    await panel.getByLabel("Email address").fill("cousin@example.com");
+    await expect(send).toBeEnabled();
+  });
+
+  test("sending ties the invite to the person; the row then reads Invited", async ({ page }) => {
+    await page.goto(membersRoute);
+    await page
+      .locator(".records-row", { hasText: "Arjun Verma" })
+      .locator(".records-invite")
+      .click();
+    await page
+      .locator(".invite-panel")
+      .getByLabel("Email address")
+      .fill("arjun.invite@example.com");
+    await page
+      .locator(".invite-panel")
+      .getByRole("button", { name: "Send the invitation" })
+      .click();
+    // The invite lands in the DB tied to Arjun (the outbound email is env-gated, but
+    // the row is written regardless).
+    await expect
+      .poll(() =>
+        withDb((c) =>
+          c
+            .query(
+              "select count(*)::int n from tree_invites where person_id=$1 and status='pending'",
+              [arjun]
+            )
+            .then((r) => r.rows[0]!.n)
+        )
+      )
+      .toBe(1);
+    // On the keeper's next view, Arjun's May cell reads Invited (not the Invite pill).
+    await page.goto(membersRoute);
+    const arjunRow = page.locator(".records-row", { hasText: "Arjun Verma" });
+    await expect(arjunRow.locator(".chip--invited")).toHaveText("Invited");
+    await expect(arjunRow.locator(".records-invite")).toHaveCount(0);
+  });
+});
+
 test.describe("Members — removing access (Spec 06 a8)", () => {
   // Removing access deletes only the membership; this suite restores it after.
   let saved: { uid: string; role: string; personId: string | null };

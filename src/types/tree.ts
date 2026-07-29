@@ -36,6 +36,8 @@ export interface TreeInvite {
   id: string;
   treeId: string;
   email: string;
+  /** The person this invite ties an account to (Spec 06 — fired from a row). */
+  personId?: string;
   role: InvitableTreeRole;
   invitedBy: string;
   status: InviteStatus;

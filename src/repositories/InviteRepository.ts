@@ -16,6 +16,7 @@ export const InviteRepository = {
       id: string;
       treeId: string;
       email: string;
+      personId?: string | null;
       role: InvitableTreeRole;
       invitedBy: string;
       expiresAt: string;
@@ -25,6 +26,7 @@ export const InviteRepository = {
       invite.id,
       invite.treeId,
       invite.email,
+      invite.personId ?? null,
       invite.role,
       invite.invitedBy,
       invite.expiresAt,

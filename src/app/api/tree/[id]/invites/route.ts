@@ -29,15 +29,24 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
     const body = (await request.json().catch(() => null)) as {
       email?: unknown;
       role?: unknown;
+      personId?: unknown;
     } | null;
     const email = typeof body?.email === "string" ? body.email.trim() : "";
     const role = body?.role;
+    const personId = typeof body?.personId === "string" ? body.personId : null;
     if (!email) throw new HttpError("email is required", 400);
     if (typeof role !== "string" || !INVITABLE.includes(role)) {
       throw new HttpError("Invalid role.", 400);
     }
     const origin = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin;
-    const result = await createInvite(id, caller.uid, email, role as InvitableTreeRole, origin);
+    const result = await createInvite(
+      id,
+      caller.uid,
+      email,
+      role as InvitableTreeRole,
+      origin,
+      personId
+    );
     return NextResponse.json(result);
   });
 }

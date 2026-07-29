@@ -23,7 +23,8 @@ export async function createInvite(
   actorUid: string,
   email: string,
   role: InvitableTreeRole,
-  origin: string
+  origin: string,
+  personId?: string | null
 ): Promise<{ invite: TreeInvite; emailError?: string }> {
   await requireOwner(treeId, actorUid);
   const db = getPool();
@@ -31,6 +32,7 @@ export async function createInvite(
     id: `inv_${nanoid(12)}`,
     treeId,
     email: email.toLowerCase(),
+    ...(personId ? { personId } : {}),
     role,
     invitedBy: actorUid,
     expiresAt: new Date(Date.now() + INVITE_TTL_MS).toISOString(),

@@ -67,6 +67,10 @@ create table tree_invites (
   id          text primary key,
   tree_id     text not null references trees (id) on delete cascade,
   email       text not null,
+  -- The person this invite ties an account to (Spec 06: an invitation is fired
+  -- from a specific row, so the invitee lands on their own branch). Nullable for
+  -- the legacy email-only path; cascades if that person is deleted.
+  person_id   text references people (id) on delete cascade,
   role        text not null check (role in ('editor', 'viewer')),
   -- Was NOT NULL + ON DELETE SET NULL in the old 0001 (contradictory — would
   -- error when an inviter was deleted). Cascade the invite with the inviter.

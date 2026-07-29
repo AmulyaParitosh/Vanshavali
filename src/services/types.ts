@@ -106,7 +106,12 @@ export interface MembershipProvider {
 
 /** Invitations to a tree. */
 export interface InvitationProvider {
-  createInvite(treeId: string, email: string, role: InvitableTreeRole): Promise<TreeInvite>;
+  createInvite(
+    treeId: string,
+    email: string,
+    role: InvitableTreeRole,
+    personId?: string
+  ): Promise<TreeInvite>;
   acceptInvite(inviteId: string, uid: string): Promise<TreeMembership>;
   revokeInvite(treeId: string, inviteId: string): Promise<void>;
   subscribeToInvites(treeId: string, callback: (invites: TreeInvite[]) => void): () => void;

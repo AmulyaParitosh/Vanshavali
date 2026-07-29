@@ -3652,6 +3652,189 @@ main {
   font-size: 13px;
   color: var(--text-meta);
 }
+/* The keeper's Invite pill in the May cell — outlined red, no fill (an offer, not
+   a state). Sits inside the row link, so it stops the row's navigation itself. */
+.records-invite {
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-control);
+  background: transparent;
+  color: var(--color-red);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--dur-panel) var(--ease),
+    border-color var(--dur-panel) var(--ease);
+}
+.records-invite:hover {
+  background: var(--color-red-wash);
+  border-color: var(--color-red);
+}
+
+/* Invite panel (Spec 06) — a 384px right drawer below the chrome banner. Reuses
+   the record inspector's shell (.inspector / .inspector-bar / .panel-footer). */
+.invite-panel {
+  position: fixed;
+  top: var(--shell-chrome-h);
+  right: 0;
+  bottom: 0;
+  /* top+bottom set the height; override the .inspector height:100% that would
+     otherwise make the fixed drawer 100vh tall and push the footer off-screen. */
+  height: auto;
+  width: 384px;
+  z-index: 1150;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-paper);
+  border-left: 1px solid var(--line-structure);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.04);
+}
+.invite-heading {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--text-primary);
+  margin: 4px 0 0;
+}
+.invite-note {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-prose);
+}
+.invite-note em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.invite-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-inner);
+}
+.invite-step-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-meta);
+}
+.invite-who {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  border: 1.5px solid var(--color-red);
+  border-radius: var(--radius-14);
+  background: var(--color-red-wash);
+}
+.portrait--who {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.invite-who-names {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.invite-who-primary {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.invite-who-secondary {
+  font-size: 12.5px;
+  color: var(--text-meta);
+}
+.invite-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.invite-role-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-12);
+  background: var(--surface-paper);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-panel) var(--ease);
+}
+.invite-role-card.selected {
+  border: 1.5px solid var(--color-red);
+  background: var(--color-red-wash);
+}
+.invite-role-card.selected .invite-role-title {
+  color: var(--color-red-deep);
+}
+.invite-role-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.invite-role-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.invite-role-body {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-prose);
+}
+/* Message preview — heritage double frame over a warm wash (a8: what Send does). */
+.invite-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 3px solid var(--color-red);
+  border-radius: var(--radius-16);
+  background: var(--surface-canvas);
+  box-shadow: inset 0 0 0 1px var(--color-marigold);
+}
+.invite-preview-banner {
+  height: 40px;
+  border-radius: var(--radius-8);
+  background: linear-gradient(rgba(20, 18, 16, 0.5), rgba(20, 18, 16, 0.72)), var(--surface-chrome);
+  background-size: cover;
+}
+.invite-preview-body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-strong);
+}
+.invite-preview-btn {
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--color-red);
+  color: #fffdf9;
+  font-size: 13px;
+  font-weight: 600;
+}
+.invite-preview-foot {
+  font-size: 11.5px;
+  color: var(--text-meta);
+}
+/* The footer is a direct child of the drawer (not inside the scrolling body), so
+   it needs its own horizontal padding. */
+.invite-panel .panel-footer {
+  padding-left: 22px;
+  padding-right: 22px;
+}
 .records-noaccount {
   font-size: 13px;
   color: var(--text-prose);
