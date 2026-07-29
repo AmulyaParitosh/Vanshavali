@@ -387,3 +387,21 @@ access. Only a keeper can change it."; no account → "Not on Vanshavali yet" + 
 Members plumbed via a Tree-local subscription (other surfaces already have it / add later).
 deviations: keeper radio set + role Save + Remove access = sub-unit D (footer + consequence dialog).
 "His branch only" 4th role deferred (QUESTIONS Q12). Deceased-hides-block edge n/a (no living field).
+
+### Wave 2 sub-unit C — edit affordance to spec + FINDING — PARTIAL
+
+spec: Spec 07 edit mode; a9
+files: src/components/tree/TreeInspector.tsx (header outlined "Edit record"; removed read-mode footer),
+src/app/globals.css (.inspector-actions)
+tests: tests/e2e/record-panel.spec.ts — still 9/9
+decisions: Read mode now has NO footer (spec); "Edit record" is an outlined header button, shown to a
+writer/keeper or anyone on their own record. It opens the legacy editor for now.
+**FINDING (reshapes C):** `PersonForm.tsx` is the LEGACY full-page editor (section-cards, its own
+Save/Delete, a `toast.confirm` delete) — it does NOT match Spec 07's panel-fit edit mode. So a9
+("same form as Account") means BUILDING a spec-faithful shared edit form (fields in place; sections
+name+photo / facts / life / details; date-precision `.segmented`; `writeState` dirty `.dirty-dot`
+labels; the `.panel-footer` Discard/Save) used by BOTH the panel and Account (Spec 12), replacing the
+legacy PersonForm. That is the real C build — a substantial shared component, best built cohesively
+with Account in view, then D layers the write path (patch endpoint, toast+undo, leaving guard,
+consequence dialog, keeper role radio) on top.
+deviations: "Edit record" still navigates to the legacy editor (in-place edit = C proper).

@@ -133,6 +133,21 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
           </div>
         </div>
 
+        {/* Edit affordance — outlined, in the header (Spec 07); read mode has no
+         * footer. Editable by a writer/keeper, or by anyone on their own record.
+         * (Edit-in-place with the shared form is sub-unit C; this opens the
+         * editor meanwhile.) */}
+        {treeId && (canEdit || isSelf) && (
+          <div className="inspector-actions">
+            <Link
+              href={`/tree/${treeId}/people?id=${encodeURIComponent(person.id)}`}
+              className="btn"
+            >
+              Edit record
+            </Link>
+          </div>
+        )}
+
         <AccessBlock
           person={person}
           membership={personMembership}
@@ -220,17 +235,6 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
           </section>
         )}
       </div>
-
-      {canEdit && treeId && (
-        <div className="inspector-foot">
-          <Link
-            href={`/tree/${treeId}/people?id=${encodeURIComponent(person.id)}`}
-            className="btn btn-primary btn-block"
-          >
-            Edit record
-          </Link>
-        </div>
-      )}
     </aside>
   );
 };
