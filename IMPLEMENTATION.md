@@ -1294,3 +1294,22 @@ deferred to S-C: ⌘↵ focus-in-tree PAN (320ms) + ↵-on-current-route nuance 
 ?person= on the canvas route); a6 place-filter-canvas (dim .35 + dismissible chip — places still inert);
 matched-substring highlight; diacritic-insensitive matching; 80ms debounce; IME compositionend guard;
 prefix-before-substring + generation ordering; members-side consumption of the carried ?q=.
+
+## Wave (Spec 09 Search) — S-C (partial): place filters the canvas (a6) — DONE
+
+spec: `_SPEC-09.md` a6 + flow §04.5 (a place result filters the canvas, never opens a page)
+files: src/components/CommandSearch.tsx — place rows are now interactive buttons (.cmdk-row--place)
+that push /tree/[id]?place=<place> and close (openPlace), instead of inert .cmdk-row--static.
+src/components/Tree.tsx — reads ?place=, holds it in placeFilter (seeded from the URL, synced by an
+effect so a push over the live canvas is picked up), dims every household with no event at that place
+via the EXISTING attention-dim mechanism (nodeHasPlace), and renders a dismissible
+".tree-place-filter" chip ("Connected to <place>", ✕ clears to full opacity). globals.css:
+.cmdk-row--place hover + .tree-place-filter chip.
+tests: tests/e2e/search.spec.ts — a place result filters the canvas (URL gains ?place=Patna, chip names
+Patna, ≥1 household dims, dismiss restores every household — 0 dimmed); place-by-kind + wrap selectors
+updated to .cmdk-row--place. Full search 10/10 on a PRODUCTION build (dev flaked on cold compiles, Q14).
+Vitest 199/199.
+deferred (Search S-C/S-D remaining): ⌘↵ focus-in-tree PAN (320ms) + ↵-on-current-route nuance (both open
+via ?person= on the canvas today); matched-substring highlight (#fdf1e2); diacritic-insensitive matching;
+80ms debounce; IME compositionend guard; prefix-before-substring + generation ordering; a marriage event
+opening the household editor (vs the person); members-side consumption of the carried ?q=.

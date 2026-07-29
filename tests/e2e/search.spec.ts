@@ -70,18 +70,34 @@ test.describe("Search palette — contract (Spec 09 S-B)", () => {
     await openSearch(page);
     // Seed: Ishaan's Birth is at Patna, his Marriage at Ranchi.
     await page.locator(".cmdk-panel input").fill("Patna");
-    const patna = page.locator(".cmdk-row--static", { hasText: "Patna" });
+    const patna = page.locator(".cmdk-row--place", { hasText: "Patna" });
     await expect(patna.locator(".cmdk-row-sub")).toHaveText("1 birth recorded here");
     await page.locator(".cmdk-panel input").fill("Ranchi");
-    const ranchi = page.locator(".cmdk-row--static", { hasText: "Ranchi" });
+    const ranchi = page.locator(".cmdk-row--place", { hasText: "Ranchi" });
     await expect(ranchi.locator(".cmdk-row-sub")).toHaveText("1 marriage recorded here");
+  });
+
+  test("a place result filters the canvas, never opens a page (a6)", async ({ page }) => {
+    await openSearch(page);
+    await page.locator(".cmdk-panel input").fill("Patna");
+    await page.locator(".cmdk-row--place", { hasText: "Patna" }).click();
+    // Still on the canvas route (no page opened), now with the place filter active.
+    await expect(page).toHaveURL(/\/tree\/[^/]+\?place=Patna/);
+    const chip = page.locator(".tree-place-filter");
+    await expect(chip).toContainText("Patna");
+    // Ishaan's household (born Patna) is undimmed; someone with no Patna event dims.
+    await expect(page.locator(".node-wrap.dimmed").first()).toBeVisible();
+    // The chip dismisses, restoring every household.
+    await chip.locator(".tree-place-filter-clear").click();
+    await expect(page.locator(".tree-place-filter")).toHaveCount(0);
+    await expect(page.locator(".node-wrap.dimmed")).toHaveCount(0);
   });
 
   test("arrow-up from the first result wraps to the last (a5 keyboard)", async ({ page }) => {
     await openSearch(page);
     const input = page.locator(".cmdk-panel input");
     await input.fill("Verma"); // 4 people, first auto-active
-    const rows = page.locator(".cmdk-row:not(.cmdk-row--static)");
+    const rows = page.locator(".cmdk-row:not(.cmdk-row--place)");
     await expect(rows).toHaveCount(4);
     await expect(rows.first()).toHaveClass(/active/);
     await input.press("ArrowUp"); // wraps to the last

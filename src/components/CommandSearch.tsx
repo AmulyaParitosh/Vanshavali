@@ -174,6 +174,13 @@ export default function CommandSearch() {
     setOpen(false);
   };
 
+  // A place filters the canvas (a6), it never opens a page: push ?place= onto the
+  // canvas route and let the tree dim everyone not connected to it.
+  const openPlace = (place: string) => {
+    if (currentTreeId) router.push(`/tree/${currentTreeId}?place=${encodeURIComponent(place)}`);
+    setOpen(false);
+  };
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     const last = navTargets.length - 1;
     if (navTargets.length === 0) return;
@@ -270,7 +277,12 @@ export default function CommandSearch() {
             </>
           )}
           {shownPlaces.map((pl) => (
-            <div key={pl.place} className="cmdk-row cmdk-row--static">
+            <button
+              key={pl.place}
+              type="button"
+              className="cmdk-row cmdk-row--place"
+              onClick={() => openPlace(pl.place)}
+            >
               <span className="cmdk-glyph" aria-hidden="true">
                 ⌖
               </span>
@@ -278,7 +290,7 @@ export default function CommandSearch() {
                 <span className="cmdk-row-primary">{pl.place}</span>
                 <span className="cmdk-row-sub">{pl.line}</span>
               </span>
-            </div>
+            </button>
           ))}
 
           {eventHits.length > 0 && (

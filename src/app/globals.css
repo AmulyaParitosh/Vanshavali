@@ -4601,6 +4601,43 @@ main {
 .cmdk-row--static {
   cursor: default;
 }
+/* Place rows are interactive (they filter the canvas, a6) — give hover feedback. */
+.cmdk-row--place:hover {
+  background: var(--color-red-wash);
+}
+
+/* Place-filter chip on the canvas (Spec 09 a6) — names the active filter, dismissible. */
+.tree-place-filter {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px 7px 14px;
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+.tree-place-filter-clear {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-meta);
+  font-size: 12px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: var(--radius-circle);
+}
+.tree-place-filter-clear:hover {
+  color: var(--color-red-deep);
+  background: var(--color-red-wash);
+}
 .cmdk-avatar {
   width: 34px;
   height: 34px;

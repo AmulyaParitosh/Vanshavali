@@ -46,6 +46,11 @@ function nodeHasAttention(data: GraphNode, a: Attention): boolean {
   return people.some((p) => !p.image_url);
 }
 
+/** Whether anyone in a household has an event at `place` (Spec 09 a6 place filter). */
+function nodeHasPlace(data: GraphNode, place: string): boolean {
+  return nodePersons(data).some((p) => (p.events ?? []).some((e) => e.place === place));
+}
+
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
@@ -68,6 +73,11 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   // effect; the effect below only pans it into view.
   const personParam = searchParams.get("person");
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(personParam);
+  // A ?place= param (a place result from ⌘K search) filters the canvas: everyone
+  // connected to the place stays at full opacity, the rest dim to .35, with a
+  // dismissible chip (Spec 09 a6). Seeded from the URL, dismissed to local null.
+  const placeParam = searchParams.get("place");
+  const [placeFilter, setPlaceFilter] = useState<string | null>(placeParam);
 
   const layout = useTreeLayout(data);
   const people = treeData?.people ?? [];
@@ -153,6 +163,12 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personParam]);
 
+  // Pick up a place filter pushed onto the URL by search, even when the canvas
+  // stays mounted (the ⌘K overlay pushes ?place= over the current canvas).
+  useEffect(() => {
+    setPlaceFilter(placeParam);
+  }, [placeParam]);
+
   return (
     <div className={`tree-canvas-container${selectedPerson ? " inspector-open" : ""}`}>
       <div className="tree-stage">
@@ -176,7 +192,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                 <g
                   key={node.data.id}
                   className={
-                    attention && !nodeHasAttention(node.data, attention)
+                    (attention && !nodeHasAttention(node.data, attention)) ||
+                    (placeFilter && !nodeHasPlace(node.data, placeFilter))
                       ? "node-wrap dimmed"
                       : "node-wrap"
                   }
@@ -208,6 +225,22 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
         {/* Generation rail (Spec 05 a7) — the keyboard spine; jump to a generation. */}
         <GenerationRail generations={generations} onJump={(x, y) => panTo(x, y)} />
+
+        {/* Place filter chip (Spec 09 a6) — a place dims the rest of the canvas
+            rather than opening a page; dismissible, restoring full opacity. */}
+        {placeFilter && (
+          <div className="tree-place-filter">
+            <span className="tree-place-filter-label">Connected to {placeFilter}</span>
+            <button
+              type="button"
+              className="tree-place-filter-clear"
+              aria-label="Clear place filter"
+              onClick={() => setPlaceFilter(null)}
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Attention filters (Spec 05 a8) — dim non-matching households, never hide. */}
         <div className="tree-attention" role="group" aria-label="Needs attention">
