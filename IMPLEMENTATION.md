@@ -214,3 +214,43 @@ deviations: none for the shell itself. Follow-ups for later waves (not shell): t
 shows a role `<select>` + "change a role from its dropdown" copy — a Spec-06 "Do not" violation to
 fix in Wave 3; a stray fixed bottom-left "N" circle on tree/members pages to investigate in Wave 3;
 `node_border.png` kept in `public/` until PersonAvatar is rewired to `--ornament-ring` (Wave 3).
+
+---
+
+## WAVE 1 — Data & write infrastructure (plan + receipts)
+
+Spec 13 distilled at `design-specs/_SPEC-13.md`; permission matrix at `_FOUNDATIONS.md` §04.
+Roles: repo `owner/editor/viewer` = spec `keeper/write/read`. Current write model is a bulk
+`saveTreeData` (whole-tree diff, one `requireEdit`) — the spec's per-record patch + base-version
+model is the rework below.
+
+Units (each a commit; tests green before moving on):
+
+1. **Permission-matrix rejection tests** — DONE. `tests/services/authz.test.ts` (26): 13/15 rows
+   (view/edit/owner/invite guards). Rows 4 (see living dates) + 5 (edit own record) pend units 3–4.
+2. **Entities + one-record rule** — Spec 00 §05/§06. Audit schema (Person.userId unique-where-not-null,
+   one root/tree, one linked person/(tree,uid)) + ConsistencyValidator; encode the 5 consequences.
+   Merge-on-join logic is unit-tested here (`tests/merge.test.ts`, integration §6); the Invite flow
+   (Spec 04) and Account (Spec 12) consume it in Wave 5/4.
+3. **Per-record patch model + conflict detection** — schema: add a version to people/families;
+   patch endpoints (only changed fields); stale-base → 409 conflict (integration, Spec 13 flow 7).
+   Replaces bulk `saveTreeData`.
+4. **Self-edit exception + readers-see-dates filter** — the 2 remaining matrix rows: a reader may
+   edit their OWN linked person (patch path); living relatives' exact dates redacted from readers
+   unless `tree.readersSeeDates` (read projection). Adds their rejection tests here.
+5. **Spec 13 client write-infra** — reusable: dirty-tracking/write-state hook (`.dirty-dot` labels,
+   footer appears, Save disabled-until-dirty), save toast + 12s undo (onto `.toast`), itemised leaving
+   guard (onto `.dialog`), deletion consequence dialog (type-to-confirm), offline/failed lines.
+   Every later form/page consumes these; none hand-rolls its own. Retires `.confirm-dialog` +
+   react-hot-toast legacy styling.
+
+### Permission matrix — server-side enforcement — DONE
+
+spec: Spec 00 §04 (`_FOUNDATIONS.md`)
+files: tests/services/authz.test.ts (authz.ts already had the 4 guards)
+tests: tests/services/authz.test.ts — 26/26 (13 of 15 matrix rows)
+consumes: requireView/requireEdit/requireOwner/requireInvite
+decisions: Roles owner/editor/viewer = keeper/write/read. Rows 4 (living-date projection) + 5
+(self-edit) are enforced by the read filter + per-record patch path (units 3–4), which add their
+own rejection tests — not skipped, deferred to the units that create the machinery.
+deviations: none.
