@@ -63,6 +63,11 @@ export interface AuthProvider {
 export interface UserProvider {
   getUserProfile(uid: string): Promise<UserProfile | null>;
   createUserProfile(uid: string, profile: UserProfile): Promise<void>;
+  /**
+   * Save the caller's own person record and propagate its own facts to every tree
+   * they're linked into (Spec 12 a5). Returns how many trees were updated.
+   */
+  updateOwnRecord(person: Person): Promise<{ trees: number }>;
 }
 
 /** Tree lifecycle — creation, deletion, and the user→tree relation. */

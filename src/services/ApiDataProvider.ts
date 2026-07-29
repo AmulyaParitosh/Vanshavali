@@ -60,6 +60,14 @@ export class ApiDataProvider implements DataProvider {
     await authedFetch(this.client, "/api/user/profile", { method: "POST", body: profile });
   }
 
+  async updateOwnRecord(person: Person): Promise<{ trees: number }> {
+    const { trees } = await authedFetch<{ trees: number }>(this.client, "/api/user/record", {
+      method: "PUT",
+      body: { person },
+    });
+    return { trees };
+  }
+
   // --------------------------- TreeMetaProvider ---------------------------
 
   async createTree(_ownerUid: string, name: string): Promise<TreeMeta> {

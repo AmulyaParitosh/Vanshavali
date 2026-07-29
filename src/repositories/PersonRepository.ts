@@ -32,6 +32,16 @@ export const PersonRepository = {
   },
 
   /**
+   * Every person row linked to a user, across all their trees, paired with the
+   * tree it lives in. Powers the one-record propagation (Spec 12 a5): edit your
+   * own facts once, write them to each linked row.
+   */
+  async listByUser(db: Db, uid: string): Promise<{ treeId: string; person: Person }[]> {
+    const rows = await query<PersonRow>(db, sql("person/list-by-user.sql"), [uid]);
+    return rows.map((r) => ({ treeId: r.tree_id, person: rowToPerson(r) }));
+  },
+
+  /**
    * Optimistic-lock write: applies `person`'s data only if `baseVersion` is still
    * the current version. Returns the fresh Person on success, or null when the
    * base was stale (someone else wrote) — the service turns null into a 409.

@@ -1029,3 +1029,20 @@ a4. The patchPerson service (Spec 07 D4) uses requireEditOrSelf, so the in-tree 
 refuses a keeper writing another user's linked record — the intended cross-spec behaviour.
 deviations: the cross-tree propagation service (a5) + the /user/record page-editor + /user overview are
 AC-A2 / AC-B / AC-C (not built here).
+
+### Wave 4 Account AC-A2 — one-record propagation backend (a5) — DONE
+
+spec: `_SPEC-12.md` a5 + integration §7 — a save reflected in every tree, no reload
+files: src/repositories/sql/person/list-by-user.sql + PersonRepository.listByUser (all linked rows
+across trees, paired with treeId); src/services/user-record-service.ts (updateOwnRecord(uid, facts):
+in ONE transaction, applyOwnFacts to every linked row + upsert; returns {trees}); PUT
+/api/user/record (self-scoped, extracts ownFactsOf the posted person); DataProvider.updateOwnRecord
+
+- ApiDataProvider + withRefresh MUTATIONS
+  tests: tests/services/user-record-service.test.ts — 2 (fan-out writes new own facts to every linked
+  row keeping id/userId/root; no-op → 0 trees). Wires the previously-unused onerecord.ts (applyOwnFacts).
+  Vitest 180.
+  decisions: self-scoped by construction (uid from the token) — a user only rewrites their OWN linked
+  rows, so a4 holds here too. Own facts authoritative (cleared fact clears everywhere). Bulk upsert
+  bumps each row's version. The end-to-end cross-tree e2e lands with the /user/record page (AC-B).
+  deviations: /user/record page-editor = AC-B; /user overview + trees list + self-leave = AC-C.
