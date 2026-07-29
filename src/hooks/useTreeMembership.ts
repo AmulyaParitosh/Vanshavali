@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MembershipProvider } from "../services/types";
 import type { TreeMembership } from "../types/tree";
 
@@ -21,15 +21,23 @@ export function useTreeMembership(
 ): UseTreeMembershipResult {
   const [membership, setMembership] = useState<TreeMembership | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  // Gate only on a real (tree, user) change — a refreshNonce re-fetch is a
+  // background refresh and must not drop the gate (which would unmount the page).
+  const gatedKey = useRef<string | null>(null);
 
   useEffect(() => {
     if (!treeId || !uid) {
       setMembership(null);
       setIsLoaded(true);
+      gatedKey.current = null;
       return;
     }
 
-    setIsLoaded(false);
+    const key = `${treeId}|${uid}`;
+    if (gatedKey.current !== key) {
+      setIsLoaded(false);
+      gatedKey.current = key;
+    }
     const unsubscribe = provider.subscribeToMembership(treeId, uid, (m) => {
       setMembership(m);
       setIsLoaded(true);

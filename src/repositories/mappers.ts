@@ -52,8 +52,9 @@ export interface TreeMemberRow {
 export interface PersonRow {
   id: string;
   tree_id: string;
-  data: Omit<Person, "id" | "userId">;
+  data: Omit<Person, "id" | "userId" | "version">;
   user_id: string | null;
+  version: number;
   created_at: string;
   updated_at: string;
 }
@@ -124,6 +125,7 @@ export function rowToPerson(row: PersonRow): Person {
     ...row.data,
     id: row.id,
     ...(row.user_id ? { userId: row.user_id } : {}),
+    version: row.version,
   };
 }
 
@@ -166,8 +168,9 @@ export function rowToSuggestion(row: SuggestionRow): Suggestion {
 export function personToRow(
   person: Person,
   treeId: string
-): Omit<PersonRow, "created_at" | "updated_at"> {
-  const { id, userId, ...rest } = person;
+): Omit<PersonRow, "created_at" | "updated_at" | "version"> {
+  // version is a row column, never part of the stored data — strip it here.
+  const { id, userId, version: _version, ...rest } = person;
   return {
     id,
     tree_id: treeId,

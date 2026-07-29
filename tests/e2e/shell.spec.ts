@@ -76,7 +76,9 @@ test.describe("Shell — chrome bar and rail", () => {
 
     const settleOn = async (label: string, url: RegExp) => {
       await page.locator(".tree-rail-item", { hasText: label }).click();
-      await expect(page).toHaveURL(url);
+      // Generous timeout: the dev server compiles a route on its first visit, so
+      // the client navigation can take longer than the 5s default late in a run.
+      await expect(page).toHaveURL(url, { timeout: 20_000 });
       await expect(page.locator(".tree-rail-item.active .tree-rail-label")).toHaveText(label);
       await page.waitForLoadState("networkidle");
     };

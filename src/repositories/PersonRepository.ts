@@ -25,6 +25,34 @@ export const PersonRepository = {
     await query(db, sql("person/upsert.sql"), [row.id, row.tree_id, row.data, row.user_id]);
   },
 
+  /** A single person by (tree, id), or null. Used to surface the fresh record on a stale patch. */
+  async find(db: Db, treeId: string, personId: string): Promise<Person | null> {
+    const rows = await query<PersonRow>(db, sql("person/find.sql"), [personId, treeId]);
+    return rows[0] ? rowToPerson(rows[0]) : null;
+  },
+
+  /**
+   * Optimistic-lock write: applies `person`'s data only if `baseVersion` is still
+   * the current version. Returns the fresh Person on success, or null when the
+   * base was stale (someone else wrote) — the service turns null into a 409.
+   */
+  async patch(
+    db: Db,
+    treeId: string,
+    personId: string,
+    person: Person,
+    baseVersion: number
+  ): Promise<Person | null> {
+    const row = personToRow(person, treeId);
+    const rows = await query<PersonRow>(db, sql("person/patch.sql"), [
+      personId,
+      treeId,
+      row.data,
+      baseVersion,
+    ]);
+    return rows[0] ? rowToPerson(rows[0]) : null;
+  },
+
   async deleteByIds(db: Db, treeId: string, ids: string[]): Promise<void> {
     if (ids.length === 0) return;
     await query(db, sql("person/delete-by-ids.sql"), [treeId, ids]);

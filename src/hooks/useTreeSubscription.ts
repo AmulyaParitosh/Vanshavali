@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { TreeData, TreeDataProvider } from "../services/types";
 
 export interface UseTreeSubscriptionResult {
@@ -19,15 +19,24 @@ export function useTreeSubscription(
 ): UseTreeSubscriptionResult {
   const [treeData, setTreeData] = useState<TreeData | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  // The tree we last showed the loading gate for. A refreshNonce bump re-fetches
+  // in the background (Spec 13: saves re-fetch in place) — the gate must NOT drop
+  // then, or the whole page would unmount and lose in-place state (edit drafts,
+  // the conflict dialog). Only a genuine tree switch re-gates.
+  const gatedTree = useRef<string | null>(null);
 
   useEffect(() => {
     if (!treeId) {
       setTreeData(null);
       setIsLoaded(true);
+      gatedTree.current = null;
       return;
     }
 
-    setIsLoaded(false);
+    if (gatedTree.current !== treeId) {
+      setIsLoaded(false);
+      gatedTree.current = treeId;
+    }
     const unsubscribe = treeProvider.subscribeToTreeData(treeId, (data) => {
       setTreeData(data);
       setIsLoaded(true);

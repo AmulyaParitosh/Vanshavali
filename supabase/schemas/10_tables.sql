@@ -41,6 +41,10 @@ create table people (
   tree_id     text not null references trees (id) on delete cascade,
   data        jsonb not null,
   user_id     text references users (uid) on delete set null,
+  -- Optimistic-lock counter for the per-record patch path (Spec 13 flow 7): a
+  -- save carries the version it read, and a stale base loses the WHERE match so
+  -- the write returns no row (the service turns that into a 409 conflict).
+  version     integer not null default 1,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );

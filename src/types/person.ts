@@ -19,6 +19,13 @@ export interface Person {
   image_url?: string;
   image_storage_path?: string;
   userId?: string;
+  /**
+   * Optimistic-lock version from the `people.version` column (not part of the
+   * stored `data`). The record panel reads it when opening a record and sends it
+   * back on Save so a stale write is caught server-side (Spec 13 flow 7). Absent
+   * on drafts that never came from the server.
+   */
+  version?: number;
 }
 
 /**

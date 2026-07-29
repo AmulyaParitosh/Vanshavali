@@ -6,11 +6,15 @@ import { portraitTint, personInitials } from "../../utils/portrait";
 import { GraphManager } from "../../lib/graph/GraphManager";
 import { generationMap, roman, bornInLine } from "../../lib/generations";
 import { buildLineage, describeRelation, ordinalWord, type Lineage } from "../../lib/lineage";
-import type { FieldChange } from "../../lib/writeState";
+import { detectConflict, type FieldChange, type FieldConflict } from "../../lib/writeState";
+import { personFieldMap } from "../../lib/personChanges";
+import { overlayPersonFields, changedFieldKeys } from "../../lib/personMerge";
+import type { PatchPersonResult } from "../../services/types";
 import AccessBlock from "./AccessBlock";
 import RecordEditor from "./RecordEditor";
 import LeavingGuard from "./LeavingGuard";
 import ConsequenceDialog from "./ConsequenceDialog";
+import ConflictDialog from "./ConflictDialog";
 
 interface TreeInspectorProps {
   person: Person;
@@ -28,8 +32,12 @@ interface TreeInspectorProps {
   treeId: string | null;
   onClose: () => void;
   onSelect: (personId: string) => void;
-  /** Persist an edited record (edit-in-place Save). */
-  onSaveRecord: (draft: DraftPerson) => Promise<void> | void;
+  /**
+   * Save one person with optimistic locking (Spec 13 flow 7). Returns the
+   * outcome so the panel can run the three-way merge on a conflict; the caller
+   * owns the success toast + undo.
+   */
+  savePerson: (person: Person, baseVersion: number) => Promise<PatchPersonResult>;
   /** True while a record save is in flight. */
   saving?: boolean;
   /** Keeper only: change a member's role (a5, no confirmation). */
@@ -63,7 +71,7 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
   treeId,
   onClose,
   onSelect,
-  onSaveRecord,
+  savePerson,
   saving = false,
   onChangeRole,
   savingRole = false,
@@ -77,14 +85,90 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
   const [liveDraft, setLiveDraft] = useState<DraftPerson | null>(null);
   const [guardOpen, setGuardOpen] = useState(false);
   const pendingLeave = useRef<(() => void) | null>(null);
+  // The record as the editor opened it — the base for the three-way merge. Held
+  // in a ref so a post-save re-fetch (which updates `person`) can't shift it.
+  const editBaseRef = useRef<Person>(person);
+  // An unresolved stale save: the fields both sides changed, awaiting a choice.
+  const [conflict, setConflict] = useState<{
+    base: Person;
+    draft: DraftPerson;
+    stored: Person;
+    conflicts: FieldConflict[];
+  } | null>(null);
 
   const dirty = editing && liveChanges.length > 0;
+
+  const startEditing = () => {
+    editBaseRef.current = person;
+    setEditing(true);
+  };
 
   const stopEditing = () => {
     setEditing(false);
     setGuardOpen(false);
+    setConflict(null);
     setLiveChanges([]);
     setLiveDraft(null);
+  };
+
+  /**
+   * Save a draft through the optimistic-lock path. On success the panel closes
+   * the editor; on a stale base it runs the three-way merge (Spec 13 flow 7):
+   * fields nobody else touched are re-saved silently against the fresh version,
+   * and only genuinely contested fields open the conflict dialog. Returns whether
+   * the record is now saved (so a Save-and-leave knows if it may leave).
+   */
+  const commitSave = async (draft: DraftPerson): Promise<boolean> => {
+    const base = editBaseRef.current;
+    const mine: Person = { ...(draft as Person), id: person.id };
+    const first = await savePerson(mine, base.version ?? 0);
+    if (first.ok) return true;
+
+    const detected = detectConflict(
+      personFieldMap(base),
+      personFieldMap(first.stored),
+      personFieldMap(draft)
+    );
+    if (detected.conflicts.length === 0) {
+      // Nothing contested — merge my changes onto the fresh record and re-save.
+      const keys = new Set(changedFieldKeys(base, draft));
+      const merged = overlayPersonFields(first.stored, draft, keys);
+      const second = await savePerson(merged, first.stored.version ?? 0);
+      if (second.ok) return true;
+      const again = detectConflict(
+        personFieldMap(base),
+        personFieldMap(second.stored),
+        personFieldMap(draft)
+      );
+      setConflict({ base, draft, stored: second.stored, conflicts: again.conflicts });
+      return false;
+    }
+    setConflict({ base, draft, stored: first.stored, conflicts: detected.conflicts });
+    return false;
+  };
+
+  // Resolve the conflict dialog: keep the chosen fields from my version, take the
+  // rest (and any field only they changed) from what's stored now, and re-save.
+  const resolveConflict = async (keepMine: ReadonlySet<string>): Promise<void> => {
+    if (!conflict) return;
+    const contested = new Set(conflict.conflicts.map((c) => c.field));
+    const keys = new Set<string>(keepMine);
+    // My changes that were never contested are safe to keep from my version.
+    for (const k of changedFieldKeys(conflict.base, conflict.draft)) {
+      if (!contested.has(k)) keys.add(k);
+    }
+    const merged = overlayPersonFields(conflict.stored, conflict.draft, keys);
+    const res = await savePerson(merged, conflict.stored.version ?? 0);
+    if (res.ok) {
+      stopEditing();
+      return;
+    }
+    const again = detectConflict(
+      personFieldMap(conflict.base),
+      personFieldMap(res.stored),
+      personFieldMap(conflict.draft)
+    );
+    setConflict({ ...conflict, stored: res.stored, conflicts: again.conflicts });
   };
 
   // Closing (✕ / Esc) a dirty edit routes through the leaving guard, never a
@@ -183,8 +267,8 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
             }}
             onCancel={stopEditing}
             onSave={async (draft) => {
-              await onSaveRecord(draft);
-              stopEditing();
+              const saved = await commitSave(draft);
+              if (saved) stopEditing();
             }}
           />
         ) : (
@@ -222,7 +306,7 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
              * editor meanwhile.) */}
             {treeId && (canEdit || isSelf) && (
               <div className="inspector-actions">
-                <button type="button" className="btn" onClick={() => setEditing(true)}>
+                <button type="button" className="btn" onClick={startEditing}>
                   Edit record
                 </button>
               </div>
@@ -339,11 +423,27 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
             after?.();
           }}
           onSaveAndLeave={async () => {
-            if (liveDraft) await onSaveRecord(liveDraft);
+            // Only leave once the save actually lands; a conflict opens its dialog
+            // and holds the panel here until the user resolves it.
+            const saved = liveDraft ? await commitSave(liveDraft) : true;
+            if (!saved) {
+              setGuardOpen(false);
+              return;
+            }
             const after = pendingLeave.current;
             stopEditing();
             after?.();
           }}
+        />
+      )}
+
+      {conflict && (
+        <ConflictDialog
+          personName={person.name.official_name}
+          conflicts={conflict.conflicts}
+          saving={saving}
+          onKeepEditing={() => setConflict(null)}
+          onResolve={resolveConflict}
         />
       )}
 

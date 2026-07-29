@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DataProvider, TreeData, UserProfile } from "./types";
+import type { DataProvider, TreeData, UserProfile, PatchPersonResult } from "./types";
+import type { Person } from "../types/person";
 import type {
   TreeMeta,
   TreeMembership,
@@ -94,6 +95,35 @@ export class ApiDataProvider implements DataProvider {
 
   async saveTreeData(treeId: string, data: TreeData): Promise<void> {
     await authedFetch(this.client, `/api/tree/${treeId}/data`, { method: "PUT", body: data });
+  }
+
+  async patchPerson(
+    treeId: string,
+    personId: string,
+    person: Person,
+    baseVersion: number
+  ): Promise<PatchPersonResult> {
+    // Not authedFetch: a 409 is an expected outcome here, not an error — we need
+    // the response body (the fresh record) rather than a thrown message.
+    const { data } = await this.client.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) throw new Error("Not signed in.");
+    const response = await fetch(`/api/tree/${treeId}/person/${personId}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ data: person, baseVersion }),
+    });
+    if (response.status === 409) {
+      const body = (await response.json().catch(() => null)) as { stored?: Person } | null;
+      if (body?.stored) return { ok: false, conflict: true, stored: body.stored };
+      throw new Error("This record was changed while you were editing.");
+    }
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(body?.error ?? `Request failed (HTTP ${response.status})`);
+    }
+    const { person: saved } = (await response.json()) as { person: Person };
+    return { ok: true, person: saved };
   }
 
   async linkUserToPerson(treeId: string, personId: string, _uid: string): Promise<void> {

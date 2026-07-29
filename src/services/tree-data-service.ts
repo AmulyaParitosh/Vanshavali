@@ -1,9 +1,10 @@
 import type { TreeData } from "./types";
+import type { Person } from "../types/person";
 import { getPool, transaction } from "../repositories/db";
 import { PersonRepository } from "../repositories/PersonRepository";
 import { FamilyRepository } from "../repositories/FamilyRepository";
 import { MembershipRepository } from "../repositories/MembershipRepository";
-import { requireView, requireEdit } from "./authz";
+import { requireView, requireEdit, requireEditOrSelf } from "./authz";
 import { HttpError } from "../lib/api";
 
 /**
@@ -43,6 +44,35 @@ export async function saveTreeData(treeId: string, uid: string, data: TreeData):
     await PersonRepository.deleteByIds(tx, treeId, peopleToDelete);
     await FamilyRepository.deleteByIds(tx, treeId, familiesToDelete);
   });
+}
+
+/**
+ * Save one person with optimistic locking (Spec 13 flow 7). Authorizes the edit
+ * (editor/keeper, or the reader's own linked record), then writes only if the
+ * caller's `baseVersion` is still current. A stale base throws 409 carrying the
+ * fresh stored record so the client can run its three-way merge; the person
+ * having vanished throws 404. Returns the freshly-written record on success.
+ */
+export async function patchPerson(
+  treeId: string,
+  uid: string,
+  personId: string,
+  data: Person,
+  baseVersion: number
+): Promise<Person> {
+  const existing = await PersonRepository.find(getPool(), treeId, personId);
+  if (!existing) throw new HttpError("That record no longer exists.", 404);
+  await requireEditOrSelf(treeId, uid, existing.userId);
+
+  const saved = await PersonRepository.patch(getPool(), treeId, personId, data, baseVersion);
+  if (!saved) {
+    // The base was stale — hand back what's stored now for the client's merge.
+    const current = await PersonRepository.find(getPool(), treeId, personId);
+    throw new HttpError("This record was changed while you were editing.", 409, {
+      stored: current,
+    });
+  }
+  return saved;
 }
 
 export async function linkUserToPerson(

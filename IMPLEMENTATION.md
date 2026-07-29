@@ -497,3 +497,55 @@ only when not name-gated). Remove access uses it WITHOUT type-to-confirm (revers
 touched (a8). ConsequenceDialog is ready for person/tree deletion (Spec 08/11) with confirmName set.
 deviations: none for the dialog. Q13: removeMember appears to also clear the global public.users
 profile — investigate at Members (Spec 06). Per-record patch endpoint + conflict = D part 4.
+
+### Wave 2 sub-unit D (part 4) — per-record patch + base-version conflict — DONE
+
+spec: Spec 13 flow 7 + a10 (`_SPEC-13.md`); Spec 00 §04 matrix row 5 (self-edit)
+files:
+
+- schema: supabase/schemas/10_tables.sql (people.version) + migration
+  20260729071315_add_people_version.sql; person/{patch,find}.sql + list-by-tree/upsert
+  (select/bump version); PersonRepository.{find,patch}; mappers (Person.version, row col, never in data)
+- service/route: tree-data-service.patchPerson (optimistic lock → 409 with fresh record);
+  authz.requireEditOrSelf (self-edit exception); lib/api HttpError payload; PATCH
+  /api/tree/[id]/person/[personId]
+- provider: types PatchPersonResult + TreeDataProvider.patchPerson; ApiDataProvider.patchPerson
+  (raw fetch, 409→conflict result); withRefresh MUTATIONS += patchPerson
+- client: lib/personMerge (overlayPersonFields/changedFieldKeys) + personChanges.personFieldMap
+  (shared keyspace); TreeInspector commitSave/resolveConflict (three-way merge orchestration);
+  tree/ConflictDialog; Tree.savePerson (network + toast + 12s undo, replaces bulk onSaveRecord);
+  globals.css .conflict-\*
+  tests:
+- tests/services/authz.test.ts — 32 (added 6: self-edit row 5 — editor/keeper edit anyone,
+  reader edits ONLY own linked record, reader rejected on another's/unlinked, non-member rejected)
+- tests/lib/personMerge.test.ts — 6 (changedFieldKeys; overlay keeps id/userId/root from stored,
+  takes only chosen groups from mine, clears a blanked field)
+- tests/e2e/record-conflict.spec.ts — 2 (a10: same-field edit on both sides → conflict dialog,
+  my choice saves; flow 7: different-field edit → silent field-group merge, no dialog). Simulates
+  the concurrent write via pg (bumps version); snapshots + restores Arjun each test.
+  Vitest 155 · record-panel 17 · shell 9 · record-conflict 2 — all green.
+  consumes: writeState.detectConflict (Wave 1), the record panel (sub-units A–D3b)
+  decisions:
+- Storage stays whole-`data` jsonb; `version` is the optimistic lock. Field-level conflict logic
+  lives client-side on the flat personFieldMap keyspace (Name/Sex/Photograph/Also-known-as/Life/
+  Details) — the same keys the leaving guard uses. A stale save → 409(stored); client runs
+  detectConflict: no contested field → merge my groups onto the fresh record + re-save silently;
+  contested → ConflictDialog (per-field Keep mine / Use theirs, never a silent overwrite).
+  overlayPersonFields always keeps id/userId/root from the STORED record (a draft can't move them).
+- Kept bulk saveTreeData for the family editor + legacy paths (they migrate to per-record in their
+  own waves). Record panel now saves via patchPerson only.
+- Self-edit exception (matrix row 5) enforced in requireEditOrSelf: editor/keeper edit anyone; a
+  reader edits only the record whose user_id is their own. Row 4 (readers-see-dates projection)
+  still pends its own unit (needs a tree setting — build with Settings/Spec 11).
+  deviations / findings:
+- FINDING (cross-cutting, FIXED): every mutation bumps the refresh nonce, and the three tree-scoped
+  subscribe hooks (useTreeSubscription/useTreeMembership/useMyTrees) reset isLoaded=false on EVERY
+  effect run — so each save flashed a full-page <Loading/> and UNMOUNTED the page, discarding
+  in-place state. Harmless for navigation-based flows but fatal for the conflict dialog (and the
+  reason ToastSystem had to live outside AppProvider). Fixed at the source: the hooks now gate the
+  Loading state only on a real key change (tree/uid), and keep stale data on screen during a
+  background nonce re-fetch — which is what CLAUDE.md's "re-fetch after its own mutations" intends.
+- The a5 role-Undo e2e test could end before its fire-and-forget restore write landed (the radio
+  reads "now" off stale state); with the faster no-remount path this left the seed dirty. Hardened
+  it to wait for the Undo's post-write confirmation toast (no product bug — the write completes in a
+  real browser; only Playwright's context-close aborted it).

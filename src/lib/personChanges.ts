@@ -9,7 +9,14 @@ import { diffFields, type FieldChange } from "./writeState";
  * tell a relative what they would lose.
  */
 
-function changeFields(p: DraftPerson): Record<string, string> {
+/**
+ * A person reduced to the flat, human-labelled field map the write-state logic
+ * compares (Spec 13). Arrays (aliases, life, details) collapse to one entry each
+ * rather than per-item — enough to tell a relative what a change would touch, and
+ * the same keyspace the conflict detector and the field-group merge use. Exported
+ * so `personMerge` shares exactly these keys.
+ */
+export function personFieldMap(p: DraftPerson): Record<string, string> {
   const aliases = (p.name?.aliases ?? []).filter((a) => a.trim());
   const events = (p.events ?? [])
     .map((e) => [e.type, e.date, e.place].filter(Boolean).join(" "))
@@ -37,5 +44,5 @@ const LABELS = {
 };
 
 export function personChanges(original: Person, draft: DraftPerson): FieldChange[] {
-  return diffFields(changeFields(original), changeFields(draft), LABELS);
+  return diffFields(personFieldMap(original), personFieldMap(draft), LABELS);
 }

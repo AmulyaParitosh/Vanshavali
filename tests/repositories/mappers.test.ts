@@ -92,12 +92,16 @@ describe("rowToPerson / personToRow round-trip", () => {
     image_storage_path: "trees/t/people/p_1/y.jpg",
     root: true,
     userId: "uid_alice",
+    version: 3,
   };
 
   it("round-trips a fully-populated Person without loss", () => {
     const row = personToRow(fullPerson, "tree_main");
+    // version is a row column personToRow drops (it isn't part of the data blob);
+    // the DB supplies it, so reconstruct it here the way the repository would.
     const reconstructed = rowToPerson({
       ...row,
+      version: 3,
       created_at: "2026-06-16T12:00:00.000Z",
       updated_at: "2026-06-16T12:00:00.000Z",
     });
@@ -130,6 +134,7 @@ describe("rowToPerson / personToRow round-trip", () => {
       tree_id: "tree_main",
       data: { name: { official_name: "Bob" }, sex: "M" },
       user_id: null,
+      version: 1,
       created_at: "2026-06-16T12:00:00.000Z",
       updated_at: "2026-06-16T12:00:00.000Z",
     };

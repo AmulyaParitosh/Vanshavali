@@ -14,10 +14,13 @@ import { formatError } from "./formatError";
 /** An error carrying an HTTP status. Services throw these; routes map them. */
 export class HttpError extends Error {
   readonly status: number;
-  constructor(message: string, status: number) {
+  /** Extra JSON merged into the error response body — e.g. the fresh record on a 409 conflict. */
+  readonly payload?: Record<string, unknown>;
+  constructor(message: string, status: number, payload?: Record<string, unknown>) {
     super(message);
     this.name = "HttpError";
     this.status = status;
+    if (payload) this.payload = payload;
   }
 }
 
@@ -36,7 +39,10 @@ export async function requireCaller(request: Request): Promise<Caller> {
 /** Map a thrown value to a JSON response: HttpError→its status, else 500. */
 export function errorResponse(error: unknown): NextResponse {
   if (error instanceof HttpError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json(
+      { error: error.message, ...(error.payload ?? {}) },
+      { status: error.status }
+    );
   }
   console.error("Unhandled route error", formatError(error));
   return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -16,6 +16,15 @@ export interface TreeData {
 }
 
 /**
+ * Outcome of a per-record save (Spec 13 flow 7). Success carries the freshly
+ * stored record (its bumped version); a conflict carries the record as it stands
+ * now, so the caller can run the three-way merge and resolve field by field.
+ */
+export type PatchPersonResult =
+  | { ok: true; person: Person }
+  | { ok: false; conflict: true; stored: Person };
+
+/**
  * Global user profile — name, email, photo. Roles live on TreeMembership
  * (per-tree), not here. Pre-multi-tenancy this carried a global role and a
  * personId; both are gone.
@@ -68,6 +77,17 @@ export interface TreeMetaProvider {
 export interface TreeDataProvider {
   subscribeToTreeData(treeId: string, callback: (data: TreeData) => void): () => void;
   saveTreeData(treeId: string, data: TreeData): Promise<void>;
+  /**
+   * Save one person with optimistic locking. `baseVersion` is the version read
+   * when the record was opened; a stale base resolves to a conflict result
+   * (carrying the fresh record) rather than throwing (Spec 13 flow 7).
+   */
+  patchPerson(
+    treeId: string,
+    personId: string,
+    person: Person,
+    baseVersion: number
+  ): Promise<PatchPersonResult>;
   linkUserToPerson(treeId: string, personId: string, uid: string): Promise<void>;
 }
 

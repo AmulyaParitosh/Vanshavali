@@ -35,6 +35,20 @@ in the Claude Design project `dd87d264-b5d2-4737-8e4c-9233afb2398d`, read via `D
 That is the "file read" primitive. Not mirrored to disk (get_file cannot be piped to disk without
 re-emitting content). Re-fetch per unit. Mechanism recorded in `IMPLEMENTATION.md`.
 
+## Q14 — e2e full-suite runs degrade the Next dev server (run per-suite, or against a prod build)
+
+The canonical Playwright webServer is `npm run dev`. A single long run of the whole suite (~79
+tests, 5+ min) degrades the unoptimised Next **dev** server (on-demand route compilation + GC),
+producing run-to-run cascading timeouts in whatever runs in the degraded window — NOT test bugs
+(every suite passes green in isolation: record-panel 17, shell 9, record-conflict 2, Vitest 155).
+Confirmed by running the full suite against a **production build** (`next build` + `next start`):
+77/79 pass, and the only 2 failures are `foundations.spec.ts` shadow/motion assertions that expect
+**unminified** CSS (`"178, 34, 34"`, `cubic-bezier(0.32, 0.72, 0, 1)`) — prod minifies the spaces
+out. So: verify units per-suite against dev; if a whole-suite green is needed, run against a prod
+build and treat those 2 CSS-format assertions as dev-only. Not fixing them (they hold in the
+configured dev environment). **Deferred**: pick a v1 CI e2e strategy (prod-build server + make the 2
+format assertions minification-agnostic) at the hosting decision (Phase 15).
+
 ## Q13 — removeMember may delete the global user profile — INVESTIGATE (pre-existing)
 
 During a8 verification, removing a member (designreview3) appeared to also drop their row from

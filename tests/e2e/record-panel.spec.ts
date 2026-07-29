@@ -190,8 +190,12 @@ test.describe("Record panel — keeper access write (Spec 07 a3/a5)", () => {
     const toast = page.locator(".toast-viewport .toast");
     await expect(toast.locator(".toast-primary")).toContainText("may now read the tree");
 
-    // Undo restores the previous role, leaving the seed clean.
+    // Undo restores the previous role, leaving the seed clean. The confirmation
+    // toast only appears once the restore write has resolved server-side, so wait
+    // for it — the radio alone can read "now" off stale state before the write
+    // lands, which would end the test (and close the page) mid-request.
     await toast.getByRole("button", { name: "Undo" }).click();
+    await expect(page.locator(".toast-viewport .toast")).toContainText("Put back the way it was");
     await expect(page.locator(".radio-row", { hasText: "Write" }).locator(".radio-now")).toHaveText(
       "now"
     );

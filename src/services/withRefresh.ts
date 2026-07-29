@@ -9,6 +9,7 @@ const MUTATIONS: ReadonlySet<string> = new Set<keyof DataProvider>([
   "createTree",
   "deleteTree",
   "saveTreeData",
+  "patchPerson",
   "linkUserToPerson",
   "updateMemberRole",
   "removeMember",

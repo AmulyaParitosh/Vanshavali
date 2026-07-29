@@ -7,10 +7,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
  * the sufficient ones. Roles: repo owner/editor/viewer = spec keeper/write/read.
  *
  * The guards resolve the caller's role via MembershipRepository.find — mocked
- * here so these are pure unit tests (no DB). Rows 4 ("see living relatives'
- * exact dates" — a read projection) and 5 ("edit their own record" — the
- * self-edit exception) are enforced by the per-record patch path and the read
- * filter; their rejection tests live with those units (see IMPLEMENTATION.md).
+ * here so these are pure unit tests (no DB). Row 5 ("edit their own record" —
+ * the self-edit exception) is covered below via requireEditOrSelf. Row 4 ("see
+ * living relatives' exact dates" — a read projection) is enforced by the read
+ * filter; its rejection tests live with that unit (see IMPLEMENTATION.md).
  */
 
 const find = vi.fn();
@@ -19,7 +19,13 @@ vi.mock("@/repositories/MembershipRepository", () => ({
 }));
 vi.mock("@/repositories/db", () => ({ getPool: () => ({}) }));
 
-import { requireView, requireEdit, requireOwner, requireInvite } from "@/services/authz";
+import {
+  requireView,
+  requireEdit,
+  requireOwner,
+  requireInvite,
+  requireEditOrSelf,
+} from "@/services/authz";
 import { HttpError } from "@/lib/api";
 import { TREE_ROLES } from "@/constants";
 
@@ -94,6 +100,33 @@ describe("Correct anyone's record (R — / W ✓ / K ✓)", () => {
   it("a reader is rejected", async () => {
     asRole(VIEWER);
     await rejects(edit);
+  });
+});
+
+describe("Correct their OWN record — the self-edit exception (R ✓self / W ✓ / K ✓)", () => {
+  // requireEditOrSelf takes the target record's user_id; caller is "u1".
+  const editSelf = (targetUserId: string | null | undefined) =>
+    requireEditOrSelf("t1", "u1", targetUserId);
+
+  it.each([EDITOR, OWNER])("%s may edit anyone's record", async (role) => {
+    asRole(role);
+    await expect(editSelf("someone_else")).resolves.toBe(role);
+  });
+  it("a reader MAY edit the one record linked to their own account", async () => {
+    asRole(VIEWER);
+    await expect(editSelf("u1")).resolves.toBe(VIEWER);
+  });
+  it("a reader may NOT edit someone else's record", async () => {
+    asRole(VIEWER);
+    await rejects(() => editSelf("someone_else"));
+  });
+  it("a reader on an unlinked record (no target user) is rejected", async () => {
+    asRole(VIEWER);
+    await rejects(() => editSelf(null));
+  });
+  it("a non-member is rejected even on a record bearing their uid", async () => {
+    asRole(null);
+    await rejects(() => editSelf("u1"));
   });
 });
 

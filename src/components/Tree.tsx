@@ -23,7 +23,7 @@ interface TreeProps {
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
-  const { treeData, membership, currentTreeId, user, dataProvider, refreshNonce, onSave, myTrees } =
+  const { treeData, membership, currentTreeId, user, dataProvider, refreshNonce, myTrees } =
     useAppContext();
   const treeName =
     [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])].find((t) => t.id === currentTreeId)
@@ -183,31 +183,46 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             await dataProvider.removeMember(currentTreeId, uid);
             showSaveToast({ primary: `${name} no longer has access`, warn: true });
           }}
-          onSaveRecord={async (draft) => {
-            if (!draft.id) return;
-            const families = treeData?.families ?? [];
-            const prevPeople = people;
-            const prev = people.find((p) => p.id === draft.id);
-            const labels = prev ? personChanges(prev, draft).map((c) => c.label) : [];
-            const summary =
-              labels.length === 0
-                ? "your changes"
-                : labels.length === 1
-                  ? labels[0]!
-                  : `${labels[0]} and ${labels.length - 1} more`;
+          savePerson={async (personToSave, baseVersion) => {
+            if (!currentTreeId) throw new Error("No tree selected.");
+            // The record as loaded now, for the change summary + the 12s Undo.
+            const prev = people.find((p) => p.id === personToSave.id) ?? null;
             setSavingRecord(true);
             try {
-              const nextPeople = people.map((p) =>
-                p.id === draft.id ? ({ ...draft, id: draft.id } as (typeof people)[number]) : p
+              const result = await dataProvider.patchPerson(
+                currentTreeId,
+                personToSave.id,
+                personToSave,
+                baseVersion
               );
-              await onSave({ people: nextPeople, families });
-              showSaveToast({
-                primary: `Saved to ${treeName}`,
-                consequence: `${summary} · everyone sees it now`,
-                onUndo: async () => {
-                  await onSave({ people: prevPeople, families });
-                },
-              });
+              if (result.ok) {
+                const labels = prev ? personChanges(prev, result.person).map((c) => c.label) : [];
+                const summary =
+                  labels.length === 0
+                    ? "your changes"
+                    : labels.length === 1
+                      ? labels[0]!
+                      : `${labels[0]} and ${labels.length - 1} more`;
+                showSaveToast({
+                  primary: `Saved to ${treeName}`,
+                  consequence: `${summary} · everyone sees it now`,
+                  ...(prev
+                    ? {
+                        onUndo: async () => {
+                          // Best-effort restore at the version we just wrote; if the
+                          // record moved on again, the undo simply no-ops.
+                          await dataProvider.patchPerson(
+                            currentTreeId,
+                            prev.id,
+                            prev,
+                            result.person.version ?? 0
+                          );
+                        },
+                      }
+                    : {}),
+                });
+              }
+              return result;
             } finally {
               setSavingRecord(false);
             }

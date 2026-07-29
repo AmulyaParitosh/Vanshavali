@@ -1727,6 +1727,45 @@ main {
   color: var(--text-meta);
 }
 
+/* Conflict dialog (Spec 13 flow 7) — one contested field per row, each offering
+   the two versions as a stacked choice so neither is overwritten unseen. */
+.conflict-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.conflict-row {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.conflict-field {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-meta);
+}
+.conflict-choice {
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  gap: 1px;
+}
+.conflict-choice .segmented-option {
+  justify-content: flex-start;
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: normal;
+}
+.conflict-choice .segmented-option strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.conflict-choice .segmented-option em {
+  font-style: italic;
+  color: var(--text-absent);
+}
+
 /* Save toast (Spec 13) — bottom-centre, above any sticky footer. */
 .toast-viewport {
   position: fixed;
