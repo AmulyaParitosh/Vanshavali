@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   countInWords,
+  detectConflict,
   diffFields,
+  hasConflict,
   inversePatch,
   isDirty,
   summarizeChanges,
@@ -90,5 +92,43 @@ describe("summarizeChanges — edge 6: first six + N more", () => {
   it("no overflow when within the cap", () => {
     const s = summarizeChanges([{ field: "a", label: "A", verb: "Added", to: "x" }]);
     expect(s.moreCount).toBe(0);
+  });
+});
+
+describe("detectConflict — flow 7 / a10: stale save splits safe vs contested", () => {
+  const base = { born: "1958", gotra: "Vatsa", job: "Engineer" };
+
+  it("fields only I changed are safe to write", () => {
+    const stored = base; // nobody else changed anything
+    const mine = { born: "22 July 1958", gotra: "Vatsa", job: "Engineer" };
+    const r = detectConflict(base, stored, mine);
+    expect(r.safe).toEqual({ born: "22 July 1958" });
+    expect(r.conflicts).toEqual([]);
+    expect(hasConflict(base, stored, mine)).toBe(false);
+  });
+
+  it("a field both sides changed to different values is a conflict, never overwritten", () => {
+    const stored = { born: "2 Jan 1958", gotra: "Vatsa", job: "Engineer" }; // someone else edited born
+    const mine = { born: "22 July 1958", gotra: "Vatsa", job: "Engineer" };
+    const r = detectConflict(base, stored, mine);
+    expect(r.conflicts).toEqual([{ field: "born", mine: "22 July 1958", theirs: "2 Jan 1958" }]);
+    expect(r.safe).toEqual({});
+    expect(hasConflict(base, stored, mine)).toBe(true);
+  });
+
+  it("saves non-conflicting fields even when another field conflicts", () => {
+    const stored = { born: "2 Jan 1958", gotra: "Vatsa", job: "Engineer" };
+    const mine = { born: "22 July 1958", gotra: "Kashyap", job: "Engineer" };
+    const r = detectConflict(base, stored, mine);
+    expect(r.safe).toEqual({ gotra: "Kashyap" }); // gotra only I changed
+    expect(r.conflicts.map((c) => c.field)).toEqual(["born"]);
+  });
+
+  it("a converged change (both made the same edit) is neither safe-write nor conflict", () => {
+    const stored = { born: "22 July 1958", gotra: "Vatsa", job: "Engineer" };
+    const mine = { born: "22 July 1958", gotra: "Vatsa", job: "Engineer" };
+    const r = detectConflict(base, stored, mine);
+    expect(r.safe).toEqual({});
+    expect(r.conflicts).toEqual([]);
   });
 });

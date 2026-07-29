@@ -120,3 +120,49 @@ export function summarizeChanges(changes: readonly FieldChange[], max = 6): Chan
     moreCount: Math.max(0, changes.length - max),
   };
 }
+
+const norm = (v: string | undefined): string => (v ?? "").trim();
+
+export interface FieldConflict {
+  field: string;
+  /** What I typed. */
+  mine: string;
+  /** What is stored now (someone changed it while I was editing). */
+  theirs: string;
+}
+
+export interface ThreeWayResult {
+  /** Fields safe to write now — I changed them and nobody else did. */
+  safe: Record<string, string | null>;
+  /** Fields both I and someone else changed, to different values — these wait. */
+  conflicts: FieldConflict[];
+}
+
+/**
+ * Three-way merge for a stale save (Spec 13 flow 7, a10). `base` is the snapshot
+ * from when I opened the record, `stored` is the server's current value, `mine`
+ * is my edit. For each field I changed: if nobody else touched it, it is safe to
+ * write; if someone else changed it to the same value, it has converged (no-op);
+ * otherwise it is a genuine conflict that must wait for the user (Keep mine / See
+ * hers) — never overwritten silently.
+ */
+export function detectConflict(base: Fields, stored: Fields, mine: Fields): ThreeWayResult {
+  const safe: Record<string, string | null> = {};
+  const conflicts: FieldConflict[] = [];
+  for (const ch of diffFields(base, mine)) {
+    const b = norm(base[ch.field]);
+    const s = norm(stored[ch.field]);
+    const m = norm(mine[ch.field]);
+    if (s === b)
+      safe[ch.field] = m === "" ? null : m; // nobody else touched it
+    else if (s === m)
+      continue; // converged — same change, nothing to do
+    else conflicts.push({ field: ch.field, mine: m, theirs: s });
+  }
+  return { safe, conflicts };
+}
+
+/** Whether a save against `stored` (from `base`) has any genuinely contested field. */
+export function hasConflict(base: Fields, stored: Fields, mine: Fields): boolean {
+  return detectConflict(base, stored, mine).conflicts.length > 0;
+}

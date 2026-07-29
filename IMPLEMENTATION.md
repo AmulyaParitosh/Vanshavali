@@ -280,3 +280,19 @@ own facts to every linked row keeping each row's id/userId/root; own facts are a
 cleared fact clears everywhere). Callers UPDATE the placeholder, never INSERT.
 deviations: none. The service wiring (invite-accept merge, /user propagation) + API land with the
 Invite (Wave 5) and Account (Wave 4) pages that own those seams.
+
+### Spec 13 conflict detection — DONE
+
+spec: Spec 13 flow 7 + a10 (`_SPEC-13.md`)
+files: src/lib/writeState.ts (detectConflict/hasConflict), tests/lib/writeState.test.ts
+tests: tests/lib/writeState.test.ts — 15/15 (4 new)
+consumes: diffFields
+decisions: Three-way merge (base / stored / mine): fields only I changed → safe write; fields both
+changed to different values → conflict (Keep mine / See hers), never silent overwrite; converged
+edits → no-op. Non-conflicting fields save even when another conflicts (flow 7).
+deviations: none. Wiring to a real stale-detecting endpoint (base version on the record) lands with
+the per-record patch model + record panel (Wave 2).
+
+**Wave 1 logic core COMPLETE** — permission matrix (26), dirty-tracking (11), merge/propagation (7),
+conflict (4 within the 15). Remaining Wave 1 = server patch/version wiring + Spec 13 UI, both built
+with the **record panel (Wave 2)** where they are consumed and testable end-to-end. Vitest total: 134.
