@@ -13,10 +13,15 @@ import { createTree } from "../../../../services/tree-service";
 export async function POST(request: NextRequest) {
   return handle(async () => {
     const caller = await requireCaller(request);
-    const body = (await request.json().catch(() => null)) as { name?: unknown } | null;
+    const body = (await request.json().catch(() => null)) as {
+      name?: unknown;
+      place?: unknown;
+    } | null;
     const name = typeof body?.name === "string" ? body.name.trim() : "";
     if (!name) throw new HttpError("name is required", 400);
-    const tree = await createTree(caller.uid, caller.email, name);
+    const place =
+      typeof body?.place === "string" && body.place.trim() ? body.place.trim() : undefined;
+    const tree = await createTree(caller.uid, caller.email, name, place);
     return NextResponse.json({ tree });
   });
 }

@@ -24,9 +24,16 @@ export const TreeRepository = {
     id: string,
     name: string,
     ownerUid: string,
-    visibility: string
+    visibility: string,
+    place?: string | null
   ): Promise<TreeMeta> {
-    const rows = await query<TreeRow>(db, sql("tree/insert.sql"), [id, name, ownerUid, visibility]);
+    const rows = await query<TreeRow>(db, sql("tree/insert.sql"), [
+      id,
+      name,
+      ownerUid,
+      visibility,
+      place ?? null,
+    ]);
     const row = rows[0];
     if (!row) throw new Error("tree insert returned no row");
     return rowToTreeMeta(row);

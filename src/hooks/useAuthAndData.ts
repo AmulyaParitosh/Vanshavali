@@ -88,43 +88,11 @@ export function useAuthAndData() {
     setIsProvisioningTree(true);
     (async () => {
       try {
+        // createTree now seeds the keeper's root person + link in the same
+        // transaction (Spec 03 f4), so first-run provisioning is one call —
+        // no separate saveTreeData/linkUserToPerson (which would collide with
+        // the root the service just created).
         const meta = await dataProvider.createTree(user.uid, `${profile.name || "My"} family tree`);
-
-        // Seed a single root person representing the user themselves. We leave
-        // userId unset here and let linkUserToPerson set it, because that call
-        // also populates the membership's personId — doing both in one atomic
-        // step. (linkUserToPerson requires the person's user_id to still be
-        // null, so we must NOT pre-set it above.)
-        //
-        // The whole sequence runs to completion even if the effect re-runs or
-        // unmounts mid-flight: `cancelled` only gates setState (below), it must
-        // never abort these writes — otherwise the tree is created without its
-        // root person and the owner gets bounced out of their own tree.
-        const rootPersonId = `p_${user.uid}`;
-        const rootPerson = {
-          id: rootPersonId,
-          name: { official_name: profile.name || "Me" },
-          sex: "M" as const,
-          events: [],
-          custom_fields: {},
-          root: true,
-        };
-        await dataProvider.saveTreeData(meta.id, {
-          people: [rootPerson],
-          families: [],
-        });
-
-        // Link owner → root person so the tree view knows "this node is me"
-        // and the membership carries personId. Non-fatal: if it fails, the
-        // tree still exists and the user can link manually from their profile.
-        try {
-          await dataProvider.linkUserToPerson(meta.id, rootPersonId, user.uid);
-        } catch (linkError) {
-          console.error(
-            "Auto-link owner to root person failed (non-fatal):",
-            formatError(linkError)
-          );
-        }
         if (!cancelled) setCurrentTreeId(meta.id);
       } catch (error) {
         // Failed before completion — release the latch so a later run can retry.

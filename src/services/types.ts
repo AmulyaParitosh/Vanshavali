@@ -74,7 +74,7 @@ export interface UserProvider {
 
 /** Tree lifecycle — creation, deletion, and the user→tree relation. */
 export interface TreeMetaProvider {
-  createTree(ownerUid: string, name: string): Promise<TreeMeta>;
+  createTree(ownerUid: string, name: string, place?: string): Promise<TreeMeta>;
   /** Keeper-only settings edit — one patch per card (Spec 11). Returns the fresh meta. */
   updateTree(treeId: string, patch: TreeSettingsPatch): Promise<TreeMeta>;
   deleteTree(treeId: string): Promise<void>;

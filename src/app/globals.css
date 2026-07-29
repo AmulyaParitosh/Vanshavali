@@ -970,6 +970,36 @@ main {
   border-radius: var(--radius-16);
   background: var(--cream, #f4ede0);
 }
+/* Create a tree (Spec 03 c3) — a 460 panel, two fields, one filled button. */
+.create-panel {
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.create-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.create-tree .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.create-tree label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.create-submit {
+  align-self: flex-start;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 
 /* --- Tree picker (authenticated landing, > 1 tree) --- */
 .trees-landing {

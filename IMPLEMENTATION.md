@@ -1425,3 +1425,29 @@ deviations (Spec 03 remaining): a2 empty-INLINE create panel + a3 one-record reu
   a8 switcher-parity — the picker card isn't yet the same component the chrome switcher renders (the
   card-is-one-link half holds); lastOpenedAt ordering not tracked (ordered by created_at). Auto-provision
   in useAuthAndData still runs, so the 0-tree empty state rarely shows until MT-B replaces it.
+
+### Wave 5 My trees MT-B — create flow + one-record reuse (a2, a3) — DONE
+
+spec: `_SPEC-03.md` c3 (create panel) + a2 (empty create INLINE) + a3/e1 (reuse the user's record) + f4
+files: createTree refactored (tree-service.ts) — now ONE transaction seeds the tree (+ optional place),
+the owner membership AND the keeper's root person: if the user already has a person in another tree it
+REUSES their own facts (ownFactsOf/applyOwnFacts) into a fresh per-tree row (a3), else seeds a fresh
+root from the account name / email local part. tree/insert.sql + TreeRepository.insert take place;
+createTree signature + /api/tree/create route + TreeMetaProvider.createTree + ApiDataProvider all
+thread place. useAuthAndData auto-provision simplified to a single createTree call (the service now
+makes the root person + link, so the old saveTreeData+linkUserToPerson — which would have collided with
+the new root — is gone). src/components/CreateTreeForm.tsx (NEW) — the two-field panel
+("What should this record be called?" + "Where is the family from?"), "Create the record" disabled
+until the name is non-space (a2/f3), routes into the new tree on success. src/app/trees/new/page.tsx
+(NEW) opens it as a route (the picker's "Start another tree" card); the picker's 0-tree state now
+renders CreateTreeForm INLINE (a2), not behind a button. CSS .create-panel/.create-tree/.create-submit.
+tests: tests/services/tree-create.test.ts — 4 (reuse existing facts into a fresh row + link; fresh from
+account name; email-local-part fallback; place passed through). tests/e2e/trees-new.spec.ts — 1 (Create
+disabled until non-empty name, then creates + routes in; deletes the test tree after). Vitest 203/203;
+all Wave-5 e2e (signin 8 / signin-route 7 / trees 4 / trees-new 1) green on a PRODUCTION build.
+decisions: cross-spec conflict (Spec 03 create sets readersSeeDates=true vs Spec 11 column default false)
+RESOLVED in favour of Spec 11's privacy default — createTree does not override, so new trees keep
+readers' dates hidden (year-only) until a keeper opts in. New root gets a fresh global id per tree
+(the facts travel, the row doesn't — one-record rule).
+deviations (Spec 03 remaining): a7 first run (MT-C, floating card over a one-node canvas); a6 portraits
+by created_at not true generation; a8 switcher-parity; lastOpenedAt ordering.

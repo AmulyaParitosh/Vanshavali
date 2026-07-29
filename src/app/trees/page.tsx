@@ -7,6 +7,7 @@ import { useAppContext } from "../../context/AppContext";
 import Loading from "../../components/Loading";
 import { isOwner, canEdit } from "../../lib/access";
 import { portraitTint, personInitials } from "../../utils/portrait";
+import CreateTreeForm from "../../components/CreateTreeForm";
 import type { TreeCardSummary, TreeRole } from "../../types/tree";
 
 /**
@@ -80,22 +81,18 @@ export default function MyTreesPage() {
   if (cards.length === 1) return <Loading />; // redirect in flight
 
   if (cards.length === 0) {
-    // Empty state (s2). The inline create panel lands with MT-B; for now the
-    // first-class create entry point.
+    // Empty state (s2) — the create panel is inline, never behind a button (a2).
     return (
       <div className="picker">
-        <header className="picker-head">
-          <h1>Start your family&apos;s record</h1>
-          <p className="picker-sub">
-            One name is a tree. Everything else can arrive later, a relative at a time.
-          </p>
-        </header>
-        <Link href="/trees/new" className="picker-card picker-card--new">
-          <span className="picker-new-plus" aria-hidden="true">
-            +
-          </span>
-          <span className="picker-new-label">Start your family&apos;s record</span>
-        </Link>
+        <div className="create-panel">
+          <header className="picker-head">
+            <h1>Start your family&apos;s record</h1>
+            <p className="picker-sub">
+              One name is a tree. Everything else can arrive later, a relative at a time.
+            </p>
+          </header>
+          <CreateTreeForm />
+        </div>
       </div>
     );
   }

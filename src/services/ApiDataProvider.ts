@@ -72,12 +72,12 @@ export class ApiDataProvider implements DataProvider {
 
   // --------------------------- TreeMetaProvider ---------------------------
 
-  async createTree(_ownerUid: string, name: string): Promise<TreeMeta> {
+  async createTree(_ownerUid: string, name: string, place?: string): Promise<TreeMeta> {
     // uid is derived from the bearer token server-side; the argument only
     // satisfies the interface.
     const { tree } = await authedFetch<{ tree: TreeMeta }>(this.client, "/api/tree/create", {
       method: "POST",
-      body: { name },
+      body: place ? { name, place } : { name },
     });
     return tree;
   }
