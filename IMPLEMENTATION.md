@@ -266,3 +266,17 @@ decisions: Fields normalise to trimmed strings; "" = absent (whitespace-only dif
 removal→null), `inversePatch` (Undo, a4), `summarizeChanges` (edge 6 first-6+more), `countInWords`.
 deviations: none. The React hook + leaving-guard/consequence-dialog/save-toast UI that consume this
 are built with the record panel (Wave 2) where there is a real form to attach them to.
+
+### One-record rule — merge + propagation core — DONE
+
+spec: Spec 00 §06 (QUESTIONS Q9, Option B); integration §6/§7
+files: src/lib/onerecord.ts, tests/merge.test.ts
+tests: tests/merge.test.ts — 7/7
+consumes: — (pure logic; Invite §04 + Account §12 call it)
+decisions: Own facts (name/sex/events/custom/photo) travel; tree-owned (id/userId/root) stay.
+`mergePlaceholder` CLAIMS the placeholder (keeps its id + root → household/sibling/event refs intact,
+one row, nothing re-pointed) and overlays the user's own facts + userId. `applyOwnFacts` propagates
+own facts to every linked row keeping each row's id/userId/root; own facts are authoritative (a
+cleared fact clears everywhere). Callers UPDATE the placeholder, never INSERT.
+deviations: none. The service wiring (invite-accept merge, /user propagation) + API land with the
+Invite (Wave 5) and Account (Wave 4) pages that own those seams.
