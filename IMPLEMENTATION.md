@@ -460,3 +460,22 @@ tests: tests/e2e/record-panel.spec.ts — 13/13 (added: Save → toast names tre
   deviations: the consequence summary is the changed field labels ("Name" / "Name and 2 more"), not the
   spec's exact "2 life events and the gotra" phrasing. Undo restores via bulk save (per-record patch =
   D part 4). Keeper role radio + Remove-access consequence dialog = D part 3.
+
+### Wave 2 sub-unit D (part 3a) — keeper access write (role radio + Save) — DONE
+
+spec: Spec 07 access-block keeper; a3 (editable only by keeper), a5 (no confirm before role change)
+files: src/components/tree/AccessBlock.tsx (keeper radio set + Save), src/components/tree/TreeInspector.tsx
+
+- src/components/Tree.tsx (onChangeRole via updateMemberRole + role toast + undo), src/app/globals.css
+  (.access-preface/.access-roles/.access-role-\*/.access-controls), tests/e2e/record-panel.spec.ts
+  tests: tests/e2e/record-panel.spec.ts — 16/16 (added: keeper sees radio + `now`; role change saves with
+  NO confirm dialog + Undo restores; own record shows no radio)
+  consumes: .radio-row/.radio-dot/.radio-now, updateMemberRole, showSaveToast
+  decisions: A keeper viewing another MEMBER sees the Read/Write/Keeper radio (stored role marked `now`,
+  spec role copy verbatim); a Save appears only when the selection differs and writes via
+  updateMemberRole with NO confirmation (a5). Toast "{name} may now …" carries Undo (restores prev
+  role). Own record → no radio, "Only a keeper can change it" (a3/edge). Renders only 3 repo roles
+  (QUESTIONS Q12: "His branch only" 4th scope deferred). Seed gained a 2nd member (Meera→designreview3,
+  editor) — documented in fixtures.ts for re-seed.
+  deviations: role Save is an inline access-block button, not the shared panel footer (the footer is
+  edit-mode's). Remove-access consequence dialog (a8) = part 3b; per-record patch endpoint = part 4.

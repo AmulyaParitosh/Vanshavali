@@ -30,6 +30,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       ?.name ?? "the tree";
   const searchParams = useSearchParams();
   const [savingRecord, setSavingRecord] = useState(false);
+  const [savingRole, setSavingRole] = useState(false);
 
   // The tree's members, so the record panel's access block can state each
   // person's role. Re-subscribed on the refresh nonce like every other read.
@@ -153,6 +154,30 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           onClose={() => setSelectedPersonId(null)}
           onSelect={(id) => handleSelect(id, true)}
           saving={savingRecord}
+          savingRole={savingRole}
+          onChangeRole={async (uid, role) => {
+            if (!currentTreeId) return;
+            const name = selectedPerson.name.official_name;
+            const prev = members.find((m) => m.uid === uid)?.role;
+            const verb =
+              role === "owner"
+                ? "now keeps this tree"
+                : role === "editor"
+                  ? "may now add and correct anyone"
+                  : "may now read the tree";
+            setSavingRole(true);
+            try {
+              await dataProvider.updateMemberRole(currentTreeId, uid, role);
+              showSaveToast({
+                primary: `${name} ${verb}`,
+                ...(prev
+                  ? { onUndo: async () => dataProvider.updateMemberRole(currentTreeId, uid, prev) }
+                  : {}),
+              });
+            } finally {
+              setSavingRole(false);
+            }
+          }}
           onSaveRecord={async (draft) => {
             if (!draft.id) return;
             const families = treeData?.families ?? [];

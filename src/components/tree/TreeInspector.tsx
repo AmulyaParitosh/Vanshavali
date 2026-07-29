@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Person, DraftPerson } from "../../types/person";
 import type { Family } from "../../types/family";
-import type { TreeMembership } from "../../types/tree";
+import type { TreeMembership, TreeRole } from "../../types/tree";
 import { portraitTint, personInitials } from "../../utils/portrait";
 import { GraphManager } from "../../lib/graph/GraphManager";
 import { generationMap, roman, bornInLine } from "../../lib/generations";
@@ -29,8 +29,12 @@ interface TreeInspectorProps {
   onSelect: (personId: string) => void;
   /** Persist an edited record (edit-in-place Save). */
   onSaveRecord: (draft: DraftPerson) => Promise<void> | void;
-  /** True while a save is in flight. */
+  /** True while a record save is in flight. */
   saving?: boolean;
+  /** Keeper only: change a member's role (a5, no confirmation). */
+  onChangeRole?: (uid: string, role: TreeRole) => Promise<void> | void;
+  /** True while a role change is in flight. */
+  savingRole?: boolean;
 }
 
 /** The birth event, if one is recorded. */
@@ -58,6 +62,8 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
   onSelect,
   onSaveRecord,
   saving = false,
+  onChangeRole,
+  savingRole = false,
 }) => {
   const [editing, setEditing] = useState(false);
   // Live edit state, reported up by RecordEditor, so a dirty close can be gated.
@@ -222,6 +228,10 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
               isSelf={isSelf}
               viewerIsKeeper={viewerIsKeeper}
               treeId={treeId}
+              savingRole={savingRole}
+              {...(personMembership && onChangeRole
+                ? { onChangeRole: (role: TreeRole) => onChangeRole(personMembership.uid, role) }
+                : {})}
             />
 
             {hasProse && lineage && (

@@ -163,3 +163,45 @@ test.describe("Record panel — edit in place (Spec 07 a2/a4/a9)", () => {
     await expect(page.locator(".toast-viewport .toast")).toContainText("Put back the way it was");
   });
 });
+
+test.describe("Record panel — keeper access write (Spec 07 a3/a5)", () => {
+  const wife = SEED.people.wife.id;
+
+  test("a keeper sees the role radio set with the stored role marked now", async ({ page }) => {
+    await page.goto(`${treeRoute()}?person=${wife}`);
+    await expect(page.locator(".access-roles")).toBeVisible();
+    await expect(page.locator(".radio-row", { hasText: "Write" }).locator(".radio-now")).toHaveText(
+      "now"
+    );
+  });
+
+  test("changing the role saves with no confirmation step, and Undo restores (a5)", async ({
+    page,
+  }) => {
+    await page.goto(`${treeRoute()}?person=${wife}`);
+    await page.locator(".radio-row", { hasText: "Read" }).click();
+
+    // No confirmation dialog before saving a role change (a5) — just a Save.
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    const save = page.locator(".access-controls").getByRole("button", { name: "Save" });
+    await expect(save).toBeVisible();
+    await save.click();
+
+    const toast = page.locator(".toast-viewport .toast");
+    await expect(toast.locator(".toast-primary")).toContainText("may now read the tree");
+
+    // Undo restores the previous role, leaving the seed clean.
+    await toast.getByRole("button", { name: "Undo" }).click();
+    await expect(page.locator(".radio-row", { hasText: "Write" }).locator(".radio-now")).toHaveText(
+      "now"
+    );
+  });
+
+  test("your own record shows no role radio — only a keeper can change your access", async ({
+    page,
+  }) => {
+    await page.goto(`${treeRoute()}?person=${you}`);
+    await expect(page.locator(".access-roles")).toHaveCount(0);
+    await expect(page.locator(".access-self")).toBeVisible();
+  });
+});
