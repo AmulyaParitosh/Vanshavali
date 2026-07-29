@@ -1165,3 +1165,35 @@ when null; Spec-11 defaults). Vitest 188/188.
 decisions: default_invite_role DB default = editor (mock "May write"). place clear-to-null isn't in
 a1–a9, so the coalesce patch keeps it (documented); everything else round-trips. heritage stays a
 client data-heritage setting (edge e7, deferred with the display-group card).
+
+### Wave 4 Settings ST-B — editable cards (Name / Names shown / Sharing) — DONE
+
+spec: `_SPEC-11.md` cards 1–3, a1 (read-only for non-keepers), a2 (per-card Save)
+files: src/app/tree/[id]/settings/page.tsx — rewritten into a 720px left-aligned column:
+
+- Card 1 "What this tree is called": editable name + optional ancestral place (`.input`), per-card
+  Save. Read-only render = plain 15.5px text + place-or-"No ancestral place recorded." (absence in words).
+- Card 2 "How names are shown": 3 radio-rows (reusing Spec-07 `.radio-row`) with the spec's live
+  Devanagari/Latin samples verbatim (देवेन्द्र मिश्र etc.), per-card Save.
+- Card 3 "Sharing": preamble + "Default role for new invitations" segmented pill (May read=viewer /
+  May write=editor, `.segmented`) + two `.toggle` switches (own-children, readers-see-dates), per-card Save.
+- CardSave (a2): outlined `.btn` until dirty → filled `.btn-primary`, disabled when the card's draft
+  equals stored. dirty = real diff (restoring the value disarms). save() = one write, one toast
+  (success OR error — a failed save keeps the draft for retry, f2).
+- About panel refined to Started/Keeper/Contains/Visibility/Tree id; danger zone (ST-C) unchanged.
+  globals.css: settings-page → 720px left-aligned (not centred), 32px pad, 16px gap; + .settings-card-foot
+  / .settings-save / .settings-readonly-_ / .settings-radiogroup / .settings-order-_ / .settings-share-\*.
+  A11y: radiogroups (role=radio+aria-checked), segmented (role=radiogroup), toggles (role=switch+aria-checked+aria-label).
+  tests: tests/e2e/settings.spec.ts — cards describe: sub-line verbatim (shown every role); each card's
+  Save disabled until THAT card changes + independent across cards (a2); keeper's name-order edit
+  round-trips to the DB + re-loads selected. Delete describe (ST-C) unchanged. a1 read-only writer view
+  = test.fixme (blocked by Q15, same as members-roles); server-enforced keeper is unit-tested (ST-A). 5 pass, 1 fixme.
+  decisions: name-order live samples use the spec's canonical bilingual strings verbatim (our Person model
+  has official_name + aliases, no separate Devanagari field — a true per-person bilingual sample needs
+  a name-model change, tracked with a3).
+  deviations (still open on Settings): a3 name-order CROSS-SURFACE rendering (canvas/table/panel/search)
+  needs the bilingual name model — the SETTING persists + re-loads, the rendering effect is deferred.
+  a4 readers-see-dates PROJECTION (ST-D, server read redaction). a5 Export job / a6 Print-here /
+  a9 hand-over (ST-E). default_invite_role → Spec-06 invite-default wire-up (small follow-up).
+  infra: restarted the dev server — TWO stale `next dev` were bound (one degraded per Q14), which flaked
+  the PATCH round-trip; a single fresh server makes the cards deterministic (5/5).
