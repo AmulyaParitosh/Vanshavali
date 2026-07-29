@@ -1548,3 +1548,35 @@ acceptance) and overlaps Spec 10 Getting started — deferred there; an invited 
 **WAVE 5 INVITATION (Spec 04) COMPLETE** — a1..a10 all covered: step 1 legible pre-auth (IN-A: a1/a2/
 a7/a8), the become-one merge with explicit consent (IN-B: a3/a4/a5/a6/a10), land on their household
 (IN-C: a9). Next Wave 5 unit: Spec 10 Getting started.
+
+## WAVE 5 — Getting started (Spec 10) — plan + receipts
+
+Distilled `design-specs/_SPEC-10.md` (a1..a9). A four-item rail checklist + three task screens.
+
+### Wave 5 Getting started GS-A — the rail checklist (a1, a2, a8, a9) — DONE
+
+spec: `_SPEC-10.md` checklist (c1..c6) + a1/a2/a8/a9
+files: src/components/GettingStarted.tsx (NEW) — a four-item checklist in the tree rail (a1, not a
+modal): Join the tree (always done), Add a photograph (done = the viewer's linked person has an
+image_url), Confirm your dates (done = their birth event has a year), Add who's missing (writer+ only).
+Progress "N / total"; done rows are quiet + non-interactive with the filled ✓ mark, the first undone is
+current (red ring, wash), the rest later (quiet ring) — reusing the pre-built .check-mark/--done/
+--current/--later. Rows link out (record via ?person for photo/dates, /members for who's-missing) and
+block nothing (a2). A reader (viewer) is offered THREE steps, not four, and the counter reads / 3 (a8).
+When every offered step is done the checklist renders nothing — no congratulation (a9); a "Hide this"
+dismiss covers the writer case where "who's missing" has no auto-complete. "Open my record" under the
+list. Wired into TreeRail after the nav. globals.css: .rail-checklist\*.
+tests: tests/e2e/getting-started.spec.ts — 3 (checklist in the rail with all four keeper steps + no
+welcome modal a1; a step links to /members, non-blocking a2; a reader sees 3 items, no "Add who's
+missing", counter "/ 3" a8). 4/4 with setup. Vitest green.
+decisions: done-states derived from the viewer's own record (no new persistence for Join/Photograph;
+Dates uses a has-a-year proxy pending the confirmation model). No WelcomeModal exists (deleted in
+Spec 03 MT-C) so a1's "no modal" holds.
+deviations (Spec 10 task screens — DEFERRED, large new models): the three /tree/[id]/start/[step] working
+screens — photo crop + face-lift from tree media (a3/a4, needs a media/face model), date
+precision Exact/About/Year + confirmedBy/confirmedAt decrementing the keeper's Missing-dates count
+(a5/a6, needs event-precision + confirmation fields), and the who's-missing household preview at 70%
+(a7, reuses Spec 06 add-person). The `startedTasks` membership column + places aggregation (c21) are
+part of that deferred surface. The rail checklist (the spec's core, a1/a2/a8/a9) is built.
+**WAVE 5 COMPLETE (screens):** Sign in (02) ✓ · My trees (03) ✓ · Invitation (04) ✓ · Getting started
+(10) rail checklist ✓ (task screens deferred with their models). Next: Wave 6 Landing (Spec 01), Wave 7 audit.

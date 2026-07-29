@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useAppContext } from "../context/AppContext";
+import GettingStarted from "./GettingStarted";
 
 /**
  * The left rail (Spec 00 §02) — 232px of fixed furniture on every tree-scoped
@@ -64,6 +65,10 @@ export default function TreeRail() {
           );
         })}
       </ul>
+
+      {/* Getting-started checklist (Spec 10) — replaces the attention block while
+          a member's onboarding is unfinished; disappears once it's done. */}
+      <GettingStarted />
     </nav>
   );
 }
