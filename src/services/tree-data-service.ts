@@ -4,7 +4,9 @@ import { getPool, transaction } from "../repositories/db";
 import { PersonRepository } from "../repositories/PersonRepository";
 import { FamilyRepository } from "../repositories/FamilyRepository";
 import { MembershipRepository } from "../repositories/MembershipRepository";
+import { TreeRepository } from "../repositories/TreeRepository";
 import { requireView, requireEdit, requireEditOrSelf } from "./authz";
+import { projectPeopleForReader } from "../lib/readerDates";
 import { HttpError } from "../lib/api";
 
 /**
@@ -15,11 +17,15 @@ import { HttpError } from "../lib/api";
  */
 
 export async function getTreeData(treeId: string, uid: string): Promise<TreeData> {
-  await requireView(treeId, uid);
+  const role = await requireView(treeId, uid);
   const db = getPool();
+  const tree = await TreeRepository.findMeta(db, treeId);
   const people = await PersonRepository.listByTree(db, treeId);
   const families = await FamilyRepository.listByTree(db, treeId);
-  return { people, families };
+  // Reader date privacy (Spec 11 a4): hide living relatives' exact dates from a
+  // reader unless the keeper turned the setting on. Default off = year only.
+  const projected = projectPeopleForReader(people, role, tree?.readersSeeDates ?? false, uid);
+  return { people: projected, families };
 }
 
 export async function saveTreeData(treeId: string, uid: string, data: TreeData): Promise<void> {

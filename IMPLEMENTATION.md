@@ -1215,3 +1215,24 @@ but Spec 06 (May cell table) says a LIVING account-less row shows the keeper's *
 "no account" is the _deceased_ state. Test corrected to assert Invite; the members page code was already right.
 regression: 52 keeper-path e2e (tree-canvas/record-panel/members/households/account) + the 3 unblocked
 reader tests + members 14/14 all green. Vitest unaffected.
+
+### Wave 4 Settings ST-D — readers-see-dates server projection (a4) — DONE
+
+spec: `_SPEC-11.md` a4 + flow f4 + edge e2 (Wave-1 access-matrix row 4 — the deferred privacy switch)
+files: src/lib/readerDates.ts (NEW, pure) — projectPeopleForReader(people, role, readersSeeDates,
+viewerUid): for a READER (view-but-not-edit) with the setting OFF, every LIVING relative's event
+dates collapse to the 4-digit year (yearOnly); a date with no year is dropped (no partial leak);
+the reader's OWN linked record + all DECEASED people keep exact dates; writers/keepers untouched.
+isDeceased/yearOnly exported. Wired into tree-data-service.getTreeData — requireView now returns the
+role, TreeRepository.findMeta supplies readers_see_dates (default false), the people list is projected
+before return. Fed by the single /data read, so canvas + panel + search are all covered at once (a4),
+on every query not just first load (e2). Write-back-safe: readers can't PUT (requireEdit blocks them)
+and writers/keepers never receive redacted data, so year-only can't round-trip to the DB.
+tests: tests/lib/readerDates.test.ts — 7 (year extraction; deceased/self kept full; living redacted;
+no-year dropped; setting-on not redacted; editor+owner never redacted). tests/e2e/reader-dates.spec.ts
+— 3 (keeper receives the exact date; a reader gets the year only with the setting off and the full date
+once the keeper flips it on — asserted on the real /api/tree/[id]/data response across both roles).
+Vitest 195/195; e2e 3/3.
+decisions: assert the server RESPONSE (network intercept) rather than a UI surface — the projection is a
+single-source read redaction, so proving the payload proves canvas/panel/search together. Self-carveout
+(userId === viewerUid) so a reader always sees their own full dates.
