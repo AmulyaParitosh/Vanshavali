@@ -9,7 +9,7 @@ import { SEED, WRITER, treeRoute } from "./fixtures";
  */
 
 async function signInAs(page: Page, email: string, password: string) {
-  await page.goto("/");
+  await page.goto("/signin");
   await page.locator("#auth-email").fill(email);
   await page.locator("#auth-password").fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();

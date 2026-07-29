@@ -12,7 +12,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe("Sign in — the card (Spec 02 SI-A)", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/signin");
     await expect(page.locator(".login-card")).toBeVisible({ timeout: 20_000 });
   });
 

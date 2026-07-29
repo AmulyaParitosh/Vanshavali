@@ -13,7 +13,7 @@ setup("authenticate", async ({ page }) => {
   // The login → auth → app-boot chain compiles several routes on a cold dev
   // server; give the whole setup room so it doesn't flake the whole suite.
   setup.setTimeout(90_000);
-  await page.goto("/");
+  await page.goto("/signin");
 
   await page.locator("#auth-email").fill(SEED.email);
   await page.locator("#auth-password").fill(SEED.password);

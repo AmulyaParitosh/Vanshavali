@@ -218,7 +218,7 @@ test.describe("Tree settings — read-only for non-keepers (Spec 11 a1)", () => 
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test("a writer sees the cards read-only with no Save (a1)", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/signin");
     await page.locator("#auth-email").fill(WRITER.email);
     await page.locator("#auth-password").fill(WRITER.password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();

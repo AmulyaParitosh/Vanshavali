@@ -35,7 +35,7 @@ async function computed(
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/signin");
 });
 
 test.describe("Components — Actions (buttons)", () => {

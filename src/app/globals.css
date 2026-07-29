@@ -5810,3 +5810,453 @@ main {
   padding: 11px 14px;
   margin: 0;
 }
+
+/* ============================================================================
+ * Landing (Spec 01) — the public marketing page: eight full-bleed bands.
+ * ========================================================================== */
+.landing {
+  color: var(--text-primary);
+}
+.landing a {
+  border: none;
+}
+
+/* Nav — sticky, transparent over the hero, paper + hairline once scrolled. */
+.landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 0 100px;
+  box-sizing: border-box;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition:
+    background 160ms var(--ease, ease),
+    border-color 160ms var(--ease, ease);
+}
+.landing-nav.scrolled {
+  background: var(--surface-paper);
+  border-bottom-color: var(--line-structure);
+}
+.landing-wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.landing-wordmark .mark {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--text-primary);
+}
+.landing-wordmark .deva {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--color-red);
+}
+.landing-nav-links {
+  display: flex;
+  gap: 28px;
+  flex: 1;
+}
+.landing-nav-links a {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-strong);
+}
+.landing-nav-links a:hover {
+  color: var(--color-red);
+}
+.landing-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.landing-nav-signin {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.landing-nav-signin:hover {
+  color: var(--color-red);
+}
+.landing-nav-start {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-red);
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+}
+.landing-nav-start:hover {
+  background: var(--color-red-deep);
+}
+
+/* Shared band frame — centred 1240 column with 100px gutters. */
+.landing-hero,
+.landing-band,
+.landing-quote,
+.landing-close {
+  padding: 0 100px;
+  box-sizing: border-box;
+}
+.landing-eyebrow,
+.landing-band-eyebrow {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-red);
+}
+.landing-band-eyebrow {
+  color: var(--text-meta);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* Hero */
+.landing-hero {
+  min-height: 640px;
+  margin-top: -76px;
+  padding-top: 160px;
+  padding-bottom: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--surface-canvas);
+}
+.landing-hero-h1 {
+  font-family: var(--font-display);
+  font-size: 58px;
+  font-weight: 400;
+  line-height: 1.16;
+  letter-spacing: 0.4px;
+  margin: 22px 0 0;
+  max-width: 1040px;
+  color: var(--text-primary);
+}
+.landing-hero-sub {
+  font-size: 20px;
+  line-height: 1.6;
+  color: var(--text-strong);
+  max-width: 620px;
+  margin: 24px 0 0;
+}
+.landing-hero-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 38px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* The one filled primary CTA — appears twice (hero + closing). */
+.landing-cta {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-red);
+  padding: 16px 34px;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 2px 8px rgba(178, 34, 34, 0.22);
+}
+.landing-cta:hover {
+  background: var(--color-red-deep);
+}
+.landing-cta--inverted {
+  color: #1a1a1a;
+  background: var(--surface-canvas);
+  box-shadow: none;
+}
+.landing-cta--inverted:hover {
+  background: #fff;
+}
+.landing-btn-secondary {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-strong);
+  border: 1px solid var(--line-control);
+  padding: 15px 33px;
+  border-radius: var(--radius-pill);
+}
+.landing-btn-secondary:hover {
+  border-color: var(--color-red);
+}
+
+/* Trust strip */
+.landing-trust {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-tablehead);
+  font-size: 14px;
+  color: var(--text-meta);
+  text-align: center;
+  padding: 0 24px;
+}
+
+/* Two-column bands */
+.landing-band {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 100px;
+  align-items: center;
+  padding-top: 96px;
+  padding-bottom: 96px;
+  scroll-margin-top: 76px;
+}
+.landing-band:nth-of-type(even) {
+  background: var(--surface-paper);
+}
+.landing-band-text {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.landing-band-h2 {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 6px 0 0;
+  color: var(--text-primary);
+}
+.landing-band-text p {
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--text-strong);
+  margin: 0;
+}
+.landing-photo {
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--line-structure);
+  border-radius: 14px;
+  background: var(--surface-tablehead);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-meta);
+  font-size: 13.5px;
+  font-style: italic;
+}
+
+/* Objection cards */
+.landing-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+  scroll-margin-top: 76px;
+}
+.landing-card {
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+.landing-band:nth-of-type(even) .landing-card {
+  background: var(--surface-canvas);
+}
+.landing-card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+.landing-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-strong);
+  margin: 6px 0 0;
+}
+.landing-card em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--color-red);
+}
+
+/* How it works — three steps */
+.landing-how {
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+.landing-how-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+.landing-how-aside {
+  font-size: 16px;
+  color: var(--text-meta);
+}
+.landing-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.landing-step-n {
+  font-family: var(--font-display);
+  font-size: 34px;
+  color: var(--color-red);
+  display: block;
+  border-bottom: 1px solid var(--line-control);
+  padding-bottom: 10px;
+}
+.landing-step h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 14px 0 6px;
+}
+.landing-step p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+/* Quotation */
+.landing-quote {
+  background: var(--surface-tablehead);
+  padding-top: 72px;
+  padding-bottom: 72px;
+  text-align: center;
+}
+.landing-quote blockquote {
+  font-size: 26px;
+  line-height: 1.5;
+  color: var(--text-strong);
+  max-width: 860px;
+  margin: 0 auto;
+  font-weight: 400;
+}
+.landing-quote-attr {
+  font-size: 14px;
+  color: var(--text-meta);
+  margin: 20px 0 0;
+}
+
+/* Closing band — the one inverted CTA, on a dark image. */
+.landing-close {
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding-top: 96px;
+  padding-bottom: 96px;
+  background:
+    linear-gradient(rgba(20, 18, 16, 0.55), rgba(20, 18, 16, 0.78)), var(--color-red-deep);
+  color: #fff;
+}
+.landing-close-eyebrow {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-marigold);
+}
+.landing-close-h2 {
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.landing-close p {
+  font-size: 18px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.86);
+  max-width: 560px;
+  margin: 0;
+}
+.landing-close-alt {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.72);
+}
+.landing-close-alt a {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Footer */
+.landing-footer {
+  background: #1a1a1a;
+  padding: 40px 100px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.landing-footer-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex: 1;
+}
+.landing-footer-brand .mark {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: #fff;
+}
+.landing-footer-brand .deva {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--color-marigold);
+}
+.landing-footer-links {
+  display: flex;
+  gap: 20px;
+}
+.landing-footer-links a {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.72);
+}
+.landing-footer-links a:hover {
+  color: #fff;
+}
+.landing-footer-made {
+  width: 100%;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+@media (max-width: 1024px) {
+  .landing-nav,
+  .landing-hero,
+  .landing-band,
+  .landing-quote,
+  .landing-close,
+  .landing-footer {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+  .landing-hero-h1 {
+    font-size: 48px;
+  }
+}
+@media (max-width: 760px) {
+  .landing-band,
+  .landing-steps {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .landing-nav-links {
+    display: none;
+  }
+  .landing-hero-h1 {
+    font-size: 34px;
+  }
+}

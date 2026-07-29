@@ -23,7 +23,7 @@ async function tokens(page: Page, names: string[]): Promise<Record<string, strin
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/signin");
 });
 
 test("brand, surface, line and text colours match the style guide", async ({ page }) => {

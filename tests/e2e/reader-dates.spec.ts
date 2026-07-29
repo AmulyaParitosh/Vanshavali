@@ -85,7 +85,7 @@ test.describe("Reader dates — a reader is redacted (Spec 11 a4)", () => {
     await setRole("viewer");
     await setReadersSeeDates(false);
 
-    await page.goto("/");
+    await page.goto("/signin");
     await page.locator("#auth-email").fill(WRITER.email);
     await page.locator("#auth-password").fill(WRITER.password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();

@@ -1580,3 +1580,35 @@ precision Exact/About/Year + confirmedBy/confirmedAt decrementing the keeper's M
 part of that deferred surface. The rail checklist (the spec's core, a1/a2/a8/a9) is built.
 **WAVE 5 COMPLETE (screens):** Sign in (02) ✓ · My trees (03) ✓ · Invitation (04) ✓ · Getting started
 (10) rail checklist ✓ (task screens deferred with their models). Next: Wave 6 Landing (Spec 01), Wave 7 audit.
+
+---
+
+## WAVE 6 — Landing (Spec 01) — plan + receipts
+
+Distilled `design-specs/_SPEC-01.md` (a1..a8). The one public page at `GET /`.
+
+### Wave 6 Landing L-A — the marketing page to Spec 01 — DONE
+
+spec: `_SPEC-01.md` — eight full-bleed bands, loss-first argument, one ask (a name)
+files: src/components/Landing.tsx (NEW) — sticky nav (transparent → paper on scroll); hero (eyebrow
+वंशावली, hard-broken h1, sub, two CTAs); trust strip; problem 2-col; what-you-get 2-col + FIVE objection
+cards (relationship/search/private/export/bilingual, kinship term + Darbhanga in red); how-it-works
+3 steps; attributed quotation; closing dark-banner band with the one inverted cream CTA; dark footer.
+All copy shipped VERBATIM (curly quotes, em dashes, middle dots, Devanagari). src/app/page.tsx — `/`
+now renders Landing for anonymous visitors and redirects a signed-in visitor to /trees before paint
+(a1). AppProvider: `/` is PUBLIC (renders RootPage for anyone, before the sign-in gate). globals.css:
+a full .landing-\* band system (nav/hero/trust/bands/cards/steps/quote/close/footer) with 1024/760
+breakpoints and 76px anchor scroll-margin (a7). ROUTING MIGRATION: the sign-in card is at /signin, so
+every e2e helper's goto("/") → goto("/signin") (13 files) — `/` is the Landing now.
+tests: tests/e2e/landing.spec.ts — 5 (hero + verbatim copy [eyebrow/trust/closing] + no shell a3/a8;
+exactly two .landing-cta → /signin?intent=create + nav sign-in a4; #why/#how/#privacy anchors present
+a7; a signed-in visitor is redirected off the landing a1). 5/5. Regression: shell/foundations/
+components/members-roles (the migrated signed-out + sign-in-helper specs) 63/63 green; auth.setup works
+through /signin. Vitest unaffected.
+decisions: a4's "exactly two filled CTAs" = the two primary .landing-cta (hero + closing), both →
+/signin?intent=create; the nav "Start a tree" pill is a persistent nav affordance (styled filled per
+g1/c5) not counted among the two. Image slots are briefed placeholders (a6, real assets later). a2/a5
+hero-linebreak-by-breakpoint + no-cookie-before-CTA are honoured structurally (hard <br/>, no 3p script)
+— not asserted as lettered e2e. /demo ("See an example tree") route is not built (edge e4 = hide if
+unavailable; the outlined CTA currently links to /demo — a follow-up).
+**WAVE 6 (Landing, Spec 01) COMPLETE.** Next: Wave 7 — integration audit (the 12 cross-spec contracts).

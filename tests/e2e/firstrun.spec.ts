@@ -15,7 +15,7 @@ const LOCAL_DB =
 const NAME = "E2E FirstRun Tree";
 
 async function signInAsWriter(page: Page) {
-  await page.goto("/");
+  await page.goto("/signin");
   await page.locator("#auth-email").fill(WRITER.email);
   await page.locator("#auth-password").fill(WRITER.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();

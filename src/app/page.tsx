@@ -4,12 +4,12 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "../context/AppContext";
 import Loading from "../components/Loading";
+import Landing from "../components/Landing";
 
 /**
- * Root route. The tree picker lives at `/trees` (Spec 03), which owns the
- * count-based routing (one tree → straight in, several → picker, none → create).
- * `/` just forwards there once the user is known; signed-out visitors get the
- * sign-in card from AppProvider's gate.
+ * Root route `/` (Spec 01). Anonymous visitors get the Landing page; a signed-in
+ * visitor is redirected to their trees before any marketing paints (a1 / s2) —
+ * reaching `/` with a session means the product has forgotten them.
  */
 export default function RootPage() {
   const { user } = useAppContext();
@@ -19,5 +19,6 @@ export default function RootPage() {
     if (user) router.replace("/trees");
   }, [user, router]);
 
-  return <Loading />;
+  if (user) return <Loading />;
+  return <Landing />;
 }

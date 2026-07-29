@@ -104,7 +104,7 @@ test.describe("Shell — signed out", () => {
   test("the chrome bar is absent on the sign-in screen (present only when authenticated)", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto("/signin");
     await expect(page.locator(".login-screen")).toBeVisible();
     await expect(page.locator(".chrome-bar")).toHaveCount(0);
   });

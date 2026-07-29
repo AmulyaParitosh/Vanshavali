@@ -38,6 +38,9 @@ const PUBLIC_PREFIXES = ["/signin", "/reset", "/privacy", "/invite/"];
 
 function isPublic(pathname: string | null): boolean {
   if (!pathname) return false;
+  // The landing (Spec 01) is public at `/` — it renders for anyone; RootPage
+  // redirects a signed-in visitor to their tree before painting marketing.
+  if (pathname === "/") return true;
   return PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));
 }
 
