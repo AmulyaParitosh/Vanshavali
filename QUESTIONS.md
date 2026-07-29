@@ -49,13 +49,16 @@ build and treat those 2 CSS-format assertions as dev-only. Not fixing them (they
 configured dev environment). **Deferred**: pick a v1 CI e2e strategy (prod-build server + make the 2
 format assertions minification-agnostic) at the hosting decision (Phase 15).
 
-## Q13 — removeMember may delete the global user profile — INVESTIGATE (pre-existing)
+## Q13 — removeMember scope — RESOLVED (no bug)
 
 During a8 verification, removing a member (designreview3) appeared to also drop their row from
 `public.users` (had to re-insert it to restore the seed). Removing tree ACCESS must not delete the
 GLOBAL user or their person record (a8 holds for the person; the profile is the concern). This is
 pre-existing membership-service behaviour (the Members page uses the same removeMember). **Investigate**
 when Members (Spec 06, Wave 3) is built — removeMember should delete only the tree_members row.
+
+**RESOLVED (Members M-A investigation):** removeMember is correct — the service (`membership-service.removeMember`) only runs `sql/membership/delete.sql`, a single `delete from tree_members where tree_id=when Members (Spec 06, Wave 3) is built — removeMember should delete only the tree_members row.
+ and uid=$2`. It never touches `public.users` or `people`, so the person record survives (a8) and the global account is untouched. The earlier "designreview3 missing from public.users" was a seed/transient artifact from manual DB edits, not a code path. No fix needed; the a8 destructive-removal e2e can be written directly (M-E).
 
 ## Q12 — Access "His branch only" — a 4th scope with no repo role — DEFERRED
 

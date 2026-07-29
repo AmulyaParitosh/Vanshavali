@@ -1,5 +1,19 @@
 import { test, expect } from "@playwright/test";
+import { Client } from "pg";
 import { SEED, treeRoute } from "./fixtures";
+
+const LOCAL_DB =
+  process.env.DATABASE_URL_LOCAL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+
+async function withDb<T>(fn: (c: Client) => Promise<T>): Promise<T> {
+  const client = new Client({ connectionString: LOCAL_DB });
+  await client.connect();
+  try {
+    return await fn(client);
+  } finally {
+    await client.end();
+  }
+}
 
 /**
  * Spec 06 — Members, the one list of people. M-A covers the table: the column set,
@@ -68,5 +82,54 @@ test.describe("Members — the list (Spec 06)", () => {
     await expect(page.locator(".records-row .records-name-primary")).toHaveText("Meera Verma");
     await page.locator(".records-search input").fill("zzzznobody");
     await expect(page.locator(".records-empty")).toHaveText("Nobody here by that name");
+  });
+});
+
+test.describe("Members — removing access (Spec 06 a8)", () => {
+  // Removing access deletes only the membership; this suite restores it after.
+  let saved: { uid: string; role: string; personId: string | null };
+
+  test.beforeAll(async () => {
+    saved = await withDb(async (c) => {
+      const r = await c.query<{ uid: string; role: string; person_id: string | null }>(
+        "select uid, role, person_id from tree_members where person_id=$1",
+        [SEED.people.wife.id]
+      );
+      const row = r.rows[0]!;
+      return { uid: row.uid, role: row.role, personId: row.person_id };
+    });
+  });
+
+  test.afterEach(async () => {
+    await withDb((c) =>
+      c.query(
+        `insert into tree_members(tree_id, uid, role, person_id, joined_at)
+         values($1, $2, $3, $4, now())
+         on conflict (tree_id, uid) do update set role = excluded.role, person_id = excluded.person_id`,
+        [SEED.tree.id, saved.uid, saved.role, saved.personId]
+      )
+    );
+  });
+
+  test("removing a member's access never deletes their person record (a8)", async ({ page }) => {
+    await page.goto(`${treeRoute()}?person=${SEED.people.wife.id}`);
+    await expect(page.locator(".inspector-name")).toHaveText("Meera Verma");
+
+    // Keeper opens the access block's Remove access → the consequence dialog.
+    await page.locator(".btn-danger-text", { hasText: "Remove access" }).click();
+    await page.locator(".dialog .btn-danger").click();
+    await expect(page.locator(".toast")).toContainText("no longer has access");
+
+    // a8: the PERSON record survives — reopen it, it's still there, now account-less.
+    await page.goto(`${treeRoute()}?person=${SEED.people.wife.id}`);
+    await expect(page.locator(".inspector-name")).toHaveText("Meera Verma");
+    await expect(page.locator(".access-none")).toContainText("Not on Vanshavali yet");
+    // And the member is genuinely gone from the DB (not just the UI).
+    const remaining = await withDb((c) =>
+      c
+        .query("select count(*)::int n from tree_members where person_id=$1", [SEED.people.wife.id])
+        .then((r) => r.rows[0]!.n)
+    );
+    expect(remaining).toBe(0);
   });
 });
