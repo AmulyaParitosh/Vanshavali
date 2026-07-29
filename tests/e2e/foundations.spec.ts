@@ -186,12 +186,15 @@ test("the seven shadows carry their exact values", async ({ page }) => {
     "--shadow-pill",
     "--shadow-dialog",
   ]);
+  // Collapse comma-spaces so the assertion holds on both the dev CSS (spaced)
+  // and the production build (minified — spaces after commas removed).
+  const nc = (s: string) => s.replace(/,\s+/g, ",");
   expect(t["--shadow-frame"]).toContain("0 24px 64px");
   expect(t["--shadow-primary"]).toContain("0 2px 8px");
-  expect(t["--shadow-primary"]).toContain("178, 34, 34");
+  expect(nc(t["--shadow-primary"]!)).toContain("178,34,34");
   expect(t["--shadow-node"]).toContain("0 3px 12px");
   expect(t["--shadow-inspector"]).toContain("-8px 0 24px");
-  expect(t["--shadow-focus"]).toBe("0 0 0 3px rgba(178, 34, 34, 0.1)");
+  expect(nc(t["--shadow-focus"]!)).toBe("0 0 0 3px rgba(178,34,34,0.1)");
   expect(t["--shadow-pill"]).toContain("0 2px 10px");
   expect(t["--shadow-dialog"]).toContain("0 32px 80px");
 });
@@ -209,7 +212,8 @@ test("shell metrics and the product motion tokens match", async ({ page }) => {
   expect(t["--shell-chrome-h"]).toBe("60px");
   expect(t["--shell-rail-w"]).toBe("232px");
   expect(t["--shell-inspector-w"]).toBe("384px");
-  expect(t["--ease"]).toBe("cubic-bezier(0.32, 0.72, 0, 1)");
+  // Minification-robust: collapse comma-spaces (prod removes them).
+  expect(t["--ease"]!.replace(/,\s+/g, ",")).toBe("cubic-bezier(0.32,0.72,0,1)");
   expect(t["--dur-panel"]).toBe("180ms");
   expect(t["--dur-dialog"]).toBe("140ms");
   expect(t["--dur-canvas"]).toBe("320ms");

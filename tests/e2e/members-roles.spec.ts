@@ -42,7 +42,8 @@ async function signInAsWriter(page: Page) {
   await page.locator("#auth-password").fill(WRITER.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.locator(".chrome-avatar-link")).toBeVisible({ timeout: 20_000 });
-  await page.waitForLoadState("networkidle");
+  // (No networkidle wait — the redirect chain to the /trees picker never settles
+  // it reliably; openMembers waits for the real signal, the records table.)
 }
 
 /** Open the seeded tree's Members page and wait past the loading gate. */
