@@ -1328,3 +1328,42 @@ matched substring is highlighted ("eer" → .cmdk-highlight "eer"). 2/2.
 deferred (Search remaining): ⌘↵ focus-in-tree PAN (320ms) + ↵-on-current-route; 80ms debounce; IME
 compositionend guard; prefix-before-substring + generation ordering; marriage event → household editor;
 members-side ?q= consumption. (Devanagari matching works via fold but is untested — seed is Latin-only.)
+
+---
+
+## WAVE 5 — Sign in / My trees / Invitation / Getting started (plan + receipts)
+
+Specs (via DesignSync, distilled locally): 02 Sign in, 03 My trees, 04 Invitation, 10 Getting started.
+Wave 6 = 01 Landing. Distilled `design-specs/_SPEC-02.md` (a1..a9).
+
+### Wave 5 Sign in SI-A — the card to the Spec 02 contract (a1–a7, a9) — DONE
+
+spec: `_SPEC-02.md` — one card, two tabs, one filled button, neutral Google, inline non-disclosing errors
+files: src/components/LoginScreen.tsx — rewritten: single "Welcome back" heading; two tabs
+(Sign in / Create account) on one card; email + password ONLY (name field removed — the name becomes
+a person record on first run); per-tab password label ("Password" / "Choose a password") + hint
+("at least 8 characters") + a reveal toggle; INLINE errors above the button (never a toast) —
+"That password does not match this email." on any sign-in failure with the password cleared + refocused
+(a6, non-disclosing f4), and an already-registered email on Create SWITCHES to Sign in with the email
+carried + "You already have an account with this email." (a7, not an error); validation on blur/submit
+not keystroke (a5); one filled red submit (label = tab, spinner in-flight, disabled while a field is
+empty, a3); Google is a neutral outline with the real 18px multi-colour mark, never leaf green (a2);
+wordmark top-left; privacy line BELOW the card → /privacy; tablist with arrow-key nav (a9). Kept
+#auth-email/#auth-password + the "Sign in" submit so every auth fixture/helper still works.
+src/lib/authErrors.ts (NEW) — tiny taxonomy: AUTH_ERR.EMAIL_EXISTS + authError/isAuthError.
+src/services/supabase/SupabaseAuthProvider.ts — signUpWithEmail now flags an already-registered email
+(both the confirmations-on `identities:[]` obfuscation and the confirmations-off "already registered"
+error) as AUTH_ERR.EMAIL_EXISTS for a7. globals.css — the .login-_/.auth-_ block rewritten to the §02
+geometry (no-shell cream page + wordmark; 452 card, subtle #e0d3b8/#f0dcd8 double hairline, ink 23px
+heading, shadow rgba(0,0,0,.08); tab track #f8f2e4 + ink active; 44px fields; reveal; inline
+error/note; 46px pill submit + spinner; "or" divider; neutral Google; privacy below).
+tests: tests/e2e/signin.spec.ts — 8 (ink heading + one filled button a1/a3; neutral Google not leaf
+green a2; tab switch preserves email + swaps password copy a4; validation on blur not keystroke a5;
+failed sign-in clears only the password + refocuses, exact non-disclosing string a6 [real Supabase];
+registered email on Create switches tabs with the note a7 [real Supabase]; arrow-key tabs a9). 8/8,
+and the auth.setup login flow still passes through the new card. Vitest 199/199.
+deviations (SI-B, next): the dedicated public GET /signin route with NO shell + ?intent (tab preselect)
+
+- ?next (validated internal path) + redirect-if-authenticated + post-auth landing (last/only/ /trees),
+  and the separate /reset request page (Forgot? links to it) — a8 lives there. The card currently renders
+  via AppProvider when !user (already chrome-less), and Forgot?/privacy link to /reset and /privacy.

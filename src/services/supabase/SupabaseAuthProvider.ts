@@ -1,6 +1,7 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { AuthProvider, AuthUser } from "../types";
 import { formatError } from "../../lib/formatError";
+import { AUTH_ERR, authError } from "../../lib/authErrors";
 
 /**
  * Supabase Auth implementation. Maps the supabase-js session model to our
@@ -54,14 +55,26 @@ export class SupabaseAuthProvider implements AuthProvider {
   }
 
   async signUpWithEmail(email: string, password: string, displayName?: string): Promise<void> {
-    const { error } = await this.client.auth.signUp({
+    const { data, error } = await this.client.auth.signUp({
       email,
       password,
       options: {
         data: displayName ? { name: displayName, full_name: displayName } : {},
       },
     });
-    if (error) throw error;
+    // Spec 02 a7: an already-registered email must switch tabs, not error. Supabase
+    // signals this two ways depending on config: with confirmations on it obfuscates
+    // (no error, but the returned user has an empty `identities` array); with them
+    // off it errors "User already registered". Map both to one tagged code.
+    if (error) {
+      if (/already\s*registered|already\s*exists/i.test(error.message)) {
+        throw authError(AUTH_ERR.EMAIL_EXISTS, error.message);
+      }
+      throw error;
+    }
+    if (data.user && (data.user.identities?.length ?? 0) === 0) {
+      throw authError(AUTH_ERR.EMAIL_EXISTS, "Email already registered.");
+    }
   }
 
   async sendPasswordReset(email: string): Promise<void> {
