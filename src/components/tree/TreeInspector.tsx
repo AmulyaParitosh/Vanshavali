@@ -2,10 +2,12 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import type { Person } from "../../types/person";
 import type { Family } from "../../types/family";
+import type { TreeMembership } from "../../types/tree";
 import { portraitTint, personInitials } from "../../utils/portrait";
 import { GraphManager } from "../../lib/graph/GraphManager";
 import { generationMap, roman, bornInLine } from "../../lib/generations";
 import { buildLineage, describeRelation, ordinalWord, type Lineage } from "../../lib/lineage";
+import AccessBlock from "./AccessBlock";
 
 interface TreeInspectorProps {
   person: Person;
@@ -15,6 +17,10 @@ interface TreeInspectorProps {
   isSelf: boolean;
   /** The viewer's own linked person in this tree, for the relation line. */
   viewerPersonId: string | null;
+  /** The selected person's membership in this tree (their role/account), if any. */
+  personMembership: TreeMembership | null;
+  /** Whether the signed-in viewer is a keeper of this tree. */
+  viewerIsKeeper: boolean;
   canEdit: boolean;
   treeId: string | null;
   onClose: () => void;
@@ -38,6 +44,8 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
   families,
   isSelf,
   viewerPersonId,
+  personMembership,
+  viewerIsKeeper,
   canEdit,
   treeId,
   onClose,
@@ -124,6 +132,14 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
             {relation && <span className="inspector-relation-line">{relation}</span>}
           </div>
         </div>
+
+        <AccessBlock
+          person={person}
+          membership={personMembership}
+          isSelf={isSelf}
+          viewerIsKeeper={viewerIsKeeper}
+          treeId={treeId}
+        />
 
         {hasProse && lineage && (
           <section className="inspector-section">

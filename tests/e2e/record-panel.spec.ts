@@ -48,3 +48,34 @@ test.describe("Record panel — read mode (Spec 07)", () => {
     await expect(page.locator(".inspector-prose")).toContainText("Married Meera Verma");
   });
 });
+
+test.describe("Record panel — access block, read display (Spec 07 a3)", () => {
+  test("a member's access is stated to the viewer: role chip + since", async ({ page }) => {
+    await page.goto(`${treeRoute()}?person=${you}`);
+    const block = page.locator(".access-block");
+    await expect(block.locator(".chip")).toHaveText("Keeper");
+    await expect(block.locator(".access-line")).toContainText("since");
+  });
+
+  test("the eyebrow is gendered by the record, never hard-coded (a10)", async ({ page }) => {
+    await page.goto(`${treeRoute()}?person=${you}`); // Ishaan, M
+    await expect(page.locator(".access-block .eyebrow")).toHaveText("What he may do");
+    await page.goto(`${treeRoute()}?person=${SEED.people.wife.id}`); // Meera, F
+    await expect(page.locator(".access-block .eyebrow")).toHaveText("What she may do");
+  });
+
+  test("your own record states who may change it", async ({ page }) => {
+    await page.goto(`${treeRoute()}?person=${you}`);
+    await expect(page.locator(".access-self")).toHaveText(
+      "This is your access. Only a keeper can change it."
+    );
+  });
+
+  test("an account-less person reads Not on Vanshavali yet, with Invite for a keeper", async ({
+    page,
+  }) => {
+    await page.goto(`${treeRoute()}?person=${son}`);
+    await expect(page.locator(".access-none")).toContainText("Not on Vanshavali yet");
+    await expect(page.locator(".access-none").getByRole("link", { name: /Invite/ })).toBeVisible();
+  });
+});

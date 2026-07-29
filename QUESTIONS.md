@@ -35,6 +35,14 @@ in the Claude Design project `dd87d264-b5d2-4737-8e4c-9233afb2398d`, read via `D
 That is the "file read" primitive. Not mirrored to disk (get_file cannot be piped to disk without
 re-emitting content). Re-fetch per unit. Mechanism recorded in `IMPLEMENTATION.md`.
 
+## Q12 — Access "His branch only" — a 4th scope with no repo role — DEFERRED
+
+Spec 07 access radio offers Read / Write / **His branch only** / Keeper. The repo has three roles
+(viewer/editor/owner = read/write/keeper); "branch-only" (edit own household + descendants, read the
+rest) is a scoped role with no model. **Render the 3 repo roles** (Read/Write/Keeper) in the keeper
+radio set (sub-unit D); revisit branch-scope as a role-model addition if prioritised (Members Spec 06
+owns role writes; the panel is the only write surface). Recorded so the 4th option is not silently dropped.
+
 ## Q10 — Two-script names (integration §3) vs the repo's single `official_name` — DEFERRED
 
 Spec: every person has `nameDeva` + `nameLatin`, shown both, in `tree.nameOrder` order (integration

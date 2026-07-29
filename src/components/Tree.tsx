@@ -3,8 +3,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { GraphNode } from "../types/graph";
+import type { TreeMembership } from "../types/tree";
 import { TREE_CONFIG } from "../constants";
-import { canEdit as canEditRole } from "../lib/access";
+import { canEdit as canEditRole, isOwner } from "../lib/access";
 import { useAppContext } from "../context/AppContext";
 import { useTreeLayout, type LaidOutNode } from "./tree/useTreeLayout";
 import { useTreeZoom } from "./tree/useTreeZoom";
@@ -20,8 +21,21 @@ interface TreeProps {
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
-  const { treeData, membership, currentTreeId, user } = useAppContext();
+  const { treeData, membership, currentTreeId, user, dataProvider, refreshNonce } = useAppContext();
   const searchParams = useSearchParams();
+
+  // The tree's members, so the record panel's access block can state each
+  // person's role. Re-subscribed on the refresh nonce like every other read.
+  const [members, setMembers] = useState<TreeMembership[]>([]);
+  useEffect(() => {
+    if (!currentTreeId) return undefined;
+    return dataProvider.subscribeToMembers(currentTreeId, setMembers);
+  }, [currentTreeId, dataProvider, refreshNonce]);
+  const membershipByPerson = React.useMemo(() => {
+    const map = new Map<string, TreeMembership>();
+    for (const m of members) if (m.personId) map.set(m.personId, m);
+    return map;
+  }, [members]);
   // A ?person= param (e.g. a click from the Members table) opens that record on
   // mount — set as the initial selection so it doesn't take a state write in an
   // effect; the effect below only pans it into view.
@@ -125,6 +139,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           families={treeData?.families ?? []}
           isSelf={!!user && selectedPerson.userId === user.uid}
           viewerPersonId={people.find((p) => !!user && p.userId === user.uid)?.id ?? null}
+          personMembership={membershipByPerson.get(selectedPerson.id) ?? null}
+          viewerIsKeeper={isOwner(membership?.role)}
           canEdit={canEdit}
           treeId={currentTreeId}
           onClose={() => setSelectedPersonId(null)}

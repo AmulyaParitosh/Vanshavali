@@ -1575,6 +1575,30 @@ main {
   text-decoration: underline;
 }
 
+/* Access block (Spec 07) — access is a fact about the person, stated to everyone. */
+.access-stated {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.access-line {
+  font-size: 13.5px;
+  color: var(--text-prose);
+  line-height: 1.5;
+}
+.access-self {
+  font-size: 13px;
+  color: var(--text-meta);
+  line-height: 1.5;
+}
+.access-none {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .inspector-section {
   display: flex;
   flex-direction: column;

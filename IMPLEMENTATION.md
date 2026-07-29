@@ -371,3 +371,19 @@ inline `.prose-link` that swaps the panel in place. Verified via screenshots on 
 deviations: "Edit record" is still a footer link to the legacy `/people?id=` editor — replaced by the
 header outlined button + edit-in-place in sub-unit C. No "· living" in the fact line (no `living`
 field; Q-note). Two-script name (§3) shows official_name only (Q10). Access block = sub-unit B.
+
+### Wave 2 sub-unit B — access block (read display) — DONE
+
+spec: Spec 07 access block (read half of a3, a10)
+files: src/components/tree/AccessBlock.tsx, src/components/tree/TreeInspector.tsx (renders it first),
+src/components/Tree.tsx (subscribes to members → membershipByPerson, passes personMembership +
+viewerIsKeeper), src/app/globals.css (.access-_), tests/e2e/record-panel.spec.ts
+tests: tests/e2e/record-panel.spec.ts — 9/9 (4 new: role chip + since; gendered eyebrow a10; own-record
+note; no-account + Invite)
+consumes: .chip_, .btn-quiet, .eyebrow; subscribeToMembers
+decisions: Access stated to EVERY viewer (chip + "…· since {Mon YYYY}"); own record → "This is your
+access. Only a keeper can change it."; no account → "Not on Vanshavali yet" + "Invite {him/her}"
+(keeper) linking to Members. Eyebrow "What {he/she} may do" gendered from person.sex (a10).
+Members plumbed via a Tree-local subscription (other surfaces already have it / add later).
+deviations: keeper radio set + role Save + Remove access = sub-unit D (footer + consequence dialog).
+"His branch only" 4th role deferred (QUESTIONS Q12). Deceased-hides-block edge n/a (no living field).
