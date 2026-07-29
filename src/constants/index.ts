@@ -62,6 +62,16 @@ export const TREE_CONFIG = {
     // Single: a 90px circle (radius 45).
     SINGLE_RADIUS: 45,
   },
+  // Zoom (Spec 05 g8/f7/a9): clamp 0.35–2.4×, step 1.25×, Fit pads 40px; labels
+  // drop to the name only below 0.6× and disappear entirely below 0.45×.
+  ZOOM: {
+    MIN: 0.35,
+    MAX: 2.4,
+    STEP: 1.25,
+    FIT_PAD: 40,
+    LOD_NAME_ONLY: 0.6,
+    LOD_NO_LABELS: 0.45,
+  },
   // Still used by the not-yet-redesigned family editor + search rows. The tree
   // node itself now renders tint + initials (PersonAvatar), not this.
   PLACEHOLDER_IMAGE_URL: (color: string, text: string) =>

@@ -42,15 +42,6 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(personParam);
 
   const layout = useTreeLayout(data);
-
-  const { panTo } = useTreeZoom({
-    svgRef,
-    gRef,
-    centerOnDataChange: layout.root ? layout.root.x : null,
-    initialRootX: layout.root?.x ?? 0,
-    initialOffsetY: TREE_CONFIG.NODE_HEIGHT / 2,
-  });
-
   const people = treeData?.people ?? [];
   // Who was born into this line (red ring) vs married in (marigold) — the ring
   // meaning is the same on every node (Spec 05 a3).
@@ -61,6 +52,16 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   const selectedPerson = selectedPersonId
     ? (people.find((p) => p.id === selectedPersonId) ?? null)
     : null;
+
+  // Frame the viewer's own household on first data (a4), falling back to the root.
+  const viewerPersonId = user ? (people.find((p) => p.userId === user.uid)?.id ?? null) : null;
+  const initialCenter = useMemo(() => {
+    const own = viewerPersonId ? findContainingNode(layout.nodes, viewerPersonId) : null;
+    const target = own ?? layout.root;
+    return target ? { x: target.x, y: target.y } : null;
+  }, [layout, viewerPersonId]);
+
+  const { panTo } = useTreeZoom({ svgRef, gRef, initialCenter });
 
   /** Center the canvas on a person (their couple offset accounted for). */
   const panToPerson = (personId: string) => {

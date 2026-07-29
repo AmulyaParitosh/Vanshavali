@@ -809,3 +809,19 @@ decisions:
   the chrome banner's leaf-green "you" avatar (a different surface).
   deviations: centering-on-you + zoom clamp/Fit/LOD = T-D; generation rail + legend + attention filter +
   controls = T-E. Couple pill still a rounded rect (the mock's stadium 999px was superseded by g-table 26px).
+
+### Wave 3 Tree T-D — centering, zoom clamp, Fit, LOD — DONE
+
+spec: `_SPEC-05.md` a4/a9/f7/g8
+files: src/constants (TREE_CONFIG.ZOOM — MIN 0.35 / MAX 2.4 / STEP 1.25 / FIT_PAD 40 / LOD 0.6,0.45);
+src/components/tree/useTreeZoom.ts (rewrite: scaleExtent 0.35–2.4; first-data frames the viewer's
+own household at 1× via `initialCenter`; on-zoom sets .lod-name-only/.lod-no-labels on the svg;
+exposes fitToView + zoomBy for the controls); src/components/Tree.tsx (compute the viewer's household
+centre → initialCenter, falling back to root); globals.css (.tree-canvas.lod-\* hide year/all labels)
+tests: tree-canvas 3 + record-panel read-mode 5 still green (open/pan unaffected). Zoom internals
+(transforms) aren't e2e-asserted — d3-zoom transforms are flaky to pin in-browser; correct by construction.
+decisions: framing centres the viewer's OWN household at 1× (a4), not the tree root; clamp is exactly
+0.35–2.4× (a9); labels drop to name-only below 0.6× and vanish below 0.45× (f7) via a class the zoom
+handler toggles. fitToView/zoomBy are ready for the T-E controls (the Fit button + −/+).
+deviations: the Fit BUTTON, −/+ controls, generation rail + keyboard, legend, attention filter are the
+navigation layer (T-E). Centering assumes the viewer has a linked person; else it frames the root.

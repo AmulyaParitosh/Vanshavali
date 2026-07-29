@@ -1426,6 +1426,15 @@ main {
 .node-year--you {
   color: var(--color-red);
 }
+/* Level-of-detail (Spec 05 f7): zoomed out, drop the year line, then all labels,
+   so five generations still read as a shape. Classes set by useTreeZoom. */
+.tree-canvas.lod-name-only .node-year {
+  display: none;
+}
+.tree-canvas.lod-no-labels .node-label,
+.tree-canvas.lod-no-labels .node-year {
+  display: none;
+}
 
 .node {
   cursor: pointer;
