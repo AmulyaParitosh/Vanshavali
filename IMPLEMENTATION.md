@@ -982,3 +982,33 @@ Coverage:
 acceptance coverage. Deferred (documented): a3 drag-reorder (keyboard done); "Swap sides"/stored
 lineageSide; reader-session e2e for role-gated views (Q15). Next: Waves 4–7 (Search/Settings/Account ·
 Sign-in/My-trees/Invitation/Getting-started · Landing · integration audit).
+
+---
+
+## WAVE 4 — Account / Settings / Search (plan)
+
+Specs: Spec 12 Account (distilled `design-specs/_SPEC-12.md`), Spec 11 Tree settings, Spec 09 Search.
+
+### Account (Spec 12) — plan (NOT yet built; distilled + analysed)
+
+Two routes: `/user` overview (Sign-in details · Your record · Trees you're in) + `/user/record`
+page-editor reusing the shared RecordEditor (a2). Acceptance a1..a9 in `_SPEC-12.md`.
+Sub-units:
+
+- **AC-A (backend, high-stakes)**: the one-record propagation. A self-scoped `updateOwnRecord(uid,
+ownFacts)` service that fans own facts (onerecord.ts `applyOwnFacts`, currently unit-tested but
+  imported nowhere) across EVERY people row with user_id=uid, in one transaction (a5 — reflected in
+  every tree). Route + provider. **a4 authz narrowing**: a person LINKED to a user account is
+  own-facts-writable ONLY by that user — narrows Spec 07's requireEditOrSelf (which today lets
+  editor/keeper edit anyone). Must add rejection tests AND re-verify the record-panel keeper-edit tests
+  still hold for UNLINKED people. Deterministic-testable (authz + onerecord unit tests) — do first.
+- **AC-B**: `/user/record` page-editor reusing RecordEditor + the Where-this-appears sidebar (a2/a3);
+  Spec 13 write-states (dirty, save toast+undo, leaving guard) — the same infra the panel uses.
+- **AC-C**: `/user` overview — Sign-in details card, Your record card (green "one record · all N trees"
+  chip + summary + Edit my record), Trees-you're-in list with role chips + per-row Leave (a6, self-leave;
+  last-keeper block) + "+ Start another family record".
+- **AC-D**: chrome on /user has no tree switcher + no search (a8); counts/plurals adapt (a7); no role
+  change here (a9). Acceptance sweep.
+  KEY divergences from repo `/user/profile`: routes (/user/profile → /user + /user/record); one-record
+  model + propagation NOT wired (onerecord.ts unused); RecordEditor not reused on profile; thin trees
+  list + no self-leave. Delete-account is out of scope (spec edge e4).
