@@ -353,3 +353,21 @@ decisions: `describeRelation` walks the shortest kinship path → phrase (one-st
   Q11 marriage date/place not on Family (deferred; prose reads "Married X" without place/year for now).
   deviations: none in the logic. Wiring into TreeInspector (header + prose render + CSS), the access
   block, edit-in-place, and write infra are the remaining Wave 2 sub-units (A part 2, B, C, D).
+
+### Wave 2 sub-unit A (part 2) — record panel READ MODE to spec — DONE
+
+spec: Spec 07 (`_SPEC-07.md`); acceptance a2, a7, a10 (read-mode-verifiable)
+files: src/components/tree/TreeInspector.tsx (rewritten read mode), src/components/Tree.tsx
+(passes viewerPersonId), src/app/globals.css (name 20px, secondary meta, +fact/relation/prose/link,
+portrait→.portrait--panel, close→.icon-close), tests/e2e/record-panel.spec.ts
+tests: tests/e2e/record-panel.spec.ts — 5/5 (a2 no route change, a7 prose links swap in place, a10
+relation from sex, header eyebrow/name/prose)
+consumes: lineage.ts (describeRelation/buildLineage/ordinalWord), generations (generationMap/roman/
+bornInLine), .portrait--panel, .icon-close, .eyebrow
+decisions: Header = "Generation {roman} · {line} line" (line = root person's surname), 44px panel
+portrait with born(red)/married(marigold) ring via bornInLine, fact line from the birth event,
+relation "your {kin}"/"this is you". Prose lineage rendered from buildLineage with every name an
+inline `.prose-link` that swaps the panel in place. Verified via screenshots on the Ishaan tree.
+deviations: "Edit record" is still a footer link to the legacy `/people?id=` editor — replaced by the
+header outlined button + edit-in-place in sub-unit C. No "· living" in the fact line (no `living`
+field; Q-note). Two-script name (§3) shows official_name only (Q10). Access block = sub-unit B.

@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import type { Person } from "../../types/person";
 import type { Family } from "../../types/family";
 import { portraitTint, personInitials } from "../../utils/portrait";
+import { GraphManager } from "../../lib/graph/GraphManager";
+import { generationMap, roman, bornInLine } from "../../lib/generations";
+import { buildLineage, describeRelation, ordinalWord, type Lineage } from "../../lib/lineage";
 
 interface TreeInspectorProps {
   person: Person;
@@ -10,85 +13,102 @@ interface TreeInspectorProps {
   families: Family[];
   /** True when the selected person is the signed-in user's own record. */
   isSelf: boolean;
+  /** The viewer's own linked person in this tree, for the relation line. */
+  viewerPersonId: string | null;
   canEdit: boolean;
   treeId: string | null;
   onClose: () => void;
   onSelect: (personId: string) => void;
 }
 
-type Relation = { person: Person; role: "parent" | "spouse" | "child" };
-
-const ROLE_LABEL: Record<Relation["role"], string> = {
-  parent: "parent",
-  spouse: "spouse",
-  child: "child",
-};
-
-/** Parents, spouse(s) and children of `person`, from the family memberships. */
-function relationsOf(person: Person, people: Person[], families: Family[]): Relation[] {
-  const byId = new Map(people.map((p) => [p.id, p]));
-  const out: Relation[] = [];
-  const seen = new Set<string>();
-  const add = (id: string | undefined, role: Relation["role"]) => {
-    if (!id || id === person.id || seen.has(id)) return;
-    const p = byId.get(id);
-    if (!p) return;
-    seen.add(id);
-    out.push({ person: p, role });
-  };
-  for (const f of families) {
-    if (f.husband === person.id || f.wife === person.id) {
-      add(f.husband === person.id ? f.wife : f.husband, "spouse");
-      f.children.forEach((c) => add(c, "child"));
-    }
-    if (f.children.includes(person.id)) {
-      add(f.husband, "parent");
-      add(f.wife, "parent");
-    }
-  }
-  // parents first, then spouse, then children
-  const order = { parent: 0, spouse: 1, child: 2 };
-  return out.sort((a, b) => order[a.role] - order[b.role]);
+/** The birth event, if one is recorded. */
+function birthOf(person: Person) {
+  return (person.events ?? []).find((e) => /birth|born/i.test(e.type));
 }
 
 /**
- * The record inspector (§07) — a 384px panel that opens in place when a person
- * is selected. One scroll, no tabs: identity, life events (❀), details (✧),
- * and the people this person is connected to. Replaces the old hover popup.
+ * The record panel (Spec 07) — a 384px inspector that opens in place. Read mode:
+ * a header that orients (generation · line, then who they are to you), the prose
+ * lineage as a sentence of linked names, life events (❀) and details (✧). The
+ * access block, edit-in-place and the write footer are the remaining sub-units.
  */
 const TreeInspector: React.FC<TreeInspectorProps> = ({
   person,
   people,
   families,
   isSelf,
+  viewerPersonId,
   canEdit,
   treeId,
   onClose,
   onSelect,
 }) => {
+  const gm = useMemo(() => new GraphManager(people, families), [people, families]);
+  const gens = useMemo(() => generationMap(people, families), [people, families]);
+  const inLine = useMemo(() => bornInLine(people, families), [people, families]);
+  const lineage = useMemo<Lineage | null>(() => buildLineage(person.id, gm), [person.id, gm]);
+
   const aliases = person.name.aliases?.filter((a) => a.trim().length > 0) ?? [];
   const events = person.events ?? [];
   const details = person.custom_fields
     ? Object.entries(person.custom_fields).filter(([, v]) => v && v.trim().length > 0)
     : [];
-  const relations = relationsOf(person, people, families);
-  const birth = events.find((e) => /birth|born/i.test(e.type));
+  const birth = birthOf(person);
+
+  // Header orientation.
+  const gen = gens.get(person.id);
+  const rootName = people.find((p) => p.root)?.name.official_name ?? "";
+  const line = rootName.trim().split(/\s+/).pop() ?? "";
+  const eyebrow =
+    (gen !== undefined ? `Generation ${roman(gen)}` : "In this tree") +
+    (line ? ` · ${line} line` : "");
+  const fact = [birth?.date ? `b. ${birth.date}` : null, birth?.place ?? null]
+    .filter(Boolean)
+    .join(", ");
+  const kin = isSelf || !viewerPersonId ? null : describeRelation(viewerPersonId, person.id, gm);
+  const relation = isSelf ? "this is you" : kin ? `your ${kin}` : null;
+  const married = !inLine.has(person.id); // marigold ring = married into this line
+
+  // A person's name rendered as an inline link that swaps the panel in place.
+  const NameLink: React.FC<{ p: Person }> = ({ p }) => (
+    <button type="button" className="prose-link" onClick={() => onSelect(p.id)}>
+      {p.name.official_name}
+    </button>
+  );
+  // Join person links with commas and a final "and".
+  const joinPeople = (persons: Person[]): React.ReactNode =>
+    persons.map((p, i) => (
+      <React.Fragment key={p.id}>
+        {i > 0 && (i === persons.length - 1 ? " and " : ", ")}
+        <NameLink p={p} />
+      </React.Fragment>
+    ));
+
+  const hasProse =
+    !!lineage && (!!lineage.childOf || lineage.unions.some((u) => u.spouse || u.children.length));
 
   return (
     <aside className="inspector" aria-label={`Record: ${person.name.official_name}`}>
       <div className="inspector-bar" aria-hidden="true" />
       <div className="inspector-body">
         <div className="inspector-head">
-          <span className="eyebrow">The record</span>
-          <button type="button" className="inspector-close" onClick={onClose} aria-label="Close">
+          <span className="eyebrow">{eyebrow}</span>
+          <button type="button" className="icon-close" onClick={onClose} aria-label="Close">
             ✕
           </button>
         </div>
 
         <div className="inspector-identity">
-          <span className="inspector-portrait" style={{ background: portraitTint(person.id) }}>
+          <span
+            className={`portrait portrait--panel${married ? " portrait--married" : ""}`}
+            style={{ background: portraitTint(person.id) }}
+          >
             {person.image_url ? (
-              <img src={person.image_url} alt={person.name.official_name} />
+              <img
+                src={person.image_url}
+                alt={person.name.official_name}
+                className="portrait-img"
+              />
             ) : (
               personInitials(person.name.official_name)
             )}
@@ -96,12 +116,52 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
           <div className="inspector-names">
             <span className="inspector-name">{person.name.official_name}</span>
             {aliases.length > 0 && (
-              <span className="inspector-secondary">{aliases.join(" · ")}</span>
+              <span className="inspector-secondary">
+                {aliases.map((a) => `“${a}”`).join(" · ")}
+              </span>
             )}
-            {birth?.date && <span className="inspector-meta">b. {birth.date}</span>}
-            {isSelf && <span className="chip chip--write inspector-you">This is you</span>}
+            {fact && <span className="inspector-fact">{fact}</span>}
+            {relation && <span className="inspector-relation-line">{relation}</span>}
           </div>
         </div>
+
+        {hasProse && lineage && (
+          <section className="inspector-section">
+            <div className="inspector-section-head">
+              <span className="eyebrow">In the tree</span>
+              <span className="inspector-rule" />
+            </div>
+            <p className="inspector-prose">
+              {lineage.childOf && (lineage.childOf.father || lineage.childOf.mother) && (
+                <>
+                  {ordinalWord(lineage.childOf.ordinal)} {person.sex === "M" ? "son" : "daughter"}{" "}
+                  of{" "}
+                  {joinPeople(
+                    [lineage.childOf.father, lineage.childOf.mother].filter((p): p is Person => !!p)
+                  )}
+                  .{" "}
+                </>
+              )}
+              {lineage.unions.map((u, i) => (
+                <React.Fragment key={i}>
+                  {u.spouse && (
+                    <>
+                      Married <NameLink p={u.spouse} />.{" "}
+                    </>
+                  )}
+                  {u.children.length > 0 && (
+                    <>
+                      {u.children.length === 1
+                        ? "One child — "
+                        : `${u.children.length} children — `}
+                      {joinPeople(u.children)}.{" "}
+                    </>
+                  )}
+                </React.Fragment>
+              ))}
+            </p>
+          </section>
+        )}
 
         {events.length > 0 && (
           <section className="inspector-section">
@@ -141,34 +201,6 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
                 <span className="inspector-detail-value">{value}</span>
               </div>
             ))}
-          </section>
-        )}
-
-        {relations.length > 0 && (
-          <section className="inspector-section">
-            <div className="inspector-section-head">
-              <span className="eyebrow">In the family</span>
-              <span className="inspector-rule" />
-            </div>
-            <div className="inspector-relations">
-              {relations.map((r) => (
-                <button
-                  type="button"
-                  key={r.person.id}
-                  className="inspector-relation"
-                  onClick={() => onSelect(r.person.id)}
-                >
-                  <span
-                    className="inspector-relation-avatar"
-                    style={{ background: portraitTint(r.person.id) }}
-                  >
-                    {personInitials(r.person.name.official_name)}
-                  </span>
-                  <span className="inspector-relation-name">{r.person.name.official_name}</span>
-                  <span className="inspector-relation-role">{ROLE_LABEL[r.role]}</span>
-                </button>
-              ))}
-            </div>
           </section>
         )}
       </div>

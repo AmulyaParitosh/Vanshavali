@@ -124,6 +124,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           people={people}
           families={treeData?.families ?? []}
           isSelf={!!user && selectedPerson.userId === user.uid}
+          viewerPersonId={people.find((p) => !!user && p.userId === user.uid)?.id ?? null}
           canEdit={canEdit}
           treeId={currentTreeId}
           onClose={() => setSelectedPersonId(null)}
