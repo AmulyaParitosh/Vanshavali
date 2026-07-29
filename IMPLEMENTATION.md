@@ -1080,3 +1080,26 @@ a tree is never orphaned. Only the tree_members row goes (removeMember-style), s
 stays" holds. A member's tree row shows Leave; an owned (keeper) tree row does not.
 deviations: chrome-no-switcher/search on /user (a8) + counts/plurals (a7) + "+ Start another family
 record" = AC-D. The /user overview 3-card visual polish stays on the existing profile page for now.
+
+### Wave 4 Account AC-D — chrome a8 + acceptance close — DONE
+
+spec: `_SPEC-12.md` a7/a8/a9
+files: src/components/Header.tsx (hide the tree switcher AND the search on /user\* routes — Account is
+outside any tree, a8)
+tests: tests/e2e/account.spec.ts +1 (on /user the chrome shows the avatar but no .chrome-treeswitcher
+and no .chrome-search, even for a keeper who has a tree). account suite 5/5.
+Acceptance coverage a1..a9:
+
+- a1 one record per user, edited only here by its owner — met: updateOwnRecord fans own facts to every
+  linked row (one logical record); a4 keeps others out; the /user/record editor is the owner's edit surface.
+- a2 same editor as the inspector — TESTED (RecordEditor reused). a3 where-this-appears — TESTED.
+- a4 keeper reads but never writes another's record — TESTED (authz 33, AC-A). a5 save reflected in
+  every tree — TESTED (propagation unit + account e2e). a6 leave keeps the record — TESTED (AC-C).
+- a7 counts/plurals adapt — the trees list + "Updated in N tree(s)" toast pluralize; overview counts
+  kept from the existing profile (minor visual polish deferred).
+- a8 chrome has no switcher/search — TESTED. a9 no role change here — met (the Account page has no
+  role controls; roles change only in the record panel, Spec 06/07).
+
+**WAVE 4 ACCOUNT (Spec 12) COMPLETE** — a4 authz + a5 propagation backend, the /user/record editor
+reusing RecordEditor, self-leave, and the tree-less chrome. Deferred: the /user overview 3-card visual
+redesign (the existing profile page carries the content). Remaining Wave 4: Spec 09 Search, Spec 11 Settings.

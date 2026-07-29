@@ -32,6 +32,15 @@ test.describe("Account — Your record (Spec 12)", () => {
     );
   });
 
+  test("the Account chrome has no tree switcher and no search (a8)", async ({ page }) => {
+    await page.goto("/user/profile");
+    await expect(page.locator(".chrome-avatar-link")).toBeVisible(); // signed in
+    // Outside any tree — neither the switcher nor the search appears (even though
+    // this keeper does have a tree).
+    await expect(page.locator(".chrome-treeswitcher")).toHaveCount(0);
+    await expect(page.locator(".chrome-search")).toHaveCount(0);
+  });
+
   test("reuses the record editor and names where it appears (a2/a3)", async ({ page }) => {
     await page.goto("/user/record");
     // The same RecordEditor as the inspector — the Name field carries the record.
