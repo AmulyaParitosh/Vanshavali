@@ -89,12 +89,18 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     if (pan) panToPerson(personId);
   };
 
-  // Bring a ?person= target into view once the layout is ready (its selection
-  // is already the initial state above, so this effect writes no state).
+  // Open (and pan to) whatever ?person= names — on mount, and whenever it
+  // changes while the canvas stays mounted (e.g. the ⌘K search or a Members-table
+  // click pushes a new ?person=, reusing this one inspector — Spec 07 a1). A
+  // direct node click sets the selection without touching the URL, so it doesn't
+  // re-trigger this and the clicked node stays put (no jump).
   useEffect(() => {
-    if (personParam) panToPerson(personParam);
+    if (personParam) {
+      setSelectedPersonId(personParam);
+      panToPerson(personParam);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [personParam]);
 
   return (
     <div className={`tree-canvas-container${selectedPerson ? " inspector-open" : ""}`}>

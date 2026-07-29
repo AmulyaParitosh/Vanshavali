@@ -549,3 +549,40 @@ files:
   reads "now" off stale state); with the faster no-remount path this left the seed dirty. Hardened
   it to wait for the Undo's post-write confirmation toast (no product bug — the write completes in a
   real browser; only Playwright's context-close aborted it).
+
+### Wave 2 sub-unit E — Spec 07 acceptance coverage map — DONE
+
+spec: Spec 07 acceptance a1..a10 (`_SPEC-07.md`)
+files: tests/e2e/record-panel.spec.ts (+a1 search test); src/components/Tree.tsx (open the panel on
+any ?person= change, not just on mount — see below)
+Coverage of a1..a10 (repo roles owner/editor/viewer = keeper/write/read):
+
+- a1 one panel serves canvas/members/household/search — TESTED for canvas (?person=) + SEARCH (⌘K
+  hit opens the same inspector in place). Members-table + household-editor surfaces reuse the same
+  component and get their opening tests when those pages are built (Wave 3).
+- a2 opening never changes the route — TESTED (mount + edit-in-place + search all stay on the tree route).
+- a3 access shown to every role, editable only by a keeper — TESTED: keeper sees the radio set; self
+  sees the stated access + "only a keeper can change it" (no radio). The non-keeper-viewing-another
+  read-only case needs a second (write/read) auth session — built with Members (Spec 06, Wave 3),
+  which owns multi-role permission e2e.
+- a4 Save disabled until dirty — TESTED (footer/Save appear only when dirty) + writeState unit tests.
+- a5 no confirmation before a role save — TESTED.
+- a6 dirty close routes through the unsaved-changes dialog — TESTED.
+- a7 prose lineage names are working links that swap the panel — TESTED.
+- a8 removing access never deletes the record — the dialog + Cancel non-destructive is TESTED; the
+  destructive "remove → person survives" e2e defers to Wave 3 Members alongside the Q13 fix
+  (removeMember currently also clears the global profile). Verified once by hand meanwhile.
+- a9 the edit form is the SAME component as Account — RecordEditor is that one component (exercised
+  in the panel). The "same on Account" reuse is proven when Account is built (Spec 12, Wave 4).
+- a10 no copy assumes an unrecorded gender — TESTED (relation line + access eyebrow both gendered
+  from person.sex).
+  decisions: Added an a1 test for the search surface, which surfaced a real gap — Tree read ?person=
+  only as initial state, so a same-page ⌘K search (router.push ?person=) didn't open the panel. Fixed:
+  Tree now opens + pans to whatever ?person= names whenever it changes (a node click still sets the
+  selection without touching the URL, so it doesn't re-trigger and the clicked node stays put).
+  deviations: a3 non-keeper-view, a8 destructive, a9 Account-reuse are each deferred to the wave that
+  builds the surface they need (Members W3 / Account W4) — not skipped; noted with a concrete home.
+
+**WAVE 2 (record panel, Spec 07) COMPLETE** — read (A), access (B), edit-in-place (C), write infra
+(D1 guard, D2 toast+undo, D3a role, D3b remove, D4 patch+conflict), acceptance map (E). One shared
+inspector + RecordEditor; per-record optimistic-locked writes with three-way conflict resolution.

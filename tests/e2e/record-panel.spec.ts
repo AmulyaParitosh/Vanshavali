@@ -47,6 +47,19 @@ test.describe("Record panel — read mode (Spec 07)", () => {
     await expect(page.locator(".inspector-name")).toHaveText("Ishaan Verma");
     await expect(page.locator(".inspector-prose")).toContainText("Married Meera Verma");
   });
+
+  test("the same panel serves the ⌘K search — a hit opens the record in place (a1)", async ({
+    page,
+  }) => {
+    await page.goto(treeRoute());
+    await expect(page.locator(".inspector")).toHaveCount(0);
+    await page.locator(".chrome-search").click();
+    await page.locator(".cmdk-panel input").fill("Meera");
+    await page.locator(".cmdk-row", { hasText: "Meera Verma" }).first().click();
+    // One inspector component, opened from search — and still no route of its own (a1/a2).
+    await expect(page.locator(".inspector-name")).toHaveText("Meera Verma");
+    expect(new URL(page.url()).pathname).toBe(treeRoute());
+  });
 });
 
 test.describe("Record panel — access block, read display (Spec 07 a3)", () => {
