@@ -5071,6 +5071,30 @@ main {
 .account-tree-row:hover {
   border-color: var(--color-red);
 }
+/* The tile + name is the link into the tree; the chip + Leave sit beside it. */
+.account-tree-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  color: inherit;
+}
+.account-tree-leave {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-red);
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.account-tree-leave:hover {
+  color: var(--color-red-deep);
+}
 .account-tree-dot {
   width: 40px;
   height: 40px;

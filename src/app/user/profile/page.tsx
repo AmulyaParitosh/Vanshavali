@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAppContext } from "../../../context/AppContext";
 import PersonSearch from "../../../components/PersonSearch";
 import { useToast } from "../../../components/ToastSystem";
+import ConsequenceDialog from "../../../components/tree/ConsequenceDialog";
 import { portraitTint, personInitials } from "../../../utils/portrait";
 import type { Person } from "../../../types/person";
 
@@ -32,6 +33,8 @@ export default function AccountPage() {
   } = useAppContext();
   const toast = useToast();
   const [isLinking, setIsLinking] = useState(false);
+  const [leavingTree, setLeavingTree] = useState<{ id: string; name: string } | null>(null);
+  const [leaving, setLeaving] = useState(false);
 
   if (!user) {
     return (
@@ -222,21 +225,59 @@ export default function AccountPage() {
         ) : (
           <div className="account-trees">
             {allTrees.map(({ tree, role }) => (
-              <Link key={tree.id} href={`/tree/${tree.id}`} className="account-tree-row">
-                <span className="account-tree-dot" style={{ background: portraitTint(tree.id) }}>
-                  {tree.name.charAt(0).toUpperCase()}
-                </span>
-                <div className="account-tree-body">
-                  <span className="account-tree-name">{tree.name}</span>
-                </div>
+              <div key={tree.id} className="account-tree-row">
+                <Link href={`/tree/${tree.id}`} className="account-tree-link">
+                  <span className="account-tree-dot" style={{ background: portraitTint(tree.id) }}>
+                    {tree.name.charAt(0).toUpperCase()}
+                  </span>
+                  <div className="account-tree-body">
+                    <span className="account-tree-name">{tree.name}</span>
+                  </div>
+                </Link>
                 <span className={`chip ${role === "owner" ? "chip--keeper" : "chip--read"}`}>
                   {role === "owner" ? "Keeper" : "Member"}
                 </span>
-              </Link>
+                {/* You can leave a tree you're a member of, but not one you keep (a6). */}
+                {role === "member" && (
+                  <button
+                    type="button"
+                    className="account-tree-leave"
+                    onClick={() => setLeavingTree({ id: tree.id, name: tree.name })}
+                  >
+                    Leave
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         )}
       </section>
+
+      {leavingTree && (
+        <ConsequenceDialog
+          eyebrow="Access only"
+          heading={`Leave ${leavingTree.name}?`}
+          consequences={[
+            "Your record stays with you — every name, date and photograph you own comes along.",
+            "You'll lose access to this tree until a keeper invites you again.",
+          ]}
+          actionLabel="Leave the tree"
+          busy={leaving}
+          onCancel={() => setLeavingTree(null)}
+          onConfirm={async () => {
+            setLeaving(true);
+            try {
+              await dataProvider.leaveTree(leavingTree.id);
+              toast.success(`You've left ${leavingTree.name}`);
+              setLeavingTree(null);
+            } catch (error: unknown) {
+              toast.error(error instanceof Error ? error.message : "Couldn't leave the tree");
+            } finally {
+              setLeaving(false);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

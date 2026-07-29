@@ -179,6 +179,11 @@ export class ApiDataProvider implements DataProvider {
     await authedFetch(this.client, `/api/tree/${treeId}/members/${uid}`, { method: "DELETE" });
   }
 
+  async leaveTree(treeId: string): Promise<void> {
+    // Self-scoped — the server takes the uid from the token.
+    await authedFetch(this.client, `/api/tree/${treeId}/membership`, { method: "DELETE" });
+  }
+
   // -------------------------- InvitationProvider --------------------------
 
   async createInvite(

@@ -107,6 +107,8 @@ export interface MembershipProvider {
   subscribeToMembers(treeId: string, callback: (members: TreeMembership[]) => void): () => void;
   updateMemberRole(treeId: string, uid: string, role: TreeRole): Promise<void>;
   removeMember(treeId: string, uid: string): Promise<void>;
+  /** The caller leaves the tree — removes their own membership (Spec 12 a6). */
+  leaveTree(treeId: string): Promise<void>;
 }
 
 /** Invitations to a tree. */

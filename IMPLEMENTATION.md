@@ -1063,3 +1063,20 @@ trees is unit-tested (AC-A2); the seed user is linked in one tree, so the e2e as
 persist + the overview return.
 deviations: the /user overview 3-card redesign + trees-list-with-self-leave = AC-C; chrome-has-no-
 switcher/search (a8) + counts/plurals (a7) + acceptance sweep = AC-D.
+
+### Wave 4 Account AC-C — self-leave (a6) — DONE
+
+spec: `_SPEC-12.md` a6 — leaving a tree removes the membership, keeps the person record
+files: src/services/membership-service.ts (leaveTree(treeId, uid): self-scoped; owner→blocked "a tree
+needs a keeper", member→remove, non-member→no-op); DELETE /api/tree/[id]/membership (self);
+DataProvider.leaveTree + ApiDataProvider + withRefresh; src/app/user/profile/page.tsx (trees rows
+restructured — Link + role chip + a Leave button on MEMBER trees → ConsequenceDialog "Your record
+stays with you" → leaveTree); globals.css (.account-tree-link, .account-tree-leave)
+tests: tests/services/membership-service.test.ts — 3 (member leaves → removed; keeper blocked;
+non-member no-op). tests/e2e/account.spec.ts — a6 UI (a member tree offers Leave; the dialog says the
+record stays; Cancel non-destructive). account suite 4/4; Vitest +3.
+decisions: leaveTree is self-scoped (uid from token) — no owner gate, but a keeper/owner is blocked so
+a tree is never orphaned. Only the tree_members row goes (removeMember-style), so a6's "person record
+stays" holds. A member's tree row shows Leave; an owned (keeper) tree row does not.
+deviations: chrome-no-switcher/search on /user (a8) + counts/plurals (a7) + "+ Start another family
+record" = AC-D. The /user overview 3-card visual polish stays on the existing profile page for now.

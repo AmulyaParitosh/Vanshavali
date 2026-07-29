@@ -1,6 +1,6 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { Client } from "pg";
-import { SEED } from "./fixtures";
+import { SEED, WRITER } from "./fixtures";
 
 /**
  * Spec 12 — Account · Your record (/user/record). The editor is the SAME component
@@ -22,6 +22,16 @@ async function withDb<T>(fn: (c: Client) => Promise<T>): Promise<T> {
 }
 
 test.describe("Account — Your record (Spec 12)", () => {
+  // The save test writes to the linked record; always restore the seed name.
+  test.afterEach(async () => {
+    await withDb((c) =>
+      c.query(
+        `update people set data = jsonb_set(data, '{name,official_name}', '"Ishaan Verma"') where id=$1`,
+        [SEED.people.you.id]
+      )
+    );
+  });
+
   test("reuses the record editor and names where it appears (a2/a3)", async ({ page }) => {
     await page.goto("/user/record");
     // The same RecordEditor as the inspector — the Name field carries the record.
@@ -39,8 +49,8 @@ test.describe("Account — Your record (Spec 12)", () => {
     const name = page.locator(".record-editor").getByLabel("Name");
     await name.fill("Ishaan K. Verma");
     await page.locator(".record-editor").getByRole("button", { name: "Save" }).click();
-    // Returns to the account overview…
-    await expect(page).toHaveURL(/\/user$/);
+    // Returns to the account overview (/user redirects to /user/profile).
+    await expect(page).toHaveURL(/\/user(\/profile)?$/);
     // …and the change is persisted to the (one) linked record.
     await expect
       .poll(() =>
@@ -53,12 +63,35 @@ test.describe("Account — Your record (Spec 12)", () => {
         )
       )
       .toBe("Ishaan K. Verma");
-    // Restore the seed name.
-    await withDb((c) =>
-      c.query(
-        `update people set data = jsonb_set(data, '{name,official_name}', '"Ishaan Verma"') where id=$1`,
-        [SEED.people.you.id]
-      )
-    );
+  });
+});
+
+test.describe("Account — leaving a tree (Spec 12 a6)", () => {
+  // Sign in as the writer (a member — not owner — of the seed tree).
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  async function signInAsWriter(page: Page) {
+    await page.goto("/");
+    await page.locator("#auth-email").fill(WRITER.email);
+    await page.locator("#auth-password").fill(WRITER.password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page.locator(".chrome-avatar-link")).toBeVisible({ timeout: 30_000 });
+  }
+
+  test("a member's tree offers Leave; the dialog says the record stays; Cancel is non-destructive", async ({
+    page,
+  }) => {
+    await signInAsWriter(page);
+    await page.goto("/user/profile");
+    const row = page.locator(".account-tree-row", { hasText: SEED.tree.name });
+    await expect(row).toBeVisible({ timeout: 20_000 });
+    // A member (not keeper) row offers Leave.
+    await row.getByRole("button", { name: "Leave" }).click();
+    const dialog = page.locator(".dialog");
+    await expect(dialog).toContainText("Your record stays with you");
+    // Cancel leaves the membership in place (non-destructive — keeps the seed clean).
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(page.locator(".dialog")).toHaveCount(0);
+    await expect(row).toBeVisible();
   });
 });

@@ -51,3 +51,18 @@ export async function removeMember(
   if (isOwner(target.role)) throw new HttpError("Can't remove the tree owner.", 400);
   await MembershipRepository.remove(getPool(), treeId, targetUid);
 }
+
+/**
+ * Self-leave (Spec 12 a6): the caller removes their OWN membership. Self-scoped —
+ * `uid` is the caller's token — so no owner gate. The person record is untouched
+ * (only the tree_members row goes), so their record stays in the tree. A keeper
+ * (owner) can't leave and orphan the tree — they must hand the tree over first.
+ */
+export async function leaveTree(treeId: string, uid: string): Promise<void> {
+  const membership = await MembershipRepository.find(getPool(), treeId, uid);
+  if (!membership) return; // not a member — idempotent
+  if (isOwner(membership.role)) {
+    throw new HttpError("A tree needs a keeper. Make someone else a keeper before you leave.", 400);
+  }
+  await MembershipRepository.remove(getPool(), treeId, uid);
+}
