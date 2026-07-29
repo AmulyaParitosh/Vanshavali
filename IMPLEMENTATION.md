@@ -1451,3 +1451,25 @@ readers' dates hidden (year-only) until a keeper opts in. New root gets a fresh 
 (the facts travel, the row doesn't — one-record rule).
 deviations (Spec 03 remaining): a7 first run (MT-C, floating card over a one-node canvas); a6 portraits
 by created_at not true generation; a8 switcher-parity; lastOpenedAt ordering.
+
+### Wave 5 My trees MT-C — first run (a7) — DONE
+
+spec: `_SPEC-03.md` c2 / state s3 / a7 — a lone-person tree floats a card over a one-node canvas
+files: src/components/onboarding/FirstRunCard.tsx (NEW) — the 452 card, verbatim: h1 "Your tree starts
+with you.", the one-paragraph body, primary "Add my parents" (filled), secondary "Invite the relative
+who remembers" (outlined), quiet link "Fill in your own dates first — complete your record" (second
+half underlined → /user/record). src/app/tree/[id]/page.tsx — renders FirstRunCard when isFirstSession
+(people===1 && root is the viewer), replacing WelcomeModal + EmptyTreeBanner (both DELETED — one
+implementation). src/components/Tree.tsx — a lone node gets a 44px `.tree-stub` connector going nowhere
+(a7); the canvas already has no floating Add button. globals.css: .firstrun-\* + .tree-stub.
+tests: tests/e2e/firstrun.spec.ts — 1 (create a fresh tree → routes to first run f4; the card with the
+verbatim heading + both buttons + "complete your record"; exactly one node + one connector stub a7;
+deletes the test tree after). 2/2 with setup.
+decisions: CTAs route to /members (where the add-person + invite panels live); father→mother prefill (f5)
+
+- invite-write preselect (f6) are refined there — deferred, noted. Tested via a freshly-created tree
+  (deterministic) rather than the ad-hoc auto-provisioned dr3 tree.
+  **WAVE 5 MY TREES (Spec 03) COMPLETE** — picker (MT-A: a1/a4/a5), create + one-record reuse (MT-B:
+  a2/a3), first run (MT-C: a7). Remaining deviations: a6 portraits by created_at not generation; a8
+  switcher-parity (card-is-one-link holds); lastOpenedAt ordering. Next Wave 5: Spec 04 Invitation, Spec 10
+  Getting started.

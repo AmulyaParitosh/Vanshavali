@@ -3,15 +3,14 @@ import React, { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "../../../context/AppContext";
 import Tree from "../../../components/Tree";
-import WelcomeModal from "../../../components/onboarding/WelcomeModal";
-import EmptyTreeBanner from "../../../components/onboarding/EmptyTreeBanner";
+import FirstRunCard from "../../../components/onboarding/FirstRunCard";
 import { GraphManager } from "../../../lib/graph/GraphManager";
 import { ConsistencyValidator } from "../../../lib/graph/ConsistencyValidator";
 
 import { UI_CONFIG } from "../../../constants";
 
 export default function TreeViewPage() {
-  const { treeData, membership, currentTreeId, user, profile } = useAppContext();
+  const { treeData, membership, currentTreeId, user } = useAppContext();
   const router = useRouter();
 
   // Nudge a member to link themselves to a person — but only if they aren't
@@ -63,16 +62,7 @@ export default function TreeViewPage() {
       )}
       {hierarchy ? <Tree data={hierarchy} /> : UI_CONFIG.MESSAGES.BUILDING_HIERARCHY}
 
-      {currentTreeId && (
-        <>
-          <WelcomeModal
-            displayName={profile?.name ?? user?.displayName ?? null}
-            treeId={currentTreeId}
-            shouldShow={isFirstSession}
-          />
-          {isFirstSession && <EmptyTreeBanner treeId={currentTreeId} />}
-        </>
-      )}
+      {currentTreeId && isFirstSession && <FirstRunCard treeId={currentTreeId} />}
     </div>
   );
 }

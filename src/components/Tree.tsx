@@ -185,6 +185,17 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                   d={layout.linkPath(link)}
                 />
               ))}
+              {/* First run (Spec 03 a7): a lone node gets a 44px connector stub
+                  going nowhere — what makes the tree feel unfinished, on purpose. */}
+              {layout.nodes.length === 1 && layout.nodes[0] && (
+                <line
+                  className="tree-stub"
+                  x1={layout.nodes[0].x}
+                  y1={layout.nodes[0].y + 60}
+                  x2={layout.nodes[0].x}
+                  y2={layout.nodes[0].y + 104}
+                />
+              )}
             </g>
 
             <g className="nodes">

@@ -866,6 +866,78 @@ main {
   cursor: default;
 }
 
+/* First run (Spec 03 c2) — a card floating over the one-node canvas. */
+.tree-stub {
+  stroke: var(--line-structure, #e6ddc9);
+  stroke-width: 2;
+}
+.firstrun-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  width: 452px;
+  max-width: calc(100vw - 48px);
+  box-sizing: border-box;
+  padding: 30px 34px;
+  background: var(--surface-paper);
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-26);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+}
+.firstrun-h1 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 400;
+  margin: 0;
+  color: var(--text-primary);
+}
+.firstrun-body {
+  margin: 0 auto;
+  max-width: 380px;
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--text-strong);
+}
+.firstrun-primary {
+  width: 100%;
+  height: 46px;
+  border-radius: var(--radius-pill);
+  margin-top: 6px;
+}
+.firstrun-secondary {
+  width: 100%;
+  height: 46px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-paper);
+  border: 1px solid var(--line-control);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+.firstrun-secondary:hover {
+  border-color: var(--color-red);
+}
+.firstrun-quiet {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--text-quiet, #6b6455);
+  margin-top: 2px;
+}
+.firstrun-quiet-link {
+  text-decoration: underline;
+  color: var(--color-red);
+}
+
 /* === My trees picker (Spec 03) — centred 760 column, 348×132 cards 2-up === */
 .picker {
   max-width: 760px;
