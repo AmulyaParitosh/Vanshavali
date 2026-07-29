@@ -20,6 +20,8 @@ Status: `not-built` | `red` | `green` | `partial` | `deferred`. Test path filled
 
 Deferred (blocked by explicitly-deferred models, revisit with them): **#3** (bilingual name model — Wave 4 a3) · **#4** (per-tree heritage column).
 
-Last full run: **2026-07-30** — the achievable contracts green (1, 2, 5, 6, 7, 9, 10, 11) + partial (8, 12);
-2, 11, 12 in `tests/e2e/integration.spec.ts`. Vitest 207+ green; e2e verified per-suite (dev-server
-degradation Q14 — full sweeps run on a production build).
+Last full run: **2026-07-30** — GREEN on a production build: **full e2e 169/169**, **Vitest 207/207**.
+Achievable contracts green (1, 2, 5, 6, 7, 9, 10, 11) + partial (8, 12); 2, 11, 12 in
+`tests/e2e/integration.spec.ts`. #3 and #4 deferred (blocked by the deferred bilingual-name model /
+per-tree heritage column). Full sweeps must run on a production build — the `next dev` server degrades
+under a long single-worker run (Q14); on prod the whole suite is stable.
