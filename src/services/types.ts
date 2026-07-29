@@ -10,6 +10,7 @@ import type {
   MyTrees,
   TreeSettingsPatch,
   TreeCardSummary,
+  InviteDetail,
 } from "../types/tree";
 
 export interface TreeData {
@@ -130,6 +131,8 @@ export interface InvitationProvider {
   acceptInvite(inviteId: string, uid: string): Promise<TreeMembership>;
   revokeInvite(treeId: string, inviteId: string): Promise<void>;
   subscribeToInvites(treeId: string, callback: (invites: TreeInvite[]) => void): () => void;
+  /** Public invite detail, legible from the token before sign-in (Spec 04 a1). */
+  getInviteDetail(inviteId: string): Promise<InviteDetail>;
 }
 
 /** Site-level feedback inbox (not tree-scoped). */

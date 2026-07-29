@@ -72,6 +72,21 @@ export interface TreeInvite {
   expiresAt?: number;
 }
 
+/**
+ * What an invitation link reveals from the token alone (Spec 04 step 1) — legible
+ * before any sign-in, exposing the tree summary + the offered record + the role,
+ * and nothing else about anyone else.
+ */
+export interface InviteDetail {
+  status: "valid" | "expired" | "revoked" | "accepted" | "not_found";
+  inviteId: string;
+  email?: string;
+  role?: InvitableTreeRole;
+  inviterName?: string;
+  tree?: { id: string; name: string; place?: string; personCount: number };
+  offered?: { name: string; birthYear?: string; birthPlace?: string };
+}
+
 /** A user's full inventory of trees — owned vs invited. */
 export interface MyTrees {
   owned: TreeMeta[];

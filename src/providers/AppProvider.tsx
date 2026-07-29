@@ -34,7 +34,7 @@ function isTreeOptional(pathname: string | null): boolean {
  * must NOT fall through to the inline sign-in gate. `/signin` and `/reset` own
  * their own card + redirect-if-authenticated; `/privacy` is static.
  */
-const PUBLIC_PREFIXES = ["/signin", "/reset", "/privacy"];
+const PUBLIC_PREFIXES = ["/signin", "/reset", "/privacy", "/invite/"];
 
 function isPublic(pathname: string | null): boolean {
   if (!pathname) return false;

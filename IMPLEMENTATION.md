@@ -1473,3 +1473,34 @@ decisions: CTAs route to /members (where the add-person + invite panels live); f
   a2/a3), first run (MT-C: a7). Remaining deviations: a6 portraits by created_at not generation; a8
   switcher-parity (card-is-one-link holds); lastOpenedAt ordering. Next Wave 5: Spec 04 Invitation, Spec 10
   Getting started.
+
+## WAVE 5 — Invitation (Spec 04) — plan + receipts
+
+Distilled `design-specs/_SPEC-04.md` (a1..a10). 3 screens: Invitation → Is-this-you (become one) →
+Welcome. Sub-units: IN-A step 1 + public read + claim, IN-B the merge (become one), IN-C welcome.
+Key insight: the repo's mergePlaceholder KEEPS the placeholder id + overlays facts (no re-point/delete),
+so "become one" is one in-place update — same outcome as the spec's delete+re-point narrative (a5).
+
+### Wave 5 Invitation IN-A — step 1 to contract + public read + claim (a1, a2, a7, a8) — DONE
+
+spec: `_SPEC-04.md` step 1 + states s2(invitee)/s3(wrong-account)/s5(expired) + f4 claim
+files: invite-service.getInviteDetail (public, no auth — tree summary + offered record + role +
+inviter, never a 404: missing/expired/revoked resolve to a status the card explains; marks a
+TTL-expired pending invite expired). GET /api/invite/[id] (public route). InvitationProvider.
+getInviteDetail + ApiDataProvider (plain unauthed fetch — legible before sign-in). acceptInvite now
+CLAIMS the offered record in the no-collision case (f4): links invite.personId to the user + sets
+membership.personId, so they land on their own branch (collision/become-one is IN-B, needs an
+explicit Yes a4). src/app/invite/[id]/page.tsx rewritten to step 1: fetches the detail (works signed
+out), renders who-asked + tree summary + offered record + role IN VERBS with the keeper-named limit;
+two ways in route through /signin?intent=create&next= and /signin?next= (a2); a wrong-account session
+gets a read-only note + "Sign in as someone else" (a7, signs out → /signin?next); expired/revoked/used
+→ "This invitation is no longer valid" + "Ask {keeper} for a new link" mailto, never a 404 (a8).
+AppProvider: /invite/ is now PUBLIC (renders the card for signed-out visitors before the login gate —
+a1). globals.css: .invite-tree / .invite-record\* / .invite-wrong-note.
+tests: tests/e2e/invite.spec.ts — 5 (a1 legible-without-session card [tree/offered/verbs/limit, not the
+login gate]; a2 "I already have an account" → /signin?next=…invite…; a8 revoked → explained card +
+mailto; a7 wrong account → note + "Sign in as someone else", no Join). Seeds/cleans two invites. 5/5.
+Vitest 203/203.
+deviations (IN-B/IN-C): the collision "Is this you?" step 2 + become-one overlay on explicit Yes +
+"Someone else · add me separately" read path (a3/a4/a5-collision/a6/a10); the Welcome step 3 centred on
+their household (a9). offered block omits generation/parents (needs the graph) — name + birth shown.

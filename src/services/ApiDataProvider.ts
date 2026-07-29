@@ -10,6 +10,7 @@ import type {
   MyTrees,
   TreeSettingsPatch,
   TreeCardSummary,
+  InviteDetail,
 } from "../types/tree";
 import type { Suggestion, SuggestionStatus } from "../types/suggestion";
 import { authedFetch } from "./api/authedFetch";
@@ -254,6 +255,13 @@ export class ApiDataProvider implements DataProvider {
     await authedFetch(this.client, `/api/tree/${treeId}/invites/${inviteId}`, {
       method: "DELETE",
     });
+  }
+
+  async getInviteDetail(inviteId: string): Promise<InviteDetail> {
+    // Public read — no bearer: the invitation must be legible before sign-in.
+    const res = await fetch(`/api/invite/${encodeURIComponent(inviteId)}`);
+    if (!res.ok) return { status: "not_found", inviteId };
+    return (await res.json()) as InviteDetail;
   }
 
   subscribeToInvites(treeId: string, callback: (invites: TreeInvite[]) => void): () => void {

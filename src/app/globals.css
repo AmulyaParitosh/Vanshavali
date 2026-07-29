@@ -5613,6 +5613,61 @@ main {
   color: var(--text-strong);
   margin: 0;
 }
+/* Step-1 invitation detail blocks (Spec 04) — tree summary + offered record. */
+.invite-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  background: var(--surface-tablehead, #f8f2e4);
+  border-radius: var(--radius-14, 14px);
+}
+.invite-tree-name {
+  font-size: 16.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.invite-tree-meta {
+  font-size: 13.5px;
+  color: var(--text-meta);
+}
+.invite-record {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 16px;
+  background: var(--surface-tablehead, #f8f2e4);
+  border-radius: var(--radius-18, 18px);
+  text-align: left;
+}
+.invite-record-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-meta);
+}
+.invite-record-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-primary);
+}
+.invite-record-sub {
+  font-size: 13px;
+  color: var(--text-meta);
+}
+.invite-record-tie {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-prose, #6b6455);
+}
+.invite-wrong-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-red-deep);
+}
 .invite-perms {
   display: flex;
   flex-direction: column;

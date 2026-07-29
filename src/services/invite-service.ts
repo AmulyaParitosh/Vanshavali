@@ -1,9 +1,10 @@
 import { nanoid } from "nanoid";
-import type { TreeInvite, InvitableTreeRole } from "../types/tree";
+import type { TreeInvite, InvitableTreeRole, InviteDetail } from "../types/tree";
 import { getPool, transaction } from "../repositories/db";
 import { InviteRepository } from "../repositories/InviteRepository";
 import { TreeRepository } from "../repositories/TreeRepository";
 import { UserRepository } from "../repositories/UserRepository";
+import { PersonRepository } from "../repositories/PersonRepository";
 import { MembershipRepository } from "../repositories/MembershipRepository";
 import { requireOwner } from "./authz";
 import { HttpError } from "../lib/api";
@@ -52,6 +53,68 @@ export async function createInvite(
   } catch (error) {
     return { invite, emailError: error instanceof Error ? error.message : "Email send failed" };
   }
+}
+
+/**
+ * Public invite detail (Spec 04 a1) — legible from the token alone, before any
+ * sign-in. Exposes the tree summary + the offered record + the role, and nothing
+ * else. An expired-by-TTL pending invite is marked expired here too. Never throws
+ * a 404: a missing/expired/revoked token resolves to a status the card explains.
+ */
+export async function getInviteDetail(inviteId: string): Promise<InviteDetail> {
+  const db = getPool();
+  const invite = await InviteRepository.find(db, inviteId);
+  if (!invite) return { status: "not_found", inviteId };
+
+  let raw = invite.status;
+  if (raw === "pending" && invite.expiresAt && invite.expiresAt < Date.now()) {
+    await InviteRepository.updateStatus(db, inviteId, "expired");
+    raw = "expired";
+  }
+  const status: InviteDetail["status"] =
+    raw === "pending"
+      ? "valid"
+      : raw === "accepted"
+        ? "accepted"
+        : raw === "revoked"
+          ? "revoked"
+          : "expired";
+
+  const tree = await TreeRepository.findMeta(db, invite.treeId);
+  const inviter = await UserRepository.find(db, invite.invitedBy);
+  const people = await PersonRepository.listByTree(db, invite.treeId);
+
+  let offered: InviteDetail["offered"];
+  if (invite.personId) {
+    const p = people.find((pp) => pp.id === invite.personId);
+    if (p) {
+      const birth = (p.events ?? []).find((e) => /birth|born/i.test(e.type));
+      offered = {
+        name: p.name.official_name,
+        ...(birth?.date?.match(/\d{4}/)?.[0] ? { birthYear: birth.date.match(/\d{4}/)![0] } : {}),
+        ...(birth?.place ? { birthPlace: birth.place } : {}),
+      };
+    }
+  }
+
+  return {
+    status,
+    inviteId,
+    email: invite.email,
+    role: invite.role,
+    inviterName: inviter?.name || inviter?.email || "A family member",
+    ...(tree
+      ? {
+          tree: {
+            id: tree.id,
+            name: tree.name,
+            ...(tree.place ? { place: tree.place } : {}),
+            personCount: people.length,
+          },
+        }
+      : {}),
+    ...(offered ? { offered } : {}),
+  };
 }
 
 export async function listInvites(treeId: string, actorUid: string): Promise<TreeInvite[]> {
@@ -107,6 +170,23 @@ export async function acceptInvite(
   await transaction(async (tx) => {
     await UserRepository.ensure(tx, callerUid, callerEmail);
     await MembershipRepository.insert(tx, invite.treeId, callerUid, invite.role);
+    // Claim the offered record so they land on their own branch (Spec 04 f4).
+    // Only in the no-collision case: if the user already has a record elsewhere,
+    // becoming one requires an explicit Yes (Spec 04 a4) — handled separately.
+    if (invite.personId) {
+      const existing = await PersonRepository.listByUser(tx, callerUid);
+      if (existing.length === 0) {
+        const linked = await PersonRepository.linkUser(
+          tx,
+          invite.treeId,
+          invite.personId,
+          callerUid
+        );
+        if (linked) {
+          await MembershipRepository.setPersonId(tx, invite.treeId, callerUid, invite.personId);
+        }
+      }
+    }
     await InviteRepository.updateStatus(tx, inviteId, "accepted");
   });
   return { treeId: invite.treeId, role: invite.role };
