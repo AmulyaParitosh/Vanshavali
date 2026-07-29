@@ -748,3 +748,26 @@ Coverage (repo owner/editor/viewer = keeper/write/read):
 
 - duplicate guard (C) · shared inspector hosted in place (D) · acceptance sweep (E). Remaining Wave 3:
   Spec 05 Tree canvas + Spec 08 Households.
+
+---
+
+## WAVE 3 — Tree canvas (Spec 05) — plan + receipts
+
+Spec 05 distilled at `design-specs/_SPEC-05.md` (10 acceptances; 6 major divergences from the current
+D3+React canvas). Sub-units: T-A geometry · T-B node redesign (couple pill, lineage ring, labels,
+hover/open) · T-C orthogonal links · T-D centering + zoom clamp/Fit/LOD · T-E navigation layer
+(generation rail + keyboard a7, legend, attention filter a8, controls) · T-F acceptance a1–a10.
+
+### Wave 3 Tree T-A — geometry / generation rhythm — DONE
+
+spec: `_SPEC-05.md` a6/g6 — rows at 24 + n × 222
+files: src/constants (TREE_CONFIG NODE_HEIGHT 240→222, + GEN_TOP 24); src/components/tree/
+useTreeLayout.ts (extracted pure computeTreeLayout — offsets every node.y by GEN_TOP so generations
+land at 24 / 246 / 468 / 690)
+tests: tests/components/tree/useTreeLayout.test.ts — 2 (generation pitch = 24 + n×222; siblings share
+a row, spread horizontally). record-panel read-mode 6/6 still green (canvas navigation unaffected).
+decisions: kept d3.tree nodeSize for the horizontal packing; the fixed generation pitch (a6) is the
+height + a whole-tree +24 shift, both pure + unit-tested. Node dimensions (couple 170×90, single 90px,
+portrait 58/ring 3px) were already in TREE_CONFIG from earlier work — T-B renders them to spec.
+deviations: links still bezier (T-C), centering still on root not the viewer's household (T-D), no nav
+layer yet (T-E). Node visuals (ring colour by lineageSide, label offset, "· you", hover-no-scale) = T-B.

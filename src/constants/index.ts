@@ -42,9 +42,11 @@ export const SUGGESTION_STATUS = {
 } as const;
 
 export const TREE_CONFIG = {
-  // d3.tree nodeSize — the layout grid each node/couple is allotted.
+  // d3.tree nodeSize — the layout grid each node/couple is allotted. Spec 05 g6:
+  // generation rows sit at y = GEN_TOP + n × NODE_HEIGHT (24, 246, 468, 690…).
   NODE_WIDTH: 230,
-  NODE_HEIGHT: 240,
+  NODE_HEIGHT: 222,
+  GEN_TOP: 24,
   // §07: portrait = 78px painted-ring art box → 58px circle (radius 29), 3px ring.
   NODE_RADIUS: 29,
   ART_BOX: 78,
