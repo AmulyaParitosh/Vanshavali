@@ -10,6 +10,8 @@ import { canEdit as canEditRole, canInvite } from "../../../../lib/access";
 import { INVITABLE_ROLES, TREE_ROLES } from "../../../../constants";
 import { portraitTint, personInitials } from "../../../../utils/portrait";
 import { generationMap, roman, bornInLine } from "../../../../lib/generations";
+import { GraphManager } from "../../../../lib/graph/GraphManager";
+import { describeRelation } from "../../../../lib/lineage";
 import type { Person } from "../../../../types/person";
 import type {
   TreeMembership,
@@ -18,7 +20,7 @@ import type {
   TreeRole,
 } from "../../../../types/tree";
 
-/** Access-chip presentation for a per-tree role. */
+/** Access-chip presentation for a per-tree role (repo owner/editor/viewer = keeper/write/read). */
 const ROLE_CHIP: Record<TreeRole, { label: string; cls: string }> = {
   owner: { label: "Keeper", cls: "chip--keeper" },
   editor: { label: "Write", cls: "chip--write" },
@@ -27,16 +29,40 @@ const ROLE_CHIP: Record<TreeRole, { label: string; cls: string }> = {
 
 const birthDate = (p: Person) => p.events?.find((e) => /birth|born/i.test(e.type))?.date;
 
+/** A birth instant for sorting; undated people sort last within their generation. */
+function birthValue(p: Person): number {
+  const d = birthDate(p);
+  const t = d ? Date.parse(d) : NaN;
+  return Number.isNaN(t) ? Number.POSITIVE_INFINITY : t;
+}
+
+/** Relative "Updated" time (Spec 06: `2 mo ago`, `1 h ago`, `—`). */
+function relativeTime(ms?: number): string {
+  if (!ms) return "—";
+  const secs = Math.max(0, (Date.now() - ms) / 1000);
+  const mins = secs / 60;
+  const hrs = mins / 60;
+  const days = hrs / 24;
+  if (secs < 60) return "just now";
+  if (mins < 60) return `${Math.floor(mins)} min ago`;
+  if (hrs < 24) return `${Math.floor(hrs)} h ago`;
+  if (days < 7) return `${Math.floor(days)} d ago`;
+  if (days < 35) return `${Math.floor(days / 7)} w ago`;
+  if (days < 365) return `${Math.floor(days / 30)} mo ago`;
+  return `${Math.floor(days / 365)} y ago`;
+}
+
 /**
- * The Members page — the mockup's one surface for people, access and
- * invitations (§2/§3). Every person in the record is a row; the "May" column
- * shows and (for the keeper) changes access. Email invitations for anyone who
- * should get an account are managed below.
+ * The Members page (Spec 06) — the ONE list of everyone in the record. Access is
+ * a column ("May") in this list, read by everyone; roles are only ever changed in
+ * the record panel (a3), never from the table. Every row opens that shared
+ * inspector. Rows are ordered by generation then birth order, never alphabetically
+ * (a10).
  */
 export default function MembersPage() {
   const params = useParams<{ id: string }>();
   const treeId = params?.id ?? null;
-  const { dataProvider, membership, treeData, refreshNonce } = useAppContext();
+  const { dataProvider, membership, treeData, refreshNonce, user } = useAppContext();
   const toast = useToast();
 
   const [members, setMembers] = useState<TreeMembership[]>([]);
@@ -65,46 +91,41 @@ export default function MembersPage() {
   const families = useMemo(() => treeData?.families ?? [], [treeData]);
   const gens = useMemo(() => generationMap(people, families), [people, families]);
   const born = useMemo(() => bornInLine(people, families), [people, families]);
+  const gm = useMemo(() => new GraphManager(people, families), [people, families]);
+  const viewerPersonId = useMemo(
+    () => people.find((p) => !!user && p.userId === user.uid)?.id ?? null,
+    [people, user]
+  );
   const membershipByPerson = useMemo(() => {
     const m = new Map<string, TreeMembership>();
     for (const mem of members) if (mem.personId) m.set(mem.personId, mem);
     return m;
   }, [members]);
 
+  // Generation, then birth order, then a stable original index — never alphabetical (a10).
+  // Search filters but does not re-sort (a9); it matches the official name + every alias.
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const index = new Map(people.map((p, i) => [p.id, i]));
     const list = q
-      ? people.filter((p) => {
-          const hay = [p.name.official_name, ...(p.name.aliases ?? [])].join(" ").toLowerCase();
-          return hay.includes(q);
-        })
+      ? people.filter((p) =>
+          [p.name.official_name, ...(p.name.aliases ?? [])].join(" ").toLowerCase().includes(q)
+        )
       : people;
-    return [...list].sort((a, b) => (gens.get(a.id) ?? 99) - (gens.get(b.id) ?? 99));
+    return [...list].sort((a, b) => {
+      const ga = gens.get(a.id) ?? 99;
+      const gb = gens.get(b.id) ?? 99;
+      if (ga !== gb) return ga - gb;
+      const ba = birthValue(a);
+      const bb = birthValue(b);
+      if (ba !== bb) return ba - bb;
+      return (index.get(a.id) ?? 0) - (index.get(b.id) ?? 0);
+    });
   }, [people, query, gens]);
 
   const pendingInvites = invites.filter((i) => i.status === "pending");
 
   if (!treeId) return <Loading />;
-
-  const handleRoleChange = async (uid: string, newRole: TreeRole) => {
-    try {
-      await dataProvider.updateMemberRole(treeId, uid, newRole);
-      toast.success("Access updated");
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Update failed");
-    }
-  };
-
-  const handleRemove = (uid: string) => {
-    toast.confirm("Remove this person's access to the tree?", async () => {
-      try {
-        await dataProvider.removeMember(treeId, uid);
-        toast.success("Access removed");
-      } catch (error: unknown) {
-        toast.error(error instanceof Error ? error.message : "Removal failed");
-      }
-    });
-  };
 
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,22 +151,27 @@ export default function MembersPage() {
     }
   };
 
+  const withAccount = members.length;
+  const sub =
+    `${people.length} in the record · ${withAccount} with an account` +
+    (pendingInvites.length > 0
+      ? ` · ${pendingInvites.length} invitation${pendingInvites.length === 1 ? "" : "s"} waiting`
+      : "");
+
   return (
     <div className="records-page">
       <header className="records-header">
         <div>
           <h1>Members</h1>
-          <div className="records-subtitle">
-            {people.length} in the record · {members.length} with an account
-            {pendingInvites.length > 0 &&
-              ` · ${pendingInvites.length} invitation${pendingInvites.length === 1 ? "" : "s"} waiting`}
-          </div>
+          <div className="records-subtitle">{sub}</div>
         </div>
         <div className="records-header-spacer" />
-        {canAdd && (
+        {canAdd ? (
           <Link href={`/tree/${treeId}/people`} className="btn btn-primary">
             + Add person
           </Link>
+        ) : (
+          <span className="records-reader-note">Ask a keeper to add someone</span>
         )}
       </header>
 
@@ -175,82 +201,77 @@ export default function MembersPage() {
 
       <div className="records-table">
         <div className="records-thead">
-          <span style={{ width: 40, flexShrink: 0 }} />
-          <span style={{ flex: 1, minWidth: 0 }}>Name</span>
+          <span className="records-col-portrait" />
+          <span className="records-col-name">Name</span>
           <span className="records-col-gen">Gen</span>
           <span className="records-col-born">Born</span>
+          <span className="records-col-relation">Relation to you</span>
+          <span className="records-col-updated">Updated</span>
           <span className="records-col-may">May</span>
+          <span className="records-col-overflow" />
         </div>
         {rows.length === 0 ? (
-          <div className="records-empty">No one matches “{query}”.</div>
+          <div className="records-empty">Nobody here by that name</div>
         ) : (
           rows.map((p) => {
             const mem = membershipByPerson.get(p.id);
-            const bornDate = birthDate(p);
+            const bornOn = birthDate(p);
             const ring = born.has(p.id) ? "var(--ring-born)" : "var(--ring-married)";
+            const isYou = viewerPersonId === p.id;
+            const relation = isYou
+              ? "you"
+              : viewerPersonId
+                ? describeRelation(viewerPersonId, p.id, gm)
+                : null;
             return (
-              <div key={p.id} className="records-row">
+              <Link
+                key={p.id}
+                href={`/tree/${treeId}?person=${encodeURIComponent(p.id)}`}
+                className="records-row"
+              >
                 <span
-                  className="records-avatar"
+                  className="records-avatar records-col-portrait"
                   style={{ background: portraitTint(p.id), border: `2px solid ${ring}` }}
                 >
                   {personInitials(p.name.official_name)}
                 </span>
-                <Link
-                  href={`/tree/${treeId}?person=${encodeURIComponent(p.id)}`}
-                  className="records-name"
-                >
+                <span className="records-name records-col-name">
                   <span className="records-name-primary">{p.name.official_name}</span>
                   {p.name.aliases && p.name.aliases.length > 0 && (
                     <span className="records-name-secondary">{p.name.aliases.join(" · ")}</span>
                   )}
-                </Link>
-                <span className="records-col-gen">{roman(gens.get(p.id))}</span>
-                <span className={`records-col-born${bornDate ? "" : " absent"}`}>
-                  {bornDate ?? "no date recorded"}
                 </span>
+                <span className="records-col-gen">{roman(gens.get(p.id))}</span>
+                <span className={`records-col-born${bornOn ? "" : " absent"}`}>
+                  {bornOn ?? "no date recorded"}
+                </span>
+                <span className={`records-col-relation${isYou ? " you" : relation ? "" : " none"}`}>
+                  {relation ?? "not connected yet"}
+                </span>
+                <span className="records-col-updated">{relativeTime(p.updatedAt)}</span>
                 <span className="records-col-may">
                   {mem ? (
-                    ownerCanManage && mem.role !== "owner" ? (
-                      <>
-                        <select
-                          className="records-select"
-                          value={mem.role}
-                          onChange={(e) => handleRoleChange(mem.uid, e.target.value as TreeRole)}
-                          aria-label={`Access for ${p.name.official_name}`}
-                        >
-                          <option value={TREE_ROLES.EDITOR}>Write</option>
-                          <option value={TREE_ROLES.VIEWER}>Read</option>
-                        </select>
-                        <button
-                          type="button"
-                          className="records-remove"
-                          onClick={() => handleRemove(mem.uid)}
-                          aria-label={`Remove ${p.name.official_name}'s access`}
-                        >
-                          ✕
-                        </button>
-                      </>
-                    ) : (
-                      <span className={`chip ${ROLE_CHIP[mem.role].cls}`}>
-                        {ROLE_CHIP[mem.role].label}
-                      </span>
-                    )
+                    <span className={`chip ${ROLE_CHIP[mem.role].cls}`}>
+                      {ROLE_CHIP[mem.role].label}
+                    </span>
                   ) : (
                     <span className="records-noaccount">no account</span>
                   )}
                 </span>
-              </div>
+                <span className="records-col-overflow" aria-hidden="true">
+                  ⋯
+                </span>
+              </Link>
             );
           })
         )}
       </div>
 
       <p className="records-note">
-        Everyone can read the <strong>May</strong> column — a relative should see who can change the
-        record.{" "}
+        Everyone can read the <strong>May</strong> column — a relative should be able to see who can
+        change the record.{" "}
         {ownerCanManage
-          ? "As keeper, you change a role from its dropdown."
+          ? "Only you, as keeper, get the controls — open a record to change a role or invite."
           : "Only the keeper can change access."}
       </p>
 

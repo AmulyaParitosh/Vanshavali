@@ -93,12 +93,13 @@ describe("rowToPerson / personToRow round-trip", () => {
     root: true,
     userId: "uid_alice",
     version: 3,
+    updatedAt: new Date("2026-06-16T12:00:00.000Z").getTime(),
   };
 
   it("round-trips a fully-populated Person without loss", () => {
     const row = personToRow(fullPerson, "tree_main");
-    // version is a row column personToRow drops (it isn't part of the data blob);
-    // the DB supplies it, so reconstruct it here the way the repository would.
+    // version + updated_at are row columns personToRow drops (not part of the data
+    // blob); the DB supplies them, so reconstruct them here as the repository would.
     const reconstructed = rowToPerson({
       ...row,
       version: 3,

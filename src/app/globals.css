@@ -3587,7 +3587,7 @@ main {
   color: var(--text-primary);
 }
 .records-col-born {
-  width: 120px;
+  width: 112px;
   flex-shrink: 0;
   font-size: 14px;
   color: var(--text-strong);
@@ -3595,12 +3595,62 @@ main {
 .records-col-born.absent {
   color: var(--text-absent);
 }
+/* Portrait + Name column anchors (header alignment + the flexible name column). */
+.records-col-portrait {
+  width: 40px;
+  flex-shrink: 0;
+}
+.records-col-name {
+  flex: 1;
+  min-width: 0;
+}
+/* Relation to you (Spec 06): own row reads "you" in red; an uncomputable path
+   reads "not connected yet" in the faintest ink — never blank, never a guess. */
+.records-col-relation {
+  width: 150px;
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.records-col-relation.you {
+  color: var(--color-red);
+  font-weight: 600;
+}
+.records-col-relation.none {
+  color: var(--text-absent);
+}
+.records-col-updated {
+  width: 82px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-meta);
+}
+.records-col-overflow {
+  width: 22px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 15px;
+  color: var(--text-meta);
+}
 .records-col-may {
-  width: 132px;
+  width: 112px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+/* The whole row is a link to the record; strip the default anchor styling. */
+.records-row {
+  text-decoration: none;
+  color: inherit;
+}
+/* The reader's stand-in for "+ Add person" (a5). */
+.records-reader-note {
+  font-size: 13px;
+  color: var(--text-meta);
 }
 .records-noaccount {
   font-size: 13px;

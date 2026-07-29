@@ -586,3 +586,44 @@ Coverage of a1..a10 (repo roles owner/editor/viewer = keeper/write/read):
 **WAVE 2 (record panel, Spec 07) COMPLETE** — read (A), access (B), edit-in-place (C), write infra
 (D1 guard, D2 toast+undo, D3a role, D3b remove, D4 patch+conflict), acceptance map (E). One shared
 inspector + RecordEditor; per-record optimistic-locked writes with three-way conflict resolution.
+
+---
+
+## WAVE 3 — Tree / Members / Households (plan + receipts)
+
+Specs: Spec 05 Tree, Spec 06 Members (distilled `design-specs/_SPEC-06.md`), Spec 08 Households.
+Members sub-units: M-A table · M-B invite panel · M-C add-person + duplicate guard · M-D in-place
+inspector host + Q13 removeMember fix · M-E acceptance a1–a10.
+
+### Wave 3 Members M-A — the list/table to Spec 06 — DONE
+
+spec: `_SPEC-06.md` — columns, ordering, May column, search; a3/a9/a10
+files: src/app/tree/[id]/members/page.tsx (rewrite); src/types/person.ts + src/repositories/mappers.ts
+(Person.updatedAt, mapped from row, stripped from stored data like version); src/app/globals.css
+(.records-col-portrait/-name/-relation[.you/.none]/-updated/-overflow; born 112, may 112; row-as-link
+reset; .records-reader-note)
+tests: tests/e2e/members.spec.ts — 6 (column set; generation-not-alphabetical a10; May display + no
+inline <select> a3; row links to ?person= + opens the record a1; search by name/alias, stable, empty
+state a9). Vitest mappers 15 (updatedAt round-trip).
+decisions:
+
+- Columns to spec: portrait(40) · Name(flex, official + aliases) · Gen(46 roman) · Born(112, "no date
+  recorded" faint when absent) · Relation to you(150 — "you" red / describeRelation phrase / "not
+  connected yet" faint, edge e5) · Updated(82 relative) · May(112) · ⋯(22). Whole row is the link to
+  the record; only interactive May controls (M-B) will stop propagation.
+- Ordering: generation, then birth instant (Date.parse of the birth event; undated sort last within
+  the generation), then a stable original index — never alphabetical (a10). Search filters the same
+  list without re-sorting and matches official name + every alias (a9); empty = "Nobody here by that
+  name".
+- a3: the inline role <select> + inline Remove are GONE. The May column only DISPLAYS the chip
+  (Keeper/Write/Read) or lowercase "no account"; roles change only in the record panel. Row click
+  opens that panel via ?person= (in-place hosting on the Members route = M-D).
+  deviations / interim (documented, with a home):
+- The per-row keeper "Invite" pill + the "Invited" chip are NOT here yet: the repo's TreeInvite is
+  email-based with no personId, so an invite can't be tied to a row. Both land in M-B (invite panel),
+  which also moves invites off the temporary bottom form now kept for function.
+- "+ Add person" still links to the legacy /people editor; the relationship-first add panel +
+  duplicate guard is M-C. Readers correctly see "Ask a keeper to add someone" (a5) already.
+- In-place inspector on the Members route (a1/a2 "never changes the route") = M-D; today a row
+  navigates to the canvas ?person=. The record panel it lands on already carries the keeper role
+  radio + Remove access (Wave 2 D3), so a3's write path is live.

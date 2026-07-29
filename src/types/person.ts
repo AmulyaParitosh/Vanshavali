@@ -26,6 +26,11 @@ export interface Person {
    * on drafts that never came from the server.
    */
   version?: number;
+  /**
+   * Row `updated_at` in epoch ms (not part of the stored `data`). Powers the
+   * Members list's "Updated" column (Spec 06). Absent on drafts.
+   */
+  updatedAt?: number;
 }
 
 /**

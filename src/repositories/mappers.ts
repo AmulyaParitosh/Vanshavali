@@ -126,6 +126,7 @@ export function rowToPerson(row: PersonRow): Person {
     id: row.id,
     ...(row.user_id ? { userId: row.user_id } : {}),
     version: row.version,
+    updatedAt: toMillis(row.updated_at),
   };
 }
 
@@ -169,8 +170,8 @@ export function personToRow(
   person: Person,
   treeId: string
 ): Omit<PersonRow, "created_at" | "updated_at" | "version"> {
-  // version is a row column, never part of the stored data — strip it here.
-  const { id, userId, version: _version, ...rest } = person;
+  // version + updatedAt are row columns, never part of the stored data — strip them.
+  const { id, userId, version: _version, updatedAt: _updatedAt, ...rest } = person;
   return {
     id,
     tree_id: treeId,
