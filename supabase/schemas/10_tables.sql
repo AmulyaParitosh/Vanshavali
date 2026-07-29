@@ -58,6 +58,10 @@ create table families (
   husband_id  text references people (id) on delete set null,
   wife_id     text references people (id) on delete set null,
   children    text[] not null default '{}',
+  -- Marriage facts (Spec 08 / QUESTIONS Q11): free-form date string + place, both
+  -- optional. Read back as a prose sentence in the household editor.
+  marriage_date   text,
+  marriage_place  text,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );

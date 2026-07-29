@@ -90,7 +90,9 @@ change (add both name fields) + the person form + every display. **Deferred to a
 unit** (like one-record); until then surfaces show `official_name` as primary and no second script.
 Flagged so §3 isn't silently dropped. Best sequenced with the shared PersonForm (Wave 2/4).
 
-## Q11 — Marriage date/place not on `Family` — DEFERRED (additive)
+## Q11 — marriage date/place on Family — RESOLVED (Households H-A)
+
+**RESOLVED (Spec 08 H-A):** added `families.marriage_date` + `marriage_place` (nullable, migration 20260729142336) → `Family.marriage {date?, place?}` (free-form date string; precision deferred like the person date-precision). Mapper round-trips it; the household editor (H-C) reads it back as prose (a5).
 
 Spec Household has `marriage {value, precision, place}`; the repo's `Family` has only husband/wife/
 children. The record-panel prose ("Married X of Place in Year") and Households (Spec 08) need it.

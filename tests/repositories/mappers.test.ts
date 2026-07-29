@@ -178,12 +178,34 @@ describe("rowToFamily / familyToRow round-trip", () => {
       husband_id: null,
       wife_id: "p_w",
       children: [],
+      marriage_date: null,
+      marriage_place: null,
       created_at: "2026-06-16T12:00:00.000Z",
       updated_at: "2026-06-16T12:00:00.000Z",
     };
     const family = rowToFamily(row);
     expect(family).not.toHaveProperty("husband");
     expect(family.wife).toBe("p_w");
+    expect(family).not.toHaveProperty("marriage");
+  });
+
+  it("round-trips marriage facts (Spec 08 / Q11)", () => {
+    const married: Family = {
+      id: "f_m",
+      husband: "p_h",
+      wife: "p_w",
+      children: [],
+      marriage: { date: "1983", place: "Darbhanga" },
+    };
+    const row = familyToRow(married, "tree_main");
+    expect(row.marriage_date).toBe("1983");
+    expect(row.marriage_place).toBe("Darbhanga");
+    const back = rowToFamily({
+      ...row,
+      created_at: "2026-06-16T12:00:00.000Z",
+      updated_at: "2026-06-16T12:00:00.000Z",
+    });
+    expect(back.marriage).toEqual({ date: "1983", place: "Darbhanga" });
   });
 
   it("rowToFamily tolerates null children array from a partial row by coercing to []", () => {

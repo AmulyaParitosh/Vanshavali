@@ -27,6 +27,8 @@ export const FamilyRepository = {
       row.husband_id,
       row.wife_id,
       row.children,
+      row.marriage_date,
+      row.marriage_place,
     ]);
   },
 

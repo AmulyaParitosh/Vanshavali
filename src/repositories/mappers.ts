@@ -65,6 +65,8 @@ export interface FamilyRow {
   husband_id: string | null;
   wife_id: string | null;
   children: string[];
+  marriage_date: string | null;
+  marriage_place: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -132,11 +134,16 @@ export function rowToPerson(row: PersonRow): Person {
 }
 
 export function rowToFamily(row: FamilyRow): Family {
+  const marriage = {
+    ...(row.marriage_date ? { date: row.marriage_date } : {}),
+    ...(row.marriage_place ? { place: row.marriage_place } : {}),
+  };
   return {
     id: row.id,
     ...(row.husband_id ? { husband: row.husband_id } : {}),
     ...(row.wife_id ? { wife: row.wife_id } : {}),
     children: row.children ?? [],
+    ...(Object.keys(marriage).length ? { marriage } : {}),
   };
 }
 
@@ -192,6 +199,8 @@ export function familyToRow(
     husband_id: family.husband ?? null,
     wife_id: family.wife ?? null,
     children: family.children ?? [],
+    marriage_date: family.marriage?.date ?? null,
+    marriage_place: family.marriage?.place ?? null,
   };
 }
 

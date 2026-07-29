@@ -894,3 +894,26 @@ Coverage:
 threads, meaning-coloured rings, name+year+you labels, viewer-framed at 1× with clamped zoom + Fit +
 LOD, legend, the keyboard generation rail, and the dim-not-hide attention filter. Remaining Wave 3:
 Spec 08 Households. Then Waves 4–7.
+
+---
+
+## WAVE 3 — Households (Spec 08) — plan + receipts
+
+Spec 08 distilled at `design-specs/_SPEC-08.md` (9 acceptances). Sub-units: H-A marriage-facts schema
+(Q11) · H-B list/cards (de-gendered, Married column, sort) · H-C household editor (de-gendered slots,
+marriage facts + prose a5, children reorder drag+keyboard a3, remove a4, Save-when-dirty, read-only a9)
+· H-D delete consequence dialog (a6) + save re-lays out (a7) · H-E acceptance a1–a9.
+
+### Wave 3 Households H-A — marriage-facts schema (Q11) — DONE
+
+spec: `_SPEC-08.md` a5; QUESTIONS Q11
+files: supabase/schemas/10_tables.sql (+ families.marriage_date, marriage_place) + migration
+20260729142336_add_marriage_facts.sql; src/types/family.ts (Marriage {date?,place?}; Family.marriage?);
+src/repositories/mappers.ts (FamilyRow + rowToFamily/familyToRow); family/{upsert,list-by-tree}.sql +
+FamilyRepository.upsert bind marriage_date/place
+tests: tests/repositories/mappers.test.ts — 16 (+1 marriage round-trip; the null-marriage case omits the
+key). Vitest 177.
+decisions: marriage = free-form `date` string + `place`, both optional (precision deferred like the
+person date-precision). Columns are nullable + additive (data-preserving migrate). Resolves Q11.
+deviations: `lineageSide` stays derived (bornInLine), not stored — the spec's "Swap sides" control is
+deferred (noted for H-C). List/editor UI = H-B..H-E.
