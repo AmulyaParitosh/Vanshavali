@@ -1504,3 +1504,30 @@ Vitest 203/203.
 deviations (IN-B/IN-C): the collision "Is this you?" step 2 + become-one overlay on explicit Yes +
 "Someone else · add me separately" read path (a3/a4/a5-collision/a6/a10); the Welcome step 3 centred on
 their household (a9). offered block omits generation/parents (needs the graph) — name + birth shown.
+
+### Wave 5 Invitation IN-B — the become-one merge (a3, a4, a5, a6, a10) — DONE
+
+spec: `_SPEC-04.md` step 2 + f6/f7 + a3/a4/a5/a6/a10
+files: acceptInvite (invite-service.ts) gains a `mode` + returns `{status, treeId, role}`. Collision =
+invite has a placeholder AND the invitee already has a record elsewhere. Collision + NO mode →
+`needs_decision`, writing NOTHING (a4). `become_one` → mergePlaceholder overlays the user's own facts
+onto the placeholder IN PLACE (keeps the row id → every household/sibling/event link stays intact, no
+re-point, no second row; the user's facts win) + links it (a5). `separate` → a `viewer` membership +
+the user's own record placed BESIDE as a fresh row, the placeholder untouched (a6). No collision →
+claim the offered record (f4, a3 — most invitations skip step 2). accept route threads `mode`;
+InvitationProvider.acceptInvite + ApiDataProvider return the status. src/app/invite/[id]/page.tsx:
+"Join" calls accept() → on `needs_decision` renders step 2 "Is this you?" (the become-one card — old
+record "will stop existing" / your red-bordered record "follows you into every tree" / three ✓
+consequences / "Yes — that's me, use my record" → become_one / "Someone else · add me separately" →
+separate). The word "merge" appears in NO interface text (a10) — the verb is "become one" (only a code
+comment + a CSS class mention it). globals.css: .invite-record--old/--yours, .invite-becomeone-arrow.
+tests: tests/services/invite-accept.test.ts — 4 (no-collision claim f4; collision+no-mode needs_decision
+writes nothing a4; become_one overlays onto the placeholder keeping its id + user facts win a5;
+separate → viewer membership + a NEW beside row, placeholder untouched a6). 4/4; invite e2e still 5/5;
+Vitest green (207).
+decisions: the repo's mergePlaceholder (keep-id + overlay) achieves a5's "one record, links intact"
+without the spec's literal delete+re-point — same user-visible outcome, safer (links can't break).
+Step-2 UI is driven by the accept endpoint's needs_decision (no separate collision-check endpoint).
+deviations: IN-C welcome step 3 (a9, canvas centred on the new member's household + suggestions) — the
+accept currently routes to /tree/[id] (first-run/tree view). Collision step-2 e2e is covered by the
+service unit tests (setting up a real cross-tree collision in-browser is heavy); step-2 copy is a10-clean.

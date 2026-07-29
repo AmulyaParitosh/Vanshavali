@@ -128,7 +128,16 @@ export interface InvitationProvider {
     role: InvitableTreeRole,
     personId?: string
   ): Promise<TreeInvite>;
-  acceptInvite(inviteId: string, uid: string): Promise<TreeMembership>;
+  /**
+   * Accept an invitation (Spec 04). Without a mode, a collision (the invitee
+   * already has a record) resolves to `needs_decision` and writes nothing (a4);
+   * `become_one` / `separate` resolve it. No collision → joins immediately.
+   */
+  acceptInvite(
+    inviteId: string,
+    uid: string,
+    mode?: "become_one" | "separate"
+  ): Promise<{ status: "joined" | "needs_decision"; treeId: string; role: string }>;
   revokeInvite(treeId: string, inviteId: string): Promise<void>;
   subscribeToInvites(treeId: string, callback: (invites: TreeInvite[]) => void): () => void;
   /** Public invite detail, legible from the token before sign-in (Spec 04 a1). */

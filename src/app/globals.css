@@ -5668,6 +5668,24 @@ main {
   line-height: 1.5;
   color: var(--color-red-deep);
 }
+/* Step 2 — become one (the surviving record is the red-bordered one). */
+.invite-record--old {
+  border: 1px solid var(--line-structure);
+  background: var(--surface-paper);
+}
+.invite-record--old .invite-record-sub {
+  color: var(--color-red-deep);
+}
+.invite-record--yours {
+  border: 1px solid var(--color-red);
+  background: var(--color-red-wash);
+}
+.invite-becomeone-arrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-meta);
+  text-align: center;
+}
 .invite-perms {
   display: flex;
   flex-direction: column;

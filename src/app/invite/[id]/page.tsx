@@ -26,6 +26,7 @@ export default function InvitePage() {
 
   const [detail, setDetail] = useState<InviteDetail | null>(null);
   const [accepting, setAccepting] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
   const next = inviteId ? `/invite/${inviteId}` : "/";
 
   useEffect(() => {
@@ -69,13 +70,19 @@ export default function InvitePage() {
   const wrongAccount = !!user && !emailMatches;
   const canWrite = detail.role === TREE_ROLES.EDITOR;
 
-  const accept = async () => {
+  const accept = async (mode?: "become_one" | "separate") => {
     if (!user) return;
     setAccepting(true);
     try {
-      const membership = await dataProvider.acceptInvite(inviteId, user.uid);
+      const res = await dataProvider.acceptInvite(inviteId, user.uid, mode);
+      if (res.status === "needs_decision") {
+        // The invitee already has a record — ask before becoming one (a4).
+        setStep(2);
+        setAccepting(false);
+        return;
+      }
       toast.success("You're in the family record");
-      router.replace(`/tree/${membership.treeId}`);
+      router.replace(`/tree/${res.treeId}`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Couldn't accept the invitation");
       setAccepting(false);
@@ -86,6 +93,91 @@ export default function InvitePage() {
     await authProvider.signOut();
     router.push(`/signin?next=${encodeURIComponent(next)}`);
   };
+
+  // Step 2 — "Is this you?" (only reached when the invitee already has a record).
+  // The verb is "become one"; the word "merge" appears nowhere (a10).
+  if (step === 2) {
+    return (
+      <div className="invite-screen">
+        <div className="invite-card">
+          <div className="invite-body">
+            <span className="eyebrow">One thing before you go in</span>
+            <h1>Is this you?</h1>
+            <p className="invite-lead">
+              {inviter} added {detail.offered?.name ?? "a relative"} to this tree before you had an
+              account. You already have your own record. If these are the same person, they become
+              one — you keep one record across every tree.
+            </p>
+
+            <div className="invite-record invite-record--old">
+              <span className="invite-record-name">{detail.offered?.name ?? "Their entry"}</span>
+              <span className="invite-record-sub">will stop existing in this tree</span>
+            </div>
+            <div className="invite-becomeone-arrow" aria-hidden="true">
+              replaced by ↓
+            </div>
+            <div className="invite-record invite-record--yours">
+              <span className="invite-record-name">
+                {user?.displayName || user?.email || "Your record"}
+              </span>
+              <span className="invite-record-sub">follows you into every tree</span>
+            </div>
+
+            <div className="invite-perms">
+              <div className="invite-perm">
+                <span className="tick" aria-hidden="true">
+                  ✓
+                </span>
+                <span>
+                  The parents, siblings and household {inviter} linked move onto your record — their
+                  work isn&apos;t lost.
+                </span>
+              </div>
+              <div className="invite-perm">
+                <span className="tick" aria-hidden="true">
+                  ✓
+                </span>
+                <span>
+                  Your name, photograph and dates stay as you wrote them. Where the two disagree,
+                  yours wins.
+                </span>
+              </div>
+              <div className="invite-perm">
+                <span className="tick" aria-hidden="true">
+                  ✓
+                </span>
+                <span>Nobody ends up with two of you — in this tree or any other.</span>
+              </div>
+            </div>
+
+            <div className="invite-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-block"
+                onClick={() => accept("become_one")}
+                disabled={accepting}
+              >
+                {accepting ? "Joining…" : "Yes — that's me, use my record"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-block"
+                onClick={() => accept("separate")}
+                disabled={accepting}
+              >
+                Someone else · add me separately
+              </button>
+            </div>
+
+            <p className="invite-note">
+              If it isn&apos;t you, {inviter} keeps their entry and we place you beside it as a new
+              relative. You go in as a reader meanwhile — nothing is lost either way.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="invite-screen">
@@ -167,7 +259,7 @@ export default function InvitePage() {
               <button
                 type="button"
                 className="btn btn-primary btn-block"
-                onClick={accept}
+                onClick={() => accept()}
                 disabled={accepting}
               >
                 {accepting ? "Joining…" : `Join ${detail.tree?.name ?? "the record"}`}

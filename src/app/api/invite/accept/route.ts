@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handle, requireCaller, HttpError } from "../../../../lib/api";
-import { acceptInvite } from "../../../../services/invite-service";
+import { acceptInvite, type AcceptMode } from "../../../../services/invite-service";
 
 /**
  * POST /api/invite/accept — accept a pending invitation. Validates the invite
@@ -14,9 +14,16 @@ import { acceptInvite } from "../../../../services/invite-service";
 export async function POST(request: NextRequest) {
   return handle(async () => {
     const caller = await requireCaller(request);
-    const body = (await request.json().catch(() => null)) as { inviteId?: unknown } | null;
+    const body = (await request.json().catch(() => null)) as {
+      inviteId?: unknown;
+      mode?: unknown;
+    } | null;
     const inviteId = typeof body?.inviteId === "string" ? body.inviteId : null;
     if (!inviteId) throw new HttpError("inviteId is required", 400);
-    return NextResponse.json(await acceptInvite(inviteId, caller.uid, caller.email));
+    const mode =
+      body?.mode === "become_one" || body?.mode === "separate"
+        ? (body.mode as AcceptMode)
+        : undefined;
+    return NextResponse.json(await acceptInvite(inviteId, caller.uid, caller.email, mode));
   });
 }

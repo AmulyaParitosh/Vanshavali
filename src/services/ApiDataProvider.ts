@@ -234,21 +234,16 @@ export class ApiDataProvider implements DataProvider {
     return invite;
   }
 
-  async acceptInvite(inviteId: string, _uid: string): Promise<TreeMembership> {
-    const { data: sessionData } = await this.client.auth.getSession();
-    const uid = sessionData.session?.user.id;
-    if (!uid) throw new Error("Sign in to accept this invite.");
-    const body = await authedFetch<{ treeId: string; role: string }>(
+  async acceptInvite(
+    inviteId: string,
+    _uid: string,
+    mode?: "become_one" | "separate"
+  ): Promise<{ status: "joined" | "needs_decision"; treeId: string; role: string }> {
+    return authedFetch<{ status: "joined" | "needs_decision"; treeId: string; role: string }>(
       this.client,
       "/api/invite/accept",
-      { method: "POST", body: { inviteId } }
+      { method: "POST", body: mode ? { inviteId, mode } : { inviteId } }
     );
-    return {
-      treeId: body.treeId,
-      uid,
-      role: body.role as TreeMembership["role"],
-      joinedAt: Date.now(),
-    };
   }
 
   async revokeInvite(treeId: string, inviteId: string): Promise<void> {

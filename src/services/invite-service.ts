@@ -1,14 +1,24 @@
 import { nanoid } from "nanoid";
 import type { TreeInvite, InvitableTreeRole, InviteDetail } from "../types/tree";
+import type { Person } from "../types/person";
 import { getPool, transaction } from "../repositories/db";
 import { InviteRepository } from "../repositories/InviteRepository";
 import { TreeRepository } from "../repositories/TreeRepository";
 import { UserRepository } from "../repositories/UserRepository";
 import { PersonRepository } from "../repositories/PersonRepository";
 import { MembershipRepository } from "../repositories/MembershipRepository";
+import { ownFactsOf, applyOwnFacts, mergePlaceholder } from "../lib/onerecord";
 import { requireOwner } from "./authz";
 import { HttpError } from "../lib/api";
 import { sendInviteEmail } from "../lib/resend";
+
+/** How a collision is resolved on accept (Spec 04 step 2). */
+export type AcceptMode = "become_one" | "separate";
+export interface AcceptResult {
+  status: "joined" | "needs_decision";
+  treeId: string;
+  role: string;
+}
 
 const INVITE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -142,8 +152,9 @@ export async function revokeInvite(
 export async function acceptInvite(
   inviteId: string,
   callerUid: string,
-  callerEmail: string | null
-): Promise<{ treeId: string; role: string }> {
+  callerEmail: string | null,
+  mode?: AcceptMode
+): Promise<AcceptResult> {
   if (!callerEmail) {
     throw new HttpError("Your account doesn't have a verified email yet.", 400);
   }
@@ -161,33 +172,56 @@ export async function acceptInvite(
   }
 
   // Idempotent: if they're already a member, just mark the invite accepted.
-  const existing = await MembershipRepository.find(db, invite.treeId, callerUid);
-  if (existing) {
+  const member = await MembershipRepository.find(db, invite.treeId, callerUid);
+  if (member) {
     await InviteRepository.updateStatus(db, inviteId, "accepted");
-    return { treeId: existing.treeId, role: existing.role };
+    return { status: "joined", treeId: member.treeId, role: member.role };
   }
+
+  // Collision: the invitee already has a record elsewhere and the invite offers a
+  // placeholder. Becoming one (or not) is their call — write NOTHING until they
+  // decide (a4). Most invitations have no collision and skip this (a3).
+  const own = invite.personId ? await PersonRepository.listByUser(db, callerUid) : [];
+  const collision = !!invite.personId && own.length > 0;
+  if (collision && !mode) {
+    return { status: "needs_decision", treeId: invite.treeId, role: invite.role };
+  }
+
+  const role = collision && mode === "separate" ? "viewer" : invite.role;
 
   await transaction(async (tx) => {
     await UserRepository.ensure(tx, callerUid, callerEmail);
-    await MembershipRepository.insert(tx, invite.treeId, callerUid, invite.role);
-    // Claim the offered record so they land on their own branch (Spec 04 f4).
-    // Only in the no-collision case: if the user already has a record elsewhere,
-    // becoming one requires an explicit Yes (Spec 04 a4) — handled separately.
-    if (invite.personId) {
-      const existing = await PersonRepository.listByUser(tx, callerUid);
-      if (existing.length === 0) {
-        const linked = await PersonRepository.linkUser(
-          tx,
-          invite.treeId,
-          invite.personId,
-          callerUid
-        );
-        if (linked) {
-          await MembershipRepository.setPersonId(tx, invite.treeId, callerUid, invite.personId);
-        }
+    await MembershipRepository.insert(tx, invite.treeId, callerUid, role);
+
+    if (invite.personId && collision && mode === "become_one") {
+      // Become one (a5): the user's own facts overlay the keeper's placeholder
+      // IN PLACE — the row keeps its id, so every household/sibling/event link
+      // stays intact (no re-point, no second row), and the user's facts win.
+      const placeholder = await PersonRepository.find(tx, invite.treeId, invite.personId);
+      if (placeholder) {
+        const merged = mergePlaceholder(placeholder, ownFactsOf(own[0]!.person), callerUid);
+        await PersonRepository.upsert(tx, invite.treeId, merged);
+        await MembershipRepository.setPersonId(tx, invite.treeId, callerUid, invite.personId);
+      }
+    } else if (invite.personId && collision && mode === "separate") {
+      // Decline the match (a6): the placeholder is untouched; the user's own
+      // record is placed BESIDE it as a fresh row, linked to them, read-only.
+      const facts = ownFactsOf(own[0]!.person);
+      const beside = applyOwnFacts(
+        { id: `p_${nanoid(10)}`, userId: callerUid, name: facts.name, sex: facts.sex },
+        facts
+      );
+      await PersonRepository.upsert(tx, invite.treeId, beside);
+      await MembershipRepository.setPersonId(tx, invite.treeId, callerUid, beside.id);
+    } else if (invite.personId) {
+      // No collision: claim the offered record so they land on their branch (f4).
+      const linked = await PersonRepository.linkUser(tx, invite.treeId, invite.personId, callerUid);
+      if (linked) {
+        await MembershipRepository.setPersonId(tx, invite.treeId, callerUid, invite.personId);
       }
     }
+
     await InviteRepository.updateStatus(tx, inviteId, "accepted");
   });
-  return { treeId: invite.treeId, role: invite.role };
+  return { status: "joined", treeId: invite.treeId, role };
 }
