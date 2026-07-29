@@ -1103,3 +1103,18 @@ Acceptance coverage a1..a9:
 **WAVE 4 ACCOUNT (Spec 12) COMPLETE** — a4 authz + a5 propagation backend, the /user/record editor
 reusing RecordEditor, self-leave, and the tree-less chrome. Deferred: the /user overview 3-card visual
 redesign (the existing profile page carries the content). Remaining Wave 4: Spec 09 Search, Spec 11 Settings.
+
+### Wave 4 Search S-A — relationship-to-viewer + empty state (a3/a9) — DONE
+
+spec: `_SPEC-09.md` a3 (the headline) + a9
+files: src/components/CommandSearch.tsx (person rows now carry the relation-to-viewer via
+describeRelation/GraphManager — "you"/"son"/"wife"/… or nothing when uncomputable [a3]; sub-line is
+"born {place}, {year} · generation {roman}"; empty query returns NO results [a9], not the whole list);
+globals.css (.cmdk-row-relation, right-aligned red)
+tests: tests/e2e/search.spec.ts — 3 (empty query → no rows a9; person results show you/son/daughter a3).
+Re-verified the record-panel a1 search still opens the record.
+decisions: relation uses the same describeRelation as the record panel; null/self handled. The empty
+state now shows only the input + footer (a9), fixing the old "shows everyone" behaviour.
+deviations (Search S-B/S-C, not built): ⌘↵ focus-in-tree + wrap/Home-End keyboard (a5); places filter
+the canvas rather than being inert (a6); events group by-kind counts; result caps (6/3/4) + overflow;
+the 640/96 geometry + copy-deck strings. The palette otherwise works (open, filter, open a record).

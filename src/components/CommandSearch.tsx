@@ -4,6 +4,19 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "../context/AppContext";
 import { portraitTint, personInitials } from "../utils/portrait";
+import { GraphManager } from "../lib/graph/GraphManager";
+import { describeRelation } from "../lib/lineage";
+import { generationMap, roman } from "../lib/generations";
+import type { Person } from "../types/person";
+
+/** A person's search sub-line: "born Patna, 1989 · generation III" (Spec 09). */
+function personSub(p: Person, gen: number | undefined): string {
+  const birth = (p.events ?? []).find((e) => /birth|born/i.test(e.type));
+  const year = birth?.date?.match(/\d{4}/)?.[0];
+  const bornStr = birth ? `born ${[birth.place, year].filter(Boolean).join(", ")}` : null;
+  const genStr = gen !== undefined ? `generation ${roman(gen)}` : null;
+  return [bornStr, genStr].filter(Boolean).join(" · ");
+}
 
 /**
  * The ⌘K search palette (§5) — one index over people, places and events,
@@ -11,7 +24,7 @@ import { portraitTint, personInitials } from "../utils/portrait";
  * event opens that record on the tree (via ?person=), reusing the inspector.
  */
 export default function CommandSearch() {
-  const { treeData, currentTreeId } = useAppContext();
+  const { treeData, currentTreeId, user } = useAppContext();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -45,14 +58,30 @@ export default function CommandSearch() {
   }, [open]);
 
   const people = useMemo(() => treeData?.people ?? [], [treeData]);
+  const families = useMemo(() => treeData?.families ?? [], [treeData]);
+  const gm = useMemo(() => new GraphManager(people, families), [people, families]);
+  const gens = useMemo(() => generationMap(people, families), [people, families]);
+  const viewerPersonId = useMemo(
+    () => people.find((p) => !!user && p.userId === user.uid)?.id ?? null,
+    [people, user]
+  );
   const q = query.trim().toLowerCase();
 
+  // Every person result carries their relation to the viewer (a3); null (or self) → no label.
+  const relationOf = (personId: string): string | null =>
+    viewerPersonId === personId
+      ? "you"
+      : viewerPersonId
+        ? describeRelation(viewerPersonId, personId, gm)
+        : null;
+
   const { peopleHits, placeHits, eventHits } = useMemo(() => {
-    const ppl = people.filter(
-      (p) =>
-        q === "" ||
-        [p.name.official_name, ...(p.name.aliases ?? [])].join(" ").toLowerCase().includes(q)
-    );
+    // The empty state suggests nothing (a9) — no query, no results.
+    const ppl = q
+      ? people.filter((p) =>
+          [p.name.official_name, ...(p.name.aliases ?? [])].join(" ").toLowerCase().includes(q)
+        )
+      : [];
     const events: { personId: string; primary: string; sub: string }[] = [];
     const placeCounts = new Map<string, number>();
     for (const p of people) {
@@ -155,10 +184,11 @@ export default function CommandSearch() {
               </span>
               <span className="cmdk-row-body">
                 <span className="cmdk-row-primary">{p.name.official_name}</span>
-                {p.name.aliases && p.name.aliases.length > 0 && (
-                  <span className="cmdk-row-sub">{p.name.aliases.join(" · ")}</span>
+                {personSub(p, gens.get(p.id)) && (
+                  <span className="cmdk-row-sub">{personSub(p, gens.get(p.id))}</span>
                 )}
               </span>
+              {relationOf(p.id) && <span className="cmdk-row-relation">{relationOf(p.id)}</span>}
             </button>
           ))}
 
