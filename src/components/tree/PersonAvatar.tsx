@@ -58,8 +58,12 @@ const PersonAvatar: React.FC<PersonAvatarProps> = ({ person, isLineage }) => {
           </text>
         </>
       )}
-      {/* Meaning ring. */}
-      <circle r={NODE_RADIUS} style={{ fill: "none", stroke: ring, strokeWidth: "3px" }} />
+      {/* Meaning ring — red born-in / marigold married-in (a3). */}
+      <circle
+        className="person-ring"
+        r={NODE_RADIUS}
+        style={{ fill: "none", stroke: ring, strokeWidth: "3px" }}
+      />
     </>
   );
 };

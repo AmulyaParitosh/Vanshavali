@@ -9,11 +9,20 @@ interface PersonNodeProps {
   isLineage: boolean;
   /** Whether this person's record is open in the inspector. */
   isSelected: boolean;
+  /** True when this is the signed-in viewer's own record (the "· you" marker). */
+  isSelf?: boolean;
   /** Y-offset for the name label, measured from the portrait centre. */
   labelOffsetY?: number;
   /** Draw the single-person circle pill behind the portrait (couples get one pill from PartnerNode instead). */
   showPill?: boolean;
   onSelect: (personId: string) => void;
+}
+
+/** The four-digit birth year from a person's birth event, if recorded. */
+function birthYear(person: Person): string | null {
+  const d = person.events?.find((e) => /birth|born/i.test(e.type))?.date;
+  const m = d?.match(/\d{4}/);
+  return m ? m[0] : null;
 }
 
 /**
@@ -25,11 +34,13 @@ const PersonNode: React.FC<PersonNodeProps> = ({
   person,
   isLineage,
   isSelected,
+  isSelf = false,
   labelOffsetY = 52,
   showPill = false,
   onSelect,
 }) => {
   const { PILL } = TREE_CONFIG;
+  const year = birthYear(person);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -59,15 +70,23 @@ const PersonNode: React.FC<PersonNodeProps> = ({
 
       <PersonAvatar person={person} isLineage={isLineage} />
 
-      {/* Name label — name only; a column centred under this portrait (§07). */}
+      {/* Name + birth year in this portrait's own 78px column (Spec 05). The "you"
+          year line reads e.g. "2001 · you" in red. */}
       <foreignObject
-        x={-46}
+        x={-39}
         y={labelOffsetY}
-        width={92}
+        width={78}
         height={44}
         style={{ overflow: "visible", pointerEvents: "none" }}
       >
-        <span className="node-label">{person.name.official_name}</span>
+        <span className={`node-label${showPill ? " node-label--single" : ""}`}>
+          {person.name.official_name}
+        </span>
+        {(year || isSelf) && (
+          <span className={`node-year${isSelf ? " node-year--you" : ""}`}>
+            {[year, isSelf ? "you" : null].filter(Boolean).join(" · ")}
+          </span>
+        )}
       </foreignObject>
     </g>
   );

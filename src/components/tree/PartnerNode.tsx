@@ -5,8 +5,11 @@ import PersonNode from "./PersonNode";
 
 interface PartnerNodeProps {
   node: GraphNode;
-  depth: number;
   selectedPersonId: string | null;
+  /** The people born into this line (red ring); everyone else married in (marigold) — a3. */
+  born: ReadonlySet<string>;
+  /** The signed-in viewer's uid, for the "· you" marker. */
+  viewerUid: string | null;
   onSelect: (personId: string) => void;
 }
 
@@ -19,7 +22,13 @@ interface PartnerNodeProps {
  * order. We render the non-lineage partner first so the lineage partner's
  * details card renders above when their cards overlap.
  */
-const PartnerNode: React.FC<PartnerNodeProps> = ({ node, depth, selectedPersonId, onSelect }) => {
+const PartnerNode: React.FC<PartnerNodeProps> = ({
+  node,
+  selectedPersonId,
+  born,
+  viewerUid,
+  onSelect,
+}) => {
   const { PARTNER_OFFSET, PILL } = TREE_CONFIG;
   const { husband, wife, lineageMemberId } = node;
   const isWifeLineage = lineageMemberId === wife?.id;
@@ -30,19 +39,23 @@ const PartnerNode: React.FC<PartnerNodeProps> = ({ node, depth, selectedPersonId
     <g key="husband" transform={`translate(${-PARTNER_OFFSET}, 0)`}>
       <PersonNode
         person={husband}
-        isLineage={lineageMemberId === husband.id && depth > 0}
+        isLineage={born.has(husband.id)}
         isSelected={selectedPersonId === husband.id}
+        isSelf={!!viewerUid && husband.userId === viewerUid}
         onSelect={onSelect}
       />
     </g>
   ) : null;
 
   const wifeNode = wife ? (
+    // Right-hand label sits 26px lower so two long names never collide (a2).
     <g key="wife" transform={`translate(${PARTNER_OFFSET}, 0)`}>
       <PersonNode
         person={wife}
-        isLineage={lineageMemberId === wife.id && depth > 0}
+        isLineage={born.has(wife.id)}
         isSelected={selectedPersonId === wife.id}
+        isSelf={!!viewerUid && wife.userId === viewerUid}
+        labelOffsetY={52 + 26}
         onSelect={onSelect}
       />
     </g>

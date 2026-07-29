@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { GraphNode } from "../types/graph";
 import type { TreeMembership } from "../types/tree";
 import { TREE_CONFIG } from "../constants";
+import { bornInLine } from "../lib/generations";
 import { useAppContext } from "../context/AppContext";
 import { useTreeLayout, type LaidOutNode } from "./tree/useTreeLayout";
 import { useTreeZoom } from "./tree/useTreeZoom";
@@ -51,6 +52,12 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   });
 
   const people = treeData?.people ?? [];
+  // Who was born into this line (red ring) vs married in (marigold) — the ring
+  // meaning is the same on every node (Spec 05 a3).
+  const born = useMemo(
+    () => bornInLine(people, treeData?.families ?? []),
+    [people, treeData?.families]
+  );
   const selectedPerson = selectedPersonId
     ? (people.find((p) => p.id === selectedPersonId) ?? null)
     : null;
@@ -115,15 +122,17 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                   {node.data.isPartnerGroup ? (
                     <PartnerNode
                       node={node.data}
-                      depth={node.depth}
                       selectedPersonId={selectedPersonId}
+                      born={born}
+                      viewerUid={user?.uid ?? null}
                       onSelect={handleSelect}
                     />
                   ) : (
                     <PersonNode
                       person={node.data}
-                      isLineage={node.depth > 0}
+                      isLineage={born.has(node.data.id)}
                       isSelected={selectedPersonId === node.data.id}
+                      isSelf={!!user && node.data.userId === user.uid}
                       showPill
                       onSelect={handleSelect}
                     />

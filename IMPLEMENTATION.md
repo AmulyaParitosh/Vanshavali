@@ -786,3 +786,26 @@ decisions: corners use a small quadratic (Q) rounding — reads as the spec's "6
 not the forbidden sweeping cubic (the test asserts no `C`). The parent endpoint is the pill centre
 (a1); the node drawn on top covers the join.
 deviations: node visuals (ring colour, labels, hover) = T-B; centering/zoom = T-D; nav layer = T-E.
+
+### Wave 3 Tree T-B — node redesign (ring / labels / you / hover) — DONE
+
+spec: `_SPEC-05.md` a2/a3 + c1 states + "you" node
+files: src/components/tree/PersonNode.tsx (name + birth-year label in a 78px column; "· you" year
+line; single-name 13.5px); PartnerNode.tsx (ring = born-in via `born` set; right label +26px a2;
+isSelf per partner; dropped dead `depth`); PersonAvatar.tsx (ring circle gets .person-ring);
+Tree.tsx (compute `bornInLine` once, pass `born` + viewerUid to nodes); globals.css (hover/open touch
+the pill BORDER only — no scale/lift c1-s2; .node-year + .node-year--you red; .node-label--single)
+tests: tests/e2e/tree-canvas.spec.ts — 3 (ring red born-in / marigold married-in a3; "· you" marker in
+red; right-hand couple label offset +26 a2). record-panel canvas 5/5 still green.
+decisions:
+
+- Ring meaning (a3) is unified through `bornInLine(people, families)` — the SAME set the Members ring
+  uses — so every node (single or partner) rings red when born into the line, marigold when married in.
+  Replaces the old `depth`-based guess (which mis-ringed the root couple).
+- Removed the 1.1× hover portrait scale (spec c1-s2 forbids scale/lift); hover + open now only change
+  the household pill's border colour (+ a red shadow when open), via `.partner-group:has(.node.selected)`
+  for couples and `.node` for singles.
+- The "· you" marker lives on the node's year line in red (#b22222) per Spec 05 c1-s4 — distinct from
+  the chrome banner's leaf-green "you" avatar (a different surface).
+  deviations: centering-on-you + zoom clamp/Fit/LOD = T-D; generation rail + legend + attention filter +
+  controls = T-E. Couple pill still a rounded rect (the mock's stadium 999px was superseded by g-table 26px).
