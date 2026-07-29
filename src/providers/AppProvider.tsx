@@ -29,6 +29,18 @@ function isTreeOptional(pathname: string | null): boolean {
   return TREE_OPTIONAL_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
+/**
+ * Fully public routes (Spec 02) — they render for anyone, signed in or out, and
+ * must NOT fall through to the inline sign-in gate. `/signin` and `/reset` own
+ * their own card + redirect-if-authenticated; `/privacy` is static.
+ */
+const PUBLIC_PREFIXES = ["/signin", "/reset", "/privacy"];
+
+function isPublic(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));
+}
+
 export default function AppProvider({ children }: AppProviderProps) {
   const pathname = usePathname();
   const {
@@ -51,6 +63,8 @@ export default function AppProvider({ children }: AppProviderProps) {
 
   const renderContent = () => {
     if (isLoading) return <Loading />;
+    // Public pages render for anyone (they own their auth handling), before the gate.
+    if (isPublic(pathname)) return children;
     if (!user) return <LoginScreen authProvider={authProvider} />;
     // Tree-optional routes (landing, invite accept, profile, etc.) render
     // without requiring a current tree or membership. Tree-scoped routes have

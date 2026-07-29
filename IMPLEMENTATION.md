@@ -1350,10 +1350,10 @@ not keystroke (a5); one filled red submit (label = tab, spinner in-flight, disab
 empty, a3); Google is a neutral outline with the real 18px multi-colour mark, never leaf green (a2);
 wordmark top-left; privacy line BELOW the card → /privacy; tablist with arrow-key nav (a9). Kept
 #auth-email/#auth-password + the "Sign in" submit so every auth fixture/helper still works.
-src/lib/authErrors.ts (NEW) — tiny taxonomy: AUTH_ERR.EMAIL_EXISTS + authError/isAuthError.
+src/lib/authErrors.ts (NEW) — tiny taxonomy: AUTH*ERR.EMAIL_EXISTS + authError/isAuthError.
 src/services/supabase/SupabaseAuthProvider.ts — signUpWithEmail now flags an already-registered email
 (both the confirmations-on `identities:[]` obfuscation and the confirmations-off "already registered"
-error) as AUTH_ERR.EMAIL_EXISTS for a7. globals.css — the .login-_/.auth-_ block rewritten to the §02
+error) as AUTH_ERR.EMAIL_EXISTS for a7. globals.css — the .login-*/.auth-\_ block rewritten to the §02
 geometry (no-shell cream page + wordmark; 452 card, subtle #e0d3b8/#f0dcd8 double hairline, ink 23px
 heading, shadow rgba(0,0,0,.08); tab track #f8f2e4 + ink active; 44px fields; reveal; inline
 error/note; 46px pill submit + spinner; "or" divider; neutral Google; privacy below).
@@ -1367,3 +1367,28 @@ deviations (SI-B, next): the dedicated public GET /signin route with NO shell + 
 - ?next (validated internal path) + redirect-if-authenticated + post-auth landing (last/only/ /trees),
   and the separate /reset request page (Forgot? links to it) — a8 lives there. The card currently renders
   via AppProvider when !user (already chrome-less), and Forgot?/privacy link to /reset and /privacy.
+
+### Wave 5 Sign in SI-B — the /signin route + ?intent/?next + /reset (a8) — DONE
+
+spec: `_SPEC-02.md` — public GET /signin (no shell), ?intent tab preselect, ?next internal-path landing,
+redirect-if-authenticated, separate /reset request page
+files: src/app/signin/page.tsx (NEW) — client route: reads ?intent (create→Create tab) + ?next
+(safeInternalPath — root-relative only, rejects absolute/protocol-relative off-site, e3); renders the
+shared LoginScreen with initialTab; a session on /signin redirects straight out to ?next ?? "/" (the
+picker then lands on the single/last tree) — perm p2 / s5. On successful auth the user becomes set →
+the effect redirects to ?next, so an invitation survives account creation (a8).
+src/app/reset/page.tsx (NEW) — the reset REQUEST card (same shell, one email field, ?email prefill);
+non-disclosing "Check your email — we sent a link to {email}" on submit whether or not the address
+exists. Distinct from /auth/reset-password (the post-link landing).
+src/providers/AppProvider.tsx — new PUBLIC_PREFIXES (/signin, /reset, /privacy) checked BEFORE the
+!user gate, so these pages render for anyone and own their auth handling (the inline LoginScreen gate
+is untouched for every other route). LoginScreen's Forgot? already links to /reset.
+tests: tests/e2e/signin-route.spec.ts — 6 (/signin no shell; ?intent=create preselects; ?next
+round-trips a real sign-in to the destination a8; off-site ?next ignored, stays on-origin e3; /reset
+one field → sent copy; an authenticated visit to /signin redirects out). 7/7 with setup; verified on a
+PRODUCTION build (useSearchParams pages build clean, exit 0). signin.spec.ts (SI-A) still 8/8. Vitest 199/199.
+decisions: kept AppProvider's inline sign-in gate as the safety net for gated routes (low-risk — no
+rebuild of the working auth boot); /signin is the canonical public entry that invitations/landing link
+to. landing delegates to "/" (the existing picker already implements single/last-tree logic).
+**WAVE 5 SIGN IN (Spec 02) COMPLETE** — card (SI-A: a1–a7, a9) + route/reset (SI-B: a8, e3, p2/s5).
+Next Wave 5 units: Spec 03 My trees, Spec 04 Invitation, Spec 10 Getting started.
