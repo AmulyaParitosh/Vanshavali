@@ -1434,11 +1434,12 @@ main {
   transform: scale(1.1);
 }
 
+/* Lineage thread (Spec 05 g7) — orthogonal, quiet, 1.5px. */
 .link {
   fill: none;
-  stroke: #8b6a4a;
-  stroke-opacity: 0.5;
-  stroke-width: 1.6px;
+  stroke: var(--line-control); /* #d8cdb4 */
+  stroke-width: 1.5px;
+  stroke-linejoin: round;
 }
 
 .node:focus {

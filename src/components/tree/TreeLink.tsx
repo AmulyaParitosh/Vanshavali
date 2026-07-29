@@ -5,9 +5,9 @@ interface TreeLinkProps {
 }
 
 /**
- * One parent→child edge rendered as a vertical cubic-Bezier path. The `d`
- * attribute is computed by the layout's `linkPath()` generator at the parent
- * level so this stays a thin presentational component.
+ * One parent→child edge — an orthogonal lineage thread (Spec 05 g7), never a
+ * bezier. The `d` attribute is computed by the layout's `linkPath()` generator so
+ * this stays a thin presentational component.
  */
 const TreeLink: React.FC<TreeLinkProps> = ({ d }) => {
   if (!d) return null;

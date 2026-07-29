@@ -771,3 +771,18 @@ height + a whole-tree +24 shift, both pure + unit-tested. Node dimensions (coupl
 portrait 58/ring 3px) were already in TREE_CONFIG from earlier work — T-B renders them to spec.
 deviations: links still bezier (T-C), centering still on root not the viewer's household (T-D), no nav
 layer yet (T-E). Node visuals (ring colour by lineageSide, label offset, "· you", hover-no-scale) = T-B.
+
+### Wave 3 Tree T-C — orthogonal lineage links — DONE
+
+spec: `_SPEC-05.md` g7 / a1 — orthogonal, never bezier; children connect to the pill centre
+files: src/components/tree/orthogonalLink.ts (NEW pure generator: drop 40 from the parent centre →
+across → down, 6px quadratic arc corners; straight vertical when in-column); useTreeLayout.linkPath
+now uses it (dropped d3.linkVertical bezier); TreeLink comment; globals.css .link → stroke
+var(--line-control) #d8cdb4 1.5px, round joins
+tests: tests/components/tree/orthogonalLink.test.ts — 4 (no cubic-bezier command; starts at parent
+centre + ends at child; vertical→horizontal→vertical with two arc corners at the bus; straight
+vertical in-column). record-panel canvas 6/6 still green.
+decisions: corners use a small quadratic (Q) rounding — reads as the spec's "6px arc corner" and is
+not the forbidden sweeping cubic (the test asserts no `C`). The parent endpoint is the pill centre
+(a1); the node drawn on top covers the join.
+deviations: node visuals (ring colour, labels, hover) = T-B; centering/zoom = T-D; nav layer = T-E.

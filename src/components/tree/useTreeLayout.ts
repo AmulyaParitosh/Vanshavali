@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import * as d3 from "d3";
 import type { GraphNode } from "../../types/graph";
 import { TREE_CONFIG } from "../../constants";
+import { orthogonalLinkPath } from "./orthogonalLink";
 
 export type LaidOutNode = d3.HierarchyPointNode<GraphNode>;
 export type LaidOutLink = d3.HierarchyPointLink<GraphNode>;
@@ -45,15 +46,12 @@ export function useTreeLayout(data: GraphNode | null): TreeLayout {
       return { root: null, nodes: [], links: [], linkPath: () => null };
     }
     const { root, nodes, links } = computeTreeLayout(data);
-    const linkGen = d3
-      .linkVertical<LaidOutLink, LaidOutNode>()
-      .x((d) => d.x)
-      .y((d) => d.y);
     return {
       root,
       nodes,
       links,
-      linkPath: (link: LaidOutLink) => linkGen(link),
+      // Orthogonal thread from the parent pill's centre (Spec 05 g7), not a bezier.
+      linkPath: (link: LaidOutLink) => orthogonalLinkPath(link.source, link.target),
     };
   }, [data]);
 }
