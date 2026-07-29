@@ -4507,18 +4507,20 @@ main {
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: rgba(26, 26, 16, 0.34);
+  /* Contract §02: scrim rgba(20,18,16,.42), overlay 640 × top 96 (Spec 09). */
+  background: rgba(20, 18, 16, 0.42);
   backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 56px var(--space-4) var(--space-4);
+  padding: 96px var(--space-4) var(--space-4);
   box-sizing: border-box;
 }
 .cmdk-panel {
-  width: 760px;
+  width: 640px;
   max-width: 100%;
-  max-height: calc(100vh - 112px);
+  box-sizing: border-box;
+  max-height: 520px;
   background: var(--surface-paper);
   border: 1px solid var(--line-control);
   border-radius: var(--radius-18);
@@ -4659,6 +4661,22 @@ main {
   padding: 24px 20px;
   color: var(--text-meta);
   font-size: 14px;
+}
+/* Cap-overflow row (Spec 09 §09 "capped") — sends the rest to Members with the query. */
+.cmdk-more {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 20px;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-red);
+  cursor: pointer;
+}
+.cmdk-more:hover {
+  background: var(--color-red-wash);
 }
 .cmdk-foot {
   display: flex;

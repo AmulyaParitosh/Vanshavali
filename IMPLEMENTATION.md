@@ -1271,3 +1271,26 @@ verification note: the full settings file flaked under `next dev` (cold-compile 
 deferred (Settings, documented): a5 Export archive job (queue + JSON/HTML/photos builder + email) and a6
 Print folio (Madhubani A2/A3) are large infra; a3 name-order cross-surface rendering needs a bilingual
 name model. Everything else in Spec 11 (a1, a2, a4, a7, a8, a9) is implemented + tested.
+
+## WAVE (Spec 09 Search) — S-B: contract compliance — DONE
+
+spec: `_SPEC-09.md` §02 geometry + §07 copy deck + caps + §03 by-kind place counts + a1/e5 (`/`) + a5 keyboard
+files: src/components/CommandSearch.tsx — placeholder → "People, places, events"; empty line →
+`Nothing in this record matches “{q}”` (curly quotes, echoes query); hint → verbatim
+`↑↓ move · ↵ open record · ⌘↵ focus in tree` + `{N} people indexed`. Result CAPS 6/3/4 (headers still
+show the TRUE total; lists slice); a people overflow row `{n} more people — see all in Members` →
+/tree/[id]/members?q=. Place counts broken out by kind ("7 births · 2 marriages · 1 death recorded here"
+via eventKind classification). `/` opens when no editable field is focused (a1/e5, isEditableTarget
+guard). Keyboard: ↑/↓ WRAP at both ends, Home/End jump (a5). globals.css: overlay → 640px (border-box),
+top 96, scrim rgba(20,18,16,.42); + .cmdk-more overflow row.
+tests: tests/e2e/search.spec.ts — S-B describe: `/` opens (a1); verbatim placeholder + hint + "4 people
+indexed"; overlay is exactly 640px (contract, not the 760 mockup); no-match verbatim empty line;
+place-by-kind counts (Patna "1 birth recorded here", Ranchi "1 marriage recorded here"); ↑ from first
+wraps to last + ↓ back. 9/9 (with the pre-existing a3/a9). a7 (reader hidden dates in results) is
+satisfied for free — search reads treeData.people, already redacted by Settings ST-D.
+decisions: cap OVERFLOW row only for people (the copy deck defines only `more`=people); places/events cap
+silently under a true-total header. seed has 4 people so the >6 overflow path isn't e2e-exercised (noted).
+deferred to S-C: ⌘↵ focus-in-tree PAN (320ms) + ↵-on-current-route nuance (both currently open via
+?person= on the canvas route); a6 place-filter-canvas (dim .35 + dismissible chip — places still inert);
+matched-substring highlight; diacritic-insensitive matching; 80ms debounce; IME compositionend guard;
+prefix-before-substring + generation ordering; members-side consumption of the carried ?q=.

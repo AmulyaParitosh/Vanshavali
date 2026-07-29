@@ -9,6 +9,9 @@ import { describeRelation } from "../lib/lineage";
 import { generationMap, roman } from "../lib/generations";
 import type { Person } from "../types/person";
 
+/** Result caps (Spec 09 §02): headers show the true total, lists show at most these. */
+const CAP = { people: 6, places: 3, events: 4 } as const;
+
 /** A person's search sub-line: "born Patna, 1989 · generation III" (Spec 09). */
 function personSub(p: Person, gen: number | undefined): string {
   const birth = (p.events ?? []).find((e) => /birth|born/i.test(e.type));
@@ -18,10 +21,43 @@ function personSub(p: Person, gen: number | undefined): string {
   return [bornStr, genStr].filter(Boolean).join(" · ");
 }
 
+/** Coarse event kind for the place counts line (Spec 09 §03). */
+function eventKind(type: string): "birth" | "marriage" | "death" | "other" {
+  if (/birth|born/i.test(type)) return "birth";
+  if (/marriage|married|wed/i.test(type)) return "marriage";
+  if (/death|died|passed|expired/i.test(type)) return "death";
+  return "other";
+}
+
+interface PlaceCount {
+  births: number;
+  marriages: number;
+  deaths: number;
+  total: number;
+}
+
+/** "7 births · 2 marriages · 1 death recorded here" — broken out by kind (Spec 09). */
+function placeCountsLine(c: PlaceCount): string {
+  const parts: string[] = [];
+  if (c.births) parts.push(`${c.births} birth${c.births === 1 ? "" : "s"}`);
+  if (c.marriages) parts.push(`${c.marriages} marriage${c.marriages === 1 ? "" : "s"}`);
+  if (c.deaths) parts.push(`${c.deaths} death${c.deaths === 1 ? "" : "s"}`);
+  if (!parts.length) return `${c.total} event${c.total === 1 ? "" : "s"} recorded here`;
+  return `${parts.join(" · ")} recorded here`;
+}
+
+/** Whether a keyboard event landed in an editable control (so `/` shouldn't hijack it). */
+function isEditableTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+}
+
 /**
- * The ⌘K search palette (§5) — one index over people, places and events,
- * grouped and keyboard-first, opened from anywhere. Selecting a person or an
- * event opens that record on the tree (via ?person=), reusing the inspector.
+ * The ⌘K search palette (Spec 09) — one index over people, places and events,
+ * grouped and keyboard-first, opened from anywhere in a tree. Selecting a person
+ * or event opens that record on the tree (via ?person=), reusing the inspector.
  */
 export default function CommandSearch() {
   const { treeData, currentTreeId, user } = useAppContext();
@@ -36,6 +72,10 @@ export default function CommandSearch() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen((o) => !o);
+      } else if (e.key === "/" && !isEditableTarget(e.target)) {
+        // `/` opens search when no field is focused (a1 / e5 — never one trigger).
+        e.preventDefault();
+        setOpen(true);
       } else if (e.key === "Escape") {
         setOpen(false);
       }
@@ -83,10 +123,18 @@ export default function CommandSearch() {
         )
       : [];
     const events: { personId: string; primary: string; sub: string }[] = [];
-    const placeCounts = new Map<string, number>();
+    const placeCounts = new Map<string, PlaceCount>();
     for (const p of people) {
       for (const e of p.events ?? []) {
-        if (e.place) placeCounts.set(e.place, (placeCounts.get(e.place) ?? 0) + 1);
+        if (e.place) {
+          const c = placeCounts.get(e.place) ?? { births: 0, marriages: 0, deaths: 0, total: 0 };
+          const kind = eventKind(e.type);
+          if (kind === "birth") c.births += 1;
+          else if (kind === "marriage") c.marriages += 1;
+          else if (kind === "death") c.deaths += 1;
+          c.total += 1;
+          placeCounts.set(e.place, c);
+        }
         if (q && `${e.type} ${e.date ?? ""} ${e.place ?? ""}`.toLowerCase().includes(q)) {
           events.push({
             personId: p.id,
@@ -99,16 +147,20 @@ export default function CommandSearch() {
     const places = q
       ? [...placeCounts.entries()]
           .filter(([place]) => place.toLowerCase().includes(q))
-          .map(([place, count]) => ({ place, count }))
+          .map(([place, counts]) => ({ place, line: placeCountsLine(counts) }))
       : [];
     return { peopleHits: ppl, placeHits: places, eventHits: events };
   }, [people, q]);
 
-  // People and events are keyboard-navigable and open a record; places are
-  // informational. The active index runs [people…, events…].
+  // Only the capped rows are on screen and keyboard-navigable; headers still show
+  // the true total. People and events open a record; places filter the canvas (S-C).
+  const shownPeople = peopleHits.slice(0, CAP.people);
+  const shownPlaces = placeHits.slice(0, CAP.places);
+  const shownEvents = eventHits.slice(0, CAP.events);
+
   const navTargets = useMemo(
-    () => [...peopleHits.map((p) => p.id), ...eventHits.map((e) => e.personId)],
-    [peopleHits, eventHits]
+    () => [...shownPeople.map((p) => p.id), ...shownEvents.map((e) => e.personId)],
+    [shownPeople, shownEvents]
   );
 
   const openPerson = (personId: string) => {
@@ -116,13 +168,27 @@ export default function CommandSearch() {
     setOpen(false);
   };
 
+  const seeAllInMembers = () => {
+    if (currentTreeId)
+      router.push(`/tree/${currentTreeId}/members?q=${encodeURIComponent(query.trim())}`);
+    setOpen(false);
+  };
+
   const onKeyDown = (e: React.KeyboardEvent) => {
+    const last = navTargets.length - 1;
+    if (navTargets.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActive((a) => Math.min(a + 1, navTargets.length - 1));
+      setActive((a) => (a >= last ? 0 : a + 1)); // wraps at the end (a5)
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActive((a) => Math.max(a - 1, 0));
+      setActive((a) => (a <= 0 ? last : a - 1)); // wraps at the start (a5)
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setActive(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setActive(last);
     } else if (e.key === "Enter") {
       e.preventDefault();
       const target = navTargets[active];
@@ -163,7 +229,7 @@ export default function CommandSearch() {
               setActive(0);
             }}
             onKeyDown={onKeyDown}
-            placeholder="Search people, places, events"
+            placeholder="People, places, events"
             aria-label="Search people, places and events"
           />
           <span className="cmdk-esc">esc</span>
@@ -171,7 +237,7 @@ export default function CommandSearch() {
 
         <div className="cmdk-results">
           {peopleHits.length > 0 && <div className="cmdk-group">People · {peopleHits.length}</div>}
-          {peopleHits.map((p, i) => (
+          {shownPeople.map((p, i) => (
             <button
               key={p.id}
               type="button"
@@ -191,6 +257,11 @@ export default function CommandSearch() {
               {relationOf(p.id) && <span className="cmdk-row-relation">{relationOf(p.id)}</span>}
             </button>
           ))}
+          {peopleHits.length > CAP.people && (
+            <button type="button" className="cmdk-more" onClick={seeAllInMembers}>
+              {peopleHits.length - CAP.people} more people — see all in Members
+            </button>
+          )}
 
           {placeHits.length > 0 && (
             <>
@@ -198,16 +269,14 @@ export default function CommandSearch() {
               <div className="cmdk-group">Places · {placeHits.length}</div>
             </>
           )}
-          {placeHits.map((pl) => (
+          {shownPlaces.map((pl) => (
             <div key={pl.place} className="cmdk-row cmdk-row--static">
               <span className="cmdk-glyph" aria-hidden="true">
                 ⌖
               </span>
               <span className="cmdk-row-body">
                 <span className="cmdk-row-primary">{pl.place}</span>
-                <span className="cmdk-row-sub">
-                  {pl.count} event{pl.count === 1 ? "" : "s"} recorded here
-                </span>
+                <span className="cmdk-row-sub">{pl.line}</span>
               </span>
             </div>
           ))}
@@ -218,8 +287,8 @@ export default function CommandSearch() {
               <div className="cmdk-group">Events · {eventHits.length}</div>
             </>
           )}
-          {eventHits.map((e, i) => {
-            const idx = peopleHits.length + i;
+          {shownEvents.map((e, i) => {
+            const idx = shownPeople.length + i;
             return (
               <button
                 key={`${e.personId}-${e.primary}-${i}`}
@@ -240,13 +309,12 @@ export default function CommandSearch() {
           })}
 
           {q && peopleHits.length === 0 && placeHits.length === 0 && eventHits.length === 0 && (
-            <div className="cmdk-empty">Nothing matches “{query}”.</div>
+            <div className="cmdk-empty">Nothing in this record matches “{query}”</div>
           )}
         </div>
 
         <div className="cmdk-foot">
-          <span>↑↓ move</span>
-          <span>↵ open record</span>
+          <span>↑↓ move · ↵ open record · ⌘↵ focus in tree</span>
           <span style={{ flex: 1 }} />
           <span>{people.length} people indexed</span>
         </div>
