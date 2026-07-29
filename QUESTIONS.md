@@ -35,6 +35,20 @@ in the Claude Design project `dd87d264-b5d2-4737-8e4c-9233afb2398d`, read via `D
 That is the "file read" primitive. Not mirrored to disk (get_file cannot be piped to disk without
 re-emitting content). Re-fetch per unit. Mechanism recorded in `IMPLEMENTATION.md`.
 
+## Q15 — a member deep-linking to a tree they do not OWN sits on "Loading…" — INVESTIGATE
+
+Signed in as a non-owner member (designreview3, a Write member of the seeded tree), navigating to
+`/tree/<other-owner-tree>/members` never leaves the AppProvider loading gate — the chrome shows the
+member's OWN default tree while the page stays `Loading…`. The keeper/owner path is fine (all the
+Members e2e run as the owner), and the picker at `/` redirects a member to their own current tree, so
+neither route reaches another owner's tree in a test. Likely the auth-boot default (currentTreeId →
+first OWNED tree) races the `[id]` layout's URL binding + the isLoading gate for a cross-user
+membership/data fetch. **Impact**: members reach shared trees today via invite-accept + the tree
+switcher, so this is not launch-blocking, but deep-links for members are broken. **Deferred**: the
+Spec 06 a2/a5 non-keeper VIEW e2e (`tests/e2e/members-roles.spec.ts`, written + `test.fixme`) is
+blocked on this; the a2/a5 gating LOGIC is already unit-tested (authz/access predicates). Investigate
+the cross-user tree boot in a focused pass (touches AppProvider/useAuthAndData — the well-tested boot).
+
 ## Q14 — e2e full-suite runs degrade the Next dev server (run per-suite, or against a prod build)
 
 The canonical Playwright webServer is `npm run dev`. A single long run of the whole suite (~79

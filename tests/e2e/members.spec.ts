@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { Client } from "pg";
-import { SEED, treeRoute } from "./fixtures";
+import { SEED, WRITER, treeRoute } from "./fixtures";
 
 const LOCAL_DB =
   process.env.DATABASE_URL_LOCAL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
@@ -300,8 +300,12 @@ test.describe("Members — removing access (Spec 06 a8)", () => {
         "select uid, role, person_id from tree_members where person_id=$1",
         [SEED.people.wife.id]
       );
-      const row = r.rows[0]!;
-      return { uid: row.uid, role: row.role, personId: row.person_id };
+      const row = r.rows[0];
+      // Self-healing: if a prior interrupted run left the membership removed, fall
+      // back to the known writer fixture so this suite restores a clean seed.
+      return row
+        ? { uid: row.uid, role: row.role, personId: row.person_id }
+        : { uid: WRITER.uid, role: "editor", personId: WRITER.personId };
     });
   });
 

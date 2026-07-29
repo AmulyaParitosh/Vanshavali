@@ -9,6 +9,19 @@ import path from "node:path";
 
 export const AUTH_FILE = path.join(process.cwd(), ".playwright", "auth", "user.json");
 
+/**
+ * A second, non-keeper member of the seeded tree — designreview3, linked to Meera
+ * with the `editor` (Write) role. Its password is set deterministically (bcrypt via
+ * pgcrypto) so a test can sign in as a writer/reader to exercise the role-gated
+ * views (Spec 06 a2/a5). Demote to `viewer` in-test for the reader case, restore after.
+ */
+export const WRITER = {
+  email: "designreview3@local.test",
+  password: "password123",
+  uid: "fd6361b3-eded-4594-b6de-ff90cb891ccb",
+  personId: "p_meera",
+} as const;
+
 export const SEED = {
   email: "designreview2@local.test",
   password: "password123",

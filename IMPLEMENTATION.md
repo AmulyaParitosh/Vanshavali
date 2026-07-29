@@ -715,3 +715,36 @@ decisions:
 - Same-sex couples are limited by the husband/wife Family model (a spouse of the same sex would
   overwrite the slot) — a data-model question, unchanged here. "+ Add person" no longer routes to the
   legacy /people editor.
+
+### Wave 3 Members M-E — acceptance sweep a1–a10 — DONE
+
+spec: `_SPEC-06.md` acceptance a1..a10
+Coverage (repo owner/editor/viewer = keeper/write/read):
+
+- a1 one list + opens in place + search surface — TESTED (list column set; row opens the inspector
+  in place, no route change; ⌘K search opens the same panel [Wave 2E]).
+- a2 May renders for every role, interactive only for a keeper — keeper side TESTED (Invite pill +
+  the panel's role radio). The non-keeper VIEW e2e is written + `test.fixme` (blocked by Q15); the
+  gating logic is unit-tested (authz/access).
+- a3 no role written from the table — TESTED (no inline <select>; roles change only in the panel).
+- a4 Invite only on account-less, never the deceased — TESTED (+ edge e2 via a death event).
+- a5 reader sees "Ask a keeper to add someone" — writer/keeper "+ Add person" TESTED; the reader
+  e2e is `test.fixme` (Q15); gating unit-tested.
+- a6 existing name opens the duplicate guard before any write — TESTED.
+- a7 connecting an existing person reuses their record (facts preserved) — TESTED + unit-tested.
+- a8 removing access never deletes the person — TESTED (person survives; membership gone).
+- a9 search matches name/alias, order never changes — TESTED.
+- a10 generation then birth order, never alphabetical — TESTED.
+  files: tests/e2e/members.spec.ts (list 5 · invite 5 · add 3 · a8 1 — a8 beforeAll now self-heals a
+  removed membership via the WRITER fixture); tests/e2e/members-roles.spec.ts (a2/a5 non-keeper,
+  test.fixme pending Q15); tests/e2e/fixtures.ts (WRITER fixture — designreview3, bcrypt password set
+  via pgcrypto). Vitest 170 (incl. addPerson 15).
+  decisions: all keeper-side acceptances are e2e-green in isolation/batches; the full 14-test members
+  run flakes on the Next dev server under load (Q14 — verified harmless earlier via a prod-build run).
+  deviations: a2/a5 non-keeper VIEW e2e deferred to Q15 (member deep-link to another owner's tree sits
+  on Loading — a cross-user boot issue, not a Members bug); their gating is unit-tested.
+
+**WAVE 3 MEMBERS (Spec 06) COMPLETE** — one sorted list (A) · row-fired invite panel (B) · add-person
+
+- duplicate guard (C) · shared inspector hosted in place (D) · acceptance sweep (E). Remaining Wave 3:
+  Spec 05 Tree canvas + Spec 08 Households.
