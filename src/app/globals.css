@@ -3856,6 +3856,130 @@ main {
 .records-page.inspector-open {
   padding-right: calc(var(--shell-inspector-w) + 24px);
 }
+
+/* Add-person panel — same fixed right drawer as the invite panel. */
+.add-panel {
+  position: fixed;
+  top: var(--shell-chrome-h);
+  right: 0;
+  bottom: 0;
+  height: auto;
+  width: var(--shell-inspector-w);
+  z-index: 1150;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-paper);
+  border-left: 1px solid var(--line-structure);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.04);
+}
+.add-panel .panel-footer {
+  padding-left: 22px;
+  padding-right: 22px;
+}
+/* Relationship chips — where a new person belongs, chosen first. */
+.rel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.rel-chip {
+  padding: 7px 13px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-control);
+  background: var(--surface-paper);
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-strong);
+  cursor: pointer;
+  transition: border-color var(--dur-panel) var(--ease);
+}
+.rel-chip.selected {
+  border: 1.5px solid var(--color-red);
+  background: var(--color-red-wash);
+  color: var(--color-red-deep);
+  font-weight: 600;
+}
+.rel-chip--loose {
+  border-style: dashed;
+}
+.add-anchor {
+  margin-top: 4px;
+}
+.add-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.add-field--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.add-preview {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-12);
+  background: var(--surface-tablehead);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-strong);
+}
+
+/* Duplicate guard (a6) — wide centred dialog; a stop, not a block. */
+.dialog--wide {
+  max-width: 640px;
+}
+.dup-eyebrow {
+  color: var(--color-amber-text, #8a5300);
+}
+.dup-compare {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+.dup-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px;
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-14);
+  background: var(--surface-paper);
+}
+.dup-card--new {
+  border: 2px solid var(--color-red);
+}
+.dup-card-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-meta);
+}
+.dup-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.portrait--dashed {
+  border: 2px dashed var(--color-red);
+  background: var(--surface-tablehead);
+}
+.dup-sep {
+  align-self: center;
+  font-size: 22px;
+  color: var(--text-meta);
+}
+.dup-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-prose);
+}
+.dialog-actions--stack {
+  flex-wrap: wrap;
+}
 .records-noaccount {
   font-size: 13px;
   color: var(--text-prose);

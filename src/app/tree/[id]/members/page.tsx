@@ -1,19 +1,21 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useAppContext } from "../../../../context/AppContext";
 import { useToast } from "../../../../components/ToastSystem";
 import Loading from "../../../../components/Loading";
 import InvitePanel from "../../../../components/tree/InvitePanel";
 import RecordInspectorDock from "../../../../components/tree/RecordInspectorDock";
+import AddPersonPanel, { type AddFields } from "../../../../components/tree/AddPersonPanel";
+import DuplicateGuard from "../../../../components/tree/DuplicateGuard";
 import { canEdit as canEditRole, canInvite } from "../../../../lib/access";
 import { portraitTint, personInitials } from "../../../../utils/portrait";
 import { generationMap, roman, bornInLine } from "../../../../lib/generations";
 import { GraphManager } from "../../../../lib/graph/GraphManager";
 import { describeRelation } from "../../../../lib/lineage";
-import type { Person } from "../../../../types/person";
+import { findDuplicate, personIdFromName, placePerson } from "../../../../lib/addPerson";
+import type { Person, PersonEvent } from "../../../../types/person";
 import type {
   TreeMembership,
   TreeInvite,
@@ -77,6 +79,10 @@ export default function MembersPage() {
   const [sendingInvite, setSendingInvite] = useState(false);
   // The record open in the shared inspector, opened in place (no route change, a2).
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addingSave, setAddingSave] = useState(false);
+  // A submitted name that already exists — the duplicate guard (a6) awaits a choice.
+  const [duplicate, setDuplicate] = useState<{ existing: Person; fields: AddFields } | null>(null);
 
   const treeName = useMemo(() => {
     const all = [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])];
@@ -165,6 +171,45 @@ export default function MembersPage() {
     }
   };
 
+  /** Persist a person placed into the tree per the chosen relationship. */
+  const writePlacement = async (person: Person, fields: AddFields, note: string) => {
+    setAddingSave(true);
+    try {
+      const next = placePerson({ people, families }, person, fields.rel, fields.anchorId);
+      await dataProvider.saveTreeData(treeId, next);
+      toast.success(note);
+      setAddOpen(false);
+      setDuplicate(null);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Add failed");
+    } finally {
+      setAddingSave(false);
+    }
+  };
+
+  /** Build a brand-new person from the add form (born → birth event, not-living → death marker). */
+  const buildNewPerson = (fields: AddFields): Person => {
+    const events: PersonEvent[] = [];
+    if (fields.born) events.push({ type: "birth", date: fields.born });
+    if (!fields.living) events.push({ type: "death" });
+    return {
+      id: personIdFromName(fields.name, new Set(people.map((p) => p.id))),
+      name: { official_name: fields.name },
+      sex: fields.sex,
+      ...(events.length ? { events } : {}),
+    };
+  };
+
+  // Submitting an existing name always opens the duplicate guard before any write (a6).
+  const handleAdd = async (fields: AddFields) => {
+    const existing = findDuplicate(people, fields.name);
+    if (existing) {
+      setDuplicate({ existing, fields });
+      return;
+    }
+    await writePlacement(buildNewPerson(fields), fields, `${fields.name} added to the record`);
+  };
+
   const sub =
     `${people.length} in the record · ${members.length} with an account` +
     (pendingCount > 0
@@ -180,9 +225,9 @@ export default function MembersPage() {
         </div>
         <div className="records-header-spacer" />
         {canAdd ? (
-          <Link href={`/tree/${treeId}/people`} className="btn btn-primary">
+          <button type="button" className="btn btn-primary" onClick={() => setAddOpen(true)}>
             + Add person
-          </Link>
+          </button>
         ) : (
           <span className="records-reader-note">Ask a keeper to add someone</span>
         )}
@@ -340,6 +385,38 @@ export default function MembersPage() {
           variant="drawer"
           onClose={() => setSelectedPersonId(null)}
           onSelect={(id) => setSelectedPersonId(id)}
+        />
+      )}
+
+      {addOpen && (
+        <AddPersonPanel
+          people={people}
+          saving={addingSave}
+          onClose={() => setAddOpen(false)}
+          onAdd={handleAdd}
+        />
+      )}
+
+      {duplicate && (
+        <DuplicateGuard
+          existing={duplicate.existing}
+          typedName={duplicate.fields.name}
+          busy={addingSave}
+          onBack={() => setDuplicate(null)}
+          onConnect={() =>
+            writePlacement(
+              duplicate.existing,
+              duplicate.fields,
+              `${duplicate.existing.name.official_name} connected`
+            )
+          }
+          onAddAnyway={() =>
+            writePlacement(
+              buildNewPerson(duplicate.fields),
+              duplicate.fields,
+              `${duplicate.fields.name} added to the record`
+            )
+          }
         />
       )}
     </div>

@@ -684,3 +684,34 @@ decisions:
   deviations: the drawer overlays rather than reflowing into a true flex column; the list gives up its
   right padding when open (spec "narrows to 824px") — close enough without a shell-layout refactor.
   Revoke/Resend still owe a home in the panel (edge e6, from M-B). Add-person + duplicate guard = M-C.
+
+### Wave 3 Members M-C — add-person panel + duplicate guard — DONE
+
+spec: `_SPEC-06.md` — add panel (relationship-first), duplicate guard; a5/a6/a7/a8
+files: src/lib/addPerson.ts (NEW, pure: findDuplicate, personIdFromName, wireRelationship, placePerson);
+src/components/tree/AddPersonPanel.tsx (drawer: 1 where-they-belong [5 relationship chips + anchor
+picker] · 2 name · 3 sex/born/living · "This will change" preview [a8]); src/components/tree/
+DuplicateGuard.tsx (existing vs typed, Connect / add-anyway / Back); src/app/tree/[id]/members/page.tsx
+(+ Add person opens the panel; handleAdd → findDuplicate → guard-or-write; connect/add-anyway via
+saveTreeData); globals.css (.add-panel, .rel-chip*, .add-field/-preview, .dialog--wide, .dup-*)
+tests: tests/lib/addPerson.test.ts — 15 (findDuplicate; personIdFromName uniqueness; every
+relationship — child/sibling/spouse/parent — both join-existing and create-new; none/no-anchor
+no-op; placePerson connect-vs-add). tests/e2e/members.spec.ts +3 (a6 guard opens before any write +
+Back writes nothing; a7 connect reuses the record, no duplicate row; add-new creates + wires into the
+household). Vitest 170; add e2e 3/3 with pg snapshot/restore of people+families.
+decisions:
+
+- The family wiring (riskiest write) is a pure, exhaustively-tested function: each relationship joins
+  an existing household where a slot fits, else creates the single household it implies. UI just calls
+  placePerson + saveTreeData (bulk is right for a structural multi-row add; per-record patch is for edits).
+- a6: findDuplicate (official name + aliases, case-insensitive) always runs before a write; a match
+  opens the guard. a7: "Connect" reuses the existing Person id (no new row) so their facts travel;
+  "add anyway" writes a second person (outlined, not quiet-red — a legitimate choice, edge e4).
+  deviations:
+- Single "Name" field (official_name), not the spec's देवनागरी+Latin two-script with live
+  transliteration — the repo Person has official_name + aliases and no transliteration service.
+- "Living" toggle records a bare death event when off (the repo has no living flag; keeps the Members
+  deceased/Invite logic consistent). Anchor is a <select>, not the pre-chosen household card + Change.
+- Same-sex couples are limited by the husband/wife Family model (a spouse of the same sex would
+  overwrite the slot) — a data-model question, unchanged here. "+ Add person" no longer routes to the
+  legacy /people editor.

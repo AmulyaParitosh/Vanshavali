@@ -183,6 +183,113 @@ test.describe("Members — inviting (Spec 06 a4, invite panel)", () => {
   });
 });
 
+test.describe("Members — adding a person (Spec 06 a6/a7)", () => {
+  let seedPeople: string[];
+  type Fam = { id: string; husband_id: string | null; wife_id: string | null; children: string[] };
+  let seedFamilies: Fam[];
+
+  test.beforeAll(async () => {
+    seedPeople = await withDb((c) =>
+      c
+        .query<{ id: string }>("select id from people where tree_id=$1", [SEED.tree.id])
+        .then((r) => r.rows.map((x) => x.id))
+    );
+    seedFamilies = await withDb((c) =>
+      c
+        .query<Fam>("select id, husband_id, wife_id, children from families where tree_id=$1", [
+          SEED.tree.id,
+        ])
+        .then((r) => r.rows)
+    );
+  });
+
+  test.afterEach(async () => {
+    await withDb(async (c) => {
+      await c.query("delete from families where tree_id=$1", [SEED.tree.id]);
+      await c.query("delete from people where tree_id=$1 and id <> all($2::text[])", [
+        SEED.tree.id,
+        seedPeople,
+      ]);
+      for (const f of seedFamilies) {
+        await c.query(
+          "insert into families(id, tree_id, husband_id, wife_id, children) values ($1,$2,$3,$4,$5)",
+          [f.id, SEED.tree.id, f.husband_id, f.wife_id, f.children]
+        );
+      }
+    });
+  });
+
+  const peopleCount = () =>
+    withDb((c) =>
+      c
+        .query("select count(*)::int n from people where tree_id=$1", [SEED.tree.id])
+        .then((r) => r.rows[0]!.n)
+    );
+
+  test("submitting an existing name opens the duplicate guard before any write (a6)", async ({
+    page,
+  }) => {
+    await page.goto(membersRoute);
+    await page.getByRole("button", { name: "+ Add person" }).click();
+    const panel = page.locator(".add-panel");
+    await panel.locator(".rel-chip", { hasText: "Not yet connected" }).click();
+    await panel.getByLabel("Name").fill("Meera Verma");
+    await panel.getByRole("button", { name: "Add to the record" }).click();
+
+    // The guard stops the write and offers to connect.
+    const guard = page.locator(".dialog--wide");
+    await expect(guard).toBeVisible();
+    await expect(guard.locator(".dialog-heading")).toContainText("already a Meera Verma");
+    await guard.getByRole("button", { name: "Back to the form" }).click();
+    await expect(guard).toHaveCount(0);
+    expect(await peopleCount()).toBe(4); // nothing written
+  });
+
+  test("connecting an existing person reuses their record — no duplicate (a7)", async ({
+    page,
+  }) => {
+    await page.goto(membersRoute);
+    await page.getByRole("button", { name: "+ Add person" }).click();
+    const panel = page.locator(".add-panel");
+    await panel.locator(".rel-chip", { hasText: "Not yet connected" }).click();
+    await panel.getByLabel("Name").fill("Meera Verma");
+    await panel.getByRole("button", { name: "Add to the record" }).click();
+    await page
+      .locator(".dialog--wide")
+      .getByRole("button", { name: "Connect the existing Meera Verma" })
+      .click();
+    // Reused, not copied — the person count is unchanged and Meera is intact.
+    await expect.poll(peopleCount).toBe(4);
+    const meera = await withDb((c) =>
+      c
+        .query("select data->'name'->>'official_name' n from people where id='p_meera'")
+        .then((r) => r.rows[0]!.n)
+    );
+    expect(meera).toBe("Meera Verma");
+  });
+
+  test("adding a genuinely new person creates and wires them into the household", async ({
+    page,
+  }) => {
+    await page.goto(membersRoute);
+    await page.getByRole("button", { name: "+ Add person" }).click();
+    const panel = page.locator(".add-panel");
+    await panel.locator(".rel-chip", { hasText: "Child of" }).click();
+    await panel.getByLabel("Who they relate to").selectOption({ label: "Ishaan Verma" });
+    await panel.getByLabel("Name").fill("Kabir Verma");
+    await panel.getByRole("button", { name: "Add to the record" }).click();
+
+    await expect.poll(peopleCount).toBe(5);
+    // Wired as a child of Ishaan's household (f_root).
+    const wired = await withDb((c) =>
+      c
+        .query<{ children: string[] }>("select children from families where id='f_root'")
+        .then((r) => r.rows[0]!.children.some((id) => id.startsWith("p_kabir")))
+    );
+    expect(wired).toBe(true);
+  });
+});
+
 test.describe("Members — removing access (Spec 06 a8)", () => {
   // Removing access deletes only the membership; this suite restores it after.
   let saved: { uid: string; role: string; personId: string | null };
