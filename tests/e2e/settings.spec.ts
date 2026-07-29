@@ -10,10 +10,9 @@ import { SEED, WRITER, treeRoute } from "./fixtures";
  *    action is quiet-red text, never a filled red button (a8). This suite never
  *    confirms the delete (it would destroy the seed) — it stops at Cancel.
  *
- * The read-only view for non-keepers (a1) needs a writer/reader session, which
- * is blocked by QUESTIONS Q15 (a member deep-linking to a tree they don't own
- * sits on Loading); it's written below as test.fixme, ready once Q15 is fixed.
- * Server-side keeper enforcement is unit-tested in tree-service.test.ts.
+ * The read-only view for non-keepers (a1) runs through a writer's session (a
+ * member of the seed tree) — the cross-tree path fixed in useAuthAndData (Q15).
+ * Server-side keeper enforcement is also unit-tested in tree-service.test.ts.
  */
 
 const LOCAL_DB =
@@ -138,12 +137,12 @@ test.describe("Tree settings — delete (Spec 11 a7/a8)", () => {
 
 /**
  * a1 — non-keepers see every setting read-only, with the sub-line, never a
- * hidden page. Deferred with the rest of the cross-user reader sessions (Q15).
+ * hidden page. Runs as the writer member (designreview3) of the seed tree.
  */
 test.describe("Tree settings — read-only for non-keepers (Spec 11 a1)", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test.fixme("a writer sees the cards read-only with no Save (a1)", async ({ page }) => {
+  test("a writer sees the cards read-only with no Save (a1)", async ({ page }) => {
     await page.goto("/");
     await page.locator("#auth-email").fill(WRITER.email);
     await page.locator("#auth-password").fill(WRITER.password);

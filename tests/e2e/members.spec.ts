@@ -54,14 +54,17 @@ test.describe("Members — the list (Spec 06)", () => {
     const youRow = page.locator(".records-row", { hasText: "Ishaan Verma" });
     await expect(youRow.locator(".records-col-relation")).toHaveText("you");
     await expect(youRow.locator(".records-col-may .chip")).toHaveText("Keeper");
-    // The editor member reads Write; an account-less relative reads "no account".
+    // The editor member reads Write. A living account-less relative shows the
+    // keeper's Invite affordance (Spec 06: "no account" as a plain word is the
+    // *deceased* state; a living unlinked row gets Invite, keeper only).
     await expect(
       page.locator(".records-row", { hasText: "Meera Verma" }).locator(".records-col-may .chip")
     ).toHaveText("Write");
     await expect(
-      page.locator(".records-row", { hasText: "Arjun Verma" }).locator(".records-noaccount")
-    ).toHaveText("no account");
-    // a3: roles are never written from the table — no <select> lives in it.
+      page.locator(".records-row", { hasText: "Arjun Verma" }).locator(".records-invite")
+    ).toHaveText("Invite");
+    // a3: roles are never written from the table — no <select> lives in it (Invite
+    // opens a panel, it doesn't set a role inline).
     await expect(page.locator(".records-table select")).toHaveCount(0);
   });
 

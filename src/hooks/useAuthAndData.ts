@@ -58,14 +58,20 @@ export function useAuthAndData() {
   const hasProvisionedRef = useRef(false);
 
   // Auto-select the user's first owned tree as the active one. On /tree/[id]
-  // routes the layout overrides this from the URL param.
+  // routes the layout overrides this from the URL param — including trees the
+  // user is a *member* of but doesn't own, so accessibility here must span both
+  // lists. (Checking only `owned` bounced a member off a tree they'd deep-linked
+  // to: the layout re-bound it from the URL, this reset it, and the two thrashed
+  // forever on a "Loading" screen — QUESTIONS Q15.)
   useEffect(() => {
     if (!myTreesLoaded || !myTrees) return;
+    const accessible = [...myTrees.owned, ...myTrees.member];
     if (!currentTreeId && myTrees.owned.length > 0) {
       setCurrentTreeId(myTrees.owned[0]!.id);
-    } else if (currentTreeId && myTrees.owned.every((t) => t.id !== currentTreeId)) {
-      // Active tree is no longer accessible (deleted, role revoked). Pick another.
-      setCurrentTreeId(myTrees.owned[0]?.id ?? null);
+    } else if (currentTreeId && accessible.every((t) => t.id !== currentTreeId)) {
+      // Active tree is no longer accessible (deleted, role revoked). Pick another,
+      // preferring an owned tree, then any membership.
+      setCurrentTreeId(myTrees.owned[0]?.id ?? myTrees.member[0]?.id ?? null);
     }
   }, [myTrees, myTreesLoaded, currentTreeId]);
 

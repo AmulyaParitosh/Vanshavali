@@ -9,11 +9,10 @@ import { SEED, WRITER, treeRoute } from "./fixtures";
  * column shows for every role but is interactive only for a keeper (a2); a reader
  * sees "Ask a keeper to add someone" instead of "+ Add person" (a5).
  *
- * DEFERRED (test.fixme) — blocked by QUESTIONS Q15: a member deep-linking to a tree
- * they do NOT own sits on a persistent "Loading…" (the keeper path is fine, and the
- * picker redirects a member to their own default tree, so no route reaches another
- * owner's tree in a test). The a2/a5 view-gating logic is unit-tested (authz/access);
- * these specs are written and ready once Q15's cross-user navigation is fixed.
+ * These run through a member's cross-tree session (designreview3 deep-linking to a tree
+ * they don't own) — the path that used to thrash on "Loading" (QUESTIONS Q15). Fixed in
+ * useAuthAndData: the active-tree accessibility check now spans owned + member trees, so
+ * a member tree bound from the URL is no longer reset out from under the layout.
  */
 
 const LOCAL_DB =
@@ -57,7 +56,7 @@ test.afterEach(async () => {
   await setRole("editor"); // leave the seed's writer as it was
 });
 
-test.fixme("a writer sees the May column but no keeper controls (a2)", async ({ page }) => {
+test("a writer sees the May column but no keeper controls (a2)", async ({ page }) => {
   await setRole("editor");
   await signInAsWriter(page);
   await openMembers(page);
@@ -73,9 +72,7 @@ test.fixme("a writer sees the May column but no keeper controls (a2)", async ({ 
   await expect(page.getByRole("button", { name: "+ Add person" })).toBeVisible();
 });
 
-test.fixme("a reader sees 'Ask a keeper to add someone', no add and no invite (a5)", async ({
-  page,
-}) => {
+test("a reader sees 'Ask a keeper to add someone', no add and no invite (a5)", async ({ page }) => {
   await setRole("viewer");
   await signInAsWriter(page);
   await openMembers(page);

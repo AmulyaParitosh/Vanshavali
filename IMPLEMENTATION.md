@@ -1197,3 +1197,21 @@ files: src/app/tree/[id]/settings/page.tsx — rewritten into a 720px left-align
   a9 hand-over (ST-E). default_invite_role → Spec-06 invite-default wire-up (small follow-up).
   infra: restarted the dev server — TWO stale `next dev` were bound (one degraded per Q14), which flaked
   the PATCH round-trip; a single fresh server makes the cards deterministic (5/5).
+
+### Q15 FIXED — cross-tree navigation no longer thrashes on "Loading"
+
+root cause: useAuthAndData's active-tree auto-select treated only `myTrees.owned` as accessible. When
+a member deep-linked to a tree they don't own, the [id] layout bound currentTreeId from the URL, this
+effect immediately reset it to the member's own tree (the URL tree wasn't in `owned`), the layout
+re-bound it, and the two thrashed forever behind the "Loading" gate.
+fix: src/hooks/useAuthAndData.ts — the accessibility check now spans owned + member; a member tree bound
+from the URL is recognised as accessible and left in place. Re-selection (deleted/role-revoked) still
+fires, preferring an owned tree then any membership.
+unblocked (test.fixme → real): tests/e2e/members-roles.spec.ts a2 (writer sees the May column, no keeper
+controls) + a5 (reader sees "Ask a keeper to add someone"); tests/e2e/settings.spec.ts a1 (writer sees
+the settings cards read-only, no Save, no danger zone). All green through a real cross-tree writer/reader session.
+also fixed (pre-existing, unrelated to Q15): tests/e2e/members.spec.ts a3 expected Arjun ("no account")
+but Spec 06 (May cell table) says a LIVING account-less row shows the keeper's **Invite** affordance —
+"no account" is the _deceased_ state. Test corrected to assert Invite; the members page code was already right.
+regression: 52 keeper-path e2e (tree-canvas/record-panel/members/households/account) + the 3 unblocked
+reader tests + members 14/14 all green. Vitest unaffected.
