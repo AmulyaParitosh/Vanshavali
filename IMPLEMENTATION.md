@@ -854,3 +854,22 @@ decisions: rows key off the d3 depth; the numeral uses roman(depth + 1) so the r
 1-based). The jump target is the first household in the generation, panned at 1.2×. The canvas nodes
 are already Tab-focusable + Enter-openable, so the rail + nodes together make the tree keyboard-complete.
 deviations: attention filter (a8, dim-not-hide) = T-E3.
+
+### Wave 3 Tree T-E3 — attention filter (a8) — DONE
+
+spec: `_SPEC-05.md` a8 — dims non-matching households, never hides
+files: src/components/Tree.tsx (Attention type + nodePersons/nodeHasAttention helpers; attention state
+
+- live counts; top-right filter chips Missing dates / No account linked / No photograph; a `dimmed`
+  class on the node wrapper for households that don't match the active lens); globals.css (.tree-attention
+  / .attention-chip[.active] / .node-wrap.dimmed opacity 0.18 + pointer-events none)
+  tests: tests/e2e/tree-canvas.spec.ts +1 (three chips; activating a lens keeps every household in the
+  DOM — never hidden — dims the non-matching root couple, leaves a matching child full; re-click clears).
+  Full spec 8/8.
+  decisions: a household "has" an issue if ANY member does (missing birth date / no userId / no photo).
+  Active lens dims + disables the non-matching households (they stop responding to hover) but they stay
+  on the canvas (a8). Counts are the number of households WITH each issue.
+
+**WAVE 3 TREE (Spec 05) — T-A..T-E complete.** Geometry (a6), orthogonal links (a1/g7), node redesign
+(a2/a3 + hover), centering/zoom/LOD (a4/a9/f7), controls + legend (g9/g10), generation rail (a7),
+attention filter (a8). Remaining: T-F acceptance audit (a5 tap/Esc, a10 no-write, a1 couple-pill).

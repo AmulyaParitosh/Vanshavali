@@ -1077,6 +1077,52 @@ main {
   min-width: 0;
   height: 100%;
 }
+/* Attention filter (Spec 05 a8) — top-right; dims non-matching households. */
+.tree-attention {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.attention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-10);
+  background: var(--surface-paper);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  color: var(--text-strong);
+  cursor: pointer;
+  transition:
+    background var(--dur-panel) var(--ease),
+    color var(--dur-panel) var(--ease);
+}
+.attention-chip:hover {
+  border-color: var(--color-red);
+}
+.attention-chip.active {
+  background: var(--color-red-wash);
+  color: var(--color-red-deep);
+  border-color: #f0dcd8;
+}
+.attention-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-meta);
+}
+/* Households that don't match the active filter dim + stop responding, but stay
+   on the canvas — never hidden (a8). */
+.node-wrap.dimmed {
+  opacity: 0.18;
+  pointer-events: none;
+  transition: opacity var(--dur-panel) var(--ease);
+}
 /* Generation rail (Spec 05 a7) — top-left; the keyboard spine. */
 .genrail {
   position: absolute;

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { GraphNode } from "../types/graph";
+import type { Person } from "../types/person";
 import type { TreeMembership } from "../types/tree";
 import { TREE_CONFIG } from "../constants";
 import { bornInLine } from "../lib/generations";
@@ -17,6 +18,32 @@ import GenerationRail, { type GenerationRow } from "./tree/GenerationRail";
 
 interface TreeProps {
   data: GraphNode | null;
+}
+
+/** The three "needs attention" lenses (Spec 05 a8). */
+type Attention = "dates" | "account" | "photo";
+const ATTENTION: { key: Attention; label: string }[] = [
+  { key: "dates", label: "Missing dates" },
+  { key: "account", label: "No account linked" },
+  { key: "photo", label: "No photograph" },
+];
+
+/** The people in a household node (both partners, or the single person). */
+function nodePersons(data: GraphNode): Person[] {
+  if (data.isPartnerGroup) {
+    return [data.husband, data.wife].filter((p): p is Person => !!p);
+  }
+  return [data as unknown as Person];
+}
+
+/** Whether a household has the given attention issue (any member does). */
+function nodeHasAttention(data: GraphNode, a: Attention): boolean {
+  const people = nodePersons(data);
+  if (a === "dates") {
+    return people.some((p) => !(p.events ?? []).some((e) => /birth|born/i.test(e.type) && e.date));
+  }
+  if (a === "account") return people.some((p) => !p.userId);
+  return people.some((p) => !p.image_url);
 }
 
 const Tree: React.FC<TreeProps> = ({ data }) => {
@@ -79,6 +106,17 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       .map(([depth, v]) => ({ depth, count: v.count, x: v.x, y: v.y }));
   }, [layout]);
 
+  // Attention filter (a8): dims non-matching households, never hides them.
+  const [attention, setAttention] = useState<Attention | null>(null);
+  const attentionCounts = useMemo(
+    () => ({
+      dates: layout.nodes.filter((n) => nodeHasAttention(n.data, "dates")).length,
+      account: layout.nodes.filter((n) => nodeHasAttention(n.data, "account")).length,
+      photo: layout.nodes.filter((n) => nodeHasAttention(n.data, "photo")).length,
+    }),
+    [layout]
+  );
+
   /** Center the canvas on a person (their couple offset accounted for). */
   const panToPerson = (personId: string) => {
     const target = findContainingNode(layout.nodes, personId);
@@ -135,7 +173,15 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
             <g className="nodes">
               {layout.nodes.map((node) => (
-                <g key={node.data.id} transform={`translate(${node.x},${node.y})`}>
+                <g
+                  key={node.data.id}
+                  className={
+                    attention && !nodeHasAttention(node.data, attention)
+                      ? "node-wrap dimmed"
+                      : "node-wrap"
+                  }
+                  transform={`translate(${node.x},${node.y})`}
+                >
                   {node.data.isPartnerGroup ? (
                     <PartnerNode
                       node={node.data}
@@ -162,6 +208,22 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
         {/* Generation rail (Spec 05 a7) — the keyboard spine; jump to a generation. */}
         <GenerationRail generations={generations} onJump={(x, y) => panTo(x, y)} />
+
+        {/* Attention filters (Spec 05 a8) — dim non-matching households, never hide. */}
+        <div className="tree-attention" role="group" aria-label="Needs attention">
+          {ATTENTION.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              className={`attention-chip${attention === key ? " active" : ""}`}
+              aria-pressed={attention === key}
+              onClick={() => setAttention((cur) => (cur === key ? null : key))}
+            >
+              {label}
+              <span className="attention-count">{attentionCounts[key]}</span>
+            </button>
+          ))}
+        </div>
 
         {/* Legend (Spec 05 g9) — what the two ring colours mean. */}
         <div className="tree-legend" aria-hidden="true">

@@ -63,6 +63,30 @@ test.describe("Tree canvas — node visuals (Spec 05)", () => {
     expect(new URL(page.url()).pathname).toBe(treeRoute());
   });
 
+  test("the attention filter dims non-matching households but never hides them (a8)", async ({
+    page,
+  }) => {
+    await page.goto(treeRoute());
+    await expect(page.locator(".attention-chip")).toHaveCount(3);
+    const total = await page.locator(".node-wrap").count();
+
+    await page.getByRole("button", { name: /No account linked/ }).click();
+    // Nothing is removed — every household stays on the canvas (a8).
+    await expect(page.locator(".node-wrap")).toHaveCount(total);
+    // The root couple (both accounts linked) has no issue → dimmed; a child with
+    // no account stays full.
+    await expect(
+      page.locator(`.node-wrap:has(.node[data-id="${SEED.people.you.id}"])`)
+    ).toHaveClass(/dimmed/);
+    await expect(
+      page.locator(`.node-wrap:has(.node[data-id="${SEED.people.son.id}"])`)
+    ).not.toHaveClass(/dimmed/);
+
+    // Clicking the same filter again clears it.
+    await page.getByRole("button", { name: /No account linked/ }).click();
+    await expect(page.locator(".node-wrap.dimmed")).toHaveCount(0);
+  });
+
   test("the canvas controls offer Fit and zoom (g10)", async ({ page }) => {
     await page.goto(treeRoute());
     const controls = page.locator(".tree-controls");
