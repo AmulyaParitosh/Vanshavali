@@ -103,24 +103,29 @@ describe("Correct anyone's record (R — / W ✓ / K ✓)", () => {
   });
 });
 
-describe("Correct their OWN record — the self-edit exception (R ✓self / W ✓ / K ✓)", () => {
+describe("Correct a record — self-edit (row 5) + the Spec 12 a4 narrowing", () => {
   // requireEditOrSelf takes the target record's user_id; caller is "u1".
   const editSelf = (targetUserId: string | null | undefined) =>
     requireEditOrSelf("t1", "u1", targetUserId);
 
-  it.each([EDITOR, OWNER])("%s may edit anyone's record", async (role) => {
+  it.each([EDITOR, OWNER])("%s may edit an UNLINKED person (no account)", async (role) => {
     asRole(role);
-    await expect(editSelf("someone_else")).resolves.toBe(role);
+    await expect(editSelf(null)).resolves.toBe(role);
   });
-  it("a reader MAY edit the one record linked to their own account", async () => {
+  it.each([EDITOR, OWNER])(
+    "%s may NOT write a record linked to another user (Spec 12 a4)",
+    async (role) => {
+      asRole(role);
+      await rejects(() => editSelf("someone_else"));
+    }
+  );
+  it("any member may edit the one record linked to their own account", async () => {
     asRole(VIEWER);
     await expect(editSelf("u1")).resolves.toBe(VIEWER);
+    asRole(OWNER);
+    await expect(editSelf("u1")).resolves.toBe(OWNER);
   });
-  it("a reader may NOT edit someone else's record", async () => {
-    asRole(VIEWER);
-    await rejects(() => editSelf("someone_else"));
-  });
-  it("a reader on an unlinked record (no target user) is rejected", async () => {
+  it("a reader may NOT edit an unlinked person", async () => {
     asRole(VIEWER);
     await rejects(() => editSelf(null));
   });

@@ -1012,3 +1012,20 @@ ownFacts)` service that fans own facts (onerecord.ts `applyOwnFacts`, currently 
   KEY divergences from repo `/user/profile`: routes (/user/profile → /user + /user/record); one-record
   model + propagation NOT wired (onerecord.ts unused); RecordEditor not reused on profile; thin trees
   list + no self-leave. Delete-account is out of scope (spec edge e4).
+
+### Wave 4 Account AC-A — a4 authz narrowing (a linked record is owner-only) — DONE
+
+spec: `_SPEC-12.md` a4 — "a keeper can read but never write another user's record, enforced server-side"
+files: src/services/authz.ts (requireEditOrSelf narrowed: allowed = (canViewTree && isSelf) ||
+(canEdit && !linkedToOther) — a person linked to ANOTHER user is their own record, unwritable even by
+a keeper; unlinked people stay editable by writers/keepers; anyone edits their own linked record)
+tests: tests/services/authz.test.ts — 33 (rewrote the self-edit describe: editor/keeper may edit an
+UNLINKED person but NOT another user's linked record [a4]; any member edits their own linked record;
+reader can't edit unlinked others; non-member rejected). Re-verified record-panel edit-in-place 4/4
+(Ishaan edits self) + record-conflict 3/3 (edits Arjun, unlinked) still pass — the narrowing only
+newly blocks the untested keeper→another-linked-record path.
+decisions: this tightens Spec 07's requireEditOrSelf (which let editor/keeper edit anyone) with Spec 12
+a4. The patchPerson service (Spec 07 D4) uses requireEditOrSelf, so the in-tree record panel now also
+refuses a keeper writing another user's linked record — the intended cross-spec behaviour.
+deviations: the cross-tree propagation service (a5) + the /user/record page-editor + /user overview are
+AC-A2 / AC-B / AC-C (not built here).

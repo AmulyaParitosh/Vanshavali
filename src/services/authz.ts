@@ -33,10 +33,13 @@ export function requireEdit(treeId: string, uid: string): Promise<TreeRole> {
 }
 
 /**
- * Edit access for a single record, with the self-edit exception (Spec 00 §04,
- * matrix row 5): an editor/keeper may edit anyone, and a reader may edit the one
- * record linked to their own account. Any lower access is refused. `targetUserId`
- * is the `user_id` of the person being edited.
+ * Edit access for a single record (Spec 00 §04 row 5 + Spec 12 a4). `targetUserId`
+ * is the `user_id` of the person being edited. Two rules combine:
+ *  - Anyone who can view the tree may edit the ONE record linked to their own
+ *    account (the self-edit exception).
+ *  - A writer/keeper may edit anyone who is NOT linked to another account. But a
+ *    person linked to a *different* user is their OWN record — even a keeper may
+ *    read it but never write it (Spec 12 a4); only its owner edits it, on Account.
  */
 export async function requireEditOrSelf(
   treeId: string,
@@ -45,7 +48,9 @@ export async function requireEditOrSelf(
 ): Promise<TreeRole> {
   const membership = await MembershipRepository.find(getPool(), treeId, uid);
   const role = membership?.role;
-  const allowed = canEdit(role) || (canViewTree(role) && !!targetUserId && targetUserId === uid);
+  const isSelf = !!targetUserId && targetUserId === uid;
+  const linkedToOther = !!targetUserId && targetUserId !== uid;
+  const allowed = (canViewTree(role) && isSelf) || (canEdit(role) && !linkedToOther);
   if (!allowed) throw new HttpError("You don't have permission to edit this record.", 403);
   return role as TreeRole;
 }
