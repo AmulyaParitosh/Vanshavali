@@ -1612,3 +1612,25 @@ hero-linebreak-by-breakpoint + no-cookie-before-CTA are honoured structurally (h
 — not asserted as lettered e2e. /demo ("See an example tree") route is not built (edge e4 = hide if
 unavailable; the outlined CTA currently links to /demo — a follow-up).
 **WAVE 6 (Landing, Spec 01) COMPLETE.** Next: Wave 7 — integration audit (the 12 cross-spec contracts).
+
+---
+
+## WAVE 7 — Integration audit (the 12 cross-spec contracts) — DONE
+
+Built tests/e2e/integration.spec.ts for the seams only expressible BETWEEN specs, and audited the rest
+against their per-spec suites. INTEGRATION.md updated with all 12 statuses + last-run.
+
+- #2 shared inspector opens in place from a members row (on /members) and from ⌘K search (on the canvas
+  via ?person) — same `.inspector-name`, no navigation. GREEN (integration.spec).
+- #11 a reader's search shows the year, never the exact date — search reads the ST-D-redacted /data.
+  GREEN (integration.spec).
+- #12 Esc closes the topmost overlay (⌘K). GREEN (integration.spec).
+- #1 shell no-remount, #5 access (table read-only + panel-only keeper write), #6 become-one one-row +
+  links intact, #7 /user propagation + keeper-can't-write, #10 Spec-13 forms — GREEN via their per-spec
+  suites (referenced in INTEGRATION.md).
+- #9 no window.confirm/beforeunload in src (verified); destructive actions are quiet-red + consequence
+  dialogs, never filled red — GREEN.
+- #8 attention counts (canvas) GREEN; missing-data-as-words per-surface — PARTIAL. #12 tab-order full
+  sweep — PARTIAL.
+- #3 (bilingual name cross-surface) + #4 (per-tree heritage) — DEFERRED (blocked by the deferred bilingual
+  name model / per-tree heritage column; revisit with those).
