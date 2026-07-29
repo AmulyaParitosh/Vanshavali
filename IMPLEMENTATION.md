@@ -1118,3 +1118,28 @@ state now shows only the input + footer (a9), fixing the old "shows everyone" be
 deviations (Search S-B/S-C, not built): ⌘↵ focus-in-tree + wrap/Home-End keyboard (a5); places filter
 the canvas rather than being inert (a6); events group by-kind counts; result caps (6/3/4) + overflow;
 the 640/96 geometry + copy-deck strings. The palette otherwise works (open, filter, open a record).
+
+---
+
+## WAVE 4 — Tree settings (Spec 11) — plan + receipts
+
+Spec 11 distilled at `design-specs/_SPEC-11.md` (a1..a9). Five setting cards + danger zone. Schema gaps
+(all additive to `trees`): name_order, default_invite_role, readers_see_dates, allow_own_children, place.
+
+### Wave 4 Settings ST-C — delete-tree to spec (a7/a8) — DONE
+
+spec: `_SPEC-11.md` a7 (exact-name type-to-confirm + real counts) / a8 (no filled red)
+files: src/app/tree/[id]/settings/page.tsx (danger zone → quiet-red TEXT action [a8]; opens the
+ConsequenceDialog with type-to-confirm the exact tree name + the real counts [people/households/
+photographs from treeData] [a7]; replaces the old toast.confirm + filled btn-primary); globals.css
+(.settings-danger-action quiet-red text)
+tests: tests/e2e/settings.spec.ts — 1 (danger action is quiet-red not filled a8; dialog states the
+real counts + the action stays disabled until the exact tree name is typed a7; Cancel non-destructive
+— never deletes the seed). 2/2 with setup.
+decisions: reuses the ConsequenceDialog's built-in confirmName type-to-confirm (from Wave 2) — the
+action is its `.btn-danger` quiet-red pill, so a8 (never filled red) holds. Counts come from the
+active tree's treeData (people, families, people-with-photo).
+deviations (Settings ST-A/B/D/E, not built): editable name + name-order + Sharing + Export/Print cards
+with per-card Save (a2/a3/a5/a6) + read-only for non-keepers (a1) need the additive `trees` columns
+(ST-A) + the cards (ST-B); readers-see-dates PROJECTION (a4) is the high-stakes Wave-1 deferred read
+redaction; hand-over keeper (a9) is an ownership model change. Delete itself is now to spec.

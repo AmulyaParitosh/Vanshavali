@@ -4798,6 +4798,21 @@ main {
   font-size: 13.5px;
   color: #8a5a5a;
 }
+/* The danger action is quiet-red text — never a filled red button (Spec 11 a8). */
+.settings-danger-action {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-red-deep);
+  cursor: pointer;
+  padding: 6px 4px;
+}
+.settings-danger-action:hover {
+  text-decoration: underline;
+}
 
 /* ============================================================================
  * Account (§8) — the account rail + the account page.

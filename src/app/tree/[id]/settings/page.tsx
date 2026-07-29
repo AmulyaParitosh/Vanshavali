@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAppContext } from "../../../../context/AppContext";
 import { useToast } from "../../../../components/ToastSystem";
 import Loading from "../../../../components/Loading";
+import ConsequenceDialog from "../../../../components/tree/ConsequenceDialog";
 import { isOwner } from "../../../../lib/access";
 
 /**
@@ -18,13 +19,22 @@ import { isOwner } from "../../../../lib/access";
 export default function TreeSettingsPage() {
   const params = useParams<{ id: string }>();
   const treeId = params?.id ?? null;
-  const { dataProvider, membership, myTrees, setCurrentTreeId } = useAppContext();
+  const { dataProvider, membership, myTrees, treeData, setCurrentTreeId } = useAppContext();
   const toast = useToast();
   const router = useRouter();
 
   const ownerCanManage = isOwner(membership?.role);
   const tree = [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])].find((t) => t.id === treeId);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  // Real counts for the delete warning (a7): people, households, photographs.
+  const people = treeData?.people ?? [];
+  const counts = {
+    people: people.length,
+    households: (treeData?.families ?? []).length,
+    photos: people.filter((p) => !!p.image_url).length,
+  };
 
   if (!treeId) return <Loading />;
   if (!tree) {
@@ -35,23 +45,19 @@ export default function TreeSettingsPage() {
     );
   }
 
-  const handleDelete = () => {
-    toast.confirm(
-      `Delete "${tree.name}"? This permanently removes the tree, all people, households, and members. This cannot be undone.`,
-      async () => {
-        setIsDeleting(true);
-        try {
-          await dataProvider.deleteTree(treeId);
-          toast.success("Tree deleted");
-          setCurrentTreeId(null);
-          router.push("/");
-        } catch (error: unknown) {
-          toast.error(error instanceof Error ? error.message : "Delete failed");
-        } finally {
-          setIsDeleting(false);
-        }
-      }
-    );
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await dataProvider.deleteTree(treeId);
+      toast.success("Tree deleted");
+      setCurrentTreeId(null);
+      router.push("/");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Delete failed");
+    } finally {
+      setIsDeleting(false);
+      setDeleteOpen(false);
+    }
   };
 
   return (
@@ -97,26 +103,46 @@ export default function TreeSettingsPage() {
       {ownerCanManage && (
         <section className="settings-card settings-danger">
           <div className="settings-card-head">
-            <h2>Careful with this</h2>
+            <h2>Danger</h2>
             <p>Deleting a tree cannot be undone from inside Vanshavali.</p>
           </div>
           <div className="settings-danger-row">
             <div className="settings-danger-copy">
-              <span className="title">Delete {tree.name}</span>
+              <span className="title">Delete this record</span>
               <span className="sub">
-                Removes every person, household, member and invitation in this tree.
+                {counts.people} {counts.people === 1 ? "person" : "people"}, {counts.households}{" "}
+                {counts.households === 1 ? "household" : "households"} and {counts.photos}{" "}
+                {counts.photos === 1 ? "photograph" : "photographs"} leave with it.
               </span>
             </div>
+            {/* Quiet-red text, never a filled red button (a8). */}
             <button
               type="button"
-              className="btn btn-primary"
-              onClick={handleDelete}
-              disabled={isDeleting}
+              className="settings-danger-action"
+              onClick={() => setDeleteOpen(true)}
             >
-              {isDeleting ? "Deleting…" : "Delete tree"}
+              Delete this record
             </button>
           </div>
         </section>
+      )}
+
+      {deleteOpen && (
+        <ConsequenceDialog
+          eyebrow="Cannot be undone"
+          danger
+          heading={`Delete ${tree.name}?`}
+          consequences={[
+            `${counts.people} ${counts.people === 1 ? "person" : "people"}, ${counts.households} ${counts.households === 1 ? "household" : "households"} and ${counts.photos} ${counts.photos === 1 ? "photograph" : "photographs"} leave with it.`,
+            "Members are notified. Records people own on their own account stay with them.",
+          ]}
+          confirmName={tree.name}
+          confirmPrompt={`Type ${tree.name} to confirm`}
+          actionLabel={isDeleting ? "Deleting…" : "Delete this record"}
+          busy={isDeleting}
+          onCancel={() => setDeleteOpen(false)}
+          onConfirm={handleDelete}
+        />
       )}
     </div>
   );
