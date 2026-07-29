@@ -254,3 +254,15 @@ decisions: Roles owner/editor/viewer = keeper/write/read. Rows 4 (living-date pr
 (self-edit) are enforced by the read filter + per-record patch path (units 3–4), which add their
 own rejection tests — not skipped, deferred to the units that create the machinery.
 deviations: none.
+
+### Spec 13 dirty-tracking core — DONE
+
+spec: Spec 13 (`_SPEC-13.md`) — flow 1/2/3, acceptance a2/a4/a6, edge 6
+files: src/lib/writeState.ts, tests/lib/writeState.test.ts
+tests: tests/lib/writeState.test.ts — 11/11
+consumes: — (pure logic; every form's write-state hook builds on it)
+decisions: Fields normalise to trimmed strings; "" = absent (whitespace-only diffs aren't dirty).
+`diffFields` classifies Added/Changed/Removed with from→to; `isDirty` (a2), `toPatch` (only changed,
+removal→null), `inversePatch` (Undo, a4), `summarizeChanges` (edge 6 first-6+more), `countInWords`.
+deviations: none. The React hook + leaving-guard/consequence-dialog/save-toast UI that consume this
+are built with the record panel (Wave 2) where there is a real form to attach them to.
