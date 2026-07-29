@@ -917,3 +917,17 @@ decisions: marriage = free-form `date` string + `place`, both optional (precisio
 person date-precision). Columns are nullable + additive (data-preserving migrate). Resolves Q11.
 deviations: `lineageSide` stays derived (bornInLine), not stored — the spec's "Swap sides" control is
 deferred (noted for H-C). List/editor UI = H-B..H-E.
+
+### Wave 3 Households H-B — the list to Spec 08 — DONE
+
+spec: `_SPEC-08.md` — Partners · Married · Children · Gen; generation ordering; empty state
+files: src/app/tree/[id]/family/page.tsx (add the Married column reading Family.marriage; sort rows by
+generation then marriage year, undated last; empty state "No marriages recorded yet"; header primary
+"+ Record a marriage"); globals.css (.hh-col-married)
+tests: tests/e2e/households.spec.ts — 3 (column set; a household reads partners "A & B" / "no marriage
+date" / children count / gen roman; clicking opens the editor in place, no route change). 4/4 with setup.
+decisions: Married cell shows "date, place" or the "no marriage date" absence (never blank). Rows sort
+generation → marriage year (never insertion order). The existing editor already avoids the words
+Husband/Wife in the UI (a1) and gates the footer by canEdit (readers read-only, a9).
+deviations: the marriage section + prose in the EDITOR (a5), the delete consequence dialog (a6),
+footer-when-dirty, and alt+↑/↓ child reorder (a3) are H-C.

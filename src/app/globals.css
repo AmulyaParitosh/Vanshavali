@@ -4288,6 +4288,15 @@ main {
 .couple-glyph .records-avatar + .records-avatar {
   margin-left: -14px;
 }
+.hh-col-married {
+  width: 150px;
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--text-strong);
+}
+.hh-col-married.absent {
+  color: var(--text-absent);
+}
 .hh-col-children {
   width: 160px;
   flex-shrink: 0;

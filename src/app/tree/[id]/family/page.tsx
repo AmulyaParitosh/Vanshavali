@@ -43,17 +43,29 @@ export default function HouseholdsPage() {
   const nameOf = (id: string | undefined) =>
     (id && personById.get(id)?.name.official_name) || undefined;
 
+  // Marriage-year value for sorting; undated households sort last (Spec 08 g).
+  const marriageValue = (f: Family): number => {
+    const y = f.marriage?.date?.match(/\d{4}/)?.[0];
+    return y ? Number(y) : Number.POSITIVE_INFINITY;
+  };
+  const genOf = (f: Family): number =>
+    [f.husband, f.wife].map((id) => (id ? gens.get(id) : undefined)).find(Boolean) ?? 99;
+
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return families;
-    return families.filter((f) => {
-      const names = [f.husband, f.wife]
-        .map((id) => (id ? personById.get(id) : undefined))
-        .filter(Boolean)
-        .flatMap((p) => [p!.name.official_name, ...(p!.name.aliases ?? [])]);
-      return names.join(" ").toLowerCase().includes(q);
-    });
-  }, [families, query, personById]);
+    const list = q
+      ? families.filter((f) => {
+          const names = [f.husband, f.wife]
+            .map((id) => (id ? personById.get(id) : undefined))
+            .filter(Boolean)
+            .flatMap((p) => [p!.name.official_name, ...(p!.name.aliases ?? [])]);
+          return names.join(" ").toLowerCase().includes(q);
+        })
+      : families;
+    // Generation, then marriage date — never arbitrary insertion order.
+    return [...list].sort((a, b) => genOf(a) - genOf(b) || marriageValue(a) - marriageValue(b));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [families, query, personById, gens]);
 
   if (!data) return <Loading />;
 
@@ -113,7 +125,7 @@ export default function HouseholdsPage() {
               className="btn btn-primary"
               onClick={() => setSelected({ id: "", husband: "", wife: "", children: [] })}
             >
-              + New household
+              + Record a marriage
             </button>
           )}
         </div>
@@ -146,12 +158,15 @@ export default function HouseholdsPage() {
           <div className="records-thead">
             <span style={{ width: 74, flexShrink: 0 }} />
             <span style={{ flex: 1, minWidth: 0 }}>Partners</span>
+            <span className="hh-col-married">Married</span>
             <span className="hh-col-children">Children</span>
             <span className="hh-col-gen">Gen</span>
           </div>
           {rows.length === 0 ? (
             <div className="records-empty">
-              {families.length === 0 ? "No households yet." : `No household matches “${query}”.`}
+              {families.length === 0
+                ? "No marriages recorded yet"
+                : `No household matches “${query}”.`}
             </div>
           ) : (
             rows.map((f) => {
@@ -193,6 +208,11 @@ export default function HouseholdsPage() {
                     <span className="records-name-primary">
                       {partners.map((id) => nameOf(id)).join(" & ") || "Unnamed household"}
                     </span>
+                  </span>
+                  <span className={`hh-col-married${f.marriage?.date ? "" : " absent"}`}>
+                    {f.marriage?.date
+                      ? [f.marriage.date, f.marriage.place].filter(Boolean).join(", ")
+                      : "no marriage date"}
                   </span>
                   <span className={`hh-col-children${childNames.length ? "" : " absent"}`}>
                     {childNames.length
