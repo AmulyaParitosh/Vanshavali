@@ -105,4 +105,40 @@ test.describe("Record panel — edit in place (Spec 07 a2/a4/a9)", () => {
     await expect(page.locator(".record-editor")).toHaveCount(0);
     await expect(page.locator(".inspector-name")).toHaveText("Ishaan Verma");
   });
+
+  test("closing a dirty edit routes through the itemised leaving guard (a6, §10)", async ({
+    page,
+  }) => {
+    await page.goto(`${treeRoute()}?person=${you}`);
+    await page.getByRole("button", { name: "Edit record" }).click();
+    await page.getByLabel("Name").fill("Ishaan K. Verma");
+
+    // ✕ while dirty → the guard, itemising the change; never a browser confirm.
+    await page.locator(".icon-close").click();
+    const guard = page.getByRole("dialog", { name: "Leave without saving?" });
+    await expect(guard).toBeVisible();
+    await expect(guard.locator(".verb-chip")).toHaveText("Changed");
+    await expect(guard.locator(".leave-value")).toContainText("Name");
+    for (const name of ["Save and leave", "Keep editing", "Throw them away"]) {
+      await expect(guard.getByRole("button", { name })).toBeVisible();
+    }
+    expect(new URL(page.url()).pathname).toBe(treeRoute()); // no navigation
+
+    // Keep editing keeps the panel and the edits.
+    await guard.getByRole("button", { name: "Keep editing" }).click();
+    await expect(guard).toHaveCount(0);
+    await expect(page.getByLabel("Name")).toHaveValue("Ishaan K. Verma");
+
+    // Throw them away leaves without saving.
+    await page.locator(".icon-close").click();
+    await page.getByRole("button", { name: "Throw them away" }).click();
+    await expect(page.locator(".inspector")).toHaveCount(0);
+  });
+
+  test("closing a clean panel does not raise the guard", async ({ page }) => {
+    await page.goto(`${treeRoute()}?person=${you}`);
+    await page.locator(".icon-close").click();
+    await expect(page.getByRole("dialog", { name: "Leave without saving?" })).toHaveCount(0);
+    await expect(page.locator(".inspector")).toHaveCount(0);
+  });
 });

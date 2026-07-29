@@ -424,3 +424,20 @@ deviations: Save uses bulk saveTreeData (per-record patch + base-version = sub-u
 toast/undo, no leaving guard on dirty-close, keeper role radio + Remove-access consequence dialog,
 date-precision segmented per event — all sub-unit D. Photo upload + legacy sub-editor styling are a
 touch oversized for 384px — cosmetic polish noted.
+
+### Wave 2 sub-unit D (part 1) — the leaving guard — DONE
+
+spec: Spec 13 flow 4, a6; Spec 07 a6; integration §10
+files: src/components/tree/LeavingGuard.tsx, src/lib/personChanges.ts, src/components/tree/RecordEditor.tsx
+(reports changes/draft up), src/components/tree/TreeInspector.tsx (gates ✕/Esc close, renders guard),
+src/app/globals.css (.leave-\*, .verb-chip), tests/e2e/record-panel.spec.ts
+tests: tests/e2e/record-panel.spec.ts — 15/15 (added: dirty close → itemised guard; clean close → none)
+consumes: .dialog/.dialog-scrim/.dialog-eyebrow/.dialog-heading/.dialog-actions, summarizeChanges,
+countInWords, .btn-danger-text
+decisions: Closing (✕ or Esc) a dirty edit shows the guard — eyebrow "Not saved yet", heading "Leave
+without saving?", body with the count in words + name, an itemised change list (verb chip + old→new),
+and Save-and-leave / Keep editing / Throw-them-away. Never a browser confirm. `personChanges` itemises
+name/sex/photo/aliases/life/details; arrays collapse to one entry each. Scrim-click = Keep editing.
+deviations: change list is per-field (arrays as one entry), not per-event as the spec sample; enough
+for a6. Save toast + 12s undo, keeper role radio + Save, Remove-access consequence dialog, and the
+per-record patch endpoint + conflict remain (D parts 2–4).

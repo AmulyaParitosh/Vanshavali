@@ -1632,6 +1632,54 @@ main {
   background: var(--surface-paper);
 }
 
+/* Leaving guard change list (Spec 13) — a verb per change, old → new for edits. */
+.leave-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-strong);
+}
+.leave-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-12);
+  overflow: hidden;
+}
+.leave-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 13px;
+  border-bottom: 1px solid var(--line-row);
+  font-size: 13.5px;
+}
+.leave-row:last-child {
+  border-bottom: none;
+}
+.verb-chip {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-quiet);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.leave-value {
+  min-width: 0;
+  color: var(--text-rail);
+}
+.leave-arrow {
+  color: var(--text-absent);
+  font-size: 12px;
+}
+.leave-more {
+  padding: 9px 13px;
+  font-size: 13px;
+  color: var(--text-meta);
+}
+
 .inspector-section {
   display: flex;
   flex-direction: column;

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Person, DraftPerson } from "../../types/person";
 import type { Family } from "../../types/family";
 import type { TreeMembership } from "../../types/tree";
@@ -6,8 +6,10 @@ import { portraitTint, personInitials } from "../../utils/portrait";
 import { GraphManager } from "../../lib/graph/GraphManager";
 import { generationMap, roman, bornInLine } from "../../lib/generations";
 import { buildLineage, describeRelation, ordinalWord, type Lineage } from "../../lib/lineage";
+import type { FieldChange } from "../../lib/writeState";
 import AccessBlock from "./AccessBlock";
 import RecordEditor from "./RecordEditor";
+import LeavingGuard from "./LeavingGuard";
 
 interface TreeInspectorProps {
   person: Person;
@@ -58,6 +60,47 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
   saving = false,
 }) => {
   const [editing, setEditing] = useState(false);
+  // Live edit state, reported up by RecordEditor, so a dirty close can be gated.
+  const [liveChanges, setLiveChanges] = useState<FieldChange[]>([]);
+  const [liveDraft, setLiveDraft] = useState<DraftPerson | null>(null);
+  const [guardOpen, setGuardOpen] = useState(false);
+  const pendingLeave = useRef<(() => void) | null>(null);
+
+  const dirty = editing && liveChanges.length > 0;
+
+  const stopEditing = () => {
+    setEditing(false);
+    setGuardOpen(false);
+    setLiveChanges([]);
+    setLiveDraft(null);
+  };
+
+  // Closing (✕ / Esc) a dirty edit routes through the leaving guard, never a
+  // silent discard and never the browser confirm (Spec 13).
+  const requestClose = (after: () => void) => {
+    if (dirty) {
+      pendingLeave.current = after;
+      setGuardOpen(true);
+    } else {
+      after();
+    }
+  };
+
+  // Esc closes the panel (asking first if dirty). Registered with the values it
+  // reads so it never goes stale.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (guardOpen) setGuardOpen(false);
+        else requestClose(onClose);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, guardOpen, onClose]);
+
   const gm = useMemo(() => new GraphManager(people, families), [people, families]);
   const gens = useMemo(() => generationMap(people, families), [people, families]);
   const inLine = useMemo(() => bornInLine(people, families), [people, families]);
@@ -108,7 +151,12 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
       <div className="inspector-body">
         <div className="inspector-head">
           <span className="eyebrow">{eyebrow}</span>
-          <button type="button" className="icon-close" onClick={onClose} aria-label="Close">
+          <button
+            type="button"
+            className="icon-close"
+            onClick={() => requestClose(onClose)}
+            aria-label="Close"
+          >
             ✕
           </button>
         </div>
@@ -117,10 +165,14 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
           <RecordEditor
             person={person}
             saving={saving}
-            onCancel={() => setEditing(false)}
+            onDirtyChange={(changes, draft) => {
+              setLiveChanges(changes);
+              setLiveDraft(draft);
+            }}
+            onCancel={stopEditing}
             onSave={async (draft) => {
               await onSaveRecord(draft);
-              setEditing(false);
+              stopEditing();
             }}
           />
         ) : (
@@ -255,6 +307,26 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
           </>
         )}
       </div>
+
+      {guardOpen && (
+        <LeavingGuard
+          personName={person.name.official_name}
+          changes={liveChanges}
+          saving={saving}
+          onKeepEditing={() => setGuardOpen(false)}
+          onDiscard={() => {
+            const after = pendingLeave.current;
+            stopEditing();
+            after?.();
+          }}
+          onSaveAndLeave={async () => {
+            if (liveDraft) await onSaveRecord(liveDraft);
+            const after = pendingLeave.current;
+            stopEditing();
+            after?.();
+          }}
+        />
+      )}
     </aside>
   );
 };

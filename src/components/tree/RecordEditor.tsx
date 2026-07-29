@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { DraftPerson, Person, PersonEvent } from "../../types/person";
 import AliasesInput from "../AliasesInput";
 import EventsEditor from "../EventsEditor";
 import CustomFieldsEditor from "../CustomFieldsEditor";
 import ImageUpload from "../ImageUpload";
-import { isDirty } from "../../lib/writeState";
+import { isDirty, type FieldChange } from "../../lib/writeState";
+import { personChanges } from "../../lib/personChanges";
 
 /**
  * The one person form (Spec 07 a9) — used in the record panel (edit in place) and,
@@ -20,6 +21,9 @@ interface RecordEditorProps {
   person: Person;
   onSave: (draft: DraftPerson) => void;
   onCancel: () => void;
+  /** Reports the live draft + its pending changes up, so the panel can gate a
+   * dirty close (the leaving guard) and offer Save-and-leave. */
+  onDirtyChange?: (changes: FieldChange[], draft: DraftPerson) => void;
   /** True while a save is in flight (footer shows Saving…, fields lock). */
   saving?: boolean;
 }
@@ -33,6 +37,7 @@ const RecordEditor: React.FC<RecordEditorProps> = ({
   person,
   onSave,
   onCancel,
+  onDirtyChange,
   saving = false,
 }) => {
   const [draft, setDraft] = useState<DraftPerson>(person);
@@ -40,6 +45,19 @@ const RecordEditor: React.FC<RecordEditorProps> = ({
 
   // Overall dirtiness drives the footer; flat-field diffs dot individual labels.
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(person), [draft, person]);
+
+  // Report the pending changes up (for the leaving guard) without re-subscribing
+  // to the parent's callback identity — a ref keeps it current.
+  const changes = useMemo(() => personChanges(person, draft), [person, draft]);
+  const reportRef = useRef(onDirtyChange);
+  useEffect(() => {
+    reportRef.current = onDirtyChange;
+  }, [onDirtyChange]);
+  useEffect(() => {
+    reportRef.current?.(changes, draft);
+    // draft is read fresh each run; the effect fires when the change set shifts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [changes]);
   const base = useMemo(() => flatFields(person), [person]);
   const now = flatFields(draft);
   const fieldDirty = (field: string) => isDirty({ v: base[field] ?? "" }, { v: now[field] ?? "" });
@@ -85,7 +103,7 @@ const RecordEditor: React.FC<RecordEditorProps> = ({
                 key={s}
                 type="button"
                 className={`segmented-option${draft.sex === s ? " selected" : ""}`}
-                aria-selected={draft.sex === s}
+                aria-pressed={draft.sex === s}
                 onClick={() => patch({ sex: s })}
                 disabled={saving}
               >
