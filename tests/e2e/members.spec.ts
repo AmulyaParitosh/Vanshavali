@@ -91,13 +91,35 @@ test.describe("Members — inviting (Spec 06 a4, invite panel)", () => {
   const sara = SEED.people.daughter.id;
 
   test.afterEach(async () => {
-    // Clean up any invites created + undo the deceased marker.
+    // Clean up any invites created + undo the deceased marker + reset the default role.
     await withDb((c) => c.query("delete from tree_invites where tree_id=$1", [SEED.tree.id]));
     await withDb((c) =>
       c.query(
         "update people set data = data - 'events' || jsonb_build_object('events','[]'::jsonb) where id=$1",
         [sara]
       )
+    );
+    await withDb((c) =>
+      c.query("update trees set default_invite_role='editor' where id=$1", [SEED.tree.id])
+    );
+  });
+
+  test("the preselected role follows the tree's default (Spec 11 card 3)", async ({ page }) => {
+    // Keeper set the tree default to May read → the read card comes up selected.
+    await withDb((c) =>
+      c.query("update trees set default_invite_role='viewer' where id=$1", [SEED.tree.id])
+    );
+    await page.goto(membersRoute);
+    await page
+      .locator(".records-row", { hasText: "Arjun Verma" })
+      .locator(".records-invite")
+      .click();
+    const panel = page.locator(".invite-panel");
+    await expect(panel.locator(".invite-role-card", { hasText: "May read" })).toHaveClass(
+      /selected/
+    );
+    await expect(panel.locator(".invite-role-card", { hasText: "May write" })).not.toHaveClass(
+      /selected/
     );
   });
 

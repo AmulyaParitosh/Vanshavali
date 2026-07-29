@@ -23,6 +23,8 @@ interface InvitePanelProps {
   inviterName: string;
   /** The family/surname line, e.g. "Verma", for the message. */
   familyName: string;
+  /** The tree's default invite role (Spec 11 card 3); preselects the role card. */
+  defaultRole?: InvitableTreeRole;
   onClose: () => void;
   onSend: (email: string, role: InvitableTreeRole) => Promise<void>;
   sending?: boolean;
@@ -52,12 +54,13 @@ const InvitePanel: React.FC<InvitePanelProps> = ({
   generation,
   inviterName,
   familyName,
+  defaultRole = TREE_ROLES.EDITOR,
   onClose,
   onSend,
   sending = false,
 }) => {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<InvitableTreeRole>(TREE_ROLES.EDITOR);
+  const [role, setRole] = useState<InvitableTreeRole>(defaultRole);
   const sx = person.sex;
   const genRoman = generation !== undefined ? roman(generation) : null;
 

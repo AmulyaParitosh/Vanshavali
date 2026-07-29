@@ -1236,3 +1236,13 @@ Vitest 195/195; e2e 3/3.
 decisions: assert the server RESPONSE (network intercept) rather than a UI surface — the projection is a
 single-source read redaction, so proving the payload proves canvas/panel/search together. Self-carveout
 (userId === viewerUid) so a reader always sees their own full dates.
+
+### Wave 4 Settings — default_invite_role → Spec 06 invite default — DONE
+
+spec: `_SPEC-11.md` card 3 ("Feeds invite creation default (Spec 06)")
+files: src/components/tree/InvitePanel.tsx — new optional `defaultRole` prop preselects the role card
+(falls back to editor); src/app/tree/[id]/members/page.tsx — passes tree.defaultInviteRole (via a
+`tree` memo replacing the name-only lookup).
+tests: tests/e2e/members.spec.ts — the invite panel's preselected role follows the tree's
+default_invite_role (set to viewer → "May read" comes up selected, "May write" not); afterEach resets
+the default to editor. Full members 15/15.

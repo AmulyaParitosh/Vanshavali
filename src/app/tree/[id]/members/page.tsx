@@ -84,10 +84,11 @@ export default function MembersPage() {
   // A submitted name that already exists — the duplicate guard (a6) awaits a choice.
   const [duplicate, setDuplicate] = useState<{ existing: Person; fields: AddFields } | null>(null);
 
-  const treeName = useMemo(() => {
+  const tree = useMemo(() => {
     const all = [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])];
-    return all.find((t) => t.id === treeId)?.name ?? "the tree";
+    return all.find((t) => t.id === treeId) ?? null;
   }, [myTrees, treeId]);
+  const treeName = tree?.name ?? "the tree";
 
   const ownerCanManage = canInvite(membership?.role);
   const canAdd = canEditRole(membership?.role);
@@ -366,6 +367,7 @@ export default function MembersPage() {
           })()}
           inviterName={user?.displayName || user?.email || "A family member"}
           familyName={familyName}
+          {...(tree ? { defaultRole: tree.defaultInviteRole } : {})}
           sending={sendingInvite}
           onClose={() => setInvitingPerson(null)}
           onSend={handleSend}
