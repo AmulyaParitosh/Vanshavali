@@ -1531,3 +1531,20 @@ Step-2 UI is driven by the accept endpoint's needs_decision (no separate collisi
 deviations: IN-C welcome step 3 (a9, canvas centred on the new member's household + suggestions) — the
 accept currently routes to /tree/[id] (first-run/tree view). Collision step-2 e2e is covered by the
 service unit tests (setting up a real cross-tree collision in-browser is heavy); step-2 copy is a10-clean.
+
+### Wave 5 Invitation IN-C — land on their household (a9) — DONE
+
+spec: `_SPEC-04.md` step 3 a9 — the canvas centres on the new member's own household, not the root
+files: acceptInvite returns the landed `personId` (the claimed/become-one placeholder, or the beside
+row for separate, or the idempotent member's personId); AcceptResult + InvitationProvider +
+ApiDataProvider thread it. src/app/invite/[id]/page.tsx routes to /tree/[id]?person={personId} on
+join, so the existing ?person pan mechanism centres the canvas on their household (a9).
+tests: tests/services/invite-accept.test.ts extended — each joined path asserts res.personId (claim →
+placeholder, become_one → placeholder, separate → the new beside row). 4/4; Vitest green.
+decisions: a9 reuses the tested ?person→panToPerson canvas mechanism rather than a bespoke step-3 view.
+The step-3 welcome CARD content (stat trio + three suggestion rows) is c-copy (not a lettered
+acceptance) and overlaps Spec 10 Getting started — deferred there; an invited member lands mid-tree
+(not first-run) centred on their branch.
+**WAVE 5 INVITATION (Spec 04) COMPLETE** — a1..a10 all covered: step 1 legible pre-auth (IN-A: a1/a2/
+a7/a8), the become-one merge with explicit consent (IN-B: a3/a4/a5/a6/a10), land on their household
+(IN-C: a9). Next Wave 5 unit: Spec 10 Getting started.

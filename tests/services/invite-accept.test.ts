@@ -101,6 +101,7 @@ describe("acceptInvite (Spec 04)", () => {
     listByUser.mockResolvedValue([]); // no existing record
     const res = await acceptInvite("inv_1", "u_new", "sneha@example.com");
     expect(res.status).toBe("joined");
+    expect(res.personId).toBe("p_placeholder"); // lands on their household (a9)
     expect(insertMember).toHaveBeenCalledWith(expect.anything(), "tree_1", "u_new", "editor");
     expect(linkUser).toHaveBeenCalledWith(expect.anything(), "tree_1", "p_placeholder", "u_new");
     expect(setPersonId).toHaveBeenCalledWith(expect.anything(), "tree_1", "u_new", "p_placeholder");
@@ -119,6 +120,7 @@ describe("acceptInvite (Spec 04)", () => {
     listByUser.mockResolvedValue([{ treeId: "tree_other", person: CANON }]);
     const res = await acceptInvite("inv_1", "u_sneha", "sneha@example.com", "become_one");
     expect(res.status).toBe("joined");
+    expect(res.personId).toBe("p_placeholder"); // lands on the merged household (a9)
     const row = upserted();
     expect(row.id).toBe("p_placeholder"); // the row keeps its id — links stay intact
     expect(row.name.official_name).toBe("Sneha Mishra"); // the user's facts win
@@ -140,6 +142,7 @@ describe("acceptInvite (Spec 04)", () => {
     expect(insertMember).toHaveBeenCalledWith(expect.anything(), "tree_1", "u_sneha", "viewer");
     const row = upserted();
     expect(row.id).not.toBe("p_placeholder"); // a NEW row beside — placeholder untouched
+    expect(res.personId).toBe(row.id); // lands on their own beside-record (a9)
     expect(row.name.official_name).toBe("Sneha Mishra");
     expect(row.userId).toBe("u_sneha");
     expect(findPerson).not.toHaveBeenCalled(); // never overwrites the placeholder

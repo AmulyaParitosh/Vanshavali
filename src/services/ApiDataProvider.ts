@@ -238,12 +238,21 @@ export class ApiDataProvider implements DataProvider {
     inviteId: string,
     _uid: string,
     mode?: "become_one" | "separate"
-  ): Promise<{ status: "joined" | "needs_decision"; treeId: string; role: string }> {
-    return authedFetch<{ status: "joined" | "needs_decision"; treeId: string; role: string }>(
-      this.client,
-      "/api/invite/accept",
-      { method: "POST", body: mode ? { inviteId, mode } : { inviteId } }
-    );
+  ): Promise<{
+    status: "joined" | "needs_decision";
+    treeId: string;
+    role: string;
+    personId?: string;
+  }> {
+    return authedFetch<{
+      status: "joined" | "needs_decision";
+      treeId: string;
+      role: string;
+      personId?: string;
+    }>(this.client, "/api/invite/accept", {
+      method: "POST",
+      body: mode ? { inviteId, mode } : { inviteId },
+    });
   }
 
   async revokeInvite(treeId: string, inviteId: string): Promise<void> {

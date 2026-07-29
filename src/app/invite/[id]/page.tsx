@@ -82,7 +82,10 @@ export default function InvitePage() {
         return;
       }
       toast.success("You're in the family record");
-      router.replace(`/tree/${res.treeId}`);
+      // Land centred on their own household, not the tree root (a9).
+      router.replace(
+        `/tree/${res.treeId}${res.personId ? `?person=${encodeURIComponent(res.personId)}` : ""}`
+      );
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Couldn't accept the invitation");
       setAccepting(false);

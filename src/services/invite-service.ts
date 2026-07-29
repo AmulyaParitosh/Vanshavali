@@ -18,6 +18,8 @@ export interface AcceptResult {
   status: "joined" | "needs_decision";
   treeId: string;
   role: string;
+  /** The person the new member landed on, so the canvas centres on their household (a9). */
+  personId?: string;
 }
 
 const INVITE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -175,7 +177,12 @@ export async function acceptInvite(
   const member = await MembershipRepository.find(db, invite.treeId, callerUid);
   if (member) {
     await InviteRepository.updateStatus(db, inviteId, "accepted");
-    return { status: "joined", treeId: member.treeId, role: member.role };
+    return {
+      status: "joined",
+      treeId: member.treeId,
+      role: member.role,
+      ...(member.personId ? { personId: member.personId } : {}),
+    };
   }
 
   // Collision: the invitee already has a record elsewhere and the invite offers a
@@ -188,6 +195,8 @@ export async function acceptInvite(
   }
 
   const role = collision && mode === "separate" ? "viewer" : invite.role;
+  // Where the new member lands (a9): the canvas centres on this household.
+  let landed: string | undefined;
 
   await transaction(async (tx) => {
     await UserRepository.ensure(tx, callerUid, callerEmail);
@@ -202,6 +211,7 @@ export async function acceptInvite(
         const merged = mergePlaceholder(placeholder, ownFactsOf(own[0]!.person), callerUid);
         await PersonRepository.upsert(tx, invite.treeId, merged);
         await MembershipRepository.setPersonId(tx, invite.treeId, callerUid, invite.personId);
+        landed = invite.personId;
       }
     } else if (invite.personId && collision && mode === "separate") {
       // Decline the match (a6): the placeholder is untouched; the user's own
@@ -213,15 +223,17 @@ export async function acceptInvite(
       );
       await PersonRepository.upsert(tx, invite.treeId, beside);
       await MembershipRepository.setPersonId(tx, invite.treeId, callerUid, beside.id);
+      landed = beside.id;
     } else if (invite.personId) {
       // No collision: claim the offered record so they land on their branch (f4).
       const linked = await PersonRepository.linkUser(tx, invite.treeId, invite.personId, callerUid);
       if (linked) {
         await MembershipRepository.setPersonId(tx, invite.treeId, callerUid, invite.personId);
+        landed = invite.personId;
       }
     }
 
     await InviteRepository.updateStatus(tx, inviteId, "accepted");
   });
-  return { status: "joined", treeId: invite.treeId, role };
+  return { status: "joined", treeId: invite.treeId, role, ...(landed ? { personId: landed } : {}) };
 }
