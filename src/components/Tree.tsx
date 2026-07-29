@@ -61,7 +61,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     return target ? { x: target.x, y: target.y } : null;
   }, [layout, viewerPersonId]);
 
-  const { panTo } = useTreeZoom({ svgRef, gRef, initialCenter });
+  const { panTo, fitToView, zoomBy } = useTreeZoom({ svgRef, gRef, initialCenter });
+  const { STEP } = TREE_CONFIG.ZOOM;
 
   /** Center the canvas on a person (their couple offset accounted for). */
   const panToPerson = (personId: string) => {
@@ -143,6 +144,41 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             </g>
           </g>
         </svg>
+
+        {/* Legend (Spec 05 g9) — what the two ring colours mean. */}
+        <div className="tree-legend" aria-hidden="true">
+          <span className="legend-item">
+            <span className="legend-dot legend-dot--born" />
+            born into this line
+          </span>
+          <span className="legend-item">
+            <span className="legend-dot legend-dot--married" />
+            married in
+          </span>
+        </div>
+
+        {/* Canvas controls (Spec 05 g10) — Fit + zoom, bottom-right. */}
+        <div className="tree-controls">
+          <button
+            type="button"
+            className="tree-control"
+            aria-label="Zoom out"
+            onClick={() => zoomBy(1 / STEP)}
+          >
+            −
+          </button>
+          <button type="button" className="tree-control tree-control--fit" onClick={fitToView}>
+            Fit
+          </button>
+          <button
+            type="button"
+            className="tree-control"
+            aria-label="Zoom in"
+            onClick={() => zoomBy(STEP)}
+          >
+            +
+          </button>
+        </div>
       </div>
 
       {selectedPerson && (

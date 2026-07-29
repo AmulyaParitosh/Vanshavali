@@ -38,4 +38,23 @@ test.describe("Tree canvas — node visuals (Spec 05)", () => {
     await expect(husbandLabel).toHaveAttribute("y", "52");
     await expect(wifeLabel).toHaveAttribute("y", "78");
   });
+
+  test("the legend names both ring meanings (g9)", async ({ page }) => {
+    await page.goto(treeRoute());
+    const legend = page.locator(".tree-legend");
+    await expect(legend).toContainText("born into this line");
+    await expect(legend).toContainText("married in");
+  });
+
+  test("the canvas controls offer Fit and zoom (g10)", async ({ page }) => {
+    await page.goto(treeRoute());
+    const controls = page.locator(".tree-controls");
+    await expect(controls.getByRole("button", { name: "Fit" })).toBeVisible();
+    await expect(controls.getByRole("button", { name: "Zoom in" })).toBeVisible();
+    await expect(controls.getByRole("button", { name: "Zoom out" })).toBeVisible();
+    // Fit runs without error and the canvas stays put (no route change).
+    await controls.getByRole("button", { name: "Fit" }).click();
+    await expect(page.locator(".tree-canvas")).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe(treeRoute());
+  });
 });

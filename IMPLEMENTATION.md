@@ -825,3 +825,18 @@ decisions: framing centres the viewer's OWN household at 1× (a4), not the tree 
 handler toggles. fitToView/zoomBy are ready for the T-E controls (the Fit button + −/+).
 deviations: the Fit BUTTON, −/+ controls, generation rail + keyboard, legend, attention filter are the
 navigation layer (T-E). Centering assumes the viewer has a linked person; else it frames the root.
+
+### Wave 3 Tree T-E1 — canvas controls + legend — DONE
+
+spec: `_SPEC-05.md` g9 (legend) / g10 (controls)
+files: src/components/Tree.tsx (destructure fitToView + zoomBy; render the legend bottom-left and the
+Fit/−/+ controls bottom-right in the stage); globals.css (.tree-legend + .legend-dot--born/--married
+ringed swatches; .tree-controls + .tree-control pills)
+tests: tests/e2e/tree-canvas.spec.ts +2 (legend names both ring meanings; controls offer Fit + zoom in/
+out, Fit runs without a route change) — full spec 5/5 (+ setup). (Local Supabase GoTrue had stalled
+with 504s mid-session → `stack:stop`+`stack:start` recovered it, data preserved; also raised the
+auth.setup timeout to 60s for cold dev-login compiles.)
+decisions: the Fit + −/+ buttons drive the T-D fitToView/zoomBy. On-canvas search pill (g10) is left to
+the ⌘K palette (the repo's search) — noted. Legend swatches reuse --ring-born/--ring-married so they
+match the node rings exactly.
+deviations: generation rail + keyboard (a7) = T-E2; attention filter (a8) = T-E3.

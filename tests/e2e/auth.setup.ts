@@ -10,6 +10,9 @@ import { AUTH_FILE, SEED } from "./fixtures";
  * not by injecting a token — so it also exercises that the sign-in flow works.
  */
 setup("authenticate", async ({ page }) => {
+  // The login → auth → app-boot chain compiles several routes on a cold dev
+  // server; give the whole setup room so it doesn't flake the whole suite.
+  setup.setTimeout(90_000);
   await page.goto("/");
 
   await page.locator("#auth-email").fill(SEED.email);
@@ -18,7 +21,7 @@ setup("authenticate", async ({ page }) => {
 
   // Authenticated signal: the chrome-bar avatar link only renders with a user,
   // and the login screen unmounts. (Chrome-bar itself renders logged-out too.)
-  await expect(page.locator(".chrome-avatar-link")).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator(".chrome-avatar-link")).toBeVisible({ timeout: 60_000 });
   await expect(page.locator(".login-screen")).toHaveCount(0);
 
   await page.context().storageState({ path: AUTH_FILE });
