@@ -931,3 +931,25 @@ generation → marriage year (never insertion order). The existing editor alread
 Husband/Wife in the UI (a1) and gates the footer by canEdit (readers read-only, a9).
 deviations: the marriage section + prose in the EDITOR (a5), the delete consequence dialog (a6),
 footer-when-dirty, and alt+↑/↓ child reorder (a3) are H-C.
+
+### Wave 3 Households H-C — the editor to Spec 08 — DONE
+
+spec: `_SPEC-08.md` a3/a5/a6 + Save model
+files: src/app/tree/[id]/family/page.tsx (Marriage section: date+place inputs + a prose read-back
+marriageProse [a5]; children rows focusable with Alt+↑/↓ reorder [a3]; Delete household = quiet-red
+TEXT in the body routing through ConsequenceDialog [a6]; save footer only when dirty [norm() diff];
+save cleans empty marriage fields); globals.css (.hh-marriage-prose/-fields, .hh-child:focus-visible)
+tests: tests/e2e/households.spec.ts +3 (marriage prose read-back + footer-reveals-on-edit a5; Alt+ArrowDown
+reorders children a3; Delete → consequence dialog names what stays, quiet-red action, Cancel
+non-destructive a6). Full spec 7/7.
+decisions:
+
+- Delete moved OUT of the dirty-gated footer into the body as quiet-red text, so it stays reachable
+  on a clean household (a6) while the SAVE footer honours "only when dirty" (a5 clean = no footer).
+- Marriage is free-form date + place; the prose sentence is the read-back (a5). Save strips empty
+  marriage fields to absent.
+- Keyboard reorder is Alt+↑/↓ on the focusable child row (a3) — the existing ▲/▼ buttons stay as a
+  second keyboard path.
+  deviations: true drag-to-reorder (with the insertion line) is NOT implemented — keyboard reorder
+  (Alt+arrow + the ▲▼ buttons) covers a3's keyboard half; HTML5 drag deferred (noted). `lineageSide`
+  stays derived (bornInLine), so the spec's "Swap sides" control is not built (deferred).

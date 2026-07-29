@@ -4379,6 +4379,27 @@ main {
   color: var(--color-marigold);
   padding-top: 34px;
 }
+/* Marriage facts (Spec 08 a5) — a prose read-back over two inputs. */
+.hh-marriage-prose {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-strong);
+}
+.hh-marriage-fields {
+  display: flex;
+  gap: 8px;
+}
+.hh-marriage-fields .input {
+  flex: 1;
+  min-width: 0;
+}
+/* Focusable child rows accept Alt+Arrow reorder (a3). */
+.hh-child:focus-visible {
+  outline: 2px solid var(--color-red);
+  outline-offset: 2px;
+  border-radius: var(--radius-8);
+}
 .hh-children {
   display: flex;
   flex-direction: column;

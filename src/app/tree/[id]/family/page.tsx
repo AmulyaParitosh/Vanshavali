@@ -10,8 +10,19 @@ import { canEdit as canEditRole } from "../../../../lib/access";
 import { inferHusbandWife } from "../../../../lib/family";
 import { generationMap, roman, bornInLine } from "../../../../lib/generations";
 import { portraitTint, personInitials } from "../../../../utils/portrait";
-import type { Family } from "../../../../types/family";
+import ConsequenceDialog from "../../../../components/tree/ConsequenceDialog";
+import type { Family, Marriage } from "../../../../types/family";
 import type { Person } from "../../../../types/person";
+
+/** The marriage facts read back as a prose sentence (Spec 08 a5). */
+function marriageProse(m: Marriage | undefined): string {
+  const date = m?.date?.trim();
+  const place = m?.place?.trim();
+  if (date && place) return `Married ${date} in ${place}.`;
+  if (date) return `Married ${date}.`;
+  if (place) return `Married in ${place}.`;
+  return "No marriage date recorded.";
+}
 
 /**
  * Households (§4) — every marriage in the record as a row (two portraits
@@ -268,13 +279,43 @@ function HouseholdEditor({
   const toast = useToast();
   const [form, setForm] = useState<Family>(family);
   const [addingChild, setAddingChild] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { husbandId, wifeId } = inferHusbandWife(form);
   const personById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
   const gen = [husbandId, wifeId].map((id) => (id ? gens.get(id) : undefined)).find(Boolean);
 
+  // Footer appears only when something differs from what's stored (Spec 08 / 13).
+  const norm = (f: Family) =>
+    JSON.stringify({
+      husband: f.husband || "",
+      wife: f.wife || "",
+      children: f.children,
+      date: f.marriage?.date?.trim() || "",
+      place: f.marriage?.place?.trim() || "",
+    });
+  const dirty = norm(form) !== norm(family);
+
   const setPartner = (which: "husband" | "wife", id: string) =>
     setForm((f) => ({ ...f, [which]: id }));
+  const setMarriage = (patch: Partial<Marriage>) =>
+    setForm((f) => ({ ...f, marriage: { ...f.marriage, ...patch } }));
+
+  // Clean empty marriage fields before persisting (empty = absent).
+  const save = () => {
+    const date = form.marriage?.date?.trim();
+    const place = form.marriage?.place?.trim();
+    const marriage: Marriage | undefined =
+      date || place ? { ...(date ? { date } : {}), ...(place ? { place } : {}) } : undefined;
+    const cleaned: Family = {
+      id: form.id,
+      children: form.children,
+      ...(form.husband ? { husband: form.husband } : {}),
+      ...(form.wife ? { wife: form.wife } : {}),
+      ...(marriage ? { marriage } : {}),
+    };
+    onSave(cleaned);
+  };
   const addChild = (id: string) => {
     if (form.children.includes(id)) {
       toast.error("Already a child in this household.");
@@ -293,14 +334,6 @@ function HouseholdEditor({
       [next[index], next[j]] = [next[j]!, next[index]!];
       return { ...f, children: next };
     });
-
-  const confirmDelete = () =>
-    toast.confirm(
-      "Delete this household? The people stay in the record; only their connection as a couple is removed.",
-      () => {
-        if (form.id) onDelete(form.id);
-      }
-    );
 
   const partnerCol = (which: "husband" | "wife", id: string | undefined) => {
     const person = id ? personById.get(id) : undefined;
@@ -368,6 +401,33 @@ function HouseholdEditor({
 
         <div className="inspector-section">
           <div className="inspector-section-head">
+            <span className="eyebrow">Marriage</span>
+            <span className="inspector-rule" />
+          </div>
+          {/* The facts read back as a prose sentence (a5). */}
+          <p className="hh-marriage-prose">{marriageProse(form.marriage)}</p>
+          {canEdit && (
+            <div className="hh-marriage-fields">
+              <input
+                className="input"
+                value={form.marriage?.date ?? ""}
+                onChange={(e) => setMarriage({ date: e.target.value })}
+                placeholder="Year — e.g. 1983"
+                aria-label="Marriage date"
+              />
+              <input
+                className="input"
+                value={form.marriage?.place ?? ""}
+                onChange={(e) => setMarriage({ place: e.target.value })}
+                placeholder="Place"
+                aria-label="Marriage place"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="inspector-section">
+          <div className="inspector-section-head">
             <span className="eyebrow">Children · eldest first</span>
             <span className="inspector-rule" />
           </div>
@@ -375,7 +435,22 @@ function HouseholdEditor({
             {form.children.map((childId, i) => {
               const child = personById.get(childId);
               return (
-                <div key={childId} className="hh-child">
+                <div
+                  key={childId}
+                  className="hh-child"
+                  tabIndex={canEdit ? 0 : undefined}
+                  onKeyDown={(e) => {
+                    // Accessible reorder (a3): Alt+Arrow moves this child in birth order.
+                    if (!canEdit || !e.altKey) return;
+                    if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      moveChild(i, -1);
+                    } else if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      moveChild(i, 1);
+                    }
+                  }}
+                >
                   {canEdit && (
                     <div className="hh-reorder">
                       <button
@@ -430,22 +505,45 @@ function HouseholdEditor({
               ))}
           </div>
         </div>
+
+        {/* Delete is quiet-red text (a6), always reachable on an existing household —
+            it routes through the consequence dialog, independent of the save footer. */}
+        {canEdit && form.id && (
+          <button type="button" className="hh-delete" onClick={() => setDeleteOpen(true)}>
+            Delete household
+          </button>
+        )}
       </div>
 
-      {canEdit && (
+      {/* The save footer appears only when dirty (Spec 08 / 13); readers never see it (a9). */}
+      {canEdit && dirty && (
         <div className="inspector-foot">
-          {form.id && (
-            <button type="button" className="hh-delete" onClick={confirmDelete}>
-              Delete household
-            </button>
-          )}
           <button type="button" className="btn btn-secondary" onClick={onClose}>
             Cancel
           </button>
-          <button type="button" className="btn btn-primary" onClick={() => onSave(form)}>
+          <button type="button" className="btn btn-primary" onClick={save}>
             Save
           </button>
         </div>
+      )}
+
+      {deleteOpen && (
+        <ConsequenceDialog
+          eyebrow="Household only"
+          heading="Delete this household?"
+          consequences={[
+            "Both partners stay in the record — every name, date, event and photograph is kept.",
+            form.children.length > 0
+              ? `The ${form.children.length} child${form.children.length === 1 ? "" : "ren"} keep their own records; only this couple as their parents' marriage is removed.`
+              : "Only their connection as a couple is removed.",
+          ]}
+          actionLabel="Delete household"
+          onCancel={() => setDeleteOpen(false)}
+          onConfirm={() => {
+            if (form.id) onDelete(form.id);
+            setDeleteOpen(false);
+          }}
+        />
       )}
     </aside>
   );
