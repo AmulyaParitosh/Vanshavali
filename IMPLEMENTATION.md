@@ -840,3 +840,17 @@ decisions: the Fit + −/+ buttons drive the T-D fitToView/zoomBy. On-canvas sea
 the ⌘K palette (the repo's search) — noted. Legend swatches reuse --ring-born/--ring-married so they
 match the node rings exactly.
 deviations: generation rail + keyboard (a7) = T-E2; attention filter (a8) = T-E3.
+
+### Wave 3 Tree T-E2 — generation rail + keyboard (a7) — DONE
+
+spec: `_SPEC-05.md` a7 — fully navigable by keyboard through the generation rail
+files: src/components/tree/GenerationRail.tsx (NEW — top-left rail: roman numeral + household count
+per generation; Enter/click jumps the canvas to that generation; ArrowUp/Down move between rows);
+src/components/Tree.tsx (group layout nodes by depth → GenerationRow[]; onJump = panTo);
+globals.css (.genrail / .genrail-row / -numeral / -count)
+tests: tests/e2e/tree-canvas.spec.ts +1 (rail lists gen I + II with counts; ArrowDown moves focus
+between rows; Enter jumps with no route change). Full spec 7/7.
+decisions: rows key off the d3 depth; the numeral uses roman(depth + 1) so the root reads I (roman is
+1-based). The jump target is the first household in the generation, panned at 1.2×. The canvas nodes
+are already Tab-focusable + Enter-openable, so the rail + nodes together make the tree keyboard-complete.
+deviations: attention filter (a8, dim-not-hide) = T-E3.

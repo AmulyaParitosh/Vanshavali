@@ -46,6 +46,23 @@ test.describe("Tree canvas — node visuals (Spec 05)", () => {
     await expect(legend).toContainText("married in");
   });
 
+  test("the generation rail lists generations and is keyboard-navigable (a7)", async ({ page }) => {
+    await page.goto(treeRoute());
+    const rail = page.locator(".genrail");
+    // Seed spans two generations: I (Ishaan + Meera) and II (their children).
+    await expect(rail.locator(".genrail-row")).toHaveCount(2);
+    await expect(rail.locator(".genrail-numeral").first()).toHaveText("I");
+    await expect(rail.locator(".genrail-numeral").nth(1)).toHaveText("II");
+    // Arrow keys move between generations without leaving the rail.
+    await rail.locator(".genrail-row").first().focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(rail.locator(".genrail-row").nth(1)).toBeFocused();
+    // Enter jumps the canvas (no route change).
+    await page.keyboard.press("Enter");
+    await expect(page.locator(".tree-canvas")).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe(treeRoute());
+  });
+
   test("the canvas controls offer Fit and zoom (g10)", async ({ page }) => {
     await page.goto(treeRoute());
     const controls = page.locator(".tree-controls");

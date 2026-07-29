@@ -1077,6 +1077,43 @@ main {
   min-width: 0;
   height: 100%;
 }
+/* Generation rail (Spec 05 a7) — top-left; the keyboard spine. */
+.genrail {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.genrail-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 56px;
+  padding: 7px 11px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-9);
+  background: var(--surface-paper);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: background var(--dur-panel) var(--ease);
+}
+.genrail-row:hover,
+.genrail-row:focus-visible {
+  background: var(--color-red-wash);
+  border-color: #f0dcd8;
+  outline: none;
+}
+.genrail-numeral {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--color-red-deep);
+}
+.genrail-count {
+  font-size: 11px;
+  color: var(--text-meta);
+}
 /* Legend (Spec 05 g9) — bottom-left; the two ring meanings. */
 .tree-legend {
   position: absolute;

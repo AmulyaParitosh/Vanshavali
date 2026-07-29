@@ -13,6 +13,7 @@ import PersonNode from "./tree/PersonNode";
 import PartnerNode from "./tree/PartnerNode";
 import TreeLink from "./tree/TreeLink";
 import RecordInspectorDock from "./tree/RecordInspectorDock";
+import GenerationRail, { type GenerationRow } from "./tree/GenerationRail";
 
 interface TreeProps {
   data: GraphNode | null;
@@ -63,6 +64,20 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
   const { panTo, fitToView, zoomBy } = useTreeZoom({ svgRef, gRef, initialCenter });
   const { STEP } = TREE_CONFIG.ZOOM;
+
+  // The generations, for the keyboard rail (a7): a roman numeral + household count
+  // per row, with a jump target (the first household in that generation).
+  const generations = useMemo<GenerationRow[]>(() => {
+    const byDepth = new Map<number, { count: number; x: number; y: number }>();
+    for (const n of layout.nodes) {
+      const cur = byDepth.get(n.depth);
+      if (cur) cur.count += 1;
+      else byDepth.set(n.depth, { count: 1, x: n.x, y: n.y });
+    }
+    return [...byDepth.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([depth, v]) => ({ depth, count: v.count, x: v.x, y: v.y }));
+  }, [layout]);
 
   /** Center the canvas on a person (their couple offset accounted for). */
   const panToPerson = (personId: string) => {
@@ -144,6 +159,9 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             </g>
           </g>
         </svg>
+
+        {/* Generation rail (Spec 05 a7) — the keyboard spine; jump to a generation. */}
+        <GenerationRail generations={generations} onJump={(x, y) => panTo(x, y)} />
 
         {/* Legend (Spec 05 g9) — what the two ring colours mean. */}
         <div className="tree-legend" aria-hidden="true">
