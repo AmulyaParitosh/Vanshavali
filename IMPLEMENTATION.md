@@ -479,3 +479,21 @@ files: src/components/tree/AccessBlock.tsx (keeper radio set + Save), src/compon
   editor) — documented in fixtures.ts for re-seed.
   deviations: role Save is an inline access-block button, not the shared panel footer (the footer is
   edit-mode's). Remove-access consequence dialog (a8) = part 3b; per-record patch endpoint = part 4.
+
+### Wave 2 sub-unit D (part 3b) — Remove access via consequence dialog — DONE
+
+spec: Spec 07 flow 7, a8; Spec 13 consequence dialog
+files: src/components/tree/ConsequenceDialog.tsx (reusable), src/components/tree/TreeInspector.tsx +
+src/components/tree/AccessBlock.tsx (Remove access → dialog), src/components/Tree.tsx (removeMember +
+toast), src/app/globals.css (.consequence-line/.consequence-softer), tests/e2e/record-panel.spec.ts
+tests: tests/e2e/record-panel.spec.ts — 17/17 (added: Remove access → consequence dialog names what
+stays, action is the quiet destructive pill not filled red, Cancel is non-destructive). a8
+(person record survives an access removal) verified one-off + seed restored.
+consumes: .dialog/.consequence/.dialog-actions, .btn-danger, removeMember
+decisions: Built a reusable ConsequenceDialog (eyebrow, heading, consequence block, optional
+type-to-confirm for irreversible deletions, Cancel + quiet-red destructive action; scrim/Esc cancel
+only when not name-gated). Remove access uses it WITHOUT type-to-confirm (reversible — re-invitable):
+"keeps their record … can no longer open or change anything until re-invited." Person record is never
+touched (a8). ConsequenceDialog is ready for person/tree deletion (Spec 08/11) with confirmName set.
+deviations: none for the dialog. Q13: removeMember appears to also clear the global public.users
+profile — investigate at Members (Spec 06). Per-record patch endpoint + conflict = D part 4.

@@ -178,6 +178,11 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
               setSavingRole(false);
             }
           }}
+          onRemoveAccess={async (uid, name) => {
+            if (!currentTreeId) return;
+            await dataProvider.removeMember(currentTreeId, uid);
+            showSaveToast({ primary: `${name} no longer has access`, warn: true });
+          }}
           onSaveRecord={async (draft) => {
             if (!draft.id) return;
             const families = treeData?.families ?? [];

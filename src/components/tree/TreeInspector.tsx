@@ -10,6 +10,7 @@ import type { FieldChange } from "../../lib/writeState";
 import AccessBlock from "./AccessBlock";
 import RecordEditor from "./RecordEditor";
 import LeavingGuard from "./LeavingGuard";
+import ConsequenceDialog from "./ConsequenceDialog";
 
 interface TreeInspectorProps {
   person: Person;
@@ -35,6 +36,8 @@ interface TreeInspectorProps {
   onChangeRole?: (uid: string, role: TreeRole) => Promise<void> | void;
   /** True while a role change is in flight. */
   savingRole?: boolean;
+  /** Keeper only: remove a member's access (the person record is untouched, a8). */
+  onRemoveAccess?: (uid: string, personName: string) => Promise<void> | void;
 }
 
 /** The birth event, if one is recorded. */
@@ -64,8 +67,11 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
   saving = false,
   onChangeRole,
   savingRole = false,
+  onRemoveAccess,
 }) => {
   const [editing, setEditing] = useState(false);
+  const [removeOpen, setRemoveOpen] = useState(false);
+  const [removing, setRemoving] = useState(false);
   // Live edit state, reported up by RecordEditor, so a dirty close can be gated.
   const [liveChanges, setLiveChanges] = useState<FieldChange[]>([]);
   const [liveDraft, setLiveDraft] = useState<DraftPerson | null>(null);
@@ -232,6 +238,9 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
               {...(personMembership && onChangeRole
                 ? { onChangeRole: (role: TreeRole) => onChangeRole(personMembership.uid, role) }
                 : {})}
+              {...(personMembership && onRemoveAccess
+                ? { onRemoveAccess: () => setRemoveOpen(true) }
+                : {})}
             />
 
             {hasProse && lineage && (
@@ -334,6 +343,29 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
             const after = pendingLeave.current;
             stopEditing();
             after?.();
+          }}
+        />
+      )}
+
+      {removeOpen && personMembership && onRemoveAccess && (
+        <ConsequenceDialog
+          eyebrow="Access only"
+          heading={`Remove ${person.name.official_name}'s access?`}
+          consequences={[
+            `${person.name.official_name} keeps their record in this tree — every name, date, event and photograph stays.`,
+            "They can no longer open or change anything here, until a keeper invites them again.",
+          ]}
+          actionLabel="Remove access"
+          busy={removing}
+          onCancel={() => setRemoveOpen(false)}
+          onConfirm={async () => {
+            setRemoving(true);
+            try {
+              await onRemoveAccess(personMembership.uid, person.name.official_name);
+            } finally {
+              setRemoving(false);
+              setRemoveOpen(false);
+            }
           }}
         />
       )}

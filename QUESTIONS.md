@@ -35,6 +35,14 @@ in the Claude Design project `dd87d264-b5d2-4737-8e4c-9233afb2398d`, read via `D
 That is the "file read" primitive. Not mirrored to disk (get_file cannot be piped to disk without
 re-emitting content). Re-fetch per unit. Mechanism recorded in `IMPLEMENTATION.md`.
 
+## Q13 — removeMember may delete the global user profile — INVESTIGATE (pre-existing)
+
+During a8 verification, removing a member (designreview3) appeared to also drop their row from
+`public.users` (had to re-insert it to restore the seed). Removing tree ACCESS must not delete the
+GLOBAL user or their person record (a8 holds for the person; the profile is the concern). This is
+pre-existing membership-service behaviour (the Members page uses the same removeMember). **Investigate**
+when Members (Spec 06, Wave 3) is built — removeMember should delete only the tree_members row.
+
 ## Q12 — Access "His branch only" — a 4th scope with no repo role — DEFERRED
 
 Spec 07 access radio offers Read / Write / **His branch only** / Keeper. The repo has three roles

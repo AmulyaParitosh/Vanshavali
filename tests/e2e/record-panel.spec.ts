@@ -205,3 +205,27 @@ test.describe("Record panel — keeper access write (Spec 07 a3/a5)", () => {
     await expect(page.locator(".access-self")).toBeVisible();
   });
 });
+
+test.describe("Record panel — Remove access (Spec 07 a8)", () => {
+  const wife = SEED.people.wife.id;
+
+  test("Remove access opens a consequence dialog naming what stays; Cancel is non-destructive", async ({
+    page,
+  }) => {
+    await page.goto(`${treeRoute()}?person=${wife}`);
+    await page.getByRole("button", { name: "Remove access" }).click();
+
+    const dlg = page.getByRole("dialog", { name: /Remove Meera Verma's access/ });
+    await expect(dlg).toBeVisible();
+    await expect(dlg.locator(".consequence")).toContainText("keeps their record");
+    // Never a filled red button (the action is the quiet destructive pill).
+    await expect(dlg.getByRole("button", { name: "Remove access" })).toHaveClass(/btn-danger/);
+
+    // Cancel changes nothing — Meera is still a Write member.
+    await dlg.getByRole("button", { name: "Cancel" }).click();
+    await expect(dlg).toHaveCount(0);
+    await expect(page.locator(".radio-row", { hasText: "Write" }).locator(".radio-now")).toHaveText(
+      "now"
+    );
+  });
+});
