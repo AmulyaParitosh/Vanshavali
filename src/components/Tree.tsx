@@ -5,16 +5,13 @@ import { useSearchParams } from "next/navigation";
 import type { GraphNode } from "../types/graph";
 import type { TreeMembership } from "../types/tree";
 import { TREE_CONFIG } from "../constants";
-import { canEdit as canEditRole, isOwner } from "../lib/access";
 import { useAppContext } from "../context/AppContext";
-import { showSaveToast } from "./ToastSystem";
-import { personChanges } from "../lib/personChanges";
 import { useTreeLayout, type LaidOutNode } from "./tree/useTreeLayout";
 import { useTreeZoom } from "./tree/useTreeZoom";
 import PersonNode from "./tree/PersonNode";
 import PartnerNode from "./tree/PartnerNode";
 import TreeLink from "./tree/TreeLink";
-import TreeInspector from "./tree/TreeInspector";
+import RecordInspectorDock from "./tree/RecordInspectorDock";
 
 interface TreeProps {
   data: GraphNode | null;
@@ -29,8 +26,6 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])].find((t) => t.id === currentTreeId)
       ?.name ?? "the tree";
   const searchParams = useSearchParams();
-  const [savingRecord, setSavingRecord] = useState(false);
-  const [savingRole, setSavingRole] = useState(false);
 
   // The tree's members, so the record panel's access block can state each
   // person's role. Re-subscribed on the refresh nonce like every other read.
@@ -39,18 +34,12 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     if (!currentTreeId) return undefined;
     return dataProvider.subscribeToMembers(currentTreeId, setMembers);
   }, [currentTreeId, dataProvider, refreshNonce]);
-  const membershipByPerson = React.useMemo(() => {
-    const map = new Map<string, TreeMembership>();
-    for (const m of members) if (m.personId) map.set(m.personId, m);
-    return map;
-  }, [members]);
   // A ?person= param (e.g. a click from the Members table) opens that record on
   // mount — set as the initial selection so it doesn't take a state write in an
   // effect; the effect below only pans it into view.
   const personParam = searchParams.get("person");
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(personParam);
 
-  const canEdit = canEditRole(membership?.role);
   const layout = useTreeLayout(data);
 
   const { panTo } = useTreeZoom({
@@ -147,92 +136,17 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       </div>
 
       {selectedPerson && (
-        <TreeInspector
-          person={selectedPerson}
+        <RecordInspectorDock
+          selectedPerson={selectedPerson}
           people={people}
           families={treeData?.families ?? []}
-          isSelf={!!user && selectedPerson.userId === user.uid}
-          viewerPersonId={people.find((p) => !!user && p.userId === user.uid)?.id ?? null}
-          personMembership={membershipByPerson.get(selectedPerson.id) ?? null}
-          viewerIsKeeper={isOwner(membership?.role)}
-          canEdit={canEdit}
+          members={members}
+          membership={membership}
+          user={user}
           treeId={currentTreeId}
+          treeName={treeName}
           onClose={() => setSelectedPersonId(null)}
           onSelect={(id) => handleSelect(id, true)}
-          saving={savingRecord}
-          savingRole={savingRole}
-          onChangeRole={async (uid, role) => {
-            if (!currentTreeId) return;
-            const name = selectedPerson.name.official_name;
-            const prev = members.find((m) => m.uid === uid)?.role;
-            const verb =
-              role === "owner"
-                ? "now keeps this tree"
-                : role === "editor"
-                  ? "may now add and correct anyone"
-                  : "may now read the tree";
-            setSavingRole(true);
-            try {
-              await dataProvider.updateMemberRole(currentTreeId, uid, role);
-              showSaveToast({
-                primary: `${name} ${verb}`,
-                ...(prev
-                  ? { onUndo: async () => dataProvider.updateMemberRole(currentTreeId, uid, prev) }
-                  : {}),
-              });
-            } finally {
-              setSavingRole(false);
-            }
-          }}
-          onRemoveAccess={async (uid, name) => {
-            if (!currentTreeId) return;
-            await dataProvider.removeMember(currentTreeId, uid);
-            showSaveToast({ primary: `${name} no longer has access`, warn: true });
-          }}
-          savePerson={async (personToSave, baseVersion) => {
-            if (!currentTreeId) throw new Error("No tree selected.");
-            // The record as loaded now, for the change summary + the 12s Undo.
-            const prev = people.find((p) => p.id === personToSave.id) ?? null;
-            setSavingRecord(true);
-            try {
-              const result = await dataProvider.patchPerson(
-                currentTreeId,
-                personToSave.id,
-                personToSave,
-                baseVersion
-              );
-              if (result.ok) {
-                const labels = prev ? personChanges(prev, result.person).map((c) => c.label) : [];
-                const summary =
-                  labels.length === 0
-                    ? "your changes"
-                    : labels.length === 1
-                      ? labels[0]!
-                      : `${labels[0]} and ${labels.length - 1} more`;
-                showSaveToast({
-                  primary: `Saved to ${treeName}`,
-                  consequence: `${summary} · everyone sees it now`,
-                  ...(prev
-                    ? {
-                        onUndo: async () => {
-                          // Best-effort restore at the version we just wrote; if the
-                          // record moved on again, the undo simply no-ops.
-                          await dataProvider.patchPerson(
-                            currentTreeId,
-                            prev.id,
-                            prev,
-                            result.person.version ?? 0
-                          );
-                        },
-                      }
-                    : {}),
-                });
-              }
-              return result;
-            } finally {
-              setSavingRecord(false);
-            }
-          }}
         />
       )}
     </div>

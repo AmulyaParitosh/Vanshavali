@@ -659,3 +659,28 @@ files:
   deviations / interim: Resend/Revoke move to the record panel (edge e6) — not built here; the bottom
   form (with its revoke) is gone, so revoke has no UI until that lands (note for M-D/later). Add-person
   panel + duplicate guard = M-C; in-place inspector on the Members route = M-D.
+
+### Wave 3 Members M-D — inspector hosted in place (a1/a2) — DONE
+
+spec: `_SPEC-06.md` — every row opens the shared Spec 07 inspector in place, no route change; a1/a2
+files: src/components/tree/RecordInspectorDock.tsx (NEW — the one wiring for the shared inspector:
+per-record patch save + toast/undo, keeper role change, remove-access; `inline` for the canvas,
+`drawer` for a fixed right dock); src/components/Tree.tsx (refactored to render the dock — its ~70
+lines of inline inspector wiring + savingRecord/savingRole/membershipByPerson moved into the dock,
+behaviour identical); src/app/tree/[id]/members/page.tsx (row is now a role="button" that opens the
+dock in place — no navigation; table narrows via .inspector-open); globals.css (.record-dock fixed
+drawer + .records-page.inspector-open padding)
+tests: record-panel 18/18 + record-conflict 2/2 (the Tree refactor is regression-free — same panel,
+same save/conflict/undo); members.spec.ts a1 rewritten to "opens in place, no route change (a1/a2)"
+— list 5/5; invite + a8 still green. Vitest 155.
+decisions:
+
+- a1's "one panel" is now literal: RecordInspectorDock owns the single wiring, TreeInspector is the
+  single component, and both the canvas and the Members list drive it. The only difference is
+  placement — a fixed right drawer on pages without an inspector column.
+- Members rows became role="button" (Enter/Space + click) rather than links, so opening a record
+  never changes the route (a2). The Invite pill stops propagation so it doesn't also open the record.
+- No behaviour change to the canvas: Tree passes the same values it used to compute inline.
+  deviations: the drawer overlays rather than reflowing into a true flex column; the list gives up its
+  right padding when open (spec "narrows to 824px") — close enough without a shell-layout refactor.
+  Revoke/Resend still owe a home in the panel (edge e6, from M-B). Add-person + duplicate guard = M-C.

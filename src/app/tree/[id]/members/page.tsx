@@ -7,6 +7,7 @@ import { useAppContext } from "../../../../context/AppContext";
 import { useToast } from "../../../../components/ToastSystem";
 import Loading from "../../../../components/Loading";
 import InvitePanel from "../../../../components/tree/InvitePanel";
+import RecordInspectorDock from "../../../../components/tree/RecordInspectorDock";
 import { canEdit as canEditRole, canInvite } from "../../../../lib/access";
 import { portraitTint, personInitials } from "../../../../utils/portrait";
 import { generationMap, roman, bornInLine } from "../../../../lib/generations";
@@ -66,7 +67,7 @@ function relativeTime(ms?: number): string {
 export default function MembersPage() {
   const params = useParams<{ id: string }>();
   const treeId = params?.id ?? null;
-  const { dataProvider, membership, treeData, refreshNonce, user } = useAppContext();
+  const { dataProvider, membership, treeData, refreshNonce, user, myTrees } = useAppContext();
   const toast = useToast();
 
   const [members, setMembers] = useState<TreeMembership[]>([]);
@@ -74,6 +75,13 @@ export default function MembersPage() {
   const [query, setQuery] = useState("");
   const [invitingPerson, setInvitingPerson] = useState<Person | null>(null);
   const [sendingInvite, setSendingInvite] = useState(false);
+  // The record open in the shared inspector, opened in place (no route change, a2).
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+
+  const treeName = useMemo(() => {
+    const all = [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])];
+    return all.find((t) => t.id === treeId)?.name ?? "the tree";
+  }, [myTrees, treeId]);
 
   const ownerCanManage = canInvite(membership?.role);
   const canAdd = canEditRole(membership?.role);
@@ -137,6 +145,9 @@ export default function MembersPage() {
   }, [people, query, gens]);
 
   const pendingCount = invites.filter((i) => i.status === "pending").length;
+  const selectedPerson = selectedPersonId
+    ? (people.find((p) => p.id === selectedPersonId) ?? null)
+    : null;
 
   if (!treeId) return <Loading />;
 
@@ -161,7 +172,7 @@ export default function MembersPage() {
       : "");
 
   return (
-    <div className="records-page">
+    <div className={`records-page${selectedPerson ? " inspector-open" : ""}`}>
       <header className="records-header">
         <div>
           <h1>Members</h1>
@@ -227,10 +238,19 @@ export default function MembersPage() {
                 ? describeRelation(viewerPersonId, p.id, gm)
                 : null;
             return (
-              <Link
+              <div
                 key={p.id}
-                href={`/tree/${treeId}?person=${encodeURIComponent(p.id)}`}
-                className="records-row"
+                role="button"
+                tabIndex={0}
+                aria-current={selectedPersonId === p.id}
+                className={`records-row${selectedPersonId === p.id ? " open" : ""}`}
+                onClick={() => setSelectedPersonId(p.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedPersonId(p.id);
+                  }
+                }}
               >
                 <span
                   className="records-avatar records-col-portrait"
@@ -278,7 +298,7 @@ export default function MembersPage() {
                 <span className="records-col-overflow" aria-hidden="true">
                   ⋯
                 </span>
-              </Link>
+              </div>
             );
           })
         )}
@@ -304,6 +324,22 @@ export default function MembersPage() {
           sending={sendingInvite}
           onClose={() => setInvitingPerson(null)}
           onSend={handleSend}
+        />
+      )}
+
+      {selectedPerson && (
+        <RecordInspectorDock
+          selectedPerson={selectedPerson}
+          people={people}
+          families={families}
+          members={members}
+          membership={membership}
+          user={user}
+          treeId={treeId}
+          treeName={treeName}
+          variant="drawer"
+          onClose={() => setSelectedPersonId(null)}
+          onSelect={(id) => setSelectedPersonId(id)}
         />
       )}
     </div>

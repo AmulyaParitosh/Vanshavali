@@ -65,14 +65,12 @@ test.describe("Members — the list (Spec 06)", () => {
     await expect(page.locator(".records-table select")).toHaveCount(0);
   });
 
-  test("a row opens the shared record (a1) — it links to the person, not a new page", async ({
-    page,
-  }) => {
+  test("a row opens the shared record in place — no route change (a1/a2)", async ({ page }) => {
     await page.goto(membersRoute);
-    const row = page.locator(".records-row", { hasText: "Meera Verma" });
-    await expect(row).toHaveAttribute("href", new RegExp(`\\?person=${SEED.people.wife.id}`));
-    await row.click();
-    await expect(page.locator(".inspector-name")).toHaveText("Meera Verma");
+    await page.locator(".records-row", { hasText: "Meera Verma" }).click();
+    // The one shared inspector opens as a right drawer, on this same route.
+    await expect(page.locator(".record-dock .inspector-name")).toHaveText("Meera Verma");
+    expect(new URL(page.url()).pathname).toBe(membersRoute);
   });
 
   test("search filters by name and alias without re-ordering (a9)", async ({ page }) => {
