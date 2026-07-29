@@ -953,3 +953,32 @@ decisions:
   deviations: true drag-to-reorder (with the insertion line) is NOT implemented — keyboard reorder
   (Alt+arrow + the ▲▼ buttons) covers a3's keyboard half; HTML5 drag deferred (noted). `lineageSide`
   stays derived (bornInLine), so the spec's "Swap sides" control is not built (deferred).
+
+### Wave 3 Households H-D/H-E — save re-layout + acceptance audit — DONE
+
+spec: `_SPEC-08.md` acceptance a1..a9
+Coverage:
+
+- a1 no "Husband"/"Wife" in the UI — met (labels are "lineage"/"married in"; search "Either
+  partner's name"; slots say "Add a partner").
+- a2 lineage label matches the ring — TESTED (Ishaan "lineage", Meera "married in").
+- a3 children ordered by the array + reorderable — keyboard TESTED (Alt+↑/↓ + the ▲▼ buttons);
+  true drag deferred (deviation).
+- a4 removing a child never deletes the person — TESTED (✕ removes from the household live; the
+  person row still exists in the DB).
+- a5 marriage facts read back as prose — TESTED (H-C). a6 delete via consequence dialog — TESTED (H-C).
+- a7 saving re-lays the list without a reload — TESTED (edit marriage → Save → list Married column
+  updates + DB persists, same route, no reload).
+- a8 one-partner household never an empty second portrait — met in the list (couple-glyph renders
+  only present partners); no single-partner seed household to e2e (noted).
+- a9 readers get the editor read-only, no footer — met (canEdit gates the footer + all edit controls);
+  the reader-session e2e is deferred to Q15 (same cross-user-nav block as Members a2/a5).
+  files: tests/e2e/households.spec.ts — 10 (list 3 · editor a2/a4/a5/a6 · save a7). All green.
+  decisions: user guidance confirmed — the SPEC files are the sole design source of truth, not the
+  embedded wireframes/mocks; where a spec's mock diverged from its own tables/copy-deck, the tables +
+  copy-deck won.
+
+**WAVE 3 COMPLETE** — Members (Spec 06), Tree (Spec 05), Households (Spec 08) all built to spec with
+acceptance coverage. Deferred (documented): a3 drag-reorder (keyboard done); "Swap sides"/stored
+lineageSide; reader-session e2e for role-gated views (Q15). Next: Waves 4–7 (Search/Settings/Account ·
+Sign-in/My-trees/Invitation/Getting-started · Landing · integration audit).
