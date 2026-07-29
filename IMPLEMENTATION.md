@@ -405,3 +405,22 @@ legacy PersonForm. That is the real C build — a substantial shared component, 
 with Account in view, then D layers the write path (patch endpoint, toast+undo, leaving guard,
 consequence dialog, keeper role radio) on top.
 deviations: "Edit record" still navigates to the legacy editor (in-place edit = C proper).
+
+### Wave 2 sub-unit C — edit-in-place shared form — DONE
+
+spec: Spec 07 edit mode; a2, a4, a9
+files: src/components/tree/RecordEditor.tsx (new shared form), src/components/tree/TreeInspector.tsx
+(edit/read branch; "Edit record" → setEditing), src/components/Tree.tsx (onSaveRecord via onSave/
+saveTreeData + savingRecord), src/app/globals.css (.record-editor\*), tests/e2e/record-panel.spec.ts
+tests: tests/e2e/record-panel.spec.ts — 12/12 (added: fields in place, no route change, footer only
+when dirty, Save enabled when dirty, Discard returns to read)
+consumes: writeState.isDirty; reuses ImageUpload/AliasesInput/EventsEditor/CustomFieldsEditor;
+.input/.segmented/.field-label/.dirty-dot/.panel-footer
+decisions: RecordEditor is THE person form (a9) — used in the panel now, and on Account in Wave 4.
+Fields in place (photo, name, sex segmented, aliases, life, details); overall dirty via deep-compare
+drives the footer (disabled-until-dirty, a4); changed identity labels get a `.dirty-dot`. Save
+persists via the existing bulk `onSave`/`saveTreeData` for now.
+deviations: Save uses bulk saveTreeData (per-record patch + base-version = sub-unit D). No save
+toast/undo, no leaving guard on dirty-close, keeper role radio + Remove-access consequence dialog,
+date-precision segmented per event — all sub-unit D. Photo upload + legacy sub-editor styling are a
+touch oversized for 384px — cosmetic polish noted.

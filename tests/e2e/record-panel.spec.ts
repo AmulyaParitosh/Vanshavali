@@ -79,3 +79,30 @@ test.describe("Record panel — access block, read display (Spec 07 a3)", () => 
     await expect(page.locator(".access-none").getByRole("link", { name: /Invite/ })).toBeVisible();
   });
 });
+
+test.describe("Record panel — edit in place (Spec 07 a2/a4/a9)", () => {
+  test("Edit record opens fields in place, no route change; footer only when dirty", async ({
+    page,
+  }) => {
+    await page.goto(`${treeRoute()}?person=${you}`);
+    await page.getByRole("button", { name: "Edit record" }).click();
+
+    // Fields in place, same route (a2), the shared form present (a9).
+    await expect(page.locator(".record-editor")).toBeVisible();
+    await expect(page.getByLabel("Name")).toHaveValue("Ishaan Verma");
+    expect(new URL(page.url()).pathname).toBe(treeRoute());
+
+    // Clean: no footer, so Save is not even offered (disabled-until-dirty, a4).
+    await expect(page.locator(".record-editor-foot")).toHaveCount(0);
+
+    // Dirty: the footer appears with Save.
+    await page.getByLabel("Name").fill("Ishaan K. Verma");
+    await expect(page.locator(".record-editor-foot")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save" })).toBeEnabled();
+
+    // Discard returns to read mode without writing.
+    await page.getByRole("button", { name: "Discard" }).click();
+    await expect(page.locator(".record-editor")).toHaveCount(0);
+    await expect(page.locator(".inspector-name")).toHaveText("Ishaan Verma");
+  });
+});

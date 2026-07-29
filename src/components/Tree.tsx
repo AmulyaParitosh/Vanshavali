@@ -21,8 +21,10 @@ interface TreeProps {
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
-  const { treeData, membership, currentTreeId, user, dataProvider, refreshNonce } = useAppContext();
+  const { treeData, membership, currentTreeId, user, dataProvider, refreshNonce, onSave } =
+    useAppContext();
   const searchParams = useSearchParams();
+  const [savingRecord, setSavingRecord] = useState(false);
 
   // The tree's members, so the record panel's access block can state each
   // person's role. Re-subscribed on the refresh nonce like every other read.
@@ -145,6 +147,19 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           treeId={currentTreeId}
           onClose={() => setSelectedPersonId(null)}
           onSelect={(id) => handleSelect(id, true)}
+          saving={savingRecord}
+          onSaveRecord={async (draft) => {
+            if (!draft.id) return;
+            setSavingRecord(true);
+            try {
+              const nextPeople = people.map((p) =>
+                p.id === draft.id ? ({ ...draft, id: draft.id } as (typeof people)[number]) : p
+              );
+              await onSave({ people: nextPeople, families: treeData?.families ?? [] });
+            } finally {
+              setSavingRecord(false);
+            }
+          }}
         />
       )}
     </div>

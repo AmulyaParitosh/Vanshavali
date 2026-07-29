@@ -1604,6 +1604,34 @@ main {
   gap: var(--space-3);
 }
 
+/* Edit-in-place form (Spec 07 edit mode) — fields where the values were, in the
+ * same 384px column, with the footer appearing only when dirty. */
+.record-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.record-editor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.record-editor-photo {
+  align-self: flex-start;
+}
+/* The dirty dot sits just before a changed field's label. */
+.field-label .dirty-dot {
+  margin-right: 6px;
+}
+/* The write footer, pinned to the panel's bottom with the column's padding. */
+.record-editor-foot {
+  position: sticky;
+  bottom: 0;
+  margin-top: 4px;
+  padding: 14px 0;
+  background: var(--surface-paper);
+}
+
 .inspector-section {
   display: flex;
   flex-direction: column;
