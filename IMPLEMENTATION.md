@@ -441,3 +441,22 @@ name/sex/photo/aliases/life/details; arrays collapse to one entry each. Scrim-cl
 deviations: change list is per-field (arrays as one entry), not per-event as the spec sample; enough
 for a6. Save toast + 12s undo, keeper role radio + Save, Remove-access consequence dialog, and the
 per-record patch endpoint + conflict remain (D parts 2–4).
+
+### Wave 2 sub-unit D (part 2) — save toast + 12s undo — DONE
+
+spec: Spec 13 flow 2/3, a4; Spec 07 (Save → toast, returns to read)
+files: src/components/ToastSystem.tsx (SaveToastHost + showSaveToast), src/components/Tree.tsx (fires
+it on save, with the inverse restore as Undo), src/app/globals.css (.toast-viewport), src/app/layout.tsx
+(ToastSystem moved OUTSIDE AppProvider — bug fix), tests/e2e/record-panel.spec.ts
+tests: tests/e2e/record-panel.spec.ts — 13/13 (added: Save → toast names tree + "everyone sees it now"
+
+- Undo; Undo → "Put back the way it was")
+  consumes: .toast/.toast-glyph/.toast-body/.toast-primary/.toast-consequence/.toast-action
+  decisions: A dedicated bottom-centre SaveToastHost (react-hot-toast is top-right) renders the spec
+  toast — "Saved to {tree}" + "{summary} · everyone sees it now" + Undo — for 12s (3.5s plain), one at
+  a time. Undo re-saves the previous people array and confirms with "Put back the way it was".
+  **Bug fixed:** ToastSystem was inside AppProvider, so the transient Loading during the post-save
+  re-fetch unmounted the open toast; moved it outside AppProvider (it uses no context).
+  deviations: the consequence summary is the changed field labels ("Name" / "Name and 2 more"), not the
+  spec's exact "2 life events and the gotra" phrasing. Undo restores via bulk save (per-record patch =
+  D part 4). Keeper role radio + Remove-access consequence dialog = D part 3.

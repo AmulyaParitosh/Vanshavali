@@ -1680,6 +1680,19 @@ main {
   color: var(--text-meta);
 }
 
+/* Save toast (Spec 13) — bottom-centre, above any sticky footer. */
+.toast-viewport {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1400;
+  pointer-events: none;
+}
+.toast-viewport .toast {
+  pointer-events: auto;
+}
+
 .inspector-section {
   display: flex;
   flex-direction: column;

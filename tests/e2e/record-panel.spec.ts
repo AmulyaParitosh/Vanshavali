@@ -141,4 +141,25 @@ test.describe("Record panel — edit in place (Spec 07 a2/a4/a9)", () => {
     await expect(page.getByRole("dialog", { name: "Leave without saving?" })).toHaveCount(0);
     await expect(page.locator(".inspector")).toHaveCount(0);
   });
+
+  test("Save shows the confirmation toast with a 12s Undo (flow 2/3)", async ({ page }) => {
+    // Non-destructive round trip: edit relative to the current value (always
+    // dirty), Save, then Undo back — the seed is preserved whatever it started at.
+    await page.goto(`${treeRoute()}?person=${you}`);
+    await page.getByRole("button", { name: "Edit record" }).click();
+    const nameField = page.getByLabel("Name");
+    const original = await nameField.inputValue();
+    await nameField.fill(`${original} ·`);
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+
+    // The toast names the tree and what the family now sees, and offers Undo.
+    const toast = page.locator(".toast-viewport .toast");
+    await expect(toast).toBeVisible();
+    await expect(toast.locator(".toast-primary")).toContainText("Saved to");
+    await expect(toast.locator(".toast-consequence")).toContainText("everyone sees it now");
+
+    // Undo fires and confirms with its own toast (restoring the previous state).
+    await toast.getByRole("button", { name: "Undo" }).click();
+    await expect(page.locator(".toast-viewport .toast")).toContainText("Put back the way it was");
+  });
 });

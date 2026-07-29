@@ -18,10 +18,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <AppProvider>
-          <ToastSystem />
-          {children}
-        </AppProvider>
+        <AppProvider>{children}</AppProvider>
+        {/* Toast infrastructure lives outside AppProvider so the transient
+         * Loading state during a post-save re-fetch never unmounts an open
+         * toast (e.g. the save confirmation + its 12s Undo). It uses no context. */}
+        <ToastSystem />
       </body>
     </html>
   );

@@ -7,6 +7,8 @@ import type { TreeMembership } from "../types/tree";
 import { TREE_CONFIG } from "../constants";
 import { canEdit as canEditRole, isOwner } from "../lib/access";
 import { useAppContext } from "../context/AppContext";
+import { showSaveToast } from "./ToastSystem";
+import { personChanges } from "../lib/personChanges";
 import { useTreeLayout, type LaidOutNode } from "./tree/useTreeLayout";
 import { useTreeZoom } from "./tree/useTreeZoom";
 import PersonNode from "./tree/PersonNode";
@@ -21,8 +23,11 @@ interface TreeProps {
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
-  const { treeData, membership, currentTreeId, user, dataProvider, refreshNonce, onSave } =
+  const { treeData, membership, currentTreeId, user, dataProvider, refreshNonce, onSave, myTrees } =
     useAppContext();
+  const treeName =
+    [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])].find((t) => t.id === currentTreeId)
+      ?.name ?? "the tree";
   const searchParams = useSearchParams();
   const [savingRecord, setSavingRecord] = useState(false);
 
@@ -150,12 +155,29 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           saving={savingRecord}
           onSaveRecord={async (draft) => {
             if (!draft.id) return;
+            const families = treeData?.families ?? [];
+            const prevPeople = people;
+            const prev = people.find((p) => p.id === draft.id);
+            const labels = prev ? personChanges(prev, draft).map((c) => c.label) : [];
+            const summary =
+              labels.length === 0
+                ? "your changes"
+                : labels.length === 1
+                  ? labels[0]!
+                  : `${labels[0]} and ${labels.length - 1} more`;
             setSavingRecord(true);
             try {
               const nextPeople = people.map((p) =>
                 p.id === draft.id ? ({ ...draft, id: draft.id } as (typeof people)[number]) : p
               );
-              await onSave({ people: nextPeople, families: treeData?.families ?? [] });
+              await onSave({ people: nextPeople, families });
+              showSaveToast({
+                primary: `Saved to ${treeName}`,
+                consequence: `${summary} · everyone sees it now`,
+                onUndo: async () => {
+                  await onSave({ people: prevPeople, families });
+                },
+              });
             } finally {
               setSavingRecord(false);
             }

@@ -192,6 +192,71 @@ const ConfirmDialog: React.FC = () => {
   );
 };
 
+// --- Save toast (Spec 13) — bottom-centre, one at a time, 12s with Undo -------
+
+export interface SaveToastRequest {
+  primary: string;
+  consequence?: string;
+  onUndo?: () => void | Promise<void>;
+  /** Amber glyph for a warning/conflict rather than a green save-confirm. */
+  warn?: boolean;
+}
+
+type SaveListener = (r: SaveToastRequest | null) => void;
+const saveListeners = new Set<SaveListener>();
+
+/** Show the save toast. A new one replaces the current — they never stack. */
+export function showSaveToast(req: SaveToastRequest) {
+  saveListeners.forEach((l) => l(req));
+}
+
+const SaveToastHost: React.FC = () => {
+  const [req, setReq] = useState<SaveToastRequest | null>(null);
+  useEffect(() => {
+    const l: SaveListener = (r) => setReq(r);
+    saveListeners.add(l);
+    return () => {
+      saveListeners.delete(l);
+    };
+  }, []);
+  useEffect(() => {
+    if (!req) return undefined;
+    // 12s while an Undo is offered (Spec 13), 3.5s for a plain confirm.
+    const ms = req.onUndo ? 12000 : 3500;
+    const id = setTimeout(() => setReq(null), ms);
+    return () => clearTimeout(id);
+  }, [req]);
+  if (!req) return null;
+
+  return (
+    <div className="toast-viewport">
+      <div className={`toast${req.warn ? " toast--warn" : ""}`} role="status" aria-live="polite">
+        <span className="toast-glyph" aria-hidden="true">
+          ✧
+        </span>
+        <div className="toast-body">
+          <span className="toast-primary">{req.primary}</span>
+          {req.consequence && <span className="toast-consequence">{req.consequence}</span>}
+        </div>
+        {req.onUndo && (
+          <button
+            type="button"
+            className="toast-action"
+            onClick={async () => {
+              const undo = req.onUndo;
+              setReq(null);
+              await undo?.();
+              showSaveToast({ primary: "Put back the way it was" });
+            }}
+          >
+            Undo
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // --- Public surface ----------------------------------------------------------
 
 export const ToastSystem = () => {
@@ -201,6 +266,7 @@ export const ToastSystem = () => {
         {(t) => <CustomToast t={t} />}
       </Toaster>
       <ConfirmDialog />
+      <SaveToastHost />
     </>
   );
 };
