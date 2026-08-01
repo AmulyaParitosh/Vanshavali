@@ -8,7 +8,10 @@ import { treeRoute } from "./fixtures";
 
 async function openSearch(page: import("@playwright/test").Page) {
   await page.goto(treeRoute());
-  await page.locator(".chrome-search").click();
+  // The top-nav search trigger was removed; open the palette the way the canvas
+  // field and ⌘K do — the CommandSearch listens for this event once mounted.
+  await expect(page.locator(".chrome-avatar-link")).toBeVisible({ timeout: 20_000 });
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("vanshavali:open-search")));
   await expect(page.locator(".cmdk-panel")).toBeVisible();
 }
 

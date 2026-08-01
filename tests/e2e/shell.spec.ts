@@ -16,13 +16,14 @@ test.describe("Shell — chrome bar and rail", () => {
     await expect(page.locator(".tree-rail")).toBeVisible();
   });
 
-  test("the chrome bar carries the wordmark, tree switcher, search trigger and you avatar", async ({
+  test("the chrome bar carries the wordmark, tree switcher and you avatar (no search trigger)", async ({
     page,
   }) => {
     await expect(page.locator(".chrome-wordmark")).toBeVisible();
     await expect(page.locator(".chrome-treeswitcher")).toBeVisible();
-    await expect(page.locator(".chrome-search")).toBeVisible();
     await expect(page.locator(".chrome-avatar-link")).toBeVisible();
+    // Search was removed from the top nav by request; ⌘K still opens the palette.
+    await expect(page.locator(".chrome-search")).toHaveCount(0);
   });
 
   test("the rail lists exactly the four destinations Tree, Members, Households, Settings", async ({
@@ -60,9 +61,9 @@ test.describe("Shell — chrome bar and rail", () => {
     await expect(active).toHaveCSS("color", "rgb(255, 253, 249)");
   });
 
-  test("the search trigger opens the ⌘K search palette", async ({ page }) => {
+  test("⌘K opens the search palette (no top-nav trigger)", async ({ page }) => {
     await expect(page.locator(".cmdk-panel")).toHaveCount(0);
-    await page.locator(".chrome-search").click();
+    await page.keyboard.press("ControlOrMeta+k");
     await expect(page.locator(".cmdk-panel")).toBeVisible();
   });
 

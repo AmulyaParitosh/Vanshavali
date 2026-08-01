@@ -9,9 +9,6 @@ import type { AuthUser } from "../services/types";
 import type { TreeMembership } from "../types/tree";
 import { canViewTree } from "../lib/access";
 
-/** Opens the ⌘K search palette (CommandSearch listens for this). */
-const OPEN_SEARCH_EVENT = "vanshavali:open-search";
-
 interface HeaderProps {
   user: AuthUser | null;
   membership: TreeMembership | null;
@@ -108,33 +105,9 @@ export default function Header({ user, membership }: HeaderProps) {
         </div>
       )}
 
-      {showTreeSwitcher && (
-        <button
-          type="button"
-          className="chrome-search"
-          onClick={() => window.dispatchEvent(new CustomEvent(OPEN_SEARCH_EVENT))}
-          aria-label="Search this record"
-          aria-keyshortcuts="Meta+K Control+K"
-        >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <span className="chrome-search-placeholder">Search this record</span>
-          <span className="chrome-search-kbd" aria-hidden="true">
-            ⌘K
-          </span>
-        </button>
-      )}
+      {/* The search trigger was removed from the top nav by request; ⌘K still
+       * opens the palette (CommandSearch listens globally) and the tree canvas
+       * carries its own "Search the whole tree" field. */}
 
       <div className="chrome-spacer" />
 

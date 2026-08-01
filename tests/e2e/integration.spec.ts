@@ -25,7 +25,9 @@ async function withDb<T>(fn: (c: Client) => Promise<T>): Promise<T> {
 }
 
 async function openSearch(page: Page) {
-  await page.locator(".chrome-search").click();
+  // Top-nav search trigger removed; open the palette via the shared event.
+  await expect(page.locator(".chrome-avatar-link")).toBeVisible({ timeout: 20_000 });
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("vanshavali:open-search")));
   await expect(page.locator(".cmdk-panel")).toBeVisible();
 }
 

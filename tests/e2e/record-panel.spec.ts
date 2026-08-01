@@ -53,7 +53,8 @@ test.describe("Record panel — read mode (Spec 07)", () => {
   }) => {
     await page.goto(treeRoute());
     await expect(page.locator(".inspector")).toHaveCount(0);
-    await page.locator(".chrome-search").click();
+    // Top-nav search trigger removed; open the palette via the shared event.
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent("vanshavali:open-search")));
     await page.locator(".cmdk-panel input").fill("Meera");
     await page.locator(".cmdk-row", { hasText: "Meera Verma" }).first().click();
     // One inspector component, opened from search — and still no route of its own (a1/a2).
