@@ -11,8 +11,19 @@ import { inferHusbandWife } from "../../../../lib/family";
 import { generationMap, roman, bornInLine } from "../../../../lib/generations";
 import { portraitTint, personInitials } from "../../../../utils/portrait";
 import ConsequenceDialog from "../../../../components/tree/ConsequenceDialog";
+import RecordsScreen from "../../../../components/records/RecordsScreen";
+import RecordsTable, { type RecordsColumn } from "../../../../components/records/RecordsTable";
 import type { Family, Marriage } from "../../../../types/family";
 import type { Person } from "../../../../types/person";
+
+/** Households table columns (Spec 08). Width via className; header font is uniform. */
+const HOUSEHOLD_COLUMNS: RecordsColumn[] = [
+  { key: "portrait", className: "couple-glyph" },
+  { key: "partners", label: "Partners", className: "records-col-name" },
+  { key: "married", label: "Married", className: "hh-col-married" },
+  { key: "children", label: "Children", className: "hh-col-children" },
+  { key: "gen", label: "Gen", className: "hh-col-gen" },
+];
 
 /**
  * The marriage facts read back as a prose sentence (Spec 08 a5 / c10): place
@@ -147,29 +158,27 @@ export default function HouseholdsPage() {
   };
 
   return (
-    <div className={`households-page${selected ? " inspector-open" : ""}`}>
-      <div className="households-main">
-        <div className="households-head">
-          <div>
-            <h1>Households</h1>
-            <div className="records-subtitle">
-              {families.length} marriage{families.length === 1 ? "" : "s"} recorded
-              {undatedCount > 0 && ` · ${undatedCount} without a date`}
-            </div>
-          </div>
-          <div className="records-header-spacer" />
-          {canEdit && (
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => setSelected({ id: "", husband: "", wife: "", children: [] })}
-            >
-              + New household
-            </button>
-          )}
-        </div>
-
-        <div className="households-searchrow">
+    <RecordsScreen
+      title="Households"
+      subtitle={
+        <>
+          {families.length} marriage{families.length === 1 ? "" : "s"} recorded
+          {undatedCount > 0 && ` · ${undatedCount} without a date`}
+        </>
+      }
+      action={
+        canEdit && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setSelected({ id: "", husband: "", wife: "", children: [] })}
+          >
+            + New household
+          </button>
+        )
+      }
+      search={
+        <>
           <label className="records-search">
             <svg
               width="14"
@@ -226,94 +235,90 @@ export default function HouseholdsPage() {
               )}
             </div>
           )}
-        </div>
-
-        <div className="records-table">
-          <div className="records-thead">
-            <span style={{ width: 74, flexShrink: 0 }} />
-            <span style={{ flex: 1, minWidth: 0 }}>Partners</span>
-            <span className="hh-col-married">Married</span>
-            <span className="hh-col-children">Children</span>
-            <span className="hh-col-gen">Gen</span>
+        </>
+      }
+      inspectorOpen={!!selected}
+    >
+      <RecordsTable columns={HOUSEHOLD_COLUMNS}>
+        {rows.length === 0 ? (
+          <div className="records-empty">
+            {families.length === 0
+              ? "No marriages recorded yet"
+              : `No household matches “${query}”.`}
           </div>
-          {rows.length === 0 ? (
-            <div className="records-empty">
-              {families.length === 0
-                ? "No marriages recorded yet"
-                : `No household matches “${query}”.`}
-            </div>
-          ) : (
-            rows.map((f) => {
-              const { husbandId, wifeId } = inferHusbandWife(f);
-              const partners = [husbandId, wifeId].filter(Boolean) as string[];
-              const gen = partners.map((id) => gens.get(id)).find(Boolean);
-              return (
-                <button
-                  key={f.id}
-                  type="button"
-                  className="records-row"
-                  style={{
-                    width: "100%",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    border: "none",
-                    borderBottom: "1px solid var(--line-row)",
-                    background: "transparent",
-                    font: "inherit",
-                  }}
-                  onClick={() => setSelected(f)}
-                >
-                  <span className="couple-glyph">
-                    {partners.map((id) => (
-                      <span
-                        key={id}
-                        className="records-avatar"
-                        style={{
-                          background: portraitTint(id),
-                          border: `2.5px solid ${born.has(id) ? "var(--ring-born)" : "var(--ring-married)"}`,
-                        }}
-                      >
-                        {personInitials(personById.get(id)?.name.official_name ?? "?")}
-                      </span>
-                    ))}
-                  </span>
-                  <span className="records-name" style={{ pointerEvents: "none" }}>
-                    <span className="records-name-primary">
-                      {partners.map((id) => nameOf(id)).join(" & ") || "Unnamed household"}
+        ) : (
+          rows.map((f) => {
+            const { husbandId, wifeId } = inferHusbandWife(f);
+            const partners = [husbandId, wifeId].filter(Boolean) as string[];
+            const gen = partners.map((id) => gens.get(id)).find(Boolean);
+            return (
+              <button
+                key={f.id}
+                type="button"
+                className="records-row"
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  border: "none",
+                  borderBottom: "1px solid var(--line-row)",
+                  background: "transparent",
+                  font: "inherit",
+                }}
+                onClick={() => setSelected(f)}
+              >
+                <span className="couple-glyph">
+                  {partners.map((id) => (
+                    <span
+                      key={id}
+                      className="records-avatar"
+                      style={{
+                        background: portraitTint(id),
+                        border: `2.5px solid ${born.has(id) ? "var(--ring-born)" : "var(--ring-married)"}`,
+                      }}
+                    >
+                      {personInitials(personById.get(id)?.name.official_name ?? "?")}
                     </span>
+                  ))}
+                </span>
+                <span className="records-name records-col-name" style={{ pointerEvents: "none" }}>
+                  <span className="records-name-primary">
+                    {partners.map((id) => nameOf(id)).join(" & ") || "Unnamed household"}
                   </span>
-                  <span className={`hh-col-married${f.marriage?.date ? "" : " absent"}`}>
-                    {f.marriage?.date
-                      ? [f.marriage.date, f.marriage.place].filter(Boolean).join(", ")
-                      : "no date recorded"}
-                  </span>
-                  <span className={`hh-col-children${f.children.length ? "" : " absent"}`}>
-                    {f.children.length
-                      ? `${f.children.length} ${f.children.length === 1 ? "child" : "children"}`
-                      : "none listed"}
-                  </span>
-                  <span className="hh-col-gen">{roman(gen)}</span>
-                </button>
-              );
-            })
-          )}
-        </div>
-      </div>
+                </span>
+                <span className={`hh-col-married${f.marriage?.date ? "" : " absent"}`}>
+                  {f.marriage?.date
+                    ? [f.marriage.date, f.marriage.place].filter(Boolean).join(", ")
+                    : "no date recorded"}
+                </span>
+                <span className={`hh-col-children${f.children.length ? "" : " absent"}`}>
+                  {f.children.length
+                    ? `${f.children.length} ${f.children.length === 1 ? "child" : "children"}`
+                    : "none listed"}
+                </span>
+                <span className="hh-col-gen">{roman(gen)}</span>
+              </button>
+            );
+          })
+        )}
+      </RecordsTable>
 
       {selected && (
-        <HouseholdEditor
-          key={selected.id || "new"}
-          family={selected}
-          people={people}
-          born={born}
-          gens={gens}
-          canEdit={canEdit}
-          onSave={handleSave}
-          onDelete={handleDelete}
-          onClose={() => setSelected(null)}
-        />
+        <div className="record-dock">
+          <HouseholdEditor
+            key={selected.id || "new"}
+            family={selected}
+            people={people}
+            born={born}
+            gens={gens}
+            canEdit={canEdit}
+            onSave={handleSave}
+            onDelete={handleDelete}
+            onClose={() => setSelected(null)}
+          />
+        </div>
       )}
-    </div>
+    </RecordsScreen>
   );
 }
 

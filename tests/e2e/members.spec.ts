@@ -25,15 +25,16 @@ async function withDb<T>(fn: (c: Client) => Promise<T>): Promise<T> {
 const membersRoute = treeRoute("members");
 
 test.describe("Members — the list (Spec 06)", () => {
-  test("the table carries the full Spec 06 column set", async ({ page }) => {
+  test("the table carries the member column set", async ({ page }) => {
     await page.goto(membersRoute);
     const head = page.locator(".records-thead");
     await expect(head).toContainText("Name");
     await expect(head).toContainText("Gen");
     await expect(head).toContainText("Born");
     await expect(head).toContainText("Relation to you");
-    await expect(head).toContainText("Updated");
     await expect(head).toContainText("May");
+    // "Updated" column removed by request.
+    await expect(head).not.toContainText("Updated");
   });
 
   test("rows are ordered by generation, not alphabetically (a10)", async ({ page }) => {

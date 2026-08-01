@@ -9,6 +9,8 @@ import InvitePanel from "../../../../components/tree/InvitePanel";
 import RecordInspectorDock from "../../../../components/tree/RecordInspectorDock";
 import AddPersonPanel, { type AddFields } from "../../../../components/tree/AddPersonPanel";
 import DuplicateGuard from "../../../../components/tree/DuplicateGuard";
+import RecordsScreen from "../../../../components/records/RecordsScreen";
+import RecordsTable, { type RecordsColumn } from "../../../../components/records/RecordsTable";
 import { canEdit as canEditRole, canInvite } from "../../../../lib/access";
 import { portraitTint, personInitials } from "../../../../utils/portrait";
 import { generationMap, roman, bornInLine } from "../../../../lib/generations";
@@ -22,6 +24,18 @@ import type {
   InvitableTreeRole,
   TreeRole,
 } from "../../../../types/tree";
+
+/** Members table columns (Spec 06). The className carries only the width; the
+ *  header font is uniform via `.records-thead span`. */
+const MEMBER_COLUMNS: RecordsColumn[] = [
+  { key: "portrait", className: "records-col-portrait" },
+  { key: "name", label: "Name", className: "records-col-name" },
+  { key: "gen", label: "Gen", className: "records-col-gen" },
+  { key: "born", label: "Born", className: "records-col-born" },
+  { key: "relation", label: "Relation to you", className: "records-col-relation" },
+  { key: "may", label: "May", className: "records-col-may" },
+  { key: "overflow", className: "records-col-overflow" },
+];
 
 /** Access-chip presentation for a per-tree role (repo owner/editor/viewer = keeper/write/read). */
 const ROLE_CHIP: Record<TreeRole, { label: string; cls: string }> = {
@@ -41,22 +55,6 @@ function birthValue(p: Person): number {
   const d = birthDate(p);
   const t = d ? Date.parse(d) : NaN;
   return Number.isNaN(t) ? Number.POSITIVE_INFINITY : t;
-}
-
-/** Relative "Updated" time (Spec 06: `2 mo ago`, `1 h ago`, `—`). */
-function relativeTime(ms?: number): string {
-  if (!ms) return "—";
-  const secs = Math.max(0, (Date.now() - ms) / 1000);
-  const mins = secs / 60;
-  const hrs = mins / 60;
-  const days = hrs / 24;
-  if (secs < 60) return "just now";
-  if (mins < 60) return `${Math.floor(mins)} min ago`;
-  if (hrs < 24) return `${Math.floor(hrs)} h ago`;
-  if (days < 7) return `${Math.floor(days)} d ago`;
-  if (days < 35) return `${Math.floor(days / 7)} w ago`;
-  if (days < 365) return `${Math.floor(days / 30)} mo ago`;
-  return `${Math.floor(days / 365)} y ago`;
 }
 
 /**
@@ -218,57 +216,46 @@ export default function MembersPage() {
       : "");
 
   return (
-    <div className={`records-page${selectedPerson ? " inspector-open" : ""}`}>
-      <header className="records-header">
-        <div>
-          <h1>Members</h1>
-          <div className="records-subtitle">{sub}</div>
-        </div>
-        <div className="records-header-spacer" />
-        {canAdd ? (
+    <RecordsScreen
+      title="Members"
+      subtitle={sub}
+      action={
+        canAdd ? (
           <button type="button" className="btn btn-primary" onClick={() => setAddOpen(true)}>
             + Add person
           </button>
         ) : (
           <span className="records-reader-note">Ask a keeper to add someone</span>
-        )}
-      </header>
-
-      <label className="records-search">
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          aria-hidden="true"
-          style={{ color: "var(--text-meta)" }}
-        >
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Name or alias"
-          aria-label="Search people"
-        />
-      </label>
-
-      <div className="records-table">
-        <div className="records-thead">
-          <span className="records-col-portrait" />
-          <span className="records-col-name">Name</span>
-          <span className="records-col-gen">Gen</span>
-          <span className="records-col-born">Born</span>
-          <span className="records-col-relation">Relation to you</span>
-          <span className="records-col-updated">Updated</span>
-          <span className="records-col-may">May</span>
-          <span className="records-col-overflow" />
-        </div>
+        )
+      }
+      search={
+        <label className="records-search">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            aria-hidden="true"
+            style={{ color: "var(--text-meta)" }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Name or alias"
+            aria-label="Search people"
+          />
+        </label>
+      }
+      inspectorOpen={!!selectedPerson}
+    >
+      <RecordsTable columns={MEMBER_COLUMNS}>
         {rows.length === 0 ? (
           <div className="records-empty">Nobody here by that name</div>
         ) : (
@@ -319,7 +306,6 @@ export default function MembersPage() {
                 <span className={`records-col-relation${isYou ? " you" : relation ? "" : " none"}`}>
                   {relation ?? "not connected yet"}
                 </span>
-                <span className="records-col-updated">{relativeTime(p.updatedAt)}</span>
                 <span className="records-col-may">
                   {mem ? (
                     <span className={`chip ${ROLE_CHIP[mem.role].cls}`}>
@@ -350,7 +336,7 @@ export default function MembersPage() {
             );
           })
         )}
-      </div>
+      </RecordsTable>
 
       <p className="records-note">
         Everyone can read the <strong>May</strong> column — a relative should be able to see who can
@@ -423,6 +409,6 @@ export default function MembersPage() {
           }
         />
       )}
-    </div>
+    </RecordsScreen>
   );
 }

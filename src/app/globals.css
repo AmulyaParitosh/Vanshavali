@@ -4164,6 +4164,17 @@ main {
   top: 0;
   z-index: 1;
 }
+/* Every column header renders in the one header font, regardless of the width
+ * class it borrows from the row cells (which set 14px/display for the data). This
+ * is what keeps Members and Households column headers identical. */
+.records-thead > span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-meta);
+}
 /* Row — 60px (40px avatar + 10px top/bottom). The whole row opens the record;
  * only the May cell stops propagation. Hover + open take the red wash; open also
  * bolds the name to 700 #8b0000. Focus is an inset red halo (keyboard nav). */
@@ -4731,34 +4742,9 @@ main {
 /* ============================================================================
  * Households (§4) — the list at full width + the editor in the inspector.
  * ========================================================================== */
-.households-page {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-}
-.households-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  padding: var(--space-8) var(--space-10);
-  gap: var(--space-5);
-}
-.households-head {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-.households-head h1 {
-  font-family: var(--font-display);
-  font-size: var(--font-size-3xl);
-  font-weight: 400;
-  margin: 0;
-  color: var(--text-primary);
-}
+/* Households now uses the shared RecordsScreen shell (.records-page) — the old
+ * .households-page/.households-main/.households-head containers are gone so the
+ * two table pages can't diverge in padding, margin or drawer behaviour. */
 /* Two portraits overlapped as one household glyph. */
 .couple-glyph {
   display: flex;
@@ -4787,8 +4773,8 @@ main {
 .hh-col-children.absent {
   color: var(--text-absent);
 }
-/* Households search row + filters (Spec 08 g2). */
-.households-searchrow {
+/* Shared search row (Members + Households): the search field plus any filters. */
+.records-searchrow {
   display: flex;
   align-items: center;
   gap: 12px;
