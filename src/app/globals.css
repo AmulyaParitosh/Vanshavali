@@ -286,6 +286,14 @@ body {
   min-height: 100vh;
 }
 
+/* Links are styled by colour and context, not a default underline. The product
+ * underlines only a few deliberate prose links, which opt back in explicitly
+ * (e.g. .landing-close-alt a). This base reset kills the browser default
+ * app-wide so a wordmark or a button-as-link never renders underlined. */
+a {
+  text-decoration: none;
+}
+
 body::before {
   content: "";
   position: fixed; /* Fixed to cover full viewport including scroll */
