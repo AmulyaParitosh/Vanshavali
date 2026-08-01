@@ -18,7 +18,9 @@ export default function NewTreePage() {
       <div className="create-panel">
         <header className="picker-head">
           <h1>Start another tree</h1>
-          <p className="picker-sub">One name is a tree. Everything else can arrive later.</p>
+          <p className="picker-sub">
+            One name is a tree. Everything else can arrive later, a relative at a time.
+          </p>
         </header>
         <CreateTreeForm />
       </div>
