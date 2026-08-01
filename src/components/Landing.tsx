@@ -11,6 +11,12 @@ import Link from "next/link";
  */
 
 const CREATE = "/signin?intent=create";
+/**
+ * The read-only example tree (/demo) isn't built yet. Spec 01 edge e4: hide
+ * "See an example tree" rather than show a button that errors — the hero
+ * survives one CTA. Flip to true when /demo ships.
+ */
+const DEMO_AVAILABLE = false;
 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
@@ -59,9 +65,11 @@ export default function Landing() {
           <Link href={CREATE} className="landing-cta">
             Start with your own name
           </Link>
-          <Link href="/demo" className="landing-btn-secondary">
-            See an example tree
-          </Link>
+          {DEMO_AVAILABLE && (
+            <Link href="/demo" className="landing-btn-secondary">
+              See an example tree
+            </Link>
+          )}
         </div>
       </header>
 
@@ -176,6 +184,9 @@ export default function Landing() {
               When it&apos;s grown, export a Madhubani-framed sheet: folded into a Diwali card, or
               hung in the hall where the next generation will see it.
             </p>
+          </div>
+          <div className="landing-photo landing-how-portrait" aria-hidden="true">
+            <span>a face from the wall</span>
           </div>
         </div>
       </section>

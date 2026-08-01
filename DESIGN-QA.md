@@ -1,0 +1,127 @@
+# DESIGN-QA — spec-vs-UI audit loop (Aug 2026)
+
+A fresh design-QA pass over the 14 Claude Design specs. Goal: kill UI inconsistency and
+design drift; every screen a 10/10 match to its spec. This file is the durable record — it
+survives conversation compaction. **Read this first on resume.**
+
+## The cycle (per spec)
+
+1. Read + understand the spec `.dc.html` (rendered design + exact inline values/copy).
+2. Go through the design(s) visually.
+3. Open the browser on the current UI (screenshot the live app route).
+4. Mark gaps / drift vs the spec design.
+5. Review UI consistency vs the rest of the app.
+6. Spot repeated UI elements → extract a shared primitive/component.
+7. Repeat 2–6 until the design review self-scores **10/10**.
+8. Reindex code + design learnings (this file + memory).
+9. Compact; preserve these instructions + the cycle's findings here.
+10. Next spec.
+
+Ground rules unchanged from CLAUDE.md: spec is the contract (exact px, verbatim copy);
+compose the CSS primitives (`.btn*`, `.input`, `.chip*`, `.card`, `.eyebrow`), never raw hex;
+one implementation of everything; no browser `confirm()`/`beforeunload`; state absence in
+words at `#a89f8c`; leaf green `#2e8b57` = "you" only; commits carry NO AI trailer.
+
+## Harness (scratchpad)
+
+- Design mirror: `scratchpad/design/` (spec `.dc.html` + `support.js` + `assets/`), served at
+  `http://localhost:8899` (python http.server). React loads from CDN at render time.
+- `scratchpad/shoot.mjs` — `auth` | `app <route> <out> [full]` | `pub <route> <out> [full]` |
+  `design <url> <out>`. Uses playwright at 1440×900, deviceScaleFactor 2, storageState `auth.json`.
+- `scratchpad/slice.py <in> <prefix> [bandCssH]` — slice tall PNGs into legible 1440-wide bands.
+- Seed (fixtures.ts): keeper `designreview2@local.test`/`password123`, tree `tree_e9PAKZi8KB`
+  ("Ishaan Verma family tree"); writer `designreview3@local.test`. People: p_b55… (Ishaan/you/root),
+  p_meera (Meera/wife/editor), p_arjun (Arjun/son), p_sara (Sara/daughter).
+
+## Spec status
+
+| #   | Spec            | Route                     | Score | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --- | --------------- | ------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 00  | Foundations     | shell/system              | 10/10 | Ruler doc. Shell/tokens/roles/one-record hold; tests green. Carry-forwards to Spec 05: rail meta line should be `N people · place · role` not "N people in the record"; attention block + generation-jump currently on canvas — reconcile placement in Spec 05.                                                                                                                                                                                     |
+| 01  | Landing         | `/`                       | 10/10 | Fixed: (1) `.landing a{border:none}` → `text-decoration:none` (removed leaked browser-default underlines from nav/CTAs/footer + restored the secondary-button border); (2) closing band was flat `--color-red-deep` → now `banner.jpg` under the g8 dark gradient; (3) added the g6 260×260 how-it-works portrait slot; (4) hid "See an example tree" (e4 — `/demo` unbuilt, `DEMO_AVAILABLE=false`). Copy deck verbatim. e2e 5/5, typecheck clean. |
+| 02  | Sign in         | `/signin`                 | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 03  | My trees        | `/trees`                  | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 04  | Invitation      | `/invite/[token]`         | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 05  | Tree            | `/tree/[id]`              | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 06  | Members         | `/tree/[id]/members`      | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 07  | Record panel    | shared inspector          | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 08  | Households      | `/tree/[id]/families`     | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 09  | Search          | overlay                   | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 10  | Getting started | `/tree/[id]/start/[step]` | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 11  | Tree settings   | `/tree/[id]/settings`     | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 12  | Account         | `/user`                   | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 13  | Write states    | cross-cutting             | —     |                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+
+## Spec 00 — Foundations (the contract for every page)
+
+**Shell** (fixed, never remounts across routes; build once as a layout component):
+
+- Chrome bar: `1440×60`, fixed, z-index 30. Bg `#1a1a1a` + `linear-gradient(rgba(20,18,16,.76),
+rgba(20,18,16,.93))` over `assets/banner.jpg` bg-position `0% 34%`. Bottom edge `2px solid #b22222`.
+  Padding `0 20px`, gap 24, align center. Wordmark: Yatra One 22px #fff ls .5px + `वंशावली` 13px/500
+  `#ff8c00` (**only** place marigold carries text). Tree switcher pill: 6px 12px, radius 10, bg
+  rgba(255,255,255,.1), border 1px rgba(255,255,255,.22), label 14px/500 #fff, caret 11px. Search
+  trigger: 260px, 7px 13px, radius 999, bg rgba(255,255,255,.08), border 1px rgba(255,255,255,.18),
+  placeholder 13.5px rgba(255,255,255,.55), ⌘K hint 11px caps. You: 34px circle #2e8b57, border 1.5px
+  rgba(255,255,255,.7), initial 14px/600 #fff (leaf green = you, nothing else).
+- Rail: `232×840`, flex-shrink 0. Bg `#f8f2e4`, border-right 1px `#e6ddc9`. Tree identity: padding
+  18/16, Yatra One 19px name, 12.5px `#8a8377` meta (people · place · role). Nav item: padding 9/12,
+  radius 10, 15px/500 `#33302b`, glyph col 16px, opacity .85. Active: bg `#b22222` color `#fffdf9`
+  weight 600. Hover: bg `#fff5f5`. Count badge: right, 12px/600 `#8a8377` (→ #fffdf9 @80% when active).
+  Section eyebrow: 10px mono, ls .14em, uppercase, `#8a8377`, pad 4/12/6. Divider 1px `#f0e9da` m 8/12.
+  Destinations: **Tree · Members · Households · Settings** — nothing else ever added.
+- Inspector: `384×840`, slides from right. Bg `#fffdf9`, border-left 1px `#e6ddc9`, box-shadow
+  `-8px 0 24px rgba(0,0,0,.04)`. Ornament bar: 3px top — `linear-gradient(90deg,#b22222,#ff8c00)` at
+  heritage full, solid `#b22222` restrained, `#e6ddc9` plain. Transition transform 180ms
+  cubic-bezier(.32,.72,0,1); page column animates width same tick. Close: × 15px #8a8377 top-right,
+  32px hit, Esc also closes, never a browser back.
+
+**Navigation model**: 4 rail destinations, no fifth. Opening a person never navigates (inspector on
+current route; no /person/[id]). Tree switcher is the only cross-tree move. Deep link → route + panel.
+One primary action per screen. Overlays never stack (a dialog closes any open overlay first; two
+scrims never coexist).
+
+**Roles** (per tree, on the membership row): Keeper / Write / Read. Non-roles in same column: Invited
+(pending), no account (absence → offer Invite). Server enforces every row; UI mirrors as courtesy.
+Read sees May column but can't change it, no Save in any record panel but their own.
+
+**One-record rule**: a user has exactly one Person record, shared by every tree. Edited from Account
+(spec 12), same form component as the tree uses. Joining a tree that has a placeholder → placeholder
+replaced by canonical record in place (id kept, links re-point), confirmed via "is this you?" before
+merge. Positional/role/checklist facts belong to membership/household, not the shared person.
+
+**Every person named twice**: Devanagari + Latin everywhere (nameDeva required, nameLatin required).
+Which sits on top = `tree.nameOrder` (devanagari | latin | latin-only), global per tree. Primary
+15px/600 #1a1a1a, secondary 13px/400 #8a8377, stacked, line-height 1.3. Secondary line never dropped.
+Aliases in curly quotes after middle dot. latin-only → secondary carries the alias. Tree node labels:
+primary only 12.5px/600 + year beneath 9px (only single-script surface; node is 78px wide). Search
+matches both scripts + all aliases.
+
+**Tokens** (the six you can't avoid): action/lineage/focus `#b22222`; hover/selected `#8b0000`;
+canvas/page `#fdf5e6`; paper/cards `#fffdf9`; structure line `#e6ddc9`; all secondary text `#8a8377`.
+Type-6: h1 Yatra One 30/400, panel record name 20/600, card heading 17/600, row name/rail 15/600,
+button label 14.5/600, eyebrow/col-head 10/.14em caps. Shape: pressable/chips 999px, person 50%,
+cards 16px, controls-in-card 12px, rail items/insets 10px. Depth: primary button `0 2px 8px
+rgba(178,34,34,.22)`; inspector edge `-8px 0 24px rgba(0,0,0,.04)`; focus halo `0 0 0 3px
+rgba(178,34,34,.1)`; dialog `0 32px 80px rgba(0,0,0,.28)`; raised node `0 3px 12px rgba(178,34,34,.24)`.
+
+**Interaction conventions** (identical on every page): Focus = border #b22222 + 3px halo @10%, keyboard
+in visual order. Hover = rows/rail red wash `#fff5f5`; outlined buttons border+text→red bg unchanged;
+filled darken→#8b0000; nothing moves/scales/lifts. Saving = nothing written until explicit Save; Save
+disabled until dirty (opacity .45). Missing data = words at `#a89f8c`, never blank/em-dash, italic never.
+Toasts = bottom-centre, one at a time, 3.5s, dismissible, confirm writes only. Dialogs = scrim
+rgba(20,18,16,.42), card centred, radius 22, pad 32, Esc + scrim-click cancel, destructive names the
+thing in the heading, max-width 460, shadow 0 32px 80px rgba(0,0,0,.28). Empty states = Yatra One
+heading + one sentence + exactly one action if permitted; never illustration/shrug. Loading = skeleton
+rows at real height in `#f4ede0`, never spinner over content; rail+chrome render immediately. Long names
+= 2 lines then ellipsis on primary, secondary ellipses at 1 line; clip Devanagari conjunct on grapheme.
+Motion = panels 180ms, dialogs 140ms fade+8px rise, canvas pans 320ms, nothing animates on first paint,
+prefers-reduced-motion cuts duration to 0. Accessibility = accessible name on every control, dialogs
+trap+restore focus, canvas keyboard-operable via generation rail, chips never rely on colour alone.
+
+**System acceptance**: chrome+rail identical on all in-tree routes, no remount on route change; a person
+opens the same 384px panel from canvas/members/household/search; two scripts per surface in nameOrder;
+Read sees May col but no change + no Save except own; non-keeper can't grant/change/remove access (UI +
+API); join-with-placeholder ends one row, links survive; heritage=plain drops the 4 painted surfaces
+only; every missing date/photo/account = words at #a89f8c + counted in rail attention; tab = every
+control in visual order + halo, Esc closes topmost overlay only; no page shows two filled red buttons.

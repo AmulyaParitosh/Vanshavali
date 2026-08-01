@@ -5817,8 +5817,11 @@ main {
 .landing {
   color: var(--text-primary);
 }
+/* Landing links never carry the browser-default underline — buttons and nav
+ * links are styled by colour/fill, not decoration. The one deliberate underline
+ * (the closing "Sign in", Spec 01 c29) re-adds it in .landing-close-alt a. */
 .landing a {
-  border: none;
+  text-decoration: none;
 }
 
 /* Nav — sticky, transparent over the hero, paper + hairline once scrolled. */
@@ -6100,8 +6103,14 @@ main {
 }
 .landing-steps {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr) 260px;
   gap: 28px;
+  align-items: start;
+}
+/* Spec 01 g6 / c4 s3 — a 1:1 portrait slot right of the third step. */
+.landing-how-portrait {
+  aspect-ratio: 1 / 1;
+  align-self: center;
 }
 .landing-step-n {
   font-family: var(--font-display);
@@ -6155,8 +6164,13 @@ main {
   gap: 14px;
   padding-top: 96px;
   padding-bottom: 96px;
-  background:
-    linear-gradient(rgba(20, 18, 16, 0.55), rgba(20, 18, 16, 0.78)), var(--color-red-deep);
+  /* Spec 01 g8 — the full-bleed banner image under a dark gradient (the one
+   * inverted CTA sits on it). #1a1a1a stands in if the asset fails to load. */
+  background-color: #1a1a1a;
+  background-image:
+    linear-gradient(rgba(20, 18, 16, 0.55), rgba(20, 18, 16, 0.78)), url("/banner.jpg");
+  background-size: cover;
+  background-position: center;
   color: #fff;
 }
 .landing-close-eyebrow {
