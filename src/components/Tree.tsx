@@ -76,9 +76,6 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   // dismissible chip (Spec 09 a6). Seeded from the URL, dismissed to local null.
   const placeParam = searchParams.get("place");
   const [placeFilter, setPlaceFilter] = useState<string | null>(placeParam);
-  // The "Tap anyone to read their record" hint fades once the first record is
-  // opened and never returns (Spec 05 g11).
-  const [everOpened, setEverOpened] = useState(!!personParam);
 
   const layout = useTreeLayout(data);
   const people = treeData?.people ?? [];
@@ -152,7 +149,6 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
    */
   const handleSelect = (personId: string, pan = false) => {
     setSelectedPersonId(personId);
-    setEverOpened(true);
     if (pan) panToPerson(personId);
   };
 
@@ -242,13 +238,6 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
         {/* The "Jump to generation" list and the attention filter live in the
             rail now (Spec 05 g8 / a8), driven through the canvas bridge. */}
-
-        {/* Tap hint (Spec 05 g11) — top-right, fades after the first open. */}
-        {!everOpened && layout.nodes.length > 0 && (
-          <div className="tree-hint" aria-hidden="true">
-            Tap anyone to read their record
-          </div>
-        )}
 
         {/* Place filter chip (Spec 09 a6) — a place dims the rest of the canvas
             rather than opening a page; dismissible, restoring full opacity. */}
