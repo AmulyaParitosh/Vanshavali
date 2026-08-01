@@ -46,6 +46,48 @@ export function generationMap(people: Person[], families: Family[]): Map<string,
   return gen;
 }
 
+/** One generation as the rail's "Jump to generation" list renders it (Spec 05 g8). */
+export interface GenerationSummary {
+  /** 1-indexed depth (root generation = 1). */
+  depth: number;
+  /** People in this generation — the count shown at the row's right. */
+  count: number;
+  /** Year span "1931—2018" (or a single year, or "" when no dates are known). */
+  span: string;
+}
+
+/**
+ * People grouped by generation with a year span and count per row — the rail's
+ * generation list (Spec 05 g8). The span runs from the earliest to the latest
+ * year (birth or death) recorded in the generation.
+ */
+export function generationSummaries(people: Person[], families: Family[]): GenerationSummary[] {
+  const gen = generationMap(people, families);
+  const byGen = new Map<number, Person[]>();
+  for (const p of people) {
+    const g = gen.get(p.id);
+    if (g === undefined) continue;
+    const bucket = byGen.get(g) ?? [];
+    bucket.push(p);
+    byGen.set(g, bucket);
+  }
+  return [...byGen.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([depth, ppl]) => {
+      const years: number[] = [];
+      for (const p of ppl) {
+        for (const e of p.events ?? []) {
+          const y = e.date?.match(/\d{4}/)?.[0];
+          if (y) years.push(Number(y));
+        }
+      }
+      const min = years.length ? Math.min(...years) : null;
+      const max = years.length ? Math.max(...years) : null;
+      const span = min === null ? "" : min === max ? `${min}` : `${min}—${max}`;
+      return { depth, count: ppl.length, span };
+    });
+}
+
 /** IDs born into the line (root + every child) — they carry the red ring. */
 export function bornInLine(people: Person[], families: Family[]): Set<string> {
   const set = new Set<string>();

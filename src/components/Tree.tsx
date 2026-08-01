@@ -14,19 +14,12 @@ import PersonNode from "./tree/PersonNode";
 import PartnerNode from "./tree/PartnerNode";
 import TreeLink from "./tree/TreeLink";
 import RecordInspectorDock from "./tree/RecordInspectorDock";
-import GenerationRail, { type GenerationRow } from "./tree/GenerationRail";
+import type { GenerationRow } from "./tree/GenerationRail";
+import { useTreeCanvas, type Attention } from "../context/TreeCanvasContext";
 
 interface TreeProps {
   data: GraphNode | null;
 }
-
-/** The three "needs attention" lenses (Spec 05 a8). */
-type Attention = "dates" | "account" | "photo";
-const ATTENTION: { key: Attention; label: string }[] = [
-  { key: "dates", label: "Missing dates" },
-  { key: "account", label: "No account linked" },
-  { key: "photo", label: "No photograph" },
-];
 
 /** The people in a household node (both partners, or the single person). */
 function nodePersons(data: GraphNode): Person[] {
@@ -56,6 +49,11 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   const gRef = useRef<SVGGElement>(null);
   const { treeData, membership, currentTreeId, user, dataProvider, refreshNonce, myTrees } =
     useAppContext();
+  // The attention filter (Spec 05 a8) lives in the rail; the canvas reads the
+  // shared state to dim non-matching households, and registers its jump API so
+  // the rail's "Jump to generation" can pan here.
+  const canvasBridge = useTreeCanvas();
+  const attention = canvasBridge?.attention ?? null;
   const treeName =
     [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])].find((t) => t.id === currentTreeId)
       ?.name ?? "the tree";
@@ -78,6 +76,9 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   // dismissible chip (Spec 09 a6). Seeded from the URL, dismissed to local null.
   const placeParam = searchParams.get("place");
   const [placeFilter, setPlaceFilter] = useState<string | null>(placeParam);
+  // The "Tap anyone to read their record" hint fades once the first record is
+  // opened and never returns (Spec 05 g11).
+  const [everOpened, setEverOpened] = useState(!!personParam);
 
   const layout = useTreeLayout(data);
   const people = treeData?.people ?? [];
@@ -116,16 +117,20 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       .map(([depth, v]) => ({ depth, count: v.count, x: v.x, y: v.y }));
   }, [layout]);
 
-  // Attention filter (a8): dims non-matching households, never hides them.
-  const [attention, setAttention] = useState<Attention | null>(null);
-  const attentionCounts = useMemo(
-    () => ({
-      dates: layout.nodes.filter((n) => nodeHasAttention(n.data, "dates")).length,
-      account: layout.nodes.filter((n) => nodeHasAttention(n.data, "account")).length,
-      photo: layout.nodes.filter((n) => nodeHasAttention(n.data, "photo")).length,
-    }),
-    [layout]
-  );
+  // Register the canvas jump API so the rail's "Jump to generation" list can pan
+  // the canvas. The rail passes a 1-indexed generation depth; the layout is
+  // 0-indexed, so match on depth - 1.
+  const registerCanvasApi = canvasBridge?.registerCanvasApi;
+  useEffect(() => {
+    if (!registerCanvasApi) return undefined;
+    registerCanvasApi({
+      panToGeneration: (depth: number) => {
+        const row = generations.find((g) => g.depth === depth - 1);
+        if (row) panTo(row.x, row.y);
+      },
+    });
+    return () => registerCanvasApi(null);
+  }, [registerCanvasApi, generations, panTo]);
 
   /** Center the canvas on a person (their couple offset accounted for). */
   const panToPerson = (personId: string) => {
@@ -147,6 +152,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
    */
   const handleSelect = (personId: string, pan = false) => {
     setSelectedPersonId(personId);
+    setEverOpened(true);
     if (pan) panToPerson(personId);
   };
 
@@ -234,8 +240,15 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           </g>
         </svg>
 
-        {/* Generation rail (Spec 05 a7) — the keyboard spine; jump to a generation. */}
-        <GenerationRail generations={generations} onJump={(x, y) => panTo(x, y)} />
+        {/* The "Jump to generation" list and the attention filter live in the
+            rail now (Spec 05 g8 / a8), driven through the canvas bridge. */}
+
+        {/* Tap hint (Spec 05 g11) — top-right, fades after the first open. */}
+        {!everOpened && layout.nodes.length > 0 && (
+          <div className="tree-hint" aria-hidden="true">
+            Tap anyone to read their record
+          </div>
+        )}
 
         {/* Place filter chip (Spec 09 a6) — a place dims the rest of the canvas
             rather than opening a page; dismissible, restoring full opacity. */}
@@ -253,22 +266,6 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           </div>
         )}
 
-        {/* Attention filters (Spec 05 a8) — dim non-matching households, never hide. */}
-        <div className="tree-attention" role="group" aria-label="Needs attention">
-          {ATTENTION.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              className={`attention-chip${attention === key ? " active" : ""}`}
-              aria-pressed={attention === key}
-              onClick={() => setAttention((cur) => (cur === key ? null : key))}
-            >
-              {label}
-              <span className="attention-count">{attentionCounts[key]}</span>
-            </button>
-          ))}
-        </div>
-
         {/* Legend (Spec 05 g9) — what the two ring colours mean. */}
         <div className="tree-legend" aria-hidden="true">
           <span className="legend-item">
@@ -281,8 +278,19 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           </span>
         </div>
 
-        {/* Canvas controls (Spec 05 g10) — Fit + zoom, bottom-right. */}
+        {/* Canvas controls (Spec 05 g10) — search the whole tree, then Fit + zoom,
+            bottom-centre. The search field opens the same ⌘K palette. */}
         <div className="tree-controls">
+          <button
+            type="button"
+            className="tree-canvas-search"
+            onClick={() => window.dispatchEvent(new CustomEvent("vanshavali:open-search"))}
+          >
+            <span className="tree-canvas-search-icon" aria-hidden="true">
+              ⌕
+            </span>
+            <span className="tree-canvas-search-label">Search the whole tree</span>
+          </button>
           <button
             type="button"
             className="tree-control"

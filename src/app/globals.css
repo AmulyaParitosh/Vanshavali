@@ -1468,14 +1468,51 @@ main {
 .legend-dot--married {
   border-color: var(--ring-married);
 }
-/* Canvas controls (Spec 05 g10) — bottom-right; Fit + zoom. */
+/* Canvas controls (Spec 05 g10) — bottom-centre; search the whole tree, Fit, zoom. */
 .tree-controls {
   position: absolute;
-  right: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 20px;
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.tree-canvas-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 260px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 253, 249, 0.92);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: var(--text-meta);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--dur-panel) var(--ease);
+}
+.tree-canvas-search:hover {
+  border-color: var(--color-red);
+}
+.tree-canvas-search-label {
+  flex: 1;
+}
+/* Tap hint (Spec 05 g11) — top-right; fades once a record is opened. */
+.tree-hint {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  font-size: 12.5px;
+  color: var(--text-meta);
+  background: rgba(255, 253, 249, 0.85);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  pointer-events: none;
 }
 .tree-control {
   min-width: 38px;
@@ -2648,6 +2685,98 @@ main {
 }
 .check-mark--later {
   border: 1.5px solid var(--line-control);
+}
+
+/* Jump to generation (Spec 05 g8) — the rail's generation list. */
+.tree-genjump {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 16px 8px;
+}
+.tree-genjump .eyebrow {
+  padding: 6px 4px 4px;
+}
+.tree-genjump-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.tree-genjump-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-9);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-panel) var(--ease);
+}
+.tree-genjump-row:hover {
+  background: var(--color-red-wash);
+}
+.tree-genjump-numeral {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--color-red-deep);
+}
+.tree-genjump-years {
+  font-size: 11px;
+  color: var(--text-strong);
+}
+.tree-genjump-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-meta);
+}
+
+/* Attention filter in the rail (Spec 05 a8) — the "what's unfinished" slot once
+   getting-started is done; each row toggles a dimming filter on the canvas. */
+.rail-attention {
+  margin: auto 16px 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-structure);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rail-attention .eyebrow {
+  padding-bottom: 2px;
+}
+.rail-attention-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--line-structure);
+  border-radius: var(--radius-10);
+  background: var(--surface-paper);
+  font-size: 13.5px;
+  color: var(--text-strong);
+  cursor: pointer;
+  transition:
+    background var(--dur-panel) var(--ease),
+    border-color var(--dur-panel) var(--ease);
+}
+.rail-attention-row:hover {
+  border-color: var(--color-red);
+}
+.rail-attention-row.active {
+  background: var(--color-red-wash);
+  color: var(--color-red-deep);
+  border-color: #f0dcd8;
+}
+.rail-attention-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-meta);
 }
 
 /* Getting-started checklist in the rail (Spec 10). */

@@ -66,28 +66,30 @@ test.describe("Tree canvas — node visuals (Spec 05)", () => {
     await expect(legend).toContainText("married in");
   });
 
-  test("the generation rail lists generations and is keyboard-navigable (a7)", async ({ page }) => {
+  test("the rail lists generations, each jumping the canvas (Spec 05 g8/a7)", async ({ page }) => {
     await page.goto(treeRoute());
-    const rail = page.locator(".genrail");
+    const genjump = page.locator(".tree-genjump");
     // Seed spans two generations: I (Ishaan + Meera) and II (their children).
-    await expect(rail.locator(".genrail-row")).toHaveCount(2);
-    await expect(rail.locator(".genrail-numeral").first()).toHaveText("I");
-    await expect(rail.locator(".genrail-numeral").nth(1)).toHaveText("II");
-    // Arrow keys move between generations without leaving the rail.
-    await rail.locator(".genrail-row").first().focus();
-    await page.keyboard.press("ArrowDown");
-    await expect(rail.locator(".genrail-row").nth(1)).toBeFocused();
-    // Enter jumps the canvas (no route change).
+    await expect(genjump.locator(".tree-genjump-row")).toHaveCount(2);
+    await expect(genjump.locator(".tree-genjump-numeral").first()).toHaveText("I");
+    await expect(genjump.locator(".tree-genjump-numeral").nth(1)).toHaveText("II");
+    // Keyboard-operable: each row is a focusable button; Enter jumps the canvas
+    // without a route change (Spec 00 — the canvas is operable via the rail).
+    await genjump.locator(".tree-genjump-row").nth(1).focus();
+    await expect(genjump.locator(".tree-genjump-row").nth(1)).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page.locator(".tree-canvas")).toBeVisible();
     expect(new URL(page.url()).pathname).toBe(treeRoute());
   });
 
-  test("the attention filter dims non-matching households but never hides them (a8)", async ({
+  test("the rail attention filter dims non-matching households, never hides them (a8)", async ({
     page,
   }) => {
     await page.goto(treeRoute());
-    await expect(page.locator(".attention-chip")).toHaveCount(3);
+    // The attention filter takes the rail's "unfinished" slot once getting-started
+    // is put away (Spec 05 — attention lives in the rail, not on the canvas).
+    await page.locator(".rail-checklist-dismiss").click();
+    await expect(page.locator(".rail-attention-row")).toHaveCount(3);
     const total = await page.locator(".node-wrap").count();
 
     await page.getByRole("button", { name: /No account linked/ }).click();
