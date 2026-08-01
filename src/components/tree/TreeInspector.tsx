@@ -52,6 +52,9 @@ interface TreeInspectorProps {
 function birthOf(person: Person) {
   return (person.events ?? []).find((e) => /birth|born/i.test(e.type));
 }
+function deathOf(person: Person) {
+  return (person.events ?? []).find((e) => /death|died|passed/i.test(e.type));
+}
 
 /**
  * The record panel (Spec 07) — a 384px inspector that opens in place. Read mode:
@@ -216,9 +219,14 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
   const eyebrow =
     (gen !== undefined ? `Generation ${roman(gen)}` : "In this tree") +
     (line ? ` · ${line} line` : "");
-  const fact = [birth?.date ? `b. ${birth.date}` : null, birth?.place ?? null]
+  // Fact line (Spec 07 c2): "b. 1958, Madhubani · living" — birth + place, then
+  // the living/deceased status, so a dateless record still states one fact.
+  const death = deathOf(person);
+  const birthPart = [birth?.date ? `b. ${birth.date}` : null, birth?.place ?? null]
     .filter(Boolean)
     .join(", ");
+  const status = death?.date ? `d. ${death.date}` : "living";
+  const fact = [birthPart || null, status].filter(Boolean).join(" · ");
   const kin = isSelf || !viewerPersonId ? null : describeRelation(viewerPersonId, person.id, gm);
   const relation = isSelf ? "this is you" : kin ? `your ${kin}` : null;
   const married = !inLine.has(person.id); // marigold ring = married into this line
@@ -292,7 +300,7 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
                 <span className="inspector-name">{person.name.official_name}</span>
                 {aliases.length > 0 && (
                   <span className="inspector-secondary">
-                    {aliases.map((a) => `“${a}”`).join(" · ")}
+                    {aliases.map((a) => `‘${a}’`).join(" · ")}
                   </span>
                 )}
                 {fact && <span className="inspector-fact">{fact}</span>}
