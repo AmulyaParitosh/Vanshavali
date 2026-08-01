@@ -5368,6 +5368,18 @@ main {
   font-size: 13px;
   color: var(--text-strong);
 }
+/* Export and print card (Spec 11 c15-c19). */
+.settings-export-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.settings-reader-note {
+  margin: 14px 0 0;
+  font-size: 13.5px;
+  color: var(--text-meta);
+}
 .settings-danger {
   background: var(--color-red-wash);
   border-color: #e8c9c9;

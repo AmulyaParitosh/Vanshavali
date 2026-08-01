@@ -6,7 +6,7 @@ import { useAppContext } from "../../../../context/AppContext";
 import { useToast } from "../../../../components/ToastSystem";
 import Loading from "../../../../components/Loading";
 import ConsequenceDialog from "../../../../components/tree/ConsequenceDialog";
-import { isOwner } from "../../../../lib/access";
+import { isOwner, canEdit } from "../../../../lib/access";
 import type {
   TreeMeta,
   TreeSettingsPatch,
@@ -30,7 +30,31 @@ export default function TreeSettingsPage() {
   const router = useRouter();
 
   const keeper = isOwner(membership?.role);
+  const writer = canEdit(membership?.role); // Export/print is a writer + keeper right.
   const tree = [...(myTrees?.owned ?? []), ...(myTrees?.member ?? [])].find((t) => t.id === treeId);
+
+  // Export everything (Spec 11 c16/c17): the whole record as JSON, client-side —
+  // "as it stands today. Nothing is held back."
+  const exportRecord = () => {
+    if (!tree || !treeData) return;
+    const payload = JSON.stringify(
+      {
+        tree: { id: tree.id, name: tree.name, place: tree.place ?? null },
+        people: treeData.people,
+        families: treeData.families,
+        exportedAt: new Date().toISOString(),
+      },
+      null,
+      2
+    );
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${tree.name.replace(/[^\w]+/g, "-").toLowerCase()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [handoverOpen, setHandoverOpen] = useState(false);
@@ -120,31 +144,26 @@ export default function TreeSettingsPage() {
       <NamesShownCard tree={tree} editable={keeper} onSave={save} />
       <SharingCard tree={tree} editable={keeper} onSave={save} />
 
+      {/* Export and print (Spec 11 c15-c19). Export is a writer/keeper right; a
+          reader is told to ask a keeper. Print is the browser print target —
+          the Madhubani-framed folio is a later refinement. */}
       <section className="settings-card">
-        <h2>About this tree</h2>
-        <dl className="settings-info">
-          <dt>Started</dt>
-          <dd>{new Date(tree.createdAt).toLocaleDateString()}</dd>
-          <dt>Keeper</dt>
-          <dd>
-            <code>{tree.ownerUid}</code>
-          </dd>
-          <dt>Contains</dt>
-          <dd>
-            {counts.people} {counts.people === 1 ? "person" : "people"} · {counts.households}{" "}
-            {counts.households === 1 ? "household" : "households"}
-          </dd>
-          <dt>Visibility</dt>
-          <dd>
-            {tree.visibility === "private"
-              ? "Private — invitation only, never indexed"
-              : tree.visibility}
-          </dd>
-          <dt>Tree id</dt>
-          <dd>
-            <code>{tree.id}</code>
-          </dd>
-        </dl>
+        <div className="settings-card-head">
+          <h2>Export and print</h2>
+          <p>Everything in this record, as it stands today. Nothing is held back.</p>
+        </div>
+        {writer ? (
+          <div className="settings-export-actions">
+            <button type="button" className="btn" onClick={exportRecord}>
+              Export everything
+            </button>
+            <button type="button" className="btn" onClick={() => window.print()}>
+              Print the tree
+            </button>
+          </div>
+        ) : (
+          <p className="settings-reader-note">Ask a keeper to export this record</p>
+        )}
       </section>
 
       {keeper && (
