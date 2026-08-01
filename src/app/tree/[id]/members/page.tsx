@@ -307,7 +307,9 @@ export default function MembersPage() {
                 <span className="records-name records-col-name">
                   <span className="records-name-primary">{p.name.official_name}</span>
                   {p.name.aliases && p.name.aliases.length > 0 && (
-                    <span className="records-name-secondary">{p.name.aliases.join(" · ")}</span>
+                    <span className="records-name-secondary">
+                      {p.name.aliases.map((a) => `‘${a}’`).join(" · ")}
+                    </span>
                   )}
                 </span>
                 <span className="records-col-gen">{roman(gens.get(p.id))}</span>
