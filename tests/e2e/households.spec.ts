@@ -37,7 +37,7 @@ test.describe("Households — the list (Spec 08)", () => {
     const row = page.locator(".records-row", { hasText: "Ishaan Verma" });
     await expect(row.locator(".records-name-primary")).toHaveText("Ishaan Verma & Meera Verma");
     // No marriage date recorded in the seed → stated as an absence, not blank.
-    await expect(row.locator(".hh-col-married")).toHaveText("no marriage date");
+    await expect(row.locator(".hh-col-married")).toHaveText("no date recorded");
     await expect(row.locator(".hh-col-children")).toContainText("2");
     await expect(row.locator(".hh-col-gen")).toHaveText("I");
   });
@@ -61,14 +61,16 @@ test.describe("Households — the editor (Spec 08)", () => {
   test("marriage facts read back as prose; editing reveals the footer (a5)", async ({ page }) => {
     await openEditor(page);
     const prose = page.locator(".hh-marriage-prose");
-    await expect(prose).toHaveText("No marriage date recorded.");
+    // The seed household (Ishaan & Meera) has two children, so the count reads
+    // back as its own sentence (Spec 08 c10).
+    await expect(prose).toHaveText("No marriage date recorded. Two children.");
     // A clean editor shows no footer (nothing to save).
     await expect(page.locator(".inspector-foot")).toHaveCount(0);
-    // Typing a date reads back as a sentence and reveals the Save footer.
+    // Typing a date reads back as a sentence (place first, then date) and reveals Save.
     await page.getByLabel("Marriage date").fill("1983");
-    await expect(prose).toHaveText("Married 1983.");
+    await expect(prose).toHaveText("Married on 1983. Two children.");
     await page.getByLabel("Marriage place").fill("Ranchi");
-    await expect(prose).toHaveText("Married 1983 in Ranchi.");
+    await expect(prose).toHaveText("Married at Ranchi on 1983. Two children.");
     await expect(
       page.locator(".inspector-foot").getByRole("button", { name: "Save" })
     ).toBeVisible();

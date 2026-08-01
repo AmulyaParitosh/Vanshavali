@@ -4793,6 +4793,54 @@ main {
 .hh-col-children.absent {
   color: var(--text-absent);
 }
+/* Households search row + filters (Spec 08 g2). */
+.households-searchrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.households-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hh-genfilter {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-pill);
+  background: var(--surface-paper);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+.hh-genfilter:hover {
+  border-color: var(--color-red);
+}
+.hh-filter-chip {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-pill);
+  background: var(--surface-paper);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: var(--text-strong);
+  cursor: pointer;
+  transition:
+    background var(--dur-panel) var(--ease),
+    border-color var(--dur-panel) var(--ease);
+}
+.hh-filter-chip:hover {
+  border-color: var(--color-red);
+}
+.hh-filter-chip.active {
+  background: var(--color-red-wash);
+  color: var(--color-red-deep);
+  border-color: #f0dcd8;
+}
 .hh-col-gen {
   width: 52px;
   flex-shrink: 0;

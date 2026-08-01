@@ -14,14 +14,25 @@ import ConsequenceDialog from "../../../../components/tree/ConsequenceDialog";
 import type { Family, Marriage } from "../../../../types/family";
 import type { Person } from "../../../../types/person";
 
-/** The marriage facts read back as a prose sentence (Spec 08 a5). */
-function marriageProse(m: Marriage | undefined): string {
+/**
+ * The marriage facts read back as a prose sentence (Spec 08 a5 / c10): place
+ * first, then date, then the child count as its own sentence — so a wrong date
+ * looks wrong the way it would in speech.
+ */
+function marriageProse(m: Marriage | undefined, childCount = 0): string {
   const date = m?.date?.trim();
   const place = m?.place?.trim();
-  if (date && place) return `Married ${date} in ${place}.`;
-  if (date) return `Married ${date}.`;
-  if (place) return `Married in ${place}.`;
-  return "No marriage date recorded.";
+  let s: string;
+  if (date && place) s = `Married at ${place} on ${date}.`;
+  else if (date) s = `Married on ${date}.`;
+  else if (place) s = `Married at ${place}.`;
+  else s = "No marriage date recorded.";
+  if (childCount > 0) {
+    const n =
+      childCount === 1 ? "One child" : childCount === 2 ? "Two children" : `${childCount} children`;
+    s += ` ${n}.`;
+  }
+  return s;
 }
 
 /**
@@ -41,6 +52,10 @@ export default function HouseholdsPage() {
   const [data, setData] = useState<TreeData | null>(treeData);
   const [selected, setSelected] = useState<Family | null>(null);
   const [query, setQuery] = useState("");
+  // Search-row filters (Spec 08 g2): a generation dropdown and the "No marriage
+  // date" queue as a dismissible chip.
+  const [genFilter, setGenFilter] = useState<number | null>(null);
+  const [undatedOnly, setUndatedOnly] = useState(false);
 
   useEffect(() => {
     setData(treeData);
@@ -62,9 +77,19 @@ export default function HouseholdsPage() {
   const genOf = (f: Family): number =>
     [f.husband, f.wife].map((id) => (id ? gens.get(id) : undefined)).find(Boolean) ?? 99;
 
+  const undatedCount = useMemo(
+    () => families.filter((f) => !f.marriage?.date?.trim()).length,
+    [families]
+  );
+  const genOptions = useMemo(
+    () => [...new Set(families.map(genOf).filter((g) => g < 99))].sort((a, b) => a - b),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [families, gens]
+  );
+
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = q
+    let list = q
       ? families.filter((f) => {
           const names = [f.husband, f.wife]
             .map((id) => (id ? personById.get(id) : undefined))
@@ -73,10 +98,12 @@ export default function HouseholdsPage() {
           return names.join(" ").toLowerCase().includes(q);
         })
       : families;
+    if (genFilter !== null) list = list.filter((f) => genOf(f) === genFilter);
+    if (undatedOnly) list = list.filter((f) => !f.marriage?.date?.trim());
     // Generation, then marriage date — never arbitrary insertion order.
     return [...list].sort((a, b) => genOf(a) - genOf(b) || marriageValue(a) - marriageValue(b));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [families, query, personById, gens]);
+  }, [families, query, personById, gens, genFilter, undatedOnly]);
 
   if (!data) return <Loading />;
 
@@ -127,6 +154,7 @@ export default function HouseholdsPage() {
             <h1>Households</h1>
             <div className="records-subtitle">
               {families.length} marriage{families.length === 1 ? "" : "s"} recorded
+              {undatedCount > 0 && ` · ${undatedCount} without a date`}
             </div>
           </div>
           <div className="records-header-spacer" />
@@ -136,34 +164,69 @@ export default function HouseholdsPage() {
               className="btn btn-primary"
               onClick={() => setSelected({ id: "", husband: "", wife: "", children: [] })}
             >
-              + Record a marriage
+              + New household
             </button>
           )}
         </div>
 
-        <label className="records-search">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            aria-hidden="true"
-            style={{ color: "var(--text-meta)" }}
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Either partner's name"
-            aria-label="Search households"
-          />
-        </label>
+        <div className="households-searchrow">
+          <label className="records-search">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              aria-hidden="true"
+              style={{ color: "var(--text-meta)" }}
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Either partner's name"
+              aria-label="Search households"
+            />
+          </label>
+
+          {/* Filters (Spec 08 g2): a generation dropdown and the "No marriage date"
+              queue as a dismissible chip. */}
+          {(genOptions.length > 0 || undatedCount > 0) && (
+            <div className="households-filters">
+              {genOptions.length > 0 && (
+                <select
+                  className="hh-genfilter"
+                  value={genFilter ?? ""}
+                  onChange={(e) => setGenFilter(e.target.value ? Number(e.target.value) : null)}
+                  aria-label="Filter by generation"
+                >
+                  <option value="">Generation</option>
+                  {genOptions.map((g) => (
+                    <option key={g} value={g}>
+                      Generation {roman(g)}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {undatedCount > 0 && (
+                <button
+                  type="button"
+                  className={`hh-filter-chip${undatedOnly ? " active" : ""}`}
+                  aria-pressed={undatedOnly}
+                  onClick={() => setUndatedOnly((v) => !v)}
+                >
+                  No marriage date · {undatedCount}
+                  {undatedOnly && <span aria-hidden="true"> ✕</span>}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="records-table">
           <div className="records-thead">
@@ -183,7 +246,6 @@ export default function HouseholdsPage() {
             rows.map((f) => {
               const { husbandId, wifeId } = inferHusbandWife(f);
               const partners = [husbandId, wifeId].filter(Boolean) as string[];
-              const childNames = f.children.map((id) => nameOf(id)).filter(Boolean);
               const gen = partners.map((id) => gens.get(id)).find(Boolean);
               return (
                 <button
@@ -223,12 +285,12 @@ export default function HouseholdsPage() {
                   <span className={`hh-col-married${f.marriage?.date ? "" : " absent"}`}>
                     {f.marriage?.date
                       ? [f.marriage.date, f.marriage.place].filter(Boolean).join(", ")
-                      : "no marriage date"}
+                      : "no date recorded"}
                   </span>
-                  <span className={`hh-col-children${childNames.length ? "" : " absent"}`}>
-                    {childNames.length
-                      ? `${childNames.length} · ${childNames.slice(0, 2).join(", ")}${childNames.length > 2 ? "…" : ""}`
-                      : "no children listed"}
+                  <span className={`hh-col-children${f.children.length ? "" : " absent"}`}>
+                    {f.children.length
+                      ? `${f.children.length} ${f.children.length === 1 ? "child" : "children"}`
+                      : "none listed"}
                   </span>
                   <span className="hh-col-gen">{roman(gen)}</span>
                 </button>
@@ -405,7 +467,7 @@ function HouseholdEditor({
             <span className="inspector-rule" />
           </div>
           {/* The facts read back as a prose sentence (a5). */}
-          <p className="hh-marriage-prose">{marriageProse(form.marriage)}</p>
+          <p className="hh-marriage-prose">{marriageProse(form.marriage, form.children.length)}</p>
           {canEdit && (
             <div className="hh-marriage-fields">
               <input
