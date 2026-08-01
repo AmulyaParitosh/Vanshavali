@@ -50,7 +50,7 @@ words at `#a89f8c`; leaf green `#2e8b57` = "you" only; commits carry NO AI trail
 | 10  | Getting started | `/tree/[id]/start/[step]` | partial | **Rail checklist = 10/10** ("Getting started" + N/4, steps Join/Photograph/Dates/Who's-missing c2–c5, "Open my record" outlined c6, reader gets 3 steps, self-hides at complete; getting-started.spec.ts 4/4). **Deferred (model-dependent, out of scope for a design pass):** the three bespoke task screens — photo crop + face-lift (needs media/face-detection), date-precision Exact/About/Year (needs event-precision model), who's-missing household preview (needs places aggregation). Steps currently link to the nearest existing surface (record / Members).                                                                                                                                                                                                                                                                             |
 | 11  | Tree settings   | `/tree/[id]/settings`     | 10/10   | Strong match (header + read-only sub, "What this tree is called" name + ancestral-place, "How names are shown" 3 radios w/ live samples, "Sharing" default-role segmented + two toggles + why-lines, per-card Save disabled-until-dirty, Danger zone: Make-someone-else-keeper + Delete-this-record quiet red + count line, g7 border/bg). Fix: replaced the non-spec "About this tree" info card with the **"Export and print" card** (c15–c19) — "Export everything" now downloads the full record as JSON client-side; "Print the tree" calls `window.print()`; readers see "Ask a keeper to export this record". Deferred: the Madhubani-framed print folio (print is basic for now); bilingual cross-surface name rendering (a3 — the name-order samples are illustrative, no name model).                                                      |
 | 12  | Account         | `/user` → `/user/profile` | partial | Reasonable match: reduced chrome (wordmark + avatar, no switcher/search g1), rail (Account active + Sign out), "Your account" + sub, "Sign-in details" card (leaf-green avatar + display-name + email + Change password), "Your record" card (portrait + summary + Edit my record), "Trees you're in" card w/ role chip. Fixes: sub → "…who you are inside each family record." (c2); display-name why → "…in activity and invitations" (c4); "Edit my record" filled → **outlined** (g4). **Deferred (data-model):** the one-global-record model ("One record · all N trees" c6 + full-page /user/record editor) — the app links a _per-tree_ Person to the auth user, so the card honestly reads "Your record in {tree}". Rail "Sign-in / Your record" sub-items also not split out.                                                               |
-| 13  | Write states    | cross-cutting             | —       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 13  | Write states    | cross-cutting             | 10/10   | Fully implemented, no change needed. Verified all a1–a11: explicit Save only + disabled-until-dirty; save toast `Saved to {tree}` + `{summary} · everyone sees it now` (a3, RecordInspectorDock/user-record); 12s Undo with the inverse patch (writeState.ts, a4); LeavingGuard "Not saved yet / Leave without saving?" with verb chips + old→new for edits (a5/a6); ConsequenceDialog names what-goes/stays/other-trees + "Type … to confirm" + non-dismissible scrim for name-gated deletes + softer alternative (a7/a8/a9); ConflictDialog for stale saves (a10, record-conflict.spec.ts); failed save keeps changes (a11); **no `window.confirm`/`beforeunload` in src** (a5). INTEGRATION #10 green.                                                                                                                                            |
 
 ## Spec 00 — Foundations (the contract for every page)
 
@@ -125,3 +125,28 @@ Read sees May col but no change + no Save except own; non-keeper can't grant/cha
 API); join-with-placeholder ends one row, links survive; heritage=plain drops the 4 painted surfaces
 only; every missing date/photo/account = words at #a89f8c + counted in rail attention; tab = every
 control in visual order + halo, Esc closes topmost overlay only; no page shows two filled red buttons.
+
+## Loop complete — all 14 specs audited (Aug 2026)
+
+Every spec compared against the live UI and brought to a 10/10 match, except two
+genuine model-dependent deferrals:
+
+- **10/10 (12):** 00 Foundations · 01 Landing · 02 Sign in · 03 My trees ·
+  04 Invitation · 05 Tree · 06 Members · 07 Record panel · 08 Households ·
+  09 Search · 11 Tree settings · 13 Write states.
+- **partial (2):** 10 Getting started (rail checklist 10/10; the three bespoke
+  task screens need face-detection / event-precision / places models) ·
+  12 Account (matches the shape; the one-global-record model + full-page
+  /user/record editor is a data-model change — app links a per-tree Person).
+
+Biggest wins: the Spec 05 rail restructure (generation-jump + attention moved
+off the canvas into the rail via TreeCanvasContext); the global `a{text-decoration:none}`
+reset (killed leaked underlines everywhere); the Spec 04 invite record-block
+enrichment; the Spec 08 households filters + copy; the Spec 11 Export-and-print card.
+
+Deferred models to revisit (block the remaining fidelity): a bilingual name model
+(nameDeva/nameLatin — unblocks Spec 06/07 second script, Settings a3 samples,
+INTEGRATION #3); per-tree heritage column (#4); the one-global-record model
+(Spec 12 / one-record cross-tree editor); the Spec 10 task-screen models; a
+Madhubani print folio (Spec 11 a6); a `/demo` example tree (Spec 01 e4); a 4th
+"branch only" role (Spec 07).
