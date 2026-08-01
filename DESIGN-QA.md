@@ -150,3 +150,25 @@ INTEGRATION #3); per-tree heritage column (#4); the one-global-record model
 (Spec 12 / one-record cross-tree editor); the Spec 10 task-screen models; a
 Madhubani print folio (Spec 11 a6); a `/demo` example tree (Spec 01 e4); a 4th
 "branch only" role (Spec 07).
+
+## Post-loop follow-up fixes (Aug 2026, committed on f/design-system)
+
+Direct user requests after the loop, all shipped:
+
+- **Site-wide scroll fix** (`11def17`) — pages rendered outside the tree shell
+  (`.landing`/`.picker`/`.invite-screen`/`.urec-page`/`.login-screen`) had no own
+  scroll inside the `overflow:hidden` app shell; each given `height:100%; overflow-y:auto`.
+- **Remove chrome-bar search** (`8ef37f7`) — dropped `.chrome-search` + `OPEN_SEARCH_EVENT`
+  from Header (deviates from Spec 09 by request; ⌘K / the canvas field still open the palette).
+- **Remove canvas tap-hint** (`d8407d5`) — deleted the "Tap anyone to read their record"
+  pill (`.tree-hint` + `everOpened` state) from Tree.tsx (was Spec 05 g11; removed by request).
+- **Members/Households consistency** (`72a84ce`) — extracted `src/components/records/`
+  `RecordsScreen` (shell: padding/margins/header/search-row/`.inspector-open`) +
+  `RecordsTable` (one paper card, one `.records-thead > span` header font so the two pages
+  can't drift). Households moved off `.households-*` and its editor into the fixed
+  `.record-dock` drawer (was overlaying the list). Updated column dropped from Members (by request).
+
+Verification: typecheck clean, lint 0, members+households e2e 22/22 warm (3 first-hit cold-compile
+flakes cleared on warm re-run, Q14). Full-suite prod sweeps this session were all degraded (concurrent
+load + an OOM-crash-looping `supabase_analytics` container that intermittently 401s token validation) —
+a trustworthy whole-branch sweep needs an idle window; the two commits are verified by the above.
