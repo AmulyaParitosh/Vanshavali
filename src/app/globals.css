@@ -5744,10 +5744,49 @@ main {
   color: var(--text-meta);
 }
 .invite-record-tie {
-  margin-top: 4px;
+  margin: 0;
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-prose, #6b6455);
+}
+/* Step 1 offered-record block (Spec 04 g3): 56px portrait ring left, the name
+ * stack right, the "Daughter/Son of …" parents line beneath. The eyebrow sits
+ * above the panel as a section label (never a raw role word). */
+.invite-record-eyebrow--section {
+  display: block;
+  margin-top: 2px;
+}
+.invite-record--offered {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+.invite-record-portrait {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  font-weight: 600;
+  color: #fffdf9;
+  box-shadow: 0 0 0 2px var(--surface-paper);
+}
+.invite-record-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.invite-record-parents {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-prose, #6b6455);
+}
+.invite-record-parent {
+  color: var(--color-red);
 }
 .invite-wrong-note {
   margin: 0;

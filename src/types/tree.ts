@@ -83,8 +83,28 @@ export interface InviteDetail {
   email?: string;
   role?: InvitableTreeRole;
   inviterName?: string;
-  tree?: { id: string; name: string; place?: string; personCount: number };
-  offered?: { name: string; birthYear?: string; birthPlace?: string };
+  tree?: {
+    id: string;
+    name: string;
+    place?: string;
+    personCount: number;
+    /** Generation depth of the tree, for the "N generations" meta fragment (Spec 04 c3). */
+    generations?: number;
+    /** Year the record was started, for "kept from {place} since {year}" (Spec 04 c3). */
+    sinceYear?: number;
+  };
+  offered?: {
+    name: string;
+    /** The offered person's id — drives the portrait tint/initials (Spec 04 g3). */
+    personId?: string;
+    sex?: "M" | "F";
+    birthYear?: string;
+    birthPlace?: string;
+    /** Roman generation numeral, e.g. "III" (Spec 04 c5). */
+    generation?: string;
+    /** Parent names for the "Daughter/Son of X and Y" line (Spec 04 g3). */
+    parents?: string[];
+  };
 }
 
 /** A user's full inventory of trees — owned vs invited. */

@@ -6,7 +6,9 @@ import { InviteRepository } from "../repositories/InviteRepository";
 import { TreeRepository } from "../repositories/TreeRepository";
 import { UserRepository } from "../repositories/UserRepository";
 import { PersonRepository } from "../repositories/PersonRepository";
+import { FamilyRepository } from "../repositories/FamilyRepository";
 import { MembershipRepository } from "../repositories/MembershipRepository";
+import { generationMap, roman } from "../lib/generations";
 import { ownFactsOf, applyOwnFacts, mergePlaceholder } from "../lib/onerecord";
 import { requireOwner } from "./authz";
 import { HttpError } from "../lib/api";
@@ -95,16 +97,35 @@ export async function getInviteDetail(inviteId: string): Promise<InviteDetail> {
   const tree = await TreeRepository.findMeta(db, invite.treeId);
   const inviter = await UserRepository.find(db, invite.invitedBy);
   const people = await PersonRepository.listByTree(db, invite.treeId);
+  const families = await FamilyRepository.listByTree(db, invite.treeId);
+
+  // Generation depth drives both the offered person's numeral (c5) and the
+  // tree's "N generations" meta fragment (c3).
+  const gen = generationMap(people, families);
+  const generations = gen.size ? Math.max(...gen.values()) : undefined;
 
   let offered: InviteDetail["offered"];
   if (invite.personId) {
     const p = people.find((pp) => pp.id === invite.personId);
     if (p) {
       const birth = (p.events ?? []).find((e) => /birth|born/i.test(e.type));
+      // "You are already in it": the arriving relative's parents, so the block
+      // reads as a place they already belong to (Spec 04 w2 / g3).
+      const parentFam = families.find((f) => f.children.includes(p.id));
+      const parents = parentFam
+        ? [parentFam.husband, parentFam.wife]
+            .map((pid) => people.find((pp) => pp.id === pid)?.name.official_name)
+            .filter((n): n is string => !!n)
+        : [];
+      const g = roman(gen.get(p.id));
       offered = {
         name: p.name.official_name,
+        personId: p.id,
+        ...(p.sex ? { sex: p.sex } : {}),
         ...(birth?.date?.match(/\d{4}/)?.[0] ? { birthYear: birth.date.match(/\d{4}/)![0] } : {}),
         ...(birth?.place ? { birthPlace: birth.place } : {}),
+        ...(g ? { generation: g } : {}),
+        ...(parents.length ? { parents } : {}),
       };
     }
   }
@@ -122,6 +143,8 @@ export async function getInviteDetail(inviteId: string): Promise<InviteDetail> {
             name: tree.name,
             ...(tree.place ? { place: tree.place } : {}),
             personCount: people.length,
+            ...(generations ? { generations } : {}),
+            ...(tree.createdAt ? { sinceYear: new Date(tree.createdAt).getFullYear() } : {}),
           },
         }
       : {}),

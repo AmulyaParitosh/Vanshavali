@@ -7,6 +7,7 @@ import { useAppContext } from "../../../context/AppContext";
 import { useToast } from "../../../components/ToastSystem";
 import Loading from "../../../components/Loading";
 import { TREE_ROLES } from "../../../constants";
+import { portraitTint, personInitials } from "../../../utils/portrait";
 import type { InviteDetail } from "../../../types/tree";
 
 /**
@@ -194,28 +195,82 @@ export default function InvitePage() {
             <div className="invite-tree">
               <span className="invite-tree-name">{detail.tree.name}</span>
               <span className="invite-tree-meta">
-                {detail.tree.personCount} {detail.tree.personCount === 1 ? "relative" : "relatives"}
-                {detail.tree.place ? ` · kept from ${detail.tree.place}` : ""}
+                {[
+                  `${detail.tree.personCount} ${detail.tree.personCount === 1 ? "relative" : "relatives"}`,
+                  detail.tree.generations ? `${detail.tree.generations} generations` : null,
+                  detail.tree.place
+                    ? `kept from ${detail.tree.place}${detail.tree.sinceYear ? ` since ${detail.tree.sinceYear}` : ""}`
+                    : detail.tree.sinceYear
+                      ? `kept since ${detail.tree.sinceYear}`
+                      : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </span>
             </div>
           )}
 
           {detail.offered && (
-            <div className="invite-record">
-              <span className="invite-record-eyebrow">You are already in it</span>
-              <span className="invite-record-name">{detail.offered.name}</span>
-              {(detail.offered.birthYear || detail.offered.birthPlace) && (
-                <span className="invite-record-sub">
-                  {["b." + (detail.offered.birthYear ?? ""), detail.offered.birthPlace]
-                    .filter((s) => s && s !== "b.")
-                    .join(", ")}
+            <>
+              <span className="invite-record-eyebrow invite-record-eyebrow--section">
+                You are already in it
+              </span>
+              <div className="invite-record invite-record--offered">
+                <span
+                  className="invite-record-portrait"
+                  aria-hidden="true"
+                  style={
+                    detail.offered.personId
+                      ? { background: portraitTint(detail.offered.personId) }
+                      : undefined
+                  }
+                >
+                  {personInitials(detail.offered.name)}
                 </span>
-              )}
-              <span className="invite-record-tie">
+                <div className="invite-record-stack">
+                  <span className="invite-record-name">{detail.offered.name}</span>
+                  {(detail.offered.birthYear ||
+                    detail.offered.birthPlace ||
+                    detail.offered.generation) && (
+                    <span className="invite-record-sub">
+                      {[
+                        [
+                          detail.offered.birthYear ? `b. ${detail.offered.birthYear}` : null,
+                          detail.offered.birthPlace,
+                        ]
+                          .filter(Boolean)
+                          .join(", "),
+                        detail.offered.generation
+                          ? `generation ${detail.offered.generation}`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  )}
+                  {detail.offered.parents && detail.offered.parents.length > 0 && (
+                    <span className="invite-record-parents">
+                      {detail.offered.sex === "F"
+                        ? "Daughter"
+                        : detail.offered.sex === "M"
+                          ? "Son"
+                          : "Child"}{" "}
+                      of{" "}
+                      {detail.offered.parents.map((n, i) => (
+                        <React.Fragment key={n}>
+                          {i > 0 && " and "}
+                          <span className="invite-record-parent">{n}</span>
+                        </React.Fragment>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <p className="invite-record-tie">
                 Your account will be tied to this record, so you land on your own branch instead of
                 an empty canvas.
-              </span>
-            </div>
+              </p>
+            </>
           )}
 
           <div className="invite-perms">

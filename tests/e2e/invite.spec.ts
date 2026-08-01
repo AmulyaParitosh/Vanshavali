@@ -57,7 +57,12 @@ test.describe("Invitation step 1 — signed out (Spec 04 a1/a2/a8)", () => {
     await expect(page.locator(".login-card")).toHaveCount(0);
     // Tree summary, offered record, role in verbs + the limit.
     await expect(card).toContainText("Ishaan Verma family tree");
+    await expect(card).toContainText("2 generations"); // tree meta carries generation depth (c3)
     await expect(card).toContainText("Arjun Verma"); // the offered record
+    // "You are already in it" reads as a place they belong: generation + parents (g3/c5).
+    await expect(card).toContainText("generation II");
+    await expect(card).toContainText("Son of");
+    await expect(card).toContainText("Meera Verma");
     await expect(card).toContainText("Read everything");
     await expect(card).toContainText("Add and correct"); // editor role → a ✓ verb
     await expect(card).toContainText("Not invite others or change the tree");
