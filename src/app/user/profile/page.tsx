@@ -116,7 +116,7 @@ export default function AccountPage() {
       <header>
         <h1>Your account</h1>
         <p className="settings-sub">
-          Who you are to Vanshavali, and how you appear in each family record.
+          Who you are to Vanshavali, and who you are inside each family record.
         </p>
       </header>
 
@@ -128,7 +128,9 @@ export default function AccountPage() {
           </span>
           <div className="account-fields">
             <div className="account-field">
-              <span className="label">Display name — how relatives see you</span>
+              <span className="label">
+                Display name — how relatives see you in activity and invitations
+              </span>
               <div className="value readonly">{name}</div>
             </div>
             <div className="account-field-row">
@@ -172,7 +174,7 @@ export default function AccountPage() {
                   .join(" · ")}
               </span>
             </div>
-            <Link href="/user/record" className="btn btn-primary">
+            <Link href="/user/record" className="btn">
               Edit my record
             </Link>
           </div>
