@@ -2,61 +2,63 @@ import { test, expect } from "@playwright/test";
 import { SEED, treeRoute } from "./fixtures";
 
 /**
- * Spec 05 node visuals (T-B): the lineage ring carries the meaning (red born-in /
- * marigold married-in, a3), the viewer's own node reads "· you", and a couple's
- * right-hand label is offset down so two names never collide (a2).
+ * Tree Canvas — the household card. A couple is one card with two rows and a
+ * seam (never two loose people); the portrait ring carries born-in (red) vs
+ * married-in (marigold); the spine turns marigold where the family name changes
+ * (a daughter's house); the viewer's own row reads "· you".
  */
 
-const node = (page: import("@playwright/test").Page, id: string) =>
-  page.locator(`.node[data-id="${id}"]`);
+const row = (page: import("@playwright/test").Page, id: string) =>
+  page.locator(`.hcard-row[data-id="${id}"]`);
+const card = (page: import("@playwright/test").Page, id: string) =>
+  page.locator(`.hcard:has([data-id="${id}"])`);
 
-test.describe("Tree canvas — node visuals (Spec 05)", () => {
-  test("a couple renders as one pill, not two overlapping circles (a1)", async ({ page }) => {
+test.describe("Tree canvas — the household card", () => {
+  test("a couple is one card with two rows, not two loose people (a5)", async ({ page }) => {
     await page.goto(treeRoute());
-    // The root couple (Ishaan + Meera) is a single partner group…
-    const group = page.locator(".partner-group");
-    await expect(group).toHaveCount(1);
-    // …with exactly one household pill behind both portraits, and two person nodes.
-    await expect(group.locator(".node-pill")).toHaveCount(1);
-    await expect(group.locator(".node")).toHaveCount(2);
+    const couple = card(page, SEED.people.you.id);
+    await expect(couple).toHaveCount(1);
+    await expect(couple.locator(".hcard-row")).toHaveCount(2);
+    // …and the spouse sits in the same card, below the head.
+    await expect(couple.locator(`.hcard-row[data-id="${SEED.people.wife.id}"]`)).toHaveCount(1);
   });
 
-  test("tapping a node opens the record in place; Esc closes it (a5)", async ({ page }) => {
+  test("tapping a row opens the record in place; Esc closes it", async ({ page }) => {
     await page.goto(treeRoute());
-    await node(page, SEED.people.son.id).click();
+    await row(page, SEED.people.son.id).click();
     await expect(page.locator(".inspector-name")).toHaveText("Arjun Verma");
-    // Opened without navigating.
     expect(new URL(page.url()).pathname).toBe(treeRoute());
     await page.keyboard.press("Escape");
     await expect(page.locator(".inspector")).toHaveCount(0);
   });
 
-  test("the ring colour reflects born-in vs married-in (a3)", async ({ page }) => {
+  test("the portrait ring reflects born-in vs married-in (a3)", async ({ page }) => {
     await page.goto(treeRoute());
     // Ishaan is the root (born into this line) → red ring.
-    const ishaanRing = node(page, SEED.people.you.id).locator(".person-ring");
-    await expect(ishaanRing).toHaveCSS("stroke", "rgb(178, 34, 34)");
+    const ishaan = row(page, SEED.people.you.id).locator(".hcard-portrait");
+    await expect(ishaan).toHaveClass(/hcard-portrait--born/);
+    await expect(ishaan).toHaveCSS("border-top-color", "rgb(178, 34, 34)");
     // Meera married into the Verma line → marigold ring.
-    const meeraRing = node(page, SEED.people.wife.id).locator(".person-ring");
-    await expect(meeraRing).toHaveCSS("stroke", "rgb(255, 140, 0)");
+    const meera = row(page, SEED.people.wife.id).locator(".hcard-portrait");
+    await expect(meera).toHaveClass(/hcard-portrait--married/);
+    await expect(meera).toHaveCSS("border-top-color", "rgb(255, 140, 0)");
   });
 
-  test("the viewer's own node reads '· you' in red", async ({ page }) => {
+  test("the spine turns marigold where the name changes — a daughter's house", async ({ page }) => {
     await page.goto(treeRoute());
-    const you = node(page, SEED.people.you.id).locator(".node-year--you");
+    // Arjun (a son) carries the name on → red spine.
+    await expect(card(page, SEED.people.son.id)).toHaveClass(/hcard--born/);
+    // Sara (a daughter) — her children take the husband's name → marigold spine.
+    await expect(card(page, SEED.people.daughter.id)).toHaveClass(/hcard--married/);
+  });
+
+  test("the viewer's own row reads '· you' in red", async ({ page }) => {
+    await page.goto(treeRoute());
+    const you = row(page, SEED.people.you.id).locator(".hcard-years--you");
     await expect(you).toContainText("you");
     await expect(you).toHaveCSS("color", "rgb(178, 34, 34)");
     // Nobody else carries the marker.
-    await expect(node(page, SEED.people.wife.id).locator(".node-year--you")).toHaveCount(0);
-  });
-
-  test("a couple's right-hand label is offset below the left (a2)", async ({ page }) => {
-    await page.goto(treeRoute());
-    // Husband (left) label at y=52; wife (right) label at y=78.
-    const husbandLabel = node(page, SEED.people.you.id).locator("foreignObject");
-    const wifeLabel = node(page, SEED.people.wife.id).locator("foreignObject");
-    await expect(husbandLabel).toHaveAttribute("y", "52");
-    await expect(wifeLabel).toHaveAttribute("y", "78");
+    await expect(row(page, SEED.people.wife.id).locator(".hcard-years--you")).toHaveCount(0);
   });
 
   test("the legend names both ring meanings (g9)", async ({ page }) => {
@@ -74,7 +76,7 @@ test.describe("Tree canvas — node visuals (Spec 05)", () => {
     await expect(genjump.locator(".tree-genjump-numeral").first()).toHaveText("I");
     await expect(genjump.locator(".tree-genjump-numeral").nth(1)).toHaveText("II");
     // Keyboard-operable: each row is a focusable button; Enter jumps the canvas
-    // without a route change (Spec 00 — the canvas is operable via the rail).
+    // without a route change.
     await genjump.locator(".tree-genjump-row").nth(1).focus();
     await expect(genjump.locator(".tree-genjump-row").nth(1)).toBeFocused();
     await page.keyboard.press("Enter");
@@ -86,8 +88,6 @@ test.describe("Tree canvas — node visuals (Spec 05)", () => {
     page,
   }) => {
     await page.goto(treeRoute());
-    // The attention filter takes the rail's "unfinished" slot once getting-started
-    // is put away (Spec 05 — attention lives in the rail, not on the canvas).
     await page.locator(".rail-checklist-dismiss").click();
     await expect(page.locator(".rail-attention-row")).toHaveCount(3);
     const total = await page.locator(".node-wrap").count();
@@ -97,12 +97,12 @@ test.describe("Tree canvas — node visuals (Spec 05)", () => {
     await expect(page.locator(".node-wrap")).toHaveCount(total);
     // The root couple (both accounts linked) has no issue → dimmed; a child with
     // no account stays full.
-    await expect(
-      page.locator(`.node-wrap:has(.node[data-id="${SEED.people.you.id}"])`)
-    ).toHaveClass(/dimmed/);
-    await expect(
-      page.locator(`.node-wrap:has(.node[data-id="${SEED.people.son.id}"])`)
-    ).not.toHaveClass(/dimmed/);
+    await expect(page.locator(`.node-wrap:has([data-id="${SEED.people.you.id}"])`)).toHaveClass(
+      /dimmed/
+    );
+    await expect(page.locator(`.node-wrap:has([data-id="${SEED.people.son.id}"])`)).not.toHaveClass(
+      /dimmed/
+    );
 
     // Clicking the same filter again clears it.
     await page.getByRole("button", { name: /No account linked/ }).click();
@@ -115,7 +115,6 @@ test.describe("Tree canvas — node visuals (Spec 05)", () => {
     await expect(controls.getByRole("button", { name: "Fit" })).toBeVisible();
     await expect(controls.getByRole("button", { name: "Zoom in" })).toBeVisible();
     await expect(controls.getByRole("button", { name: "Zoom out" })).toBeVisible();
-    // Fit runs without error and the canvas stays put (no route change).
     await controls.getByRole("button", { name: "Fit" }).click();
     await expect(page.locator(".tree-canvas")).toBeVisible();
     expect(new URL(page.url()).pathname).toBe(treeRoute());

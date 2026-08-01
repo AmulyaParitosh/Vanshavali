@@ -1846,90 +1846,163 @@ main {
 
 /* Household pill behind the portrait(s) — paper surface, hairline control
  * border, the soft node-pill shadow. */
-.node-pill {
-  fill: rgba(255, 253, 249, 0.92);
-  stroke: #e0d3b8;
-  stroke-width: 1.5px;
-  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.07));
+/* ============================================================================
+ * The household card — the only atom on the canvas (Tree Canvas spec). One
+ * household: a single person, or a married pair as two rows sharing one card
+ * with a seam. Rendered as HTML inside a <foreignObject>; each row is a hit
+ * target. Colour carries meaning, never shape.
+ * ========================================================================== */
+.hcard-fo {
+  overflow: visible;
 }
-
-/* Name (12.5/600) + birth year beneath it — each portrait's own 78px column
-   (Spec 05). No background. A single node's name reads slightly larger (13.5px). */
-.node-label {
-  display: block;
+.hcard-fo-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.hcard {
+  position: relative;
+  box-sizing: border-box;
+  width: 208px;
+  background: #fffdf9;
+  border: 1px solid #e3d8c0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(90, 70, 40, 0.09);
+  overflow: hidden;
   font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 12.5px;
-  line-height: 1.22;
-  color: var(--text-primary);
-  text-align: center;
-  pointer-events: none;
 }
-.node-label--single {
-  font-size: 13.5px;
+/* Descent spine — 3px, flush left, clipped to the card radius. Red carries the
+   family name on through this household; marigold marks where it changes. */
+.hcard-spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
 }
-.node-year {
-  display: block;
-  font-family: var(--font-body);
-  font-size: 9px;
-  line-height: 1.3;
-  color: var(--text-meta);
-  text-align: center;
-  pointer-events: none;
+.hcard--born .hcard-spine {
+  background: var(--ring-born);
 }
-/* "you" year line — e.g. "2001 · you" — reads red (Spec 05 c1-s4). */
-.node-year--you {
-  color: var(--color-red);
+.hcard--married .hcard-spine {
+  background: var(--ring-married);
 }
-/* Level-of-detail (Spec 05 f7): zoomed out, drop the year line, then all labels,
-   so five generations still read as a shape. Classes set by useTreeZoom. */
-.tree-canvas.lod-name-only .node-year {
-  display: none;
-}
-.tree-canvas.lod-no-labels .node-label,
-.tree-canvas.lod-no-labels .node-year {
-  display: none;
-}
-
-.node {
+/* A row — one person. 44px tall (32px portrait + 6px top/bottom). */
+.hcard-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 12px 0 10px;
+  box-sizing: border-box;
   cursor: pointer;
 }
-/* Open node (Spec 05 c1): the selected person's name goes deep red + bold. */
-.node.selected .node-label {
+/* The couple's second row: a dashed seam above it, half a step warmer — one
+   object with a seam, not two cards. */
+.hcard-row--spouse {
+  border-top: 1px dashed #ece0c6;
+  background: #fefaf1;
+}
+/* Both dates recorded: the row reads back at 50% — opacity only, never a
+   different border, badge, or icon. */
+.hcard-row.is-deceased {
+  opacity: 0.5;
+}
+.hcard-portrait {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  border: 2px solid var(--ring-married);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hcard-portrait--born {
+  border-color: var(--ring-born);
+}
+.hcard-portrait--married {
+  border-color: var(--ring-married);
+}
+.hcard-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hcard-portrait-tint {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fffdf9;
+}
+.hcard-id {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.hcard-name {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hcard-years {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 1.3;
+  color: #a49a89;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+/* "you" year line reads red (the leaf-green "you" marker is elsewhere). */
+.hcard-years--you {
+  color: var(--color-red);
+}
+/* Hover — a 1px red border, no movement. */
+.hcard:hover {
+  border-color: var(--color-red);
+}
+.hcard-row:hover .hcard-name {
+  color: var(--color-red);
+}
+/* Selected — a 2px red border, a lifted shadow, a faintly warmer face; the
+   record panel opens at the same moment. */
+.hcard.is-selected {
+  border: 2px solid var(--color-red);
+  background: #fffaf6;
+  box-shadow: 0 8px 22px rgba(178, 34, 34, 0.22);
+}
+.hcard.is-selected .hcard-row.is-selected .hcard-name {
   color: var(--color-red-deep);
   font-weight: 700;
 }
-/* Hover / open touch the household pill's BORDER only — no scale, no lift
-   (Spec 05 c1-s2, explicitly). The pill lives on the .node for a single and on the
-   shared .partner-group for a couple. */
-.node-pill {
-  transition: stroke var(--dur-panel) var(--ease);
+.hcard-row:focus {
+  outline: none;
 }
-.node:hover .node-pill,
-.partner-group:hover .node-pill {
-  stroke: var(--color-red);
-}
-.node.selected .node-pill,
-.partner-group:has(.node.selected) .node-pill {
-  stroke: var(--color-red);
-  filter: drop-shadow(0 3px 12px rgba(178, 34, 34, 0.24));
+.hcard-row:focus-visible {
+  outline: 2px solid var(--color-red);
+  outline-offset: -2px;
+  border-radius: 10px;
 }
 
-/* Lineage thread (Spec 05 g7) — orthogonal, quiet, 1.5px. */
+/* Lineage thread — the sepia descent joinery. */
 .link {
   fill: none;
   stroke: var(--line-control); /* #d8cdb4 */
   stroke-width: 1.5px;
   stroke-linejoin: round;
-}
-
-.node:focus {
-  outline: none;
-}
-.node:focus-visible {
-  outline: 2px solid var(--color-red);
-  outline-offset: 4px;
-  border-radius: var(--radius-circle);
 }
 
 /* --- Record inspector (§07) — a 384px panel that opens in place beside the

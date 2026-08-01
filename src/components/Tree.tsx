@@ -10,8 +10,9 @@ import { bornInLine } from "../lib/generations";
 import { useAppContext } from "../context/AppContext";
 import { useTreeLayout, type LaidOutNode } from "./tree/useTreeLayout";
 import { useTreeZoom } from "./tree/useTreeZoom";
-import PersonNode from "./tree/PersonNode";
-import PartnerNode from "./tree/PartnerNode";
+import HouseholdCard from "./tree/HouseholdCard";
+import { cardModel, cardHeight, type CardModel } from "./tree/cardModel";
+import { orthogonalLinkPath } from "./tree/orthogonalLink";
 import TreeLink from "./tree/TreeLink";
 import RecordInspectorDock from "./tree/RecordInspectorDock";
 import type { GenerationRow } from "./tree/GenerationRail";
@@ -89,6 +90,16 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     ? (people.find((p) => p.id === selectedPersonId) ?? null)
     : null;
 
+  // One card model per laid-out node (rows + spine colour). Memoised so link
+  // routing can read each card's height without rebuilding it per render.
+  const viewerUid = user?.uid ?? null;
+  const cards = useMemo(() => {
+    const map = new Map<string, CardModel>();
+    for (const n of layout.nodes) map.set(n.data.id, cardModel(n.data, born, viewerUid));
+    return map;
+  }, [layout.nodes, born, viewerUid]);
+  const heightOf = (node: LaidOutNode) => cardHeight(cards.get(node.data.id)?.rows.length ?? 1);
+
   // Frame the viewer's own household on first data (a4), falling back to the root.
   const viewerPersonId = user ? (people.find((p) => p.userId === user.uid)?.id ?? null) : null;
   const initialCenter = useMemo(() => {
@@ -99,6 +110,11 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
   const { panTo, fitToView, zoomBy } = useTreeZoom({ svgRef, gRef, initialCenter });
   const { STEP } = TREE_CONFIG.ZOOM;
+  const { CARD_ROW_H } = TREE_CONFIG;
+  // The <foreignObject> that frames each card: card width + room for the selected
+  // border/shadow, and card height + room for the fold chip that hangs below.
+  const CARD_FO_W = TREE_CONFIG.CARD_WIDTH + 40;
+  const CARD_FO_H = CARD_ROW_H * 2 + 40;
 
   // The generations, for the keyboard rail (a7): a roman numeral + household count
   // per row, with a jump target (the first household in that generation).
@@ -129,16 +145,11 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     return () => registerCanvasApi(null);
   }, [registerCanvasApi, generations, panTo]);
 
-  /** Center the canvas on a person (their couple offset accounted for). */
+  /** Center the canvas on a person's household card. */
   const panToPerson = (personId: string) => {
     const target = findContainingNode(layout.nodes, personId);
     if (!target) return;
-    let xOffset = 0;
-    if (target.data.isPartnerGroup) {
-      if (target.data.husband?.id === personId) xOffset = -TREE_CONFIG.PARTNER_OFFSET;
-      else if (target.data.wife?.id === personId) xOffset = TREE_CONFIG.PARTNER_OFFSET;
-    }
-    panTo(target.x + xOffset, target.y);
+    panTo(target.x, target.y);
   };
 
   /**
@@ -181,57 +192,65 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             <BackgroundOrnaments />
 
             <g className="links">
-              {layout.links.map((link) => (
-                <TreeLink
-                  key={`${link.source.data.id}-${link.target.data.id}`}
-                  d={layout.linkPath(link)}
-                />
-              ))}
+              {layout.links.map((link) => {
+                // Descent runs from the parent card's bottom edge to the child
+                // card's top edge (cards are top-aligned at y − CARD_ROW_H).
+                const s = {
+                  x: link.source.x,
+                  y: link.source.y - CARD_ROW_H + heightOf(link.source),
+                };
+                const t = { x: link.target.x, y: link.target.y - CARD_ROW_H };
+                return (
+                  <TreeLink
+                    key={`${link.source.data.id}-${link.target.data.id}`}
+                    d={orthogonalLinkPath(s, t)}
+                  />
+                );
+              })}
               {/* First run (Spec 03 a7): a lone node gets a 44px connector stub
                   going nowhere — what makes the tree feel unfinished, on purpose. */}
               {layout.nodes.length === 1 && layout.nodes[0] && (
                 <line
                   className="tree-stub"
                   x1={layout.nodes[0].x}
-                  y1={layout.nodes[0].y + 60}
+                  y1={layout.nodes[0].y}
                   x2={layout.nodes[0].x}
-                  y2={layout.nodes[0].y + 104}
+                  y2={layout.nodes[0].y + 44}
                 />
               )}
             </g>
 
             <g className="nodes">
-              {layout.nodes.map((node) => (
-                <g
-                  key={node.data.id}
-                  className={
-                    (attention && !nodeHasAttention(node.data, attention)) ||
-                    (placeFilter && !nodeHasPlace(node.data, placeFilter))
-                      ? "node-wrap dimmed"
-                      : "node-wrap"
-                  }
-                  transform={`translate(${node.x},${node.y})`}
-                >
-                  {node.data.isPartnerGroup ? (
-                    <PartnerNode
-                      node={node.data}
-                      selectedPersonId={selectedPersonId}
-                      born={born}
-                      viewerUid={user?.uid ?? null}
-                      onSelect={handleSelect}
-                    />
-                  ) : (
-                    <PersonNode
-                      person={node.data}
-                      isLineage={born.has(node.data.id)}
-                      isSelected={selectedPersonId === node.data.id}
-                      isSelf={!!user && node.data.userId === user.uid}
-                      showPill
-                      onSelect={handleSelect}
-                    />
-                  )}
-                </g>
-              ))}
+              {layout.nodes.map((node) => {
+                const model = cards.get(node.data.id);
+                if (!model) return null;
+                const dim =
+                  (attention && !nodeHasAttention(node.data, attention)) ||
+                  (placeFilter && !nodeHasPlace(node.data, placeFilter));
+                return (
+                  <g
+                    key={node.data.id}
+                    className={dim ? "node-wrap dimmed" : "node-wrap"}
+                    transform={`translate(${node.x},${node.y})`}
+                  >
+                    <foreignObject
+                      className="hcard-fo"
+                      x={-CARD_FO_W / 2}
+                      y={-CARD_ROW_H}
+                      width={CARD_FO_W}
+                      height={CARD_FO_H}
+                    >
+                      <div className="hcard-fo-inner">
+                        <HouseholdCard
+                          model={model}
+                          selectedId={selectedPersonId}
+                          onSelect={handleSelect}
+                        />
+                      </div>
+                    </foreignObject>
+                  </g>
+                );
+              })}
             </g>
           </g>
         </svg>

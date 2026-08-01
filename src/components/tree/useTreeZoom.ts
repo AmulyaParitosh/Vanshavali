@@ -27,7 +27,7 @@ export interface TreeZoomApi {
 export function useTreeZoom({ svgRef, gRef, initialCenter }: UseTreeZoomOptions): TreeZoomApi {
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const isFirstCenterRef = useRef(true);
-  const { MIN, MAX, FIT_PAD, LOD_NAME_ONLY, LOD_NO_LABELS } = TREE_CONFIG.ZOOM;
+  const { MIN, MAX, FIT_PAD, LOD_COMPACT, LOD_GLYPH } = TREE_CONFIG.ZOOM;
 
   useEffect(() => {
     const svgEl = svgRef.current;
@@ -42,9 +42,11 @@ export function useTreeZoom({ svgRef, gRef, initialCenter }: UseTreeZoomOptions)
       .scaleExtent([MIN, MAX])
       .on("zoom", (event) => {
         g.attr("transform", event.transform.toString());
+        // Level of detail follows zoom alone (spec): full ≥ 0.72, compact in
+        // 0.42–0.72, glyph below 0.42. The classes drive the card geometry swap.
         const k = event.transform.k;
-        svgEl.classList.toggle("lod-name-only", k < LOD_NAME_ONLY && k >= LOD_NO_LABELS);
-        svgEl.classList.toggle("lod-no-labels", k < LOD_NO_LABELS);
+        svgEl.classList.toggle("lod-compact", k < LOD_COMPACT && k >= LOD_GLYPH);
+        svgEl.classList.toggle("lod-glyph", k < LOD_GLYPH);
       });
 
     svg.call(zoom);
@@ -65,7 +67,7 @@ export function useTreeZoom({ svgRef, gRef, initialCenter }: UseTreeZoomOptions)
     return () => {
       svg.on(".zoom", null);
     };
-  }, [svgRef, gRef, initialCenter, MIN, MAX, LOD_NAME_ONLY, LOD_NO_LABELS]);
+  }, [svgRef, gRef, initialCenter, MIN, MAX, LOD_COMPACT, LOD_GLYPH]);
 
   return {
     panTo: (x, y, scale = 1.2) => {

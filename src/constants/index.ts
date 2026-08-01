@@ -42,38 +42,28 @@ export const SUGGESTION_STATUS = {
 } as const;
 
 export const TREE_CONFIG = {
-  // d3.tree nodeSize — the layout grid each node/couple is allotted. Spec 05 g6:
-  // generation rows sit at y = GEN_TOP + n × NODE_HEIGHT (24, 246, 468, 690…).
-  NODE_WIDTH: 230,
-  NODE_HEIGHT: 222,
+  // d3.tree nodeSize — the grid each household card is allotted. Generation rows
+  // sit at y = GEN_TOP + n × NODE_HEIGHT; NODE_HEIGHT is the full-detail
+  // generation pitch (172) and NODE_WIDTH the card width (208) + sibling gap (20).
+  NODE_WIDTH: 228,
+  NODE_HEIGHT: 172,
   GEN_TOP: 24,
-  // §07: portrait = 78px painted-ring art box → 58px circle (radius 29), 3px ring.
-  NODE_RADIUS: 29,
-  ART_BOX: 78,
-  // Half-distance between the two portraits of a couple, so their art boxes sit
-  // side by side (nearly touching) inside one pill.
-  PARTNER_OFFSET: 40,
-  // The household pill behind the portrait(s).
-  PILL: {
-    // Couple: one rounded pill wrapping both portraits (radius 26).
-    COUPLE_WIDTH: 170,
-    COUPLE_HEIGHT: 90,
-    COUPLE_RADIUS: 26,
-    // Single: a 90px circle (radius 45).
-    SINGLE_RADIUS: 45,
-  },
-  // Zoom (Spec 05 g8/f7/a9): clamp 0.35–2.4×, step 1.25×, Fit pads 40px; labels
-  // drop to the name only below 0.6× and disappear entirely below 0.45×.
+  // The household card (Tree Canvas spec, full detail): 208px wide, 44px per row
+  // (a couple is two rows = 88). Cards are top-aligned in the band, so a single
+  // card and a couple share the same top line.
+  CARD_WIDTH: 208,
+  CARD_ROW_H: 44,
+  // Zoom (Tree Canvas spec): continuous 0.18–1.4×, step 1.25×, Fit pads 40px. The
+  // level of detail swaps at 0.72 (full → compact) and 0.42 (compact → glyph).
   ZOOM: {
-    MIN: 0.35,
-    MAX: 2.4,
+    MIN: 0.18,
+    MAX: 1.4,
     STEP: 1.25,
     FIT_PAD: 40,
-    LOD_NAME_ONLY: 0.6,
-    LOD_NO_LABELS: 0.45,
+    LOD_COMPACT: 0.72,
+    LOD_GLYPH: 0.42,
   },
-  // Still used by the not-yet-redesigned family editor + search rows. The tree
-  // node itself now renders tint + initials (PersonAvatar), not this.
+  // Still used by the not-yet-redesigned family editor + search rows.
   PLACEHOLDER_IMAGE_URL: (color: string, text: string) =>
     `https://placehold.co/100x100/${color}/FFFFFF?text=${text}`,
 };
