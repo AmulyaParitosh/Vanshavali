@@ -113,7 +113,7 @@ export default function Header({ user, membership }: HeaderProps) {
           type="button"
           className="chrome-search"
           onClick={() => window.dispatchEvent(new CustomEvent(OPEN_SEARCH_EVENT))}
-          aria-label="Search people, places and events"
+          aria-label="Search this record"
           aria-keyshortcuts="Meta+K Control+K"
         >
           <svg
@@ -129,7 +129,7 @@ export default function Header({ user, membership }: HeaderProps) {
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <span className="chrome-search-placeholder">Search people, places, events</span>
+          <span className="chrome-search-placeholder">Search this record</span>
           <span className="chrome-search-kbd" aria-hidden="true">
             ⌘K
           </span>

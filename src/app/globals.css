@@ -5073,7 +5073,7 @@ main {
   flex-shrink: 0;
 }
 .cmdk-input-row > svg {
-  color: var(--color-red);
+  color: var(--text-meta);
   flex-shrink: 0;
 }
 .cmdk-input-row input {
