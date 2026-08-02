@@ -83,3 +83,39 @@ carried on a heavier trunk stroke; branches thin out.
 10. Generation rail always names the band under the pointer, at every zoom.
 11. Keyboard-navigable: arrows between siblings, up/down between generations.
 12. Printing produces the whole tree at full detail across as many sheets as needed.
+
+## Implementation progress (branch f/design-system)
+
+Done + verified (typecheck, unit tests, tree-canvas e2e 11/11, visual):
+
+- **Phase 1 — household cards** (`d0fc865`): `HouseholdCard` (HTML in a
+  `<foreignObject>`) + `cardModel` (rows/spine/years, unit-tested). Couple = one
+  card, two rows, dashed seam, warmer spouse row. Spine red / marigold
+  (daughter's house). Ring red born-in / marigold married-in. Deceased row dims
+  50% by opacity. Deletes PersonNode/PartnerNode/PersonAvatar. Layout retuned to
+  208px card / 172px pitch; zoom range 0.18–1.4.
+- **Phase 2a — bands + quiet cream** (`476b103`): alternating full-width
+  generation bands (`#fdf5e6`/`#fbf2e0`) with a top hairline; canvas base set to
+  solid cream so the figural heritage wash is kept off the canvas.
+- **Phase 3 — sepia joinery** (`3aac7cd`): branches `#b39a72` 1.5px, trunk (the
+  eldest son's line from the root) `#8b6a4a` 2.6px, 10px elbows.
+- **Phase 4 — focus path** (`3b32f6c`): selecting lights ancestors-to-founder +
+  all descent; everything else (cards + branch links) drops to 26%; Escape clears.
+
+Deferred / not done (reason):
+
+- **LOD swap (compact / glyph)** — faithful version re-lays-out per level
+  (different pitch/width) with a crossfade; substantial, and hard to judge on the
+  4-person seed. `useTreeZoom` already toggles `.lod-compact` / `.lod-glyph` at
+  0.72 / 0.42 for when it lands.
+- **Folding + stubs, minimap** — need a large tree to be meaningful/verifiable;
+  the seed has no foldable depth and never reaches 3 screenfuls.
+- **On-canvas generation rail** — the app already carries generation nav in the
+  left sidebar ("JUMP TO GENERATION"); a floating on-canvas rail would duplicate
+  it. Kept the sidebar for app consistency; the pointer-tracking nuance (a10) is
+  the one unmet bit.
+- **Keyboard arrows between siblings/generations** (a11) — cards are
+  focusable + Enter-openable; arrow traversal not yet wired.
+- **Data-model blocked**: Devanagari-first names (bilingual name model), the
+  marigold remarriage/name-change _line_ edge case, unrecorded "name unknown"
+  cards.
