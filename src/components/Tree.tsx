@@ -8,6 +8,7 @@ import type { TreeMembership } from "../types/tree";
 import { TREE_CONFIG } from "../constants";
 import { bornInLine } from "../lib/generations";
 import { useAppContext } from "../context/AppContext";
+import { GraphManager } from "../lib/graph/GraphManager";
 import { useTreeLayout, type LaidOutNode } from "./tree/useTreeLayout";
 import { useTreeZoom } from "./tree/useTreeZoom";
 import HouseholdCard from "./tree/HouseholdCard";
@@ -80,15 +81,32 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
   const layout = useTreeLayout(data);
   const people = treeData?.people ?? [];
+  const families = treeData?.families ?? [];
   // Who was born into this line (red ring) vs married in (marigold) — the ring
   // meaning is the same on every node (Spec 05 a3).
-  const born = useMemo(
-    () => bornInLine(people, treeData?.families ?? []),
-    [people, treeData?.families]
-  );
+  const born = useMemo(() => bornInLine(people, families), [people, families]);
   const selectedPerson = selectedPersonId
     ? (people.find((p) => p.id === selectedPersonId) ?? null)
     : null;
+
+  // Focus path: selecting anyone lights an unbroken path to the founder plus all
+  // of their descent; everything off it drops to 26%. Escape (or a background
+  // click) clears the selection and the path with it.
+  const graph = useMemo(() => new GraphManager(people, families), [people, families]);
+  const focusIds = useMemo(() => {
+    if (!selectedPersonId) return null;
+    const set = new Set<string>([selectedPersonId]);
+    graph.getAncestors(selectedPersonId).forEach((p) => set.add(p.id));
+    graph.getDescendants(selectedPersonId).forEach((p) => set.add(p.id));
+    // Keep the selected household whole — include the spouse on the path.
+    for (const f of families) {
+      if (f.husband === selectedPersonId && f.wife) set.add(f.wife);
+      if (f.wife === selectedPersonId && f.husband) set.add(f.husband);
+    }
+    return set;
+  }, [selectedPersonId, graph, families]);
+  const nodeOnPath = (node: GraphNode) =>
+    !focusIds || nodePersons(node).some((p) => focusIds.has(p.id));
 
   // One card model per laid-out node (rows + spine colour). Memoised so link
   // routing can read each card's height without rebuilding it per render.
@@ -256,11 +274,13 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                 };
                 const t = { x: link.target.x, y: link.target.y - CARD_ROW_H };
                 const key = `${link.source.data.id}-${link.target.data.id}`;
+                const onPath = nodeOnPath(link.source.data) && nodeOnPath(link.target.data);
                 return (
                   <TreeLink
                     key={key}
                     d={orthogonalLinkPath(s, t, { corner: 10 })}
                     trunk={trunkLinks.has(key)}
+                    dim={!onPath}
                   />
                 );
               })}
@@ -284,10 +304,14 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                 const dim =
                   (attention && !nodeHasAttention(node.data, attention)) ||
                   (placeFilter && !nodeHasPlace(node.data, placeFilter));
+                const off = !nodeOnPath(node.data);
+                const cls = ["node-wrap", dim && "dimmed", off && "off-path"]
+                  .filter(Boolean)
+                  .join(" ");
                 return (
                   <g
                     key={node.data.id}
-                    className={dim ? "node-wrap dimmed" : "node-wrap"}
+                    className={cls}
                     transform={`translate(${node.x},${node.y})`}
                   >
                     <foreignObject

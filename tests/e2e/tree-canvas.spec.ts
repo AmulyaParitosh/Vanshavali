@@ -52,6 +52,23 @@ test.describe("Tree canvas — the household card", () => {
     await expect(card(page, SEED.people.daughter.id)).toHaveClass(/hcard--married/);
   });
 
+  test("selecting a person lights the path to the founder, dims the rest (a6)", async ({
+    page,
+  }) => {
+    await page.goto(`${treeRoute()}?person=${SEED.people.son.id}`);
+    // Arjun's ancestors (his parents' household) stay on the path…
+    await expect(page.locator(`.node-wrap:has([data-id="${SEED.people.you.id}"])`)).not.toHaveClass(
+      /off-path/
+    );
+    // …his sister, off the line of descent, drops back.
+    await expect(
+      page.locator(`.node-wrap:has([data-id="${SEED.people.daughter.id}"])`)
+    ).toHaveClass(/off-path/);
+    // Escape clears the selection and the path with it.
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".node-wrap.off-path")).toHaveCount(0);
+  });
+
   test("the viewer's own row reads '· you' in red", async ({ page }) => {
     await page.goto(treeRoute());
     const you = row(page, SEED.people.you.id).locator(".hcard-years--you");

@@ -1408,6 +1408,16 @@ main {
   pointer-events: none;
   transition: opacity var(--dur-panel) var(--ease);
 }
+/* Focus path (Tree Canvas spec): with a record open, ancestors to the founder
+   and all descent stay full; everything else drops to 26% — still there, still
+   clickable, no longer competing. Escape clears it. */
+.node-wrap.off-path {
+  opacity: 0.26;
+  transition: opacity var(--dur-panel) var(--ease);
+}
+.link.off-path {
+  opacity: 0.26;
+}
 /* Generation rail (Spec 05 a7) — top-left; the keyboard spine. */
 .genrail {
   position: absolute;
