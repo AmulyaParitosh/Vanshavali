@@ -100,6 +100,27 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   }, [layout.nodes, born, viewerUid]);
   const heightOf = (node: LaidOutNode) => cardHeight(cards.get(node.data.id)?.rows.length ?? 1);
 
+  // Generation bands: one full-width horizontal stripe per generation, alternating
+  // cream tints (the only thing separating them). Drawn inside the panned group so
+  // they scale and move with the tree. Each band tiles the full generation pitch.
+  const bands = useMemo(() => {
+    if (!layout.nodes.length) return [];
+    const { GEN_TOP, NODE_HEIGHT, CARD_ROW_H: rowH } = TREE_CONFIG;
+    const depths = [...new Set(layout.nodes.map((n) => n.depth))].sort((a, b) => a - b);
+    const xs = layout.nodes.map((n) => n.x);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const x = minX - 2600;
+    const width = maxX - minX + 5200;
+    return depths.map((d) => ({
+      depth: d,
+      x,
+      width,
+      y: GEN_TOP + d * NODE_HEIGHT - rowH - 24,
+      height: NODE_HEIGHT,
+    }));
+  }, [layout.nodes]);
+
   // Frame the viewer's own household on first data (a4), falling back to the root.
   const viewerPersonId = user ? (people.find((p) => p.userId === user.uid)?.id ?? null) : null;
   const initialCenter = useMemo(() => {
@@ -189,7 +210,21 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             Sizing/cursor live on .tree-canvas in globals.css; a background click clears the selection. */}
         <svg ref={svgRef} className="tree-canvas" onClick={() => setSelectedPersonId(null)}>
           <g ref={gRef}>
-            <BackgroundOrnaments />
+            {/* Generation bands — behind the joinery and the cards. */}
+            <g className="bands" aria-hidden="true">
+              {bands.map((b) => (
+                <g key={b.depth}>
+                  <rect
+                    className={`gen-band gen-band--${b.depth % 2 === 0 ? "even" : "odd"}`}
+                    x={b.x}
+                    y={b.y}
+                    width={b.width}
+                    height={b.height}
+                  />
+                  <line className="gen-band-line" x1={b.x} y1={b.y} x2={b.x + b.width} y2={b.y} />
+                </g>
+              ))}
+            </g>
 
             <g className="links">
               {layout.links.map((link) => {
@@ -338,19 +373,6 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     </div>
   );
 };
-
-/**
- * Heritage ornaments rendered behind the tree — a faint trunk silhouette.
- * Kept SVG-native so it scales/pans with the zoom transform.
- */
-const BackgroundOrnaments: React.FC = () => (
-  <path
-    d="M-20,600 Q0,300 20,600 Z M-10,300 Q0,0 10,300 Z"
-    fill="var(--color-primary)"
-    fillOpacity={0.03}
-    transform="translate(0, 100)"
-  />
-);
 
 /**
  * Walks the laid-out nodes to find the one containing a given personId —

@@ -1538,9 +1538,25 @@ main {
   height: 100%;
   display: block;
   cursor: grab;
+  /* The canvas paper is quiet cream (the even generation band); the alternating
+   * bands provide the only tint variation, so the figural heritage wash is kept
+   * off the canvas where it would compete with the cards. */
+  background: #fdf5e6;
   /* Prevent the browser from interpreting two-finger gestures as page
    * scroll/zoom so d3-zoom gets the touch events and can pinch-zoom. */
   touch-action: none;
+}
+/* Generation bands (Tree Canvas spec) — full-width stripes, alternating cream
+   tints, a hairline at each band's top. */
+.gen-band--even {
+  fill: #fdf5e6;
+}
+.gen-band--odd {
+  fill: #fbf2e0;
+}
+.gen-band-line {
+  stroke: #ece0c6;
+  stroke-width: 1px;
 }
 
 /* --- Confirm dialog (native <dialog>) --- */
