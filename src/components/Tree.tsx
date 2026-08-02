@@ -121,6 +121,26 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     }));
   }, [layout.nodes]);
 
+  // The trunk: the main patrilineal line inked heavier (a panjikar's main stroke,
+  // branches thinning out). From the root, follow the eldest son who continues the
+  // line at each generation; the set holds those "source-target" link keys.
+  const trunkLinks = useMemo(() => {
+    const set = new Set<string>();
+    const personMap = new Map(people.map((p) => [p.id, p]));
+    let node: LaidOutNode | undefined = layout.root ?? undefined;
+    while (node?.children?.length) {
+      const heir =
+        node.children.find((k) => {
+          const lm = k.data.lineageMemberId;
+          return lm ? personMap.get(lm)?.sex === "M" : false;
+        }) ?? node.children[0];
+      if (!heir) break;
+      set.add(`${node.data.id}-${heir.data.id}`);
+      node = heir;
+    }
+    return set;
+  }, [layout.root, people]);
+
   // Frame the viewer's own household on first data (a4), falling back to the root.
   const viewerPersonId = user ? (people.find((p) => p.userId === user.uid)?.id ?? null) : null;
   const initialCenter = useMemo(() => {
@@ -235,10 +255,12 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                   y: link.source.y - CARD_ROW_H + heightOf(link.source),
                 };
                 const t = { x: link.target.x, y: link.target.y - CARD_ROW_H };
+                const key = `${link.source.data.id}-${link.target.data.id}`;
                 return (
                   <TreeLink
-                    key={`${link.source.data.id}-${link.target.data.id}`}
-                    d={orthogonalLinkPath(s, t)}
+                    key={key}
+                    d={orthogonalLinkPath(s, t, { corner: 10 })}
+                    trunk={trunkLinks.has(key)}
                   />
                 );
               })}

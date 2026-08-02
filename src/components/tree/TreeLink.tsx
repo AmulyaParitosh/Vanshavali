@@ -2,16 +2,18 @@ import React from "react";
 
 interface TreeLinkProps {
   d: string | null;
+  /** The eldest son's line — inked heavier and darker, the way a panjikar draws the trunk. */
+  trunk?: boolean;
 }
 
 /**
- * One parent→child edge — an orthogonal lineage thread (Spec 05 g7), never a
- * bezier. The `d` attribute is computed by the layout's `linkPath()` generator so
- * this stays a thin presentational component.
+ * One parent→child edge — an orthogonal lineage thread, never a bezier. The `d`
+ * attribute is computed by the layout so this stays a thin presentational
+ * component; `trunk` swaps in the heavier main-line stroke.
  */
-const TreeLink: React.FC<TreeLinkProps> = ({ d }) => {
+const TreeLink: React.FC<TreeLinkProps> = ({ d, trunk = false }) => {
   if (!d) return null;
-  return <path className="link" d={d} />;
+  return <path className={trunk ? "link link--trunk" : "link"} d={d} />;
 };
 
 export default TreeLink;
