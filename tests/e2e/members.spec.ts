@@ -301,7 +301,10 @@ test.describe("Members — adding a person (Spec 06 a6/a7)", () => {
     await page.getByRole("button", { name: "+ Add person" }).click();
     const panel = page.locator(".add-panel");
     await panel.locator(".rel-chip", { hasText: "Child of" }).click();
-    await panel.getByLabel("Who they relate to").selectOption({ label: "Ishaan Verma" });
+    // The anchor is now the shared person picker (the ⌘K overlay), not a <select>.
+    await panel.getByRole("button", { name: "Who they relate to" }).click();
+    await page.locator(".cmdk-panel input").fill("Ishaan");
+    await page.locator(".cmdk-row", { hasText: "Ishaan Verma" }).click();
     await panel.getByLabel("Name").fill("Kabir Verma");
     await panel.getByRole("button", { name: "Add to the record" }).click();
 
