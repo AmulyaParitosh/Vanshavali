@@ -34,7 +34,6 @@ const MEMBER_COLUMNS: RecordsColumn[] = [
   { key: "born", label: "Born", className: "records-col-born" },
   { key: "relation", label: "Relation to you", className: "records-col-relation" },
   { key: "may", label: "May", className: "records-col-may" },
-  { key: "overflow", className: "records-col-overflow" },
 ];
 
 /** Access-chip presentation for a per-tree role (repo owner/editor/viewer = keeper/write/read). */
@@ -328,9 +327,6 @@ export default function MembersPage() {
                   ) : (
                     <span className="records-noaccount">no account</span>
                   )}
-                </span>
-                <span className="records-col-overflow" aria-hidden="true">
-                  ⋯
                 </span>
               </div>
             );
