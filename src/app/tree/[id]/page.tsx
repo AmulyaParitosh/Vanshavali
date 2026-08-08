@@ -15,8 +15,8 @@ export default function TreeViewPage() {
 
   // Nudge a member to link themselves to a person — but only if they aren't
   // represented in the tree at all. The owner of an auto-provisioned tree IS
-  // the root person (person.userId === their uid) even before the realtime
-  // membership row's personId syncs, so keying only off membership.personId
+  // the root person (person.userId === their uid) even before the membership
+  // row's personId is populated, so keying only off membership.personId
   // would bounce the owner out of their own tree on every visit.
   useEffect(() => {
     if (!treeData || !membership) return;

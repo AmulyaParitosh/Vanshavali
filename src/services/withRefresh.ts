@@ -2,8 +2,8 @@ import type { DataProvider } from "./types";
 
 /**
  * DataProvider methods that mutate server state. After any of these resolves,
- * the wrapped provider calls `bump()` so the UI re-fetches — this replaces
- * realtime now that there are no live channels (see withRefresh).
+ * the wrapped provider calls `bump()` so the UI re-fetches — the app has no
+ * live channels, so a user's own writes are what trigger a refresh.
  */
 const MUTATIONS: ReadonlySet<string> = new Set<keyof DataProvider>([
   "createTree",

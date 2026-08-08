@@ -5,8 +5,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * signed-in user's Supabase access token as a bearer, sends/receives JSON, and
  * surfaces the route's `{ error }` body as a thrown Error.
  *
- * supabase-js stays on the client for exactly two things now: auth (this token)
- * and realtime change-pings. All data reads/writes go through here.
+ * supabase-js stays on the client for exactly one thing now: auth (this token).
+ * All data reads/writes go through here — there are no live channels.
  */
 export async function authedFetch<T>(
   client: SupabaseClient,

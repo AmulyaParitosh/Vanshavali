@@ -220,7 +220,8 @@ export class ApiDataProvider implements DataProvider {
   ): Promise<TreeInvite> {
     // The server route creates the row and sends the email in one step. A
     // non-empty emailError means the invite exists but the email didn't go out
-    // — surface it the way the old flow did (the row still lands via realtime).
+    // — surface it; the invite itself is already saved (returned here, and the
+    // list re-fetches on the next refresh-nonce bump).
     const { invite, emailError } = await authedFetch<{
       invite: TreeInvite;
       emailError?: string;
