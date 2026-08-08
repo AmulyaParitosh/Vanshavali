@@ -4181,9 +4181,10 @@ main {
  * changed; everyone can read it, only the keeper gets the controls.
  * ========================================================================== */
 .records-page {
+  /* Fixed, symmetric side padding so Members / Households / Settings share the
+   * exact same gutters regardless of content width or viewport (no centred
+   * max-width, whose side gap would vary with the window). */
   padding: var(--space-8) var(--space-10);
-  max-width: 1080px;
-  margin: 0 auto;
   /* Fill the flex-column shell (.tree-shell-content) and be allowed to shrink
    * below content height so `overflow-y` engages. `height: 100%` would compute
    * to auto here — the parent's height comes from flex stretch, not an explicit
@@ -4256,6 +4257,11 @@ main {
   border: 1px solid var(--line-structure);
   border-radius: var(--radius-16);
   overflow: hidden;
+  /* Don't let the table shrink to fit the scroll container: it would clip its
+   * own rows (overflow:hidden) instead of letting .records-page scroll. Keeping
+   * full height makes the page overflow, so overflow-y engages and every row is
+   * reachable. */
+  flex-shrink: 0;
 }
 .records-thead {
   display: flex;
@@ -4622,14 +4628,11 @@ main {
 }
 /* The list gives up room on the right so the drawer doesn't cover it (the spec's
    "page column narrows when a record opens"). */
-/* With a record open beside the table, spend the page's own horizontal room
-   first — drop the centred max-width and pull the side padding in — so the table
-   keeps its columns readable; only genuinely narrow viewports compress them. */
+/* With a record/editor open beside the table, keep the same fixed left gutter
+   and just reserve room on the right for the fixed dock, so the left edge never
+   shifts when the panel opens. */
 .records-page.inspector-open {
-  max-width: none;
-  margin: 0;
-  padding-left: var(--space-5);
-  padding-right: calc(var(--shell-inspector-w) + var(--space-5));
+  padding-right: calc(var(--shell-inspector-w) + var(--space-10));
 }
 
 /* Add-person panel — same fixed right drawer as the invite panel. */
@@ -5417,12 +5420,10 @@ main {
  * Tree settings (§7) — cards on the content canvas.
  * ========================================================================== */
 .settings-page {
-  /* Match the Members/Households page shell: a centred column, same width and
-   * padding, and the same flex-based scroll (flex:1 + min-height:0 so overflow-y
-   * engages under the overflow:hidden shell — see .records-page). */
+  /* Match the Members/Households shell exactly: the same fixed side padding and
+   * the same flex-based scroll (flex:1 + min-height:0 so overflow-y engages under
+   * the overflow:hidden shell — see .records-page). */
   padding: var(--space-8) var(--space-10);
-  max-width: 1080px;
-  margin: 0 auto;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -5430,6 +5431,10 @@ main {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+}
+/* Cards keep their height so the page scrolls rather than squashing them. */
+.settings-card {
+  flex-shrink: 0;
 }
 .settings-page > header {
   display: flex;
