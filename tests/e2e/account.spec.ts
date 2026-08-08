@@ -32,12 +32,14 @@ test.describe("Account — Your record (Spec 12)", () => {
     );
   });
 
-  test("the Account chrome has no tree switcher and no search (a8)", async ({ page }) => {
+  test("the Account chrome keeps the tree switcher (a way back), still no search", async ({
+    page,
+  }) => {
     await page.goto("/user/profile");
     await expect(page.locator(".chrome-avatar-link")).toBeVisible(); // signed in
-    // Outside any tree — neither the switcher nor the search appears (even though
-    // this keeper does have a tree).
-    await expect(page.locator(".chrome-treeswitcher")).toHaveCount(0);
+    // The switcher stays on the Account page — it's the way back into a tree from
+    // here (this keeper has one). Search is still removed from the chrome bar.
+    await expect(page.locator(".chrome-treeswitcher")).toHaveCount(1);
     await expect(page.locator(".chrome-search")).toHaveCount(0);
   });
 
