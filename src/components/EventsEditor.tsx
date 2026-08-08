@@ -67,6 +67,15 @@ const EventsEditor: React.FC<EventsEditorProps> = ({ events, onChange, canEdit }
           )}
         </div>
       ))}
+      {canEdit && (
+        <button
+          type="button"
+          className="dynamic-list-add"
+          onClick={() => onChange([...events, { type: "", date: "", place: "" }])}
+        >
+          + Add event
+        </button>
+      )}
     </div>
   );
 };

@@ -44,6 +44,7 @@ const UserSidebar: React.FC = () => {
 
       <ul className="tree-rail-nav">
         {item("/user/profile", "Account")}
+        {item("/user/record", "My record")}
         {isSiteAdmin(user.uid) && item("/user/suggestions", "Suggestions")}
       </ul>
 

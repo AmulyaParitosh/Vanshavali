@@ -3514,6 +3514,27 @@ main {
   margin-left: auto; /* Push the remove button to the far right */
   margin-top: 14px; /* Align slightly with input fields usually having label gap */
 }
+/* "+ Add event / detail" — a quiet dashed affordance that adds a blank row to a
+   dynamic list (Life / Details); matches the households add-child affordance. */
+.dynamic-list-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px dashed var(--line-control);
+  border-radius: var(--radius-12);
+  background: transparent;
+  color: var(--text-meta);
+  font-family: var(--font-body);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.dynamic-list-add:hover {
+  border-color: var(--color-red);
+  color: var(--color-red);
+}
 
 /* --- Children List Styles --- */
 .children-list {

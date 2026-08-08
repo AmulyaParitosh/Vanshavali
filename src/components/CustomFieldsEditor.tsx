@@ -63,6 +63,15 @@ const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
           )}
         </div>
       ))}
+      {canEdit && (
+        <button
+          type="button"
+          className="dynamic-list-add"
+          onClick={() => onChange([...customFields, { key: "", value: "" }])}
+        >
+          + Add detail
+        </button>
+      )}
     </div>
   );
 };
