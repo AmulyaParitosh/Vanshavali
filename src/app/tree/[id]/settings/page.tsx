@@ -6,6 +6,7 @@ import { useAppContext } from "../../../../context/AppContext";
 import { useToast } from "../../../../components/ToastSystem";
 import Loading from "../../../../components/Loading";
 import ConsequenceDialog from "../../../../components/tree/ConsequenceDialog";
+import SegmentedControl from "../../../../components/SegmentedControl";
 import { isOwner, canEdit } from "../../../../lib/access";
 import type {
   TreeMeta,
@@ -577,30 +578,15 @@ function SharingCard({
           </span>
         </div>
         {editable ? (
-          <div
-            className="segmented"
-            role="radiogroup"
-            aria-label="Default role for new invitations"
-          >
-            <button
-              type="button"
-              role="radio"
-              aria-checked={role === "viewer"}
-              className={role === "viewer" ? "segmented-option selected" : "segmented-option"}
-              onClick={() => setRole("viewer")}
-            >
-              May read
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={role === "editor"}
-              className={role === "editor" ? "segmented-option selected" : "segmented-option"}
-              onClick={() => setRole("editor")}
-            >
-              May write
-            </button>
-          </div>
+          <SegmentedControl
+            ariaLabel="Default role for new invitations"
+            options={[
+              { value: "viewer", label: "May read" },
+              { value: "editor", label: "May write" },
+            ]}
+            value={role}
+            onChange={setRole}
+          />
         ) : (
           <span className="settings-readonly-flag">
             {role === "editor" ? "May write" : "May read"}

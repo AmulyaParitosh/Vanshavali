@@ -3150,7 +3150,8 @@ main {
 }
 .segmented-option {
   flex: 1;
-  padding: 7px 0;
+  /* Horizontal padding so labels aren't cramped against the segment edges. */
+  padding: 8px 16px;
   border: 1px solid transparent;
   border-radius: var(--radius-9);
   background: none;

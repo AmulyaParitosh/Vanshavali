@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import type { Person } from "../../types/person";
 import type { AddRelationship } from "../../lib/addPerson";
 import { usePersonPicker } from "../../providers/PersonPickerProvider";
+import SegmentedControl from "../SegmentedControl";
 import { portraitTint, personInitials } from "../../utils/portrait";
 
 /**
@@ -154,20 +155,16 @@ const AddPersonPanel: React.FC<AddPersonPanelProps> = ({
           <span className="invite-step-label">3 · the little you know</span>
           <div className="add-field">
             <span className="field-label">Sex</span>
-            <div className="segmented" role="group" aria-label="Sex">
-              {(["M", "F"] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`segmented-option${sex === s ? " selected" : ""}`}
-                  aria-pressed={sex === s}
-                  onClick={() => setSex(s)}
-                  disabled={saving}
-                >
-                  {s === "M" ? "Male" : "Female"}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              ariaLabel="Sex"
+              options={[
+                { value: "M", label: "Male" },
+                { value: "F", label: "Female" },
+              ]}
+              value={sex}
+              onChange={setSex}
+              disabled={saving}
+            />
           </div>
           <div className="add-field">
             <span className="field-label">Born</span>
@@ -201,9 +198,7 @@ const AddPersonPanel: React.FC<AddPersonPanelProps> = ({
       </div>
 
       <div className="panel-footer">
-        <button type="button" className="btn-quiet" onClick={onClose} disabled={saving}>
-          Cancel
-        </button>
+        {/* No Cancel here — the ✕ in the panel header already closes it. */}
         <button
           type="button"
           className="btn btn-primary"

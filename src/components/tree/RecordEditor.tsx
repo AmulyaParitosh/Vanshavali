@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { DraftPerson, Person, PersonEvent } from "../../types/person";
 import AliasesInput from "../AliasesInput";
+import SegmentedControl from "../SegmentedControl";
 import EventsEditor from "../EventsEditor";
 import CustomFieldsEditor from "../CustomFieldsEditor";
 import ImageUpload from "../ImageUpload";
@@ -97,20 +98,16 @@ const RecordEditor: React.FC<RecordEditorProps> = ({
 
         <div className="form-group">
           {label("Sex", "sex")}
-          <div className="segmented" role="group" aria-label="Sex">
-            {(["M", "F"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                className={`segmented-option${draft.sex === s ? " selected" : ""}`}
-                aria-pressed={draft.sex === s}
-                onClick={() => patch({ sex: s })}
-                disabled={saving}
-              >
-                {s === "M" ? "Male" : "Female"}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            ariaLabel="Sex"
+            options={[
+              { value: "M", label: "Male" },
+              { value: "F", label: "Female" },
+            ]}
+            value={draft.sex}
+            onChange={(sex) => patch({ sex })}
+            disabled={saving}
+          />
         </div>
 
         <div className="form-group">

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { FieldConflict } from "../../lib/writeState";
+import SegmentedControl from "../SegmentedControl";
 
 /**
  * The conflict dialog (Spec 13 flow 7 / a10). When a save lands on a record
@@ -56,30 +57,17 @@ const ConflictDialog: React.FC<ConflictDialogProps> = ({
           {conflicts.map((c) => (
             <div key={c.field} className="conflict-row">
               <span className="conflict-field">{c.field}</span>
-              <div
-                className="segmented conflict-choice"
-                role="group"
-                aria-label={`${c.field}: which to keep`}
-              >
-                <button
-                  type="button"
-                  className={`segmented-option${choice[c.field] === "mine" ? " selected" : ""}`}
-                  aria-pressed={choice[c.field] === "mine"}
-                  onClick={() => setChoice((s) => ({ ...s, [c.field]: "mine" }))}
-                  disabled={saving}
-                >
-                  Keep mine — {stated(c.mine)}
-                </button>
-                <button
-                  type="button"
-                  className={`segmented-option${choice[c.field] === "theirs" ? " selected" : ""}`}
-                  aria-pressed={choice[c.field] === "theirs"}
-                  onClick={() => setChoice((s) => ({ ...s, [c.field]: "theirs" }))}
-                  disabled={saving}
-                >
-                  Use theirs — {stated(c.theirs)}
-                </button>
-              </div>
+              <SegmentedControl
+                className="conflict-choice"
+                ariaLabel={`${c.field}: which to keep`}
+                options={[
+                  { value: "mine", label: <>Keep mine — {stated(c.mine)}</> },
+                  { value: "theirs", label: <>Use theirs — {stated(c.theirs)}</> },
+                ]}
+                value={choice[c.field] as "mine" | "theirs"}
+                onChange={(v) => setChoice((s) => ({ ...s, [c.field]: v }))}
+                disabled={saving}
+              />
             </div>
           ))}
         </div>
