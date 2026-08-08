@@ -5364,16 +5364,19 @@ main {
  * Tree settings (§7) — cards on the content canvas.
  * ========================================================================== */
 .settings-page {
-  padding: var(--space-8);
-  /* One 720px column, left-aligned — starts at the same x as every page, not centred (Spec 11). */
-  max-width: calc(720px + var(--space-8) * 2);
-  margin: 0;
-  height: 100%;
+  /* Match the Members/Households page shell: a centred column, same width and
+   * padding, and the same flex-based scroll (flex:1 + min-height:0 so overflow-y
+   * engages under the overflow:hidden shell — see .records-page). */
+  padding: var(--space-8) var(--space-10);
+  max-width: 1080px;
+  margin: 0 auto;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-5);
 }
 .settings-page > header {
   display: flex;
@@ -5388,7 +5391,7 @@ main {
   color: var(--text-primary);
 }
 .settings-sub {
-  font-size: 14.5px;
+  font-size: var(--font-size-sm);
   color: var(--text-meta);
   margin: 0;
 }
