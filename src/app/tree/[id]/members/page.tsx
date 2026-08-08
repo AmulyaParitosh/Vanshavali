@@ -252,7 +252,7 @@ export default function MembersPage() {
           />
         </label>
       }
-      inspectorOpen={!!selectedPerson}
+      inspectorOpen={!!selectedPerson || addOpen}
     >
       <RecordsTable columns={MEMBER_COLUMNS}>
         {rows.length === 0 ? (
@@ -375,12 +375,14 @@ export default function MembersPage() {
       )}
 
       {addOpen && (
-        <AddPersonPanel
-          people={people}
-          saving={addingSave}
-          onClose={() => setAddOpen(false)}
-          onAdd={handleAdd}
-        />
+        <div className="record-dock">
+          <AddPersonPanel
+            people={people}
+            saving={addingSave}
+            onClose={() => setAddOpen(false)}
+            onAdd={handleAdd}
+          />
+        </div>
       )}
 
       {duplicate && (

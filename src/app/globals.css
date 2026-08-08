@@ -4635,21 +4635,11 @@ main {
   padding-right: calc(var(--shell-inspector-w) + var(--space-10));
 }
 
-/* Add-person panel — same fixed right drawer as the invite panel. */
-.add-panel {
-  position: fixed;
-  top: var(--shell-chrome-h);
-  right: 0;
-  bottom: 0;
-  height: auto;
-  width: var(--shell-inspector-w);
-  z-index: 1150;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface-paper);
-  border-left: 1px solid var(--line-structure);
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.04);
-}
+/* Add-person panel — docks in the shared right drawer (.record-dock), the same
+   placement Households and the record inspector use; the .inspector base carries
+   the surface, border, shadow and flex column, and .record-dock bounds the height
+   (so the footer stays on-screen without the standalone height:auto hack). Only
+   the footer needs the body's 22px gutter. */
 .add-panel .panel-footer {
   padding-left: 22px;
   padding-right: 22px;
