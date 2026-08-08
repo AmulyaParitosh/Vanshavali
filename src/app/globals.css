@@ -4184,7 +4184,14 @@ main {
   padding: var(--space-8) var(--space-10);
   max-width: 1080px;
   margin: 0 auto;
-  height: 100%;
+  /* Fill the flex-column shell (.tree-shell-content) and be allowed to shrink
+   * below content height so `overflow-y` engages. `height: 100%` would compute
+   * to auto here — the parent's height comes from flex stretch, not an explicit
+   * height — leaving the page as tall as its rows and its overflow clipped
+   * (unreachable) by the shell's `overflow: hidden`. `min-height: 0` overrides
+   * the default `min-height: auto` on flex items so the scroll container works. */
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   box-sizing: border-box;
   display: flex;
