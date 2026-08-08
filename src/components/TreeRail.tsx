@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -25,6 +25,9 @@ function roleWords(role: string | undefined): string {
   return "read only";
 }
 
+/** Where the collapsed/expanded choice is remembered across navigation + reload. */
+const RAIL_COLLAPSED_KEY = "vanshavali:tree-rail-collapsed";
+
 export default function TreeRail() {
   const pathname = usePathname();
   const { currentTreeId, myTrees, treeData, membership } = useAppContext();
@@ -33,6 +36,29 @@ export default function TreeRail() {
   const people = treeData?.people ?? [];
   const families = treeData?.families ?? [];
   const generations = useMemo(() => generationSummaries(people, families), [people, families]);
+
+  // Default to expanded on first load; hydrate the remembered choice after mount
+  // (localStorage is client-only, so reading it in an effect avoids a hydration
+  // mismatch and keeps the server render — and the e2e default — expanded).
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem(RAIL_COLLAPSED_KEY) === "1");
+    } catch {
+      /* storage unavailable — stay expanded */
+    }
+  }, []);
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(RAIL_COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        /* storage unavailable — the choice just won't persist */
+      }
+      return next;
+    });
+  };
 
   if (!currentTreeId) return null;
 
@@ -61,7 +87,20 @@ export default function TreeRail() {
     .join(" · ");
 
   return (
-    <nav className="tree-rail" aria-label="Tree navigation">
+    <nav className={`tree-rail${collapsed ? " collapsed" : ""}`} aria-label="Tree navigation">
+      <div className="tree-rail-toolbar">
+        <button
+          type="button"
+          className="tree-rail-toggle"
+          onClick={toggleCollapsed}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <span aria-hidden="true">{collapsed ? "»" : "«"}</span>
+        </button>
+      </div>
+
       <div className="tree-rail-identity">
         <span className="eyebrow">Tree</span>
         <span className="tree-rail-name">{tree?.name ?? "Tree"}</span>
@@ -77,6 +116,8 @@ export default function TreeRail() {
                 href={d.href}
                 className={`tree-rail-item${active ? " active" : ""}`}
                 aria-current={active ? "page" : undefined}
+                aria-label={d.label}
+                title={d.label}
               >
                 <span className="tree-rail-glyph" aria-hidden="true">
                   {d.glyph}

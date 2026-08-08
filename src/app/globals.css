@@ -227,6 +227,7 @@
   /* ---- Shell metrics — fixed; the rail and inspector are furniture ------- */
   --shell-chrome-h: 60px;
   --shell-rail-w: 232px;
+  --shell-rail-w-collapsed: 60px; /* rail collapsed to an icon-only strip */
   --shell-inspector-w: 384px;
   /* Legacy alias — the chrome bar is now the system 60px. */
   --header-height: var(--shell-chrome-h);
@@ -534,6 +535,65 @@ main {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  transition: width var(--dur-panel) var(--ease);
+}
+.tree-rail.collapsed {
+  width: var(--shell-rail-w-collapsed);
+  overflow-x: hidden;
+}
+
+/* Collapse toggle — a small chevron button, top of the rail, right-aligned
+ * when open and centred when collapsed. */
+.tree-rail-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 10px 0;
+}
+.tree-rail.collapsed .tree-rail-toolbar {
+  justify-content: center;
+  padding: 8px 0 0;
+}
+.tree-rail-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-9);
+  background: var(--surface-paper);
+  color: var(--text-meta);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--dur-panel) var(--ease),
+    border-color var(--dur-panel) var(--ease),
+    color var(--dur-panel) var(--ease);
+}
+.tree-rail-toggle:hover {
+  border-color: var(--color-red);
+  color: var(--color-red-deep);
+}
+
+/* Collapsed rail — an icon-only strip: hide identity, section labels/counts,
+ * the generation list, and the getting-started / attention zone; keep just the
+ * nav glyphs, centred and still clickable with their active state. */
+.tree-rail.collapsed .tree-rail-identity,
+.tree-rail.collapsed .tree-rail-badge,
+.tree-rail.collapsed .tree-rail-label,
+.tree-rail.collapsed .tree-genjump,
+.tree-rail.collapsed .rail-checklist,
+.tree-rail.collapsed .rail-attention {
+  display: none;
+}
+.tree-rail.collapsed .tree-rail-nav {
+  padding: var(--space-3) 8px;
+}
+.tree-rail.collapsed .tree-rail-item {
+  justify-content: center;
+  gap: 0;
+  padding: 9px 0;
 }
 .tree-rail-identity {
   padding: 18px 18px 14px;
