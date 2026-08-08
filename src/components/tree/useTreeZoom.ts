@@ -11,6 +11,7 @@ interface UseTreeZoomOptions {
 }
 
 export interface TreeZoomApi {
+  /** Centre (x, y) in the canvas. Keeps the current zoom unless `scale` is given. */
   panTo: (x: number, y: number, scale?: number) => void;
   /** Fit the whole tree in view with padding (Spec 05 a9). */
   fitToView: () => void;
@@ -70,16 +71,19 @@ export function useTreeZoom({ svgRef, gRef, initialCenter }: UseTreeZoomOptions)
   }, [svgRef, gRef, initialCenter, MIN, MAX, LOD_COMPACT, LOD_GLYPH]);
 
   return {
-    panTo: (x, y, scale = 1.2) => {
+    panTo: (x, y, scale) => {
       const svgEl = svgRef.current;
       const zoom = zoomRef.current;
       if (!svgEl || !zoom) return;
       const rect = svgEl.getBoundingClientRect();
+      // Centre (x, y) in the current viewport. Keep the current zoom unless a
+      // scale is asked for, so focusing a person doesn't yank the zoom level.
+      const k = scale ?? d3.zoomTransform(svgEl).k;
       const transform = d3.zoomIdentity
         .translate(rect.width / 2, rect.height / 2)
-        .scale(scale)
+        .scale(k)
         .translate(-x, -y);
-      d3.select(svgEl).transition().duration(750).call(zoom.transform, transform);
+      d3.select(svgEl).transition().duration(600).call(zoom.transform, transform);
     },
 
     fitToView: () => {

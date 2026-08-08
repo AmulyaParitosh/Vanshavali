@@ -211,28 +211,27 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     panTo(target.x, target.y);
   };
 
-  /**
-   * Open a person's record. A direct node click doesn't pan — the tree keeps
-   * its coordinates so the person you clicked doesn't jump out from under the
-   * cursor (§07). Selecting from search or a relation chip does pan, since the
-   * target may be off-screen.
-   */
-  const handleSelect = (personId: string, pan = false) => {
+  /** Open a person's record; the effect below centres their household. */
+  const handleSelect = (personId: string) => {
     setSelectedPersonId(personId);
-    if (pan) panToPerson(personId);
   };
 
-  // Open (and pan to) whatever ?person= names — on mount, and whenever it
-  // changes while the canvas stays mounted (e.g. the ⌘K search or a Members-table
-  // click pushes a new ?person=, reusing this one inspector — Spec 07 a1). A
-  // direct node click sets the selection without touching the URL, so it doesn't
-  // re-trigger this and the clicked node stays put (no jump).
+  // Centre the open record's household in the canvas. Runs on every selection —
+  // a card click, a relation link, or a ?person= from the Members table/search —
+  // on the next frame, once the inspector has taken its column, so the node lands
+  // in the middle of what's left of the canvas rather than behind the panel.
   useEffect(() => {
-    if (personParam) {
-      setSelectedPersonId(personParam);
-      panToPerson(personParam);
-    }
+    if (!selectedPersonId) return undefined;
+    const raf = requestAnimationFrame(() => panToPerson(selectedPersonId));
+    return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPersonId]);
+
+  // Reflect a ?person= from the URL into the selection (the ⌘K search or a
+  // Members-table click pushes it over the current canvas — Spec 07 a1); the
+  // centring effect above then frames it.
+  useEffect(() => {
+    if (personParam) setSelectedPersonId(personParam);
   }, [personParam]);
 
   // Pick up a place filter pushed onto the URL by search, even when the canvas
@@ -413,7 +412,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
           treeId={currentTreeId}
           treeName={treeName}
           onClose={() => setSelectedPersonId(null)}
-          onSelect={(id) => handleSelect(id, true)}
+          onSelect={handleSelect}
         />
       )}
     </div>
