@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "../../../../context/AppContext";
 import type { TreeData } from "../../../../context/AppContext";
 import Loading from "../../../../components/Loading";
-import PersonSearch from "../../../../components/PersonSearch";
+import { usePersonPicker } from "../../../../providers/PersonPickerProvider";
 import { useToast } from "../../../../components/ToastSystem";
 import { canEdit as canEditRole } from "../../../../lib/access";
 import { inferHusbandWife } from "../../../../lib/family";
@@ -344,8 +344,8 @@ function HouseholdEditor({
   onClose,
 }: HouseholdEditorProps) {
   const toast = useToast();
+  const { openPicker } = usePersonPicker();
   const [form, setForm] = useState<Family>(family);
-  const [addingChild, setAddingChild] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { husbandId, wifeId } = inferHusbandWife(form);
@@ -389,7 +389,6 @@ function HouseholdEditor({
       return;
     }
     setForm((f) => ({ ...f, children: [...f.children, id] }));
-    setAddingChild(false);
   };
   const removeChild = (id: string) =>
     setForm((f) => ({ ...f, children: f.children.filter((c) => c !== id) }));
@@ -435,13 +434,21 @@ function HouseholdEditor({
           </span>
         )}
         {canEdit && (
-          <PersonSearch
-            people={people}
-            selectedPersonId={id ?? ""}
-            onSelect={(pid) => setPartner(which, pid)}
-            placeholder={person ? "Change…" : "Add a partner…"}
-            filterSex={which === "husband" ? "M" : "F"}
-          />
+          <button
+            type="button"
+            className="hh-partner-pick"
+            onClick={() =>
+              openPicker({
+                title: which === "husband" ? "Choose a husband" : "Choose a wife",
+                placeholder: person ? "Change…" : "Add a partner…",
+                filterSex: which === "husband" ? "M" : "F",
+                selectedPersonId: id ?? null,
+                onPick: (pid) => setPartner(which, pid),
+              })
+            }
+          >
+            {person ? "Change…" : "Add a partner…"}
+          </button>
         )}
       </div>
     );
@@ -555,21 +562,22 @@ function HouseholdEditor({
                 </div>
               );
             })}
-            {canEdit &&
-              (addingChild ? (
-                <PersonSearch
-                  people={people}
-                  selectedPersonId=""
-                  onSelect={addChild}
-                  placeholder="Search to add a child…"
-                  excludeIds={[husbandId ?? "", wifeId ?? "", ...form.children]}
-                  autoFocus
-                />
-              ) : (
-                <button type="button" className="hh-add" onClick={() => setAddingChild(true)}>
-                  + Add a child — search or create
-                </button>
-              ))}
+            {canEdit && (
+              <button
+                type="button"
+                className="hh-add"
+                onClick={() =>
+                  openPicker({
+                    title: "Add a child",
+                    placeholder: "Search to add a child…",
+                    excludeIds: [husbandId ?? "", wifeId ?? "", ...form.children],
+                    onPick: addChild,
+                  })
+                }
+              >
+                + Add a child — search or create
+              </button>
+            )}
           </div>
         </div>
 

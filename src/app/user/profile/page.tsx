@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useAppContext } from "../../../context/AppContext";
-import PersonSearch from "../../../components/PersonSearch";
+import { usePersonPicker } from "../../../providers/PersonPickerProvider";
 import { useToast } from "../../../components/ToastSystem";
 import ConsequenceDialog from "../../../components/tree/ConsequenceDialog";
 import { portraitTint, personInitials } from "../../../utils/portrait";
@@ -32,7 +32,7 @@ export default function AccountPage() {
     refreshProfile,
   } = useAppContext();
   const toast = useToast();
-  const [isLinking, setIsLinking] = useState(false);
+  const { openPicker } = usePersonPicker();
   const [leavingTree, setLeavingTree] = useState<{ id: string; name: string } | null>(null);
   const [leaving, setLeaving] = useState(false);
 
@@ -77,7 +77,6 @@ export default function AccountPage() {
         try {
           await dataProvider.linkUserToPerson(currentTreeId, personId, user.uid);
           toast.success("Linked");
-          setIsLinking(false);
           await refreshProfile();
         } catch (error: unknown) {
           toast.error(error instanceof Error ? error.message : "Link failed");
@@ -183,36 +182,25 @@ export default function AccountPage() {
             <p className="settings-note">
               You&apos;re not yet linked to a person in {currentTree?.name ?? "this tree"}.
             </p>
-            {isLinking ? (
-              <>
-                <PersonSearch
-                  people={treeData?.people ?? []}
-                  onSelect={handleLinkPerson}
-                  hideLinked
-                  placeholder="Find yourself in the tree…"
-                />
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setIsLinking(false)}
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <div className="account-link-actions">
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setIsLinking(true)}
-                >
-                  I&apos;m already in the tree — link me
-                </button>
-                <button type="button" className="btn btn-secondary" onClick={handleCreatePerson}>
-                  Create my record
-                </button>
-              </div>
-            )}
+            <div className="account-link-actions">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() =>
+                  openPicker({
+                    title: "Find yourself in the tree",
+                    placeholder: "Find yourself in the tree…",
+                    hideLinked: true,
+                    onPick: handleLinkPerson,
+                  })
+                }
+              >
+                I&apos;m already in the tree — link me
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={handleCreatePerson}>
+                Create my record
+              </button>
+            </div>
           </>
         )}
       </section>

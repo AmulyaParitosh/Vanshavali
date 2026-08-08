@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import type { Person } from "../../types/person";
 import type { AddRelationship } from "../../lib/addPerson";
+import { usePersonPicker } from "../../providers/PersonPickerProvider";
+import { portraitTint, personInitials } from "../../utils/portrait";
 
 /**
  * The add-person panel (Spec 06) — relationship first, then the name, then the
@@ -59,6 +61,7 @@ const AddPersonPanel: React.FC<AddPersonPanelProps> = ({
   onAdd,
   saving = false,
 }) => {
+  const { openPicker } = usePersonPicker();
   const [rel, setRel] = useState<AddRelationship>("child");
   const [anchorId, setAnchorId] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -100,20 +103,37 @@ const AddPersonPanel: React.FC<AddPersonPanelProps> = ({
             ))}
           </div>
           {needsAnchor && (
-            <select
-              className="input add-anchor"
-              value={anchorId ?? ""}
-              onChange={(e) => setAnchorId(e.target.value || null)}
+            <button
+              type="button"
+              className={`input add-anchor add-anchor-trigger${anchor ? " chosen" : ""}`}
               aria-label="Who they relate to"
               disabled={saving}
+              onClick={() =>
+                openPicker({
+                  title: "Who they relate to",
+                  placeholder: "Search for a person…",
+                  selectedPersonId: anchorId,
+                  onPick: setAnchorId,
+                })
+              }
             >
-              <option value="">Choose a person…</option>
-              {people.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name.official_name}
-                </option>
-              ))}
-            </select>
+              {anchor ? (
+                <>
+                  <span
+                    className="add-anchor-avatar"
+                    style={{ background: portraitTint(anchor.id) }}
+                  >
+                    {personInitials(anchor.name.official_name)}
+                  </span>
+                  <span className="add-anchor-name">{anchor.name.official_name}</span>
+                  <span className="add-anchor-change" aria-hidden="true">
+                    Change
+                  </span>
+                </>
+              ) : (
+                "Choose a person…"
+              )}
+            </button>
           )}
         </div>
 

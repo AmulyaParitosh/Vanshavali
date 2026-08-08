@@ -9,6 +9,7 @@ import Header from "../components/Header";
 import LoginScreen from "../components/LoginScreen";
 import Loading from "../components/Loading";
 import CommandSearch from "../components/CommandSearch";
+import PersonPickerProvider from "./PersonPickerProvider";
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -119,7 +120,11 @@ export default function AppProvider({ children }: AppProviderProps) {
         {/* Chrome bar is present on every authenticated route, absent on Landing
          * and Sign in (Spec 00 §02). */}
         {user && <Header user={user} membership={membership} />}
-        <main>{renderContent()}</main>
+        {/* The picker provider wraps the pages so any of them can open the shared
+         * person picker; the ⌘K navigate singleton sits alongside it. */}
+        <PersonPickerProvider>
+          <main>{renderContent()}</main>
+        </PersonPickerProvider>
         {user && <CommandSearch />}
       </div>
     </AppContext.Provider>

@@ -4680,6 +4680,42 @@ main {
 .add-anchor {
   margin-top: 4px;
 }
+/* Anchor picker trigger — a field-like button that opens the shared person
+ * picker; muted "Choose a person…" until one is chosen, then shows them. */
+.add-anchor-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-meta);
+}
+.add-anchor-trigger.chosen {
+  color: var(--text-primary);
+}
+.add-anchor-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-circle);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fffdf9;
+}
+.add-anchor-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.add-anchor-change {
+  font-size: 12px;
+  color: var(--color-red);
+}
 .add-field {
   display: flex;
   flex-direction: column;
@@ -5000,6 +5036,19 @@ main {
   background: var(--chip-invited-bg);
   color: var(--chip-invited-fg);
 }
+/* Quiet text affordance under a partner portrait — opens the shared person picker. */
+.hh-partner-pick {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-red);
+  padding: 2px 4px;
+}
+.hh-partner-pick:hover {
+  text-decoration: underline;
+}
 .hh-amp {
   font-size: 13px;
   color: var(--color-marigold);
@@ -5222,6 +5271,10 @@ main {
   cursor: pointer;
 }
 .cmdk-row.active {
+  background: var(--color-red-wash);
+}
+/* Picker mode: the already-chosen person reads as current when the overlay opens. */
+.cmdk-row[aria-current="true"] {
   background: var(--color-red-wash);
 }
 .cmdk-row--static {

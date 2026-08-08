@@ -12,6 +12,43 @@ import type { Person } from "../types/person";
 /** Result caps (Spec 09 §02): headers show the true total, lists show at most these. */
 const CAP = { people: 6, places: 3, events: 4 } as const;
 
+/** Picker mode shows at most this many people (the overlay scrolls past it). */
+const PICKER_CAP = 50;
+
+/**
+ * Picker-mode options (the shared person-picker API — see `PersonPickerProvider`).
+ * A picker reuses the ⌘K overlay chrome but shows only people, optionally filtered,
+ * and hands the chosen id back through `onPick` instead of routing.
+ */
+export interface PersonPickerOptions {
+  /** Accessible heading for the dialog; also the placeholder fallback. */
+  title?: string;
+  /** Input placeholder; defaults to the title, then "Search people". */
+  placeholder?: string;
+  /** Restrict to one sex (partner pickers). */
+  filterSex?: "M" | "F";
+  /** People to omit (e.g. the couple + existing children). */
+  excludeIds?: string[];
+  /** Hide people already linked to an account (the "link me" flow). */
+  hideLinked?: boolean;
+  /** The already-chosen person, marked current on open. */
+  selectedPersonId?: string | null;
+  /** Called with the chosen person's id; the overlay closes itself after. */
+  onPick: (personId: string) => void;
+}
+
+/** The picker prop CommandSearch receives — the options plus a close callback. */
+type PickerMode = PersonPickerOptions & { onClose: () => void };
+
+interface CommandSearchProps {
+  /**
+   * When set, the palette runs in picker mode instead of the ⌘K navigate
+   * singleton: people-only, filtered, and a choice calls back rather than
+   * routing. Absent (the default) → the global navigate palette.
+   */
+  picker?: PickerMode | undefined;
+}
+
 /** A person's search sub-line: "born Patna, 1989 · generation III" (Spec 09). */
 function personSub(p: Person, gen: number | undefined): string {
   const birth = (p.events ?? []).find((e) => /birth|born/i.test(e.type));
@@ -83,16 +120,26 @@ function isEditableTarget(target: EventTarget | null): boolean {
  * The ⌘K search palette (Spec 09) — one index over people, places and events,
  * grouped and keyboard-first, opened from anywhere in a tree. Selecting a person
  * or event opens that record on the tree (via ?person=), reusing the inspector.
+ *
+ * The same overlay doubles as the app-wide person picker: given a `picker` prop
+ * it runs people-only + filtered and calls back on a choice (see
+ * `PersonPickerProvider`), so every "pick a person" surface shares this chrome.
  */
-export default function CommandSearch() {
+export default function CommandSearch({ picker }: CommandSearchProps = {}) {
   const { treeData, currentTreeId, user } = useAppContext();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const isPicker = picker != null;
+  // A picker instance is rendered only while active, so it starts open; the
+  // navigate singleton opens on ⌘K / `/` / the open-search event.
+  const [open, setOpen] = useState(isPicker);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Global triggers belong to the navigate singleton only; a picker is opened
+    // imperatively through the picker context, never by ⌘K / `/`.
+    if (isPicker) return undefined;
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -112,7 +159,7 @@ export default function CommandSearch() {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("vanshavali:open-search", onOpen);
     };
-  }, []);
+  }, [isPicker]);
 
   useEffect(() => {
     if (!open) return;
@@ -141,6 +188,8 @@ export default function CommandSearch() {
         : null;
 
   const { peopleHits, placeHits, eventHits } = useMemo(() => {
+    // Navigate index only; a picker computes its own people list below.
+    if (isPicker) return { peopleHits: [], placeHits: [], eventHits: [] };
     // The empty state suggests nothing (a9) — no query, no results.
     const ppl = q
       ? people.filter((p) =>
@@ -175,22 +224,58 @@ export default function CommandSearch() {
           .map(([place, counts]) => ({ place, line: placeCountsLine(counts) }))
       : [];
     return { peopleHits: ppl, placeHits: places, eventHits: events };
-  }, [people, q]);
+  }, [people, q, isPicker]);
+
+  // Picker index (people only, filtered). Unlike navigate, an empty query lists
+  // everyone eligible so the user can browse — the old dropdown did the same.
+  const pickerHits = useMemo(() => {
+    if (!picker) return [];
+    const base = people.filter((p) => {
+      if (picker.filterSex && p.sex !== picker.filterSex) return false;
+      if (picker.excludeIds?.includes(p.id)) return false;
+      if (picker.hideLinked && p.userId) return false;
+      return true;
+    });
+    return q
+      ? base.filter((p) =>
+          fold([p.name.official_name, ...(p.name.aliases ?? [])].join(" ")).includes(q)
+        )
+      : base;
+  }, [picker, people, q]);
 
   // Only the capped rows are on screen and keyboard-navigable; headers still show
   // the true total. People and events open a record; places filter the canvas (S-C).
   const shownPeople = peopleHits.slice(0, CAP.people);
   const shownPlaces = placeHits.slice(0, CAP.places);
   const shownEvents = eventHits.slice(0, CAP.events);
+  const shownPicker = pickerHits.slice(0, PICKER_CAP);
 
   const navTargets = useMemo(
-    () => [...shownPeople.map((p) => p.id), ...shownEvents.map((e) => e.personId)],
-    [shownPeople, shownEvents]
+    () =>
+      isPicker
+        ? shownPicker.map((p) => p.id)
+        : [...shownPeople.map((p) => p.id), ...shownEvents.map((e) => e.personId)],
+    [isPicker, shownPicker, shownPeople, shownEvents]
   );
+
+  const close = () => {
+    if (picker) picker.onClose();
+    else setOpen(false);
+  };
 
   const openPerson = (personId: string) => {
     if (currentTreeId) router.push(`/tree/${currentTreeId}?person=${encodeURIComponent(personId)}`);
     setOpen(false);
+  };
+
+  // In picker mode a choice hands the id back and closes; it never routes.
+  const activate = (personId: string) => {
+    if (picker) {
+      picker.onPick(personId);
+      picker.onClose();
+    } else {
+      openPerson(personId);
+    }
   };
 
   const seeAllInMembers = () => {
@@ -207,6 +292,12 @@ export default function CommandSearch() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // The picker has no global Escape listener; close it from the field instead.
+    if (isPicker && e.key === "Escape") {
+      e.preventDefault();
+      close();
+      return;
+    }
     const last = navTargets.length - 1;
     if (navTargets.length === 0) return;
     if (e.key === "ArrowDown") {
@@ -224,19 +315,29 @@ export default function CommandSearch() {
     } else if (e.key === "Enter") {
       e.preventDefault();
       const target = navTargets[active];
-      if (target) openPerson(target);
+      if (target) activate(target);
     }
   };
 
   if (!open) return null;
 
+  // One overlay, two modes. The scrim/panel/input chrome is shared verbatim so
+  // the picker looks identical to ⌘K; only the results list and the foot differ.
+  const placeholder = picker
+    ? (picker.placeholder ?? picker.title ?? "Search people")
+    : "People, places, events";
+  const dialogLabel = picker
+    ? (picker.title ?? picker.placeholder ?? "Choose a person")
+    : "Search the tree";
+  const inputLabel = picker ? placeholder : "Search people, places and events";
+
   return (
-    <div className="cmdk-scrim" onClick={() => setOpen(false)}>
+    <div className="cmdk-scrim" onClick={close}>
       <div
         className="cmdk-panel"
         role="dialog"
         aria-modal="true"
-        aria-label="Search the tree"
+        aria-label={dialogLabel}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="cmdk-input-row">
@@ -261,104 +362,149 @@ export default function CommandSearch() {
               setActive(0);
             }}
             onKeyDown={onKeyDown}
-            placeholder="People, places, events"
-            aria-label="Search people, places and events"
+            placeholder={placeholder}
+            aria-label={inputLabel}
           />
           <span className="cmdk-esc">esc</span>
         </div>
 
-        <div className="cmdk-results">
-          {peopleHits.length > 0 && <div className="cmdk-group">People · {peopleHits.length}</div>}
-          {shownPeople.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              className={`cmdk-row${active === i ? " active" : ""}`}
-              onClick={() => openPerson(p.id)}
-              onMouseEnter={() => setActive(i)}
-            >
-              <span className="cmdk-avatar" style={{ background: portraitTint(p.id) }}>
-                {personInitials(p.name.official_name)}
-              </span>
-              <span className="cmdk-row-body">
-                <span className="cmdk-row-primary">
-                  <Highlight text={p.name.official_name} q={q} />
-                </span>
-                {personSub(p, gens.get(p.id)) && (
-                  <span className="cmdk-row-sub">{personSub(p, gens.get(p.id))}</span>
-                )}
-              </span>
-              {relationOf(p.id) && <span className="cmdk-row-relation">{relationOf(p.id)}</span>}
-            </button>
-          ))}
-          {peopleHits.length > CAP.people && (
-            <button type="button" className="cmdk-more" onClick={seeAllInMembers}>
-              {peopleHits.length - CAP.people} more people — see all in Members
-            </button>
-          )}
-
-          {placeHits.length > 0 && (
-            <>
-              <div className="cmdk-sep" />
-              <div className="cmdk-group">Places · {placeHits.length}</div>
-            </>
-          )}
-          {shownPlaces.map((pl) => (
-            <button
-              key={pl.place}
-              type="button"
-              className="cmdk-row cmdk-row--place"
-              onClick={() => openPlace(pl.place)}
-            >
-              <span className="cmdk-glyph" aria-hidden="true">
-                ⌖
-              </span>
-              <span className="cmdk-row-body">
-                <span className="cmdk-row-primary">
-                  <Highlight text={pl.place} q={q} />
-                </span>
-                <span className="cmdk-row-sub">{pl.line}</span>
-              </span>
-            </button>
-          ))}
-
-          {eventHits.length > 0 && (
-            <>
-              <div className="cmdk-sep" />
-              <div className="cmdk-group">Events · {eventHits.length}</div>
-            </>
-          )}
-          {shownEvents.map((e, i) => {
-            const idx = shownPeople.length + i;
-            return (
+        {/* Picker mode: people-only, filtered, and a choice calls back. */}
+        {picker ? (
+          <div className="cmdk-results">
+            {shownPicker.length > 0 && (
+              <div className="cmdk-group">People · {pickerHits.length}</div>
+            )}
+            {shownPicker.map((p, i) => (
               <button
-                key={`${e.personId}-${e.primary}-${i}`}
+                key={p.id}
                 type="button"
-                className={`cmdk-row${active === idx ? " active" : ""}`}
-                onClick={() => openPerson(e.personId)}
-                onMouseEnter={() => setActive(idx)}
+                className={`cmdk-row${active === i ? " active" : ""}`}
+                aria-current={p.id === picker.selectedPersonId ? true : undefined}
+                onClick={() => activate(p.id)}
+                onMouseEnter={() => setActive(i)}
               >
-                <span className="cmdk-glyph cmdk-glyph--event" aria-hidden="true">
-                  ❀
+                <span className="cmdk-avatar" style={{ background: portraitTint(p.id) }}>
+                  {personInitials(p.name.official_name)}
                 </span>
                 <span className="cmdk-row-body">
-                  <span className="cmdk-row-primary">{e.primary}</span>
-                  <span className="cmdk-row-sub">{e.sub}</span>
+                  <span className="cmdk-row-primary">
+                    <Highlight text={p.name.official_name} q={q} />
+                  </span>
+                  {personSub(p, gens.get(p.id)) && (
+                    <span className="cmdk-row-sub">{personSub(p, gens.get(p.id))}</span>
+                  )}
+                </span>
+                {relationOf(p.id) && <span className="cmdk-row-relation">{relationOf(p.id)}</span>}
+              </button>
+            ))}
+            {shownPicker.length === 0 && (
+              <div className="cmdk-empty">
+                {q ? `No one matches “${query}”` : "No one to choose from"}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="cmdk-results">
+            {peopleHits.length > 0 && (
+              <div className="cmdk-group">People · {peopleHits.length}</div>
+            )}
+            {shownPeople.map((p, i) => (
+              <button
+                key={p.id}
+                type="button"
+                className={`cmdk-row${active === i ? " active" : ""}`}
+                onClick={() => openPerson(p.id)}
+                onMouseEnter={() => setActive(i)}
+              >
+                <span className="cmdk-avatar" style={{ background: portraitTint(p.id) }}>
+                  {personInitials(p.name.official_name)}
+                </span>
+                <span className="cmdk-row-body">
+                  <span className="cmdk-row-primary">
+                    <Highlight text={p.name.official_name} q={q} />
+                  </span>
+                  {personSub(p, gens.get(p.id)) && (
+                    <span className="cmdk-row-sub">{personSub(p, gens.get(p.id))}</span>
+                  )}
+                </span>
+                {relationOf(p.id) && <span className="cmdk-row-relation">{relationOf(p.id)}</span>}
+              </button>
+            ))}
+            {peopleHits.length > CAP.people && (
+              <button type="button" className="cmdk-more" onClick={seeAllInMembers}>
+                {peopleHits.length - CAP.people} more people — see all in Members
+              </button>
+            )}
+
+            {placeHits.length > 0 && (
+              <>
+                <div className="cmdk-sep" />
+                <div className="cmdk-group">Places · {placeHits.length}</div>
+              </>
+            )}
+            {shownPlaces.map((pl) => (
+              <button
+                key={pl.place}
+                type="button"
+                className="cmdk-row cmdk-row--place"
+                onClick={() => openPlace(pl.place)}
+              >
+                <span className="cmdk-glyph" aria-hidden="true">
+                  ⌖
+                </span>
+                <span className="cmdk-row-body">
+                  <span className="cmdk-row-primary">
+                    <Highlight text={pl.place} q={q} />
+                  </span>
+                  <span className="cmdk-row-sub">{pl.line}</span>
                 </span>
               </button>
-            );
-          })}
+            ))}
 
-          {q && peopleHits.length === 0 && placeHits.length === 0 && eventHits.length === 0 && (
-            <div className="cmdk-empty">Nothing in this record matches “{query}”</div>
-          )}
-        </div>
+            {eventHits.length > 0 && (
+              <>
+                <div className="cmdk-sep" />
+                <div className="cmdk-group">Events · {eventHits.length}</div>
+              </>
+            )}
+            {shownEvents.map((e, i) => {
+              const idx = shownPeople.length + i;
+              return (
+                <button
+                  key={`${e.personId}-${e.primary}-${i}`}
+                  type="button"
+                  className={`cmdk-row${active === idx ? " active" : ""}`}
+                  onClick={() => openPerson(e.personId)}
+                  onMouseEnter={() => setActive(idx)}
+                >
+                  <span className="cmdk-glyph cmdk-glyph--event" aria-hidden="true">
+                    ❀
+                  </span>
+                  <span className="cmdk-row-body">
+                    <span className="cmdk-row-primary">{e.primary}</span>
+                    <span className="cmdk-row-sub">{e.sub}</span>
+                  </span>
+                </button>
+              );
+            })}
 
-        <div className="cmdk-foot">
-          <span>↑↓ move · ↵ open record · ⌘↵ focus in tree</span>
-          <span style={{ flex: 1 }} />
-          <span>{people.length} people indexed</span>
-        </div>
+            {q && peopleHits.length === 0 && placeHits.length === 0 && eventHits.length === 0 && (
+              <div className="cmdk-empty">Nothing in this record matches “{query}”</div>
+            )}
+          </div>
+        )}
+
+        {picker ? (
+          <div className="cmdk-foot">
+            <span>↑↓ move · ↵ choose · esc cancel</span>
+          </div>
+        ) : (
+          <div className="cmdk-foot">
+            <span>↑↓ move · ↵ open record · ⌘↵ focus in tree</span>
+            <span style={{ flex: 1 }} />
+            <span>{people.length} people indexed</span>
+          </div>
+        )}
       </div>
     </div>
   );
