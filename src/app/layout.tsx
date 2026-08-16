@@ -16,7 +16,11 @@ import React from "react";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    // `data-heritage` drives all four ornament surfaces (the chrome banner, the
+    // portrait ring, the inspector's 3px bar, the paper wash) — §04: ornament is
+    // a setting, not a decision. "full" is the default; "restrained" and "plain"
+    // turn the painting down for a projector or a print.
+    <html lang="en" data-heritage="full" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <AppProvider>{children}</AppProvider>
         {/* Toast infrastructure lives outside AppProvider so the transient

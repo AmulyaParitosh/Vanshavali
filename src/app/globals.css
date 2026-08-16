@@ -244,7 +244,13 @@
   --heritage-paper: 0.05; /* page / content paper-wash opacity */
   --heritage-paper-tree: 0.07; /* heavier wash under the tree canvas */
   --ornament-ring: url("/node_border_320.png"); /* painted portrait ring art */
-  --ornament-bar: linear-gradient(90deg, #b22222, #ff8c00); /* inspector 3px top bar */
+  --ornament-bar: linear-gradient(
+    90deg,
+    var(--color-red),
+    var(--color-marigold)
+  ); /* inspector 3px top bar */
+  --ornament-banner:
+    linear-gradient(rgba(20, 18, 16, 0.76), rgba(20, 18, 16, 0.93)), url("/banner.jpg"); /* the chrome bar's darkened Madhubani banner */
   --heritage-border: #e8c9c6; /* heritage-warmed hairline (e.g. record card edge) */
 
   /* Breakpoints referenced by the responsive blocks below (CSS can't read
@@ -263,6 +269,7 @@
   --heritage-paper-tree: 0;
   --ornament-ring: none; /* portrait rings removed */
   --ornament-bar: var(--line-structure); /* hairline only */
+  --ornament-banner: none; /* the banner painting comes off too */
   --heritage-border: var(--line-structure);
 }
 
@@ -356,8 +363,7 @@ main {
 .chrome-bar-banner {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(20, 18, 16, 0.76), rgba(20, 18, 16, 0.93)), url("/banner.jpg");
+  background-image: var(--ornament-banner);
   background-size: cover;
   background-position: 0% 34%;
   pointer-events: none;
@@ -1240,7 +1246,7 @@ main {
 }
 .welcome-bar {
   height: 4px;
-  background: linear-gradient(90deg, var(--color-red), var(--color-marigold));
+  background: var(--ornament-bar);
 }
 .welcome-body {
   padding: 32px 36px;
@@ -2140,7 +2146,8 @@ main {
 .inspector-bar {
   height: 3px;
   flex-shrink: 0;
-  background: linear-gradient(90deg, var(--color-red), var(--color-marigold));
+  /* One of the four ornament surfaces — it answers to data-heritage (§04). */
+  background: var(--ornament-bar);
 }
 .inspector-body {
   flex: 1;
@@ -3788,9 +3795,9 @@ main {
 }
 
 .btn-icon-add {
-  background-color: var(--color-success);
-  color: var(--color-neutral-0);
-  border: none;
+  background-color: var(--surface-paper);
+  color: var(--text-rail);
+  border: 1px solid var(--line-control);
   width: 32px;
   height: 32px;
   border-radius: var(--radius-circle);
@@ -3800,13 +3807,14 @@ main {
   font-size: 1.5em;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(46, 139, 87, 0.3);
-  transition: all var(--duration-base) var(--ease-standard);
+  transition:
+    border-color var(--dur-panel) var(--ease),
+    color var(--dur-panel) var(--ease);
 }
 
 .btn-icon-add:hover {
-  transform: scale(1.1) rotate(90deg); /* Playful rotation on hover */
-  background-color: #246d44; /* darker accent — no neutral fits, kept local */
+  border-color: var(--color-red);
+  color: var(--color-red);
 }
 
 .profile-header-info {
@@ -5162,9 +5170,9 @@ button.records-row {
   text-decoration: underline;
 }
 .hh-amp {
-  font-size: 13px;
-  color: var(--color-marigold);
-  padding-top: 34px;
+  font-size: var(--font-size-sm);
+  color: var(--text-meta);
+  padding-top: var(--space-8);
 }
 /* Marriage facts (Spec 08 a5) — a prose read-back over two inputs. */
 .hh-marriage-prose {
