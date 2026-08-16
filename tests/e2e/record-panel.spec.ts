@@ -63,6 +63,84 @@ test.describe("Record panel — read mode (Spec 07)", () => {
   });
 });
 
+test.describe("Record panel — the descent line (Spec 07)", () => {
+  /** Open a record and wait for the panel itself before asserting on its parts. */
+  const openRecord = async (page: import("@playwright/test").Page, id: string) => {
+    await page.goto(`${treeRoute()}?person=${id}`);
+    await expect(page.locator(".inspector")).toBeVisible();
+    await expect(page.locator(".inspector-name")).not.toBeEmpty();
+  };
+
+  test("one card per generation — the record, then its parents as one household", async ({
+    page,
+  }) => {
+    await openRecord(page, son);
+    const cards = page.locator(".descent-gen");
+    await expect(cards).toHaveCount(2);
+    await expect(cards.locator(".descent-card-label")).toHaveText(["This record", "Parents"]);
+    // The father is the top row and the mother the bottom — position says which,
+    // so nothing has to spell it out.
+    await expect(cards.nth(0).locator(".descent-name")).toHaveText(["Arjun Verma"]);
+    await expect(cards.nth(1).locator(".descent-name")).toHaveText(["Ishaan Verma", "Meera Verma"]);
+    await expect(cards.nth(1).locator(".descent-person--second .descent-name")).toHaveText(
+      "Meera Verma"
+    );
+  });
+
+  test("the joinery runs down the middle and closes the gap between cards", async ({ page }) => {
+    await openRecord(page, son);
+    await expect(page.locator(".descent")).toBeVisible();
+    const link = await page
+      .locator(".descent-gen")
+      .first()
+      .evaluate((li) => {
+        const run = getComputedStyle(li, "::after");
+        return {
+          left: run.left,
+          height: run.height,
+          gap: getComputedStyle(li.parentElement!).rowGap,
+          cardWidth: li.getBoundingClientRect().width,
+        };
+      });
+    // Centred on the card, not run down one edge.
+    expect(parseFloat(link.left)).toBeCloseTo(link.cardWidth / 2, 0);
+    // And exactly as tall as the space it bridges, so the line never breaks.
+    expect(link.height).toBe(link.gap);
+    // The last card ends the line rather than trailing one into nothing.
+    const trailing = await page
+      .locator(".descent-gen")
+      .last()
+      .evaluate((li) => getComputedStyle(li, "::after").content);
+    expect(trailing).toBe("none");
+  });
+
+  test("the rings say who was born into the line and who married in", async ({ page }) => {
+    await openRecord(page, son);
+    const rings = await page
+      .locator(".descent-person .portrait")
+      .evaluateAll((els) => els.map((el) => getComputedStyle(el).borderColor));
+    // Arjun and his father are born into the line; his mother married in.
+    expect(rings[0]).toBe(rings[1]);
+    expect(rings[2]).not.toBe(rings[0]);
+  });
+
+  test("a row opens that person's record in place; the record itself is not a link", async ({
+    page,
+  }) => {
+    await openRecord(page, son);
+    await expect(page.locator("div.descent-person")).toHaveCount(1); // the record itself
+    await expect(page.locator("button.descent-person")).toHaveCount(2);
+    await page.locator("button.descent-person").first().click();
+    await expect(page.locator(".inspector-name")).toHaveText("Ishaan Verma");
+    expect(new URL(page.url()).pathname).toBe(treeRoute());
+  });
+
+  test("no section at all for someone with nobody recorded above them", async ({ page }) => {
+    await openRecord(page, you); // the root of this tree
+    await expect(page.locator(".descent")).toHaveCount(0);
+  });
+});
+
 test.describe("Record panel — access block, read display (Spec 07 a3)", () => {
   test("a member's access is stated to the viewer: role chip + since", async ({ page }) => {
     await page.goto(`${treeRoute()}?person=${you}`);

@@ -700,9 +700,13 @@ test.describe("Components — Empty & loading", () => {
 test.describe("Components — A person (portrait)", () => {
   const sizes = [
     ["table", "40px", "2px", "12px"],
-    ["panel", "44px", "3px", "14px"],
+    // The descent card's row portrait is the canvas household row's, exactly.
+    ["descent", "32px", "2px", "12px"],
     ["hero", "56px", "3px", "15px"],
     ["node", "58px", "3px", "15px"],
+    // The record panel's identity portrait — the face the panel is about, so it
+    // is the largest of the set rather than an avatar beside a name.
+    ["panel", "72px", "3px", "22px"],
   ] as const;
 
   for (const [mod, size, ring, initials] of sizes) {

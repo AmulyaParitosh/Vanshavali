@@ -7,12 +7,19 @@ import type { TreeMembership, TreeRole } from "../../types/tree";
 import { portraitTint, personInitials } from "../../utils/portrait";
 import { GraphManager } from "../../lib/graph/GraphManager";
 import { generationMap, roman, bornInLine } from "../../lib/generations";
-import { buildLineage, describeRelation, ordinalWord, type Lineage } from "../../lib/lineage";
+import {
+  buildDescent,
+  buildLineage,
+  describeRelation,
+  ordinalWord,
+  type Lineage,
+} from "../../lib/lineage";
 import { detectConflict, type FieldChange, type FieldConflict } from "../../lib/writeState";
 import { personFieldMap } from "../../lib/personChanges";
 import { overlayPersonFields, changedFieldKeys } from "../../lib/personMerge";
 import type { PatchPersonResult } from "../../services/types";
 import AccessBlock from "./AccessBlock";
+import DescentLine from "./DescentLine";
 import RecordEditor from "./RecordEditor";
 import LeavingGuard from "./LeavingGuard";
 import ConsequenceDialog from "./ConsequenceDialog";
@@ -206,6 +213,7 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
   const gens = useMemo(() => generationMap(people, families), [people, families]);
   const inLine = useMemo(() => bornInLine(people, families), [people, families]);
   const lineage = useMemo<Lineage | null>(() => buildLineage(person.id, gm), [person.id, gm]);
+  const descent = useMemo(() => buildDescent(person.id, gm, inLine), [person.id, gm, inLine]);
 
   const aliases = person.name.aliases?.filter((a) => a.trim().length > 0) ?? [];
   const events = person.events ?? [];
@@ -417,6 +425,19 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
                     <span className="inspector-detail-value">{value}</span>
                   </div>
                 ))}
+              </section>
+            )}
+
+            {/* The line this person inherits — them, then each generation's father
+             * and mother going back, on one thread. Only worth a section when
+             * there's something above them (a4). */}
+            {descent.length > 1 && (
+              <section className="inspector-section">
+                <div className="inspector-section-head">
+                  <span className="eyebrow">Descent</span>
+                  <span className="inspector-rule" />
+                </div>
+                <DescentLine generations={descent} bornInLine={inLine} onSelect={onSelect} />
               </section>
             )}
           </>
