@@ -40,3 +40,6 @@ tsconfig.tsbuildinfo
 
 # Redesign spec mirror (fetched from Claude Design via DesignSync; not source)
 /design-specs
+
+# Scratch Playwright config used to point the suite at an already-running dev server.
+playwright.*.config.ts
