@@ -309,7 +309,7 @@ function HandOverDialog({
           </button>
           <button
             type="button"
-            className="btn-danger"
+            className="btn btn-danger"
             disabled={busy || !selected}
             onClick={() => selected && onConfirm(selected)}
           >

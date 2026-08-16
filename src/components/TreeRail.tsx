@@ -145,7 +145,9 @@ export default function TreeRail() {
                   onClick={() => canvas?.panToGeneration(g.depth)}
                 >
                   <span className="tree-genjump-numeral">{roman(g.depth)}</span>
-                  <span className="tree-genjump-years">{g.span || "—"}</span>
+                  <span className={`tree-genjump-years${g.span ? "" : " absent"}`}>
+                    {g.span || "no years recorded"}
+                  </span>
                   <span className="tree-genjump-count">{g.count}</span>
                 </button>
               </li>

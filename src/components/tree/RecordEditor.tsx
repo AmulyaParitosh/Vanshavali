@@ -150,7 +150,7 @@ const RecordEditor: React.FC<RecordEditorProps> = ({
       {/* Footer appears only when dirty; Save is disabled until then (Spec 13). */}
       {dirty && (
         <div className="panel-footer record-editor-foot">
-          <button type="button" className="btn-quiet" onClick={onCancel} disabled={saving}>
+          <button type="button" className="btn btn-quiet" onClick={onCancel} disabled={saving}>
             Discard
           </button>
           <button

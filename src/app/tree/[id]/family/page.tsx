@@ -255,16 +255,8 @@ export default function HouseholdsPage() {
               <button
                 key={f.id}
                 type="button"
-                className="records-row"
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  border: "none",
-                  borderBottom: "1px solid var(--line-row)",
-                  background: "transparent",
-                  font: "inherit",
-                }}
+                aria-current={selected?.id === f.id}
+                className={`records-row${selected?.id === f.id ? " open" : ""}`}
                 onClick={() => setSelected(f)}
               >
                 <span className="couple-glyph">
@@ -439,7 +431,7 @@ function HouseholdEditor({
             className="hh-partner-pick"
             onClick={() =>
               openPicker({
-                title: which === "husband" ? "Choose a husband" : "Choose a wife",
+                title: "Choose a partner",
                 placeholder: person ? "Change…" : "Add a partner…",
                 filterSex: which === "husband" ? "M" : "F",
                 selectedPersonId: id ?? null,

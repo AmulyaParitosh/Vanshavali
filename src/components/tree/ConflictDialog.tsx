@@ -73,7 +73,7 @@ const ConflictDialog: React.FC<ConflictDialogProps> = ({
         </div>
 
         <div className="dialog-actions">
-          <button type="button" className="btn-quiet" onClick={onKeepEditing} disabled={saving}>
+          <button type="button" className="btn btn-quiet" onClick={onKeepEditing} disabled={saving}>
             Keep editing
           </button>
           <button

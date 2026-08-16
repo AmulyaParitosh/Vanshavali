@@ -165,7 +165,7 @@ const InvitePanel: React.FC<InvitePanelProps> = ({
       </div>
 
       <div className="panel-footer">
-        <button type="button" className="btn-quiet" onClick={onClose} disabled={sending}>
+        <button type="button" className="btn btn-quiet" onClick={onClose} disabled={sending}>
           Cancel
         </button>
         <button

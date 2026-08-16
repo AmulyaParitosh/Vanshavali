@@ -87,7 +87,7 @@ const ConsequenceDialog: React.FC<ConsequenceDialogProps> = ({
           </button>
           <button
             type="button"
-            className="btn-danger"
+            className="btn btn-danger"
             onClick={onConfirm}
             disabled={busy || !matches}
           >

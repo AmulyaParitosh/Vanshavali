@@ -36,7 +36,8 @@ const ROLE: Record<TreeRole, { cls: string; label: string; stated: string; body:
 // Read → Write → Keeper, the order the radio set presents them.
 const ROLE_ORDER: TreeRole[] = ["viewer", "editor", "owner"];
 
-// Gendered from the record's sex, never hard-coded (a10). Sex is always M or F.
+// Gendered from the record's sex, never hard-coded (Spec 07 a10) — §08.8 allows
+// gendered copy precisely when "the record says so", and sex is a required field.
 const subject = (sex: Person["sex"]): string => (sex === "M" ? "he" : "she");
 const object = (sex: Person["sex"]): string => (sex === "M" ? "him" : "her");
 

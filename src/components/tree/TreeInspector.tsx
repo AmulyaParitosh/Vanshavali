@@ -383,7 +383,9 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
                 </div>
                 {events.map((e, i) => (
                   <div key={`${e.type}-${i}`} className="inspector-event">
-                    <span className="inspector-event-date">{e.date ?? ""}</span>
+                    <span className={`inspector-event-date${e.date ? "" : " absent"}`}>
+                      {e.date ?? "no date recorded"}
+                    </span>
                     <span className="inspector-glyph inspector-glyph--event" aria-hidden="true">
                       ❀
                     </span>

@@ -87,7 +87,7 @@ const DuplicateGuard: React.FC<DuplicateGuardProps> = ({
         </p>
 
         <div className="dialog-actions dialog-actions--stack">
-          <button type="button" className="btn-quiet" onClick={onBack} disabled={busy}>
+          <button type="button" className="btn btn-quiet" onClick={onBack} disabled={busy}>
             Back to the form
           </button>
           <button type="button" className="btn" onClick={() => void onAddAnyway()} disabled={busy}>

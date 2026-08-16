@@ -6,19 +6,20 @@ import type { Toast } from "react-hot-toast";
 
 // --- Standard toast ----------------------------------------------------------
 
+// Tokens only, and no ornament: a toast is a cream card, not a heritage surface,
+// so it carries no gradient and no marigold (§04 / R7).
 const toastContainerStyle: React.CSSProperties = {
   fontFamily: "var(--font-body)",
   padding: "var(--space-4)",
-  color: "var(--color-text)",
-  backgroundColor: "rgba(255, 255, 255, 0.95)",
-  border: "2px solid var(--color-primary-500)",
-  borderRadius: "var(--radius-lg)",
-  boxShadow: "var(--shadow-md)",
+  color: "var(--text-primary)",
+  backgroundColor: "var(--surface-paper)",
+  border: "1px solid var(--line-structure)",
+  borderRadius: "var(--radius-12)",
+  boxShadow: "var(--shadow-frame)",
   display: "flex",
   alignItems: "center",
-  gap: "12px",
+  gap: "var(--space-3)",
   minWidth: "300px",
-  borderImage: "linear-gradient(to right, var(--color-primary-500), var(--color-secondary-500)) 1",
 };
 
 const CustomToast = ({ t }: { t: Toast }) => {
@@ -35,19 +36,23 @@ const CustomToast = ({ t }: { t: Toast }) => {
         transition: "all 0.3s ease",
       }}
     >
-      {t.type === "success" && (
-        <span aria-hidden="true" style={{ color: "var(--color-success)", fontSize: "1.5em" }}>
-          ✔
-        </span>
-      )}
-      {t.type === "error" && (
-        <span aria-hidden="true" style={{ color: "var(--color-danger)", fontSize: "1.5em" }}>
-          ✖
-        </span>
-      )}
-      {t.type === "loading" && (
-        <span aria-hidden="true" style={{ color: "var(--color-warning)", fontSize: "1.5em" }}>
-          ⏳
+      {/* One glyph, three inks — ✧ is the system's "detail" mark (green when it
+          confirms). No emoji and no other dingbats (§04). The message states the
+          outcome, so the glyph stays decorative. */}
+      {t.type !== "blank" && (
+        <span
+          aria-hidden="true"
+          style={{
+            color:
+              t.type === "success"
+                ? "var(--chip-write-fg)"
+                : t.type === "error"
+                  ? "var(--color-red)"
+                  : "var(--text-meta)",
+            fontSize: "var(--font-size-lg)",
+          }}
+        >
+          ✧
         </span>
       )}
 

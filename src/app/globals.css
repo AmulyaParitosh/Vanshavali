@@ -86,6 +86,11 @@
   --line-control: #d8cdb4; /* button and input borders at rest */
   --line-inner: #f0e9da; /* dividers inside a card or rail section */
   --line-row: #f4ede0; /* between table rows */
+  --line-open: #f0dcd8; /* edge of an open/selected row — the red wash's own line */
+  /* The lineage joinery on the canvas: the eldest son's line is inked heavier and
+   * darker than the branches, the way a panjikar draws a trunk. */
+  --joinery-trunk: #8b6a4a;
+  --joinery-branch: #b39a72;
 
   /* ---- Colour · Text (6) — warm greys, every piece of text --------------- */
   --text-primary: #1a1a1a; /* names, headings, anything you came to read */
@@ -251,14 +256,14 @@
   --heritage-paper: 0.025;
   --heritage-paper-tree: 0.035;
   --ornament-bar: #b22222; /* solid, gradient dropped */
-  --heritage-border: #e6ddc9;
+  --heritage-border: var(--line-structure);
 }
 :root[data-heritage="plain"] {
   --heritage-paper: 0;
   --heritage-paper-tree: 0;
   --ornament-ring: none; /* portrait rings removed */
-  --ornament-bar: #e6ddc9; /* hairline only */
-  --heritage-border: #e6ddc9;
+  --ornament-bar: var(--line-structure); /* hairline only */
+  --heritage-border: var(--line-structure);
 }
 
 /* Global focus-visible base — every interactive element shows the same ring.
@@ -726,7 +731,7 @@ main {
   content: "";
   position: absolute;
   inset: 7px;
-  border: 1px solid #f0dcd8;
+  border: 1px solid var(--line-open);
   border-radius: 19px;
   pointer-events: none;
 }
@@ -778,7 +783,7 @@ main {
   padding: 3px;
   height: 40px;
   box-sizing: border-box;
-  background: #f8f2e4;
+  background: var(--surface-tablehead);
   border: 1px solid var(--line-structure);
   border-radius: var(--radius-12);
 }
@@ -938,7 +943,7 @@ main {
 
 /* First run (Spec 03 c2) — a card floating over the one-node canvas. */
 .tree-stub {
-  stroke: var(--line-structure, #e6ddc9);
+  stroke: var(--line-structure);
   stroke-width: 2;
 }
 .firstrun-card {
@@ -1000,7 +1005,7 @@ main {
   border: none;
   cursor: pointer;
   font-size: 13.5px;
-  color: var(--text-quiet, #6b6455);
+  color: var(--text-prose);
   margin-top: 2px;
 }
 .firstrun-quiet-link {
@@ -1084,7 +1089,7 @@ main {
   justify-content: center;
   font-size: 12px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
 }
 .picker-portrait + .picker-portrait {
   margin-left: -8px;
@@ -1114,7 +1119,7 @@ main {
 .picker-skeleton {
   height: 132px;
   border-radius: var(--radius-16);
-  background: var(--cream, #f4ede0);
+  background: var(--surface-quiet);
 }
 /* Create a tree (Spec 03 c3) — a 460 panel, two fields, one filled button. */
 .create-panel {
@@ -1454,7 +1459,7 @@ main {
 .attention-chip.active {
   background: var(--color-red-wash);
   color: var(--color-red-deep);
-  border-color: #f0dcd8;
+  border-color: var(--line-open);
 }
 .attention-count {
   font-size: 12px;
@@ -1503,7 +1508,7 @@ main {
 .genrail-row:hover,
 .genrail-row:focus-visible {
   background: var(--color-red-wash);
-  border-color: #f0dcd8;
+  border-color: var(--line-open);
   outline: none;
 }
 .genrail-numeral {
@@ -1626,7 +1631,7 @@ main {
   /* The canvas paper is quiet cream (the even generation band); the alternating
    * bands provide the only tint variation, so the figural heritage wash is kept
    * off the canvas where it would compete with the cards. */
-  background: #fdf5e6;
+  background: var(--surface-canvas);
   /* Prevent the browser from interpreting two-finger gestures as page
    * scroll/zoom so d3-zoom gets the touch events and can pinch-zoom. */
   touch-action: none;
@@ -1634,7 +1639,7 @@ main {
 /* Generation bands (Tree Canvas spec) — full-width stripes, alternating cream
    tints, a hairline at each band's top. */
 .gen-band--even {
-  fill: #fdf5e6;
+  fill: var(--surface-canvas);
 }
 .gen-band--odd {
   fill: #fbf2e0;
@@ -1728,7 +1733,7 @@ main {
   flex-direction: column;
   gap: 8px;
   background: var(--color-red-wash);
-  border: 1px solid #f0dcd8;
+  border: 1px solid var(--line-open);
   border-radius: var(--radius-14);
   padding: 13px 15px;
   font-size: 13.5px;
@@ -1914,7 +1919,7 @@ main {
   box-sizing: border-box;
   border-radius: 50%;
   border: 3px solid var(--ring-born); /* born into the line; consumer sets tint bg */
-  color: #fffdf9;
+  color: var(--surface-paper);
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -1972,7 +1977,7 @@ main {
   position: relative;
   box-sizing: border-box;
   width: 208px;
-  background: #fffdf9;
+  background: var(--surface-paper);
   border: 1px solid #e3d8c0;
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(90, 70, 40, 0.09);
@@ -2047,7 +2052,7 @@ main {
   justify-content: center;
   font-size: 12.5px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
 }
 .hcard-id {
   min-width: 0;
@@ -2107,13 +2112,13 @@ main {
    stroke; the trunk (the eldest son's line) is inked heavier and darker. */
 .link {
   fill: none;
-  stroke: #b39a72;
+  stroke: var(--joinery-branch);
   stroke-width: 1.5px;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 .link--trunk {
-  stroke: #8b6a4a;
+  stroke: var(--joinery-trunk);
   stroke-width: 2.6px;
 }
 
@@ -2190,7 +2195,7 @@ main {
   overflow: hidden;
   font-size: 22px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
 }
 .inspector-portrait img {
   width: 100%;
@@ -2552,7 +2557,7 @@ main {
   justify-content: center;
   font-size: 10px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
 }
 .inspector-relation-name {
   font-size: 13.5px;
@@ -2682,7 +2687,7 @@ main {
   padding: 10px 18px;
   color: var(--color-red);
   background: var(--color-red-wash);
-  border-color: #f0dcd8;
+  border-color: var(--line-open);
 }
 .btn-danger:hover,
 .btn-outline-danger:hover {
@@ -2721,7 +2726,7 @@ main {
   padding: 4px 11px;
   border-radius: var(--radius-pill);
   background: var(--color-red-wash);
-  border: 1px solid #f0dcd8;
+  border: 1px solid var(--line-open);
   color: var(--color-red);
   font-family: var(--font-body);
   font-size: 12.5px;
@@ -2950,7 +2955,7 @@ main {
 .rail-attention-row.active {
   background: var(--color-red-wash);
   color: var(--color-red-deep);
-  border-color: #f0dcd8;
+  border-color: var(--line-open);
 }
 .rail-attention-count {
   font-size: 12px;
@@ -2994,7 +2999,7 @@ main {
   padding: 0 8px;
   border: none;
   background: none;
-  border-radius: var(--radius-10, 10px);
+  border-radius: var(--radius-10);
   font-family: var(--font-body);
   font-size: 14px;
   color: var(--text-primary);
@@ -3014,7 +3019,7 @@ main {
 .rail-checklist-record {
   height: 34px;
   border: 1px solid var(--line-control);
-  border-radius: var(--radius-10, 10px);
+  border-radius: var(--radius-10);
   background: var(--surface-paper);
   font-family: var(--font-body);
   font-size: 13.5px;
@@ -3158,7 +3163,7 @@ main {
   color: var(--text-meta);
 }
 
-/* Segmented switch — 2–3 short options. Track #f8f2e4/#e6ddc9, radius 12, pad 3;
+/* Segmented switch — 2–3 short options. Track var(--surface-tablehead)/var(--line-structure), radius 12, pad 3;
  * segment radius 9, pad 7; selected raised paper + 600. */
 .segmented {
   display: inline-flex;
@@ -3240,7 +3245,7 @@ main {
 .radio-row.selected,
 .radio-row[aria-checked="true"] {
   background: var(--color-red-wash);
-  border-color: #f0dcd8;
+  border-color: var(--line-open);
 }
 .radio-dot {
   width: 16px;
@@ -3362,12 +3367,12 @@ main {
 }
 
 .role-select {
-  margin-left: 10px;
-  padding: 8px;
-  border-radius: var(--border-radius-sm);
-  border: 1px solid var(--color-node-border);
-  background-color: var(--color-surface);
-  font-size: 1em;
+  margin-left: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-12);
+  border: 1px solid var(--line-control);
+  background-color: var(--surface-paper);
+  font-size: var(--font-size-base);
 }
 
 .role-select:focus {
@@ -3387,7 +3392,7 @@ main {
 .sidebar {
   width: 300px;
   background-color: var(--color-surface);
-  border-right: 1px solid var(--color-node-border);
+  border-right: 1px solid var(--line-structure);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -3425,10 +3430,10 @@ main {
 }
 
 .welcome-message h2 {
-  font-family: var(--font-heading);
-  margin-bottom: 20px;
-  font-size: 1.8em;
-  color: var(--color-secondary);
+  font-family: var(--font-display);
+  margin-bottom: var(--space-5);
+  font-size: var(--font-size-2xl);
+  color: var(--text-primary);
 }
 
 /* --- Forms --- */
@@ -3651,7 +3656,7 @@ main {
   box-shadow: var(--shadow-focus);
 }
 
-/* Alias chip (Components §Inputs) — neutral pill: bg #f8f2e4, border #e6ddc9,
+/* Alias chip (Components §Inputs) — neutral pill: bg var(--surface-tablehead), border var(--line-structure),
  * 13.5px, removable. NOT red — red is action/lineage. */
 .aliases-input-container .alias-tag {
   background: var(--surface-tablehead);
@@ -3959,7 +3964,7 @@ main {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--color-node-border);
+  border: 1px solid var(--line-control);
   background-color: var(--color-surface);
   box-shadow: 0 2px 8px var(--color-shadow);
   transition: transform 0.2s ease;
@@ -4047,18 +4052,17 @@ main {
   font-weight: 500;
 }
 
+/* §06 row states: Rest → Hover (red wash) → Open (red wash + name 700 red-deep).
+   No lift and no red shadow on a cream row (§05 "no lift", §03 red-tinted shadows
+   belong to red objects). */
 .data-list li:hover {
-  background-color: var(--color-primary-light);
-  border-color: rgba(178, 34, 34, 0.1);
-  transform: translateX(4px);
+  background-color: var(--color-red-wash);
 }
 
 .data-list li.active {
-  background-color: var(--color-primary);
-  color: var(--color-surface);
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(178, 34, 34, 0.2);
-  transform: scale(1.02);
+  background-color: var(--color-red-wash);
+  color: var(--color-red-deep);
+  font-weight: 700;
 }
 
 /* Search Input Refined */
@@ -4070,7 +4074,7 @@ main {
 .unified-search-input {
   width: 100%;
   padding: 8px 36px 8px 16px;
-  border: 2px solid var(--color-node-border);
+  border: 1px solid var(--line-control);
   border-radius: 9999px;
   background-color: var(--color-surface);
   font-family: var(--font-body);
@@ -4436,7 +4440,7 @@ main {
   box-sizing: border-box;
   font-size: 12px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
 }
 .records-name {
   flex: 1;
@@ -4523,6 +4527,19 @@ main {
 .records-row {
   text-decoration: none;
   color: inherit;
+}
+/* A row may be a real <button> (Households). Reset the control chrome only —
+   never the row's own border-bottom, background or states, so both tables keep
+   one row treatment (§06 Rest → Hover → Open → Focus). */
+button.records-row {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
 }
 /* The reader's stand-in for "+ Add person" (a5). */
 .records-reader-note {
@@ -4698,7 +4715,7 @@ main {
   padding: 6px 14px;
   border-radius: var(--radius-pill);
   background: var(--color-red);
-  color: #fffdf9;
+  color: var(--surface-paper);
   font-size: 13px;
   font-weight: 600;
 }
@@ -4798,7 +4815,7 @@ main {
   justify-content: center;
   font-size: 11px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
 }
 .add-anchor-name {
   flex: 1;
@@ -4836,7 +4853,7 @@ main {
   max-width: 640px;
 }
 .dup-eyebrow {
-  color: var(--color-amber-text, #8a5300);
+  color: var(--chip-invited-fg);
 }
 .dup-compare {
   display: flex;
@@ -5061,7 +5078,7 @@ main {
 .hh-filter-chip.active {
   background: var(--color-red-wash);
   color: var(--color-red-deep);
-  border-color: #f0dcd8;
+  border-color: var(--line-open);
 }
 .hh-col-gen {
   width: 52px;
@@ -5096,7 +5113,7 @@ main {
   justify-content: center;
   font-size: 20px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
   overflow: hidden;
   background: var(--surface-quiet);
 }
@@ -5194,7 +5211,7 @@ main {
   justify-content: center;
   font-size: 12px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
 }
 .hh-child-name {
   flex: 1;
@@ -5428,7 +5445,7 @@ main {
   justify-content: center;
   font-size: 12px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
 }
 .cmdk-glyph {
   width: 34px;
@@ -5765,7 +5782,7 @@ main {
   justify-content: center;
   font-size: 15px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
   flex-shrink: 0;
   box-sizing: border-box;
   overflow: hidden;
@@ -5836,7 +5853,7 @@ main {
   justify-content: center;
   font-size: 30px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
   flex-shrink: 0;
   box-sizing: border-box;
   overflow: hidden;
@@ -5903,7 +5920,7 @@ main {
 }
 .urec-head h1 {
   font-family: var(--font-display);
-  font-size: var(--fs-30, 30px);
+  font-size: var(--fs-30);
   font-weight: 400;
   margin: 0;
   color: var(--text-primary);
@@ -5984,7 +6001,7 @@ main {
   justify-content: center;
   font-size: 17px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -6061,7 +6078,7 @@ main {
   justify-content: center;
   font-size: 15px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
   flex-shrink: 0;
 }
 .account-tree-body {
@@ -6144,8 +6161,8 @@ main {
   flex-direction: column;
   gap: 2px;
   padding: 14px 16px;
-  background: var(--surface-tablehead, #f8f2e4);
-  border-radius: var(--radius-14, 14px);
+  background: var(--surface-tablehead);
+  border-radius: var(--radius-14);
 }
 .invite-tree-name {
   font-size: 16.5px;
@@ -6161,8 +6178,8 @@ main {
   flex-direction: column;
   gap: 3px;
   padding: 16px;
-  background: var(--surface-tablehead, #f8f2e4);
-  border-radius: var(--radius-18, 18px);
+  background: var(--surface-tablehead);
+  border-radius: var(--radius-18);
   text-align: left;
 }
 .invite-record-eyebrow {
@@ -6185,7 +6202,7 @@ main {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--text-prose, #6b6455);
+  color: var(--text-prose);
 }
 /* Step 1 offered-record block (Spec 04 g3): 56px portrait ring left, the name
  * stack right, the "Daughter/Son of …" parents line beneath. The eyebrow sits
@@ -6209,7 +6226,7 @@ main {
   justify-content: center;
   font-size: 19px;
   font-weight: 600;
-  color: #fffdf9;
+  color: var(--surface-paper);
   box-shadow: 0 0 0 2px var(--surface-paper);
 }
 .invite-record-stack {
@@ -6221,7 +6238,7 @@ main {
 .invite-record-parents {
   font-size: 13px;
   line-height: 1.5;
-  color: var(--text-prose, #6b6455);
+  color: var(--text-prose);
 }
 .invite-record-parent {
   color: var(--color-red);
@@ -6290,7 +6307,7 @@ main {
   font-size: 14px;
   color: var(--color-red-deep);
   background: var(--color-red-wash);
-  border: 1px solid #f0dcd8;
+  border: 1px solid var(--line-open);
   border-radius: var(--radius-12);
   padding: 11px 14px;
   margin: 0;
