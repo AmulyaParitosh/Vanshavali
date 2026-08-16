@@ -185,14 +185,66 @@ All seven batches reviewed. Fixed (`820202c`, `f88abb1`):
 - Colour roles on `/about` and `/user/suggestions` (marigold headings/badges,
   green links/badges).
 
-**Deferred, and why:** `Person.sex` is **required** by the domain type, so the
-account page still defaults it when creating your record — making it optional is a
-data-model change across repositories, validators and every consumer, not a
-styling fix. Also still open: the People page on the legacy `.edit-screen` shell;
-~830 lines of dead CSS; `ToastSystem`'s CSS-in-JS + duplicate `.confirm-dialog`;
-the landing page's hand-rolled buttons, off-grid spacing and two red primaries;
-`/about`'s 140-line `<style jsx>` block; focus traps for the four dialogs and the
-⌘K panel; `EventsEditor`/`CustomFieldsEditor` inputs lacking labels.
+**Deferred at the time** — most of this was cleared in round 2 (see below). What
+remains open is listed under "Still open" at the end.
+
+### Round 2 — completed
+
+Every finding from batches F and G triaged and either applied or deferred with a
+reason. Commits: `9cbd386`, `96dfe6a`, `29052cd`, `66ccd6f`, `785aab4`, `d009c45`.
+
+**Broken things found by reviewing, not by using the app:**
+
+- `/auth/reset-password` rendered `.login-content` — a class with **no rule
+  anywhere**, so the card never existed. Rebuilt on the `.login-card` structure
+  its sibling `/reset` already used.
+- The public landing page displayed the **art-direction brief** to visitors ("an
+  elder with grandchildren, warm interior"). The photo slots hold layout now.
+- `.no-image-placeholder` also had **no CSS**; the missing-photo state was
+  unstyled text reading "No Image". It states _no photograph_ in the absent ink.
+- The People list fetched **placehold.co** per person without a photo — an
+  external request that sent names off-site, broke offline, and rendered gendered
+  `H`/`W` letters. Now the local tint+initials tile; the dead chain
+  (`getPersonPlaceholderUrl`, `stringToColor`, `PLACEHOLDER_IMAGE_URL`) is gone.
+  **No external image reference remains in `src/`.**
+- The four guards/dialogs declared `aria-modal` and implemented none of it. One
+  shared `useModalFocus` hook now traps and restores focus; verified in-browser.
+
+**Also:** two filled-red primaries on landing → one · five inputs with no
+accessible name · seven components missing `'use client'` · unsanctioned glyphs
+(`✎ ≟ ⌖`) removed · the suggestions filter's filled-red active state → red wash ·
+`SegmentedControl` made a real radiogroup (roving tabindex + arrows) ·
+`PersonForm`'s `<select>` → `SegmentedControl` · `.cmdk-group` composes
+`.eyebrow` · duplicate `.invite-note` resolved · the alias field's box-in-a-box
+(and the file's last `!important`) · dead tree-picker CSS deleted.
+
+### Final metrics
+
+|                           | before  | after |
+| ------------------------- | ------- | ----- |
+| raw hex outside `:root`   | 92      | 42    |
+| `!important`              | 1       | 0     |
+| undefined-token fallbacks | 3       | 0     |
+| external image references | 1 chain | 0     |
+| unsanctioned glyphs       | 3       | 0     |
+| unit tests                | 207     | 207 ✓ |
+
+### Lessons worth keeping
+
+1. **When a container's background changes role, re-check its descendants.**
+   Round 1 turned a filled-red row into the red wash; its child rules — written
+   for a red background — then painted near-white text on cream. Round 2 caught it.
+2. **A finding is a hypothesis until the spec agrees.** The access eyebrow's
+   "What he/she may do" is _required_ by Spec 07 a10; the reviewer read §08.8 as
+   banning it. The e2e encoding a10 was the tiebreaker. Reverted.
+3. **Fixing a11y can break selectors.** Associating labels made "Field Name"
+   match `getByLabel("Name")`. The fix was better copy ("Detail" / "What it says"
+   / "What happened"), not a weaker test.
+4. **Verify the environment before believing a failure.** A run of 7 failures was
+   a corrupted seed — Meera's editor membership wiped by an interrupted
+   remove-access test — not the code. Restoring it took the same specs to 31/1.
+   Equally: never probe or screenshot while a suite is running; both share one
+   dev server and one database, and the result is a transient mid-test state.
 
 ### Baseline (measured before round 1)
 
@@ -202,3 +254,29 @@ the landing page's hand-rolled buttons, off-grid spacing and two red primaries;
   `--color-surface` ×12, `--color-neutral-*` ×11, `--border-radius-*` ×4,
   `--font-heading` ×4, `--header-height` ×3, `--shadow-strong` ×1.
 - Raw hex in TSX: `LoginScreen.tsx`, `user/suggestions/page.tsx`.
+
+## Still open (rebuild work, not token swaps)
+
+Each of these is a real finding that needs more than a swap, so it is tracked
+rather than half-done:
+
+- **`Person.sex` is required by the domain type**, so the account page still
+  defaults it when creating your record. Making it optional touches repositories,
+  validators and every consumer — a data-model decision, not a styling fix.
+- **The People page still runs the legacy `.edit-screen` split shell** instead of
+  `RecordsScreen` + `RecordsTable`, so it shares no header band, search row or row
+  states with Members/Households. (Members is arguably the one list of everyone;
+  retiring the route is a product call.)
+- **`ToastSystem` is CSS-in-JS** with a duplicate `.confirm-dialog` that three
+  call sites still use; it should move to `globals.css` and to
+  `ConsequenceDialog`.
+- **`/about` carries a 140-line `<style jsx>` block** (banned by §00.4), still on
+  legacy aliases.
+- **The landing band grid is off the 4px scale** (~33 declarations) and its
+  eyebrows are Hind 600 at `.16em` rather than the `.eyebrow` object.
+- **~700 lines of dead CSS remain** after the tree-picker block was removed —
+  each rule needs verifying against `src/` before deletion.
+- **The ⌘K panel still has no focus trap** (the four dialogs now do); it needs the
+  Escape handler moved off the input and onto the panel.
+- **Off-ladder type and off-scale spacing** persist in the un-rebuilt legacy
+  islands (`.admin-*`, `.profile-*`, `.search-item*`), which use `em`/`rem` sizing.
