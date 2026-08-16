@@ -13,19 +13,19 @@ import type { Suggestion, SuggestionStatus } from "../../../types/suggestion";
 const STATUS_CONFIG: Record<SuggestionStatus, { label: string; color: string; bgColor: string }> = {
   unread: {
     label: "Unread",
-    color: "var(--color-primary-500)",
-    bgColor: "var(--color-primary-50)",
+    color: "var(--color-red-deep)",
+    bgColor: "var(--color-red-wash)",
   },
-  read: { label: "Read", color: "var(--color-accent-500)", bgColor: "#e8f5ec" },
+  read: { label: "Read", color: "var(--text-strong)", bgColor: "var(--surface-quiet)" },
   prioritized: {
     label: "Prioritized",
-    color: "var(--color-secondary-500)",
-    bgColor: "#fff5e0",
+    color: "var(--chip-invited-fg)",
+    bgColor: "var(--chip-invited-bg)",
   },
   archived: {
     label: "Archived",
-    color: "var(--color-neutral-600)",
-    bgColor: "var(--color-neutral-100)",
+    color: "var(--text-meta)",
+    bgColor: "var(--surface-tablehead)",
   },
 };
 

@@ -152,14 +152,14 @@ export default function AboutPage() {
           right: 30%;
           height: 2px;
           background: var(--color-primary);
-          box-shadow: 0 4px 0 var(--color-secondary);
+          box-shadow: 0 4px 0 var(--line-structure);
         }
         .about-section {
           margin-bottom: 40px;
         }
         .about-section h3 {
           font-family: var(--font-heading);
-          color: var(--color-secondary);
+          color: var(--text-primary);
           border-bottom: 2px solid var(--color-primary);
           padding-bottom: 8px;
           margin-bottom: 20px;
@@ -208,18 +208,21 @@ export default function AboutPage() {
           gap: 20px;
         }
         .developer-connections a {
-          color: var(--color-accent);
+          color: var(--color-red);
           text-decoration: none;
           font-weight: 600;
           font-size: 1em;
-          padding: 5px 10px;
-          border: 1px solid var(--color-accent);
-          border-radius: var(--border-radius-sm);
-          transition: all 0.2s;
+          padding: var(--space-1) var(--space-2);
+          border: 1px solid var(--line-control);
+          border-radius: var(--radius-pill);
+          transition:
+            background-color var(--dur-panel) var(--ease),
+            border-color var(--dur-panel) var(--ease);
         }
         .developer-connections a:hover {
-          background-color: var(--color-accent);
-          color: white;
+          background-color: var(--color-red-wash);
+          border-color: var(--color-red);
+          color: var(--color-red-deep);
         }
         .suggestion-form {
           display: flex;
