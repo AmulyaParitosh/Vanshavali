@@ -4605,12 +4605,6 @@ button.records-row {
   color: var(--text-primary);
   margin: 4px 0 0;
 }
-.invite-note {
-  margin: 0;
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--text-prose);
-}
 .invite-note em {
   font-style: normal;
   font-weight: 600;
@@ -5370,12 +5364,7 @@ button.records-row {
   overflow-y: auto;
 }
 .cmdk-group {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-meta);
-  padding: 6px 20px;
+  padding: 6px var(--space-5);
 }
 .cmdk-sep {
   height: 1px;

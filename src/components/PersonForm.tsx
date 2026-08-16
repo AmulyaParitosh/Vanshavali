@@ -5,6 +5,7 @@ import type { Person, DraftPerson, PersonEvent } from "../types/person";
 import { useToast } from "./ToastSystem";
 import ImageUpload from "./ImageUpload";
 import AliasesInput from "./AliasesInput";
+import SegmentedControl from "./SegmentedControl";
 import EventsEditor from "./EventsEditor";
 import CustomFieldsEditor from "./CustomFieldsEditor";
 
@@ -155,17 +156,17 @@ const PersonForm: React.FC<PersonFormProps> = ({
           <div className="form-row">
             <div className="form-col">
               <div className="form-group">
-                <label htmlFor="person-sex">Sex</label>
-                <select
-                  id="person-sex"
-                  name="sex"
+                <span className="field-label">Sex</span>
+                <SegmentedControl
+                  ariaLabel="Sex"
+                  options={[
+                    { value: "M", label: "Male" },
+                    { value: "F", label: "Female" },
+                  ]}
                   value={formData.sex || "M"}
-                  onChange={handleChange}
+                  onChange={(sex) => setFormData({ ...formData, sex })}
                   disabled={!canEdit}
-                >
-                  <option value="M">Male</option>
-                  <option value="F">Female</option>
-                </select>
+                />
               </div>
             </div>
             <div className="form-col">

@@ -372,7 +372,7 @@ export default function CommandSearch({ picker }: CommandSearchProps = {}) {
         {picker ? (
           <div className="cmdk-results">
             {shownPicker.length > 0 && (
-              <div className="cmdk-group">People · {pickerHits.length}</div>
+              <div className="eyebrow cmdk-group">People · {pickerHits.length}</div>
             )}
             {shownPicker.map((p, i) => (
               <button
@@ -406,7 +406,7 @@ export default function CommandSearch({ picker }: CommandSearchProps = {}) {
         ) : (
           <div className="cmdk-results">
             {peopleHits.length > 0 && (
-              <div className="cmdk-group">People · {peopleHits.length}</div>
+              <div className="eyebrow cmdk-group">People · {peopleHits.length}</div>
             )}
             {shownPeople.map((p, i) => (
               <button
@@ -439,7 +439,7 @@ export default function CommandSearch({ picker }: CommandSearchProps = {}) {
             {placeHits.length > 0 && (
               <>
                 <div className="cmdk-sep" />
-                <div className="cmdk-group">Places · {placeHits.length}</div>
+                <div className="eyebrow cmdk-group">Places · {placeHits.length}</div>
               </>
             )}
             {shownPlaces.map((pl) => (
@@ -464,7 +464,7 @@ export default function CommandSearch({ picker }: CommandSearchProps = {}) {
             {eventHits.length > 0 && (
               <>
                 <div className="cmdk-sep" />
-                <div className="cmdk-group">Events · {eventHits.length}</div>
+                <div className="eyebrow cmdk-group">Events · {eventHits.length}</div>
               </>
             )}
             {shownEvents.map((e, i) => {
