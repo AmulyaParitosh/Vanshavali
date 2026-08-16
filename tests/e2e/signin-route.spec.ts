@@ -42,9 +42,13 @@ test.describe("Sign in — the route, signed out (Spec 02 SI-B)", () => {
     await page.locator("#auth-email").fill(SEED.email);
     await page.locator("#auth-password").fill(SEED.password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    // Lands somewhere on our origin, never the off-site URL.
+    // Lands somewhere on our origin, never the off-site URL. Asserted against the
+    // configured baseURL rather than a hard-coded port, so the check is about the
+    // origin — not about which port the dev server happens to be on.
     await expect(page).not.toHaveURL(/evil\.example\.com/);
-    await expect(page).toHaveURL(/^http:\/\/localhost:3000\//, { timeout: 20_000 });
+    await expect
+      .poll(() => new URL(page.url()).origin, { timeout: 20_000 })
+      .toBe(new URL(test.info().project.use.baseURL!).origin);
   });
 
   test("/reset asks for one email, then confirms the link was sent", async ({ page }) => {
