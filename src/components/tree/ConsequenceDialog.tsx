@@ -1,5 +1,6 @@
 "use client";
 
+import { useModalFocus } from "../../hooks/useModalFocus";
 import React, { useState } from "react";
 
 /**
@@ -51,9 +52,12 @@ const ConsequenceDialog: React.FC<ConsequenceDialogProps> = ({
   // (non-name-gated) dialogs cancel on scrim-click.
   const dismissible = !needsName;
 
+  const dialogRef = useModalFocus<HTMLDivElement>(onCancel);
+
   return (
     <div className="dialog-scrim" onClick={dismissible ? onCancel : undefined}>
       <div
+        ref={dialogRef}
         className={`dialog${danger ? " dialog--danger" : ""}`}
         role="dialog"
         aria-modal="true"

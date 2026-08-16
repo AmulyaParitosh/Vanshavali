@@ -1158,71 +1158,6 @@ main {
   gap: 8px;
 }
 
-/* --- Tree picker (authenticated landing, > 1 tree) --- */
-.trees-landing {
-  padding: var(--space-10);
-  max-width: 1200px;
-  margin: 0 auto;
-  height: 100%;
-  overflow-y: auto;
-  box-sizing: border-box;
-}
-.trees-landing-header {
-  margin-bottom: var(--space-8);
-}
-.trees-landing-header .eyebrow {
-  display: block;
-  margin-bottom: var(--space-2);
-}
-.trees-landing-header h1 {
-  font-family: var(--font-display);
-  font-size: var(--font-size-3xl);
-  font-weight: 400;
-  margin: 0;
-  color: var(--text-primary);
-}
-.trees-section {
-  margin-bottom: var(--space-10);
-}
-.trees-section > .eyebrow {
-  display: block;
-  margin: 0 0 var(--space-4);
-}
-.tree-grid {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-4);
-}
-.tree-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  align-items: flex-start;
-  padding: var(--space-5);
-  background: var(--surface-paper);
-  border: 1px solid var(--line-structure);
-  border-radius: var(--radius-16);
-  color: inherit;
-  text-decoration: none;
-  transition:
-    border-color var(--duration-base) var(--ease-standard),
-    box-shadow var(--duration-base) var(--ease-standard);
-}
-.tree-card:hover {
-  border-color: var(--color-red);
-  box-shadow: var(--shadow-pill);
-}
-.tree-card h3 {
-  font-family: var(--font-display);
-  font-size: var(--font-size-xl);
-  font-weight: 400;
-  margin: 0;
-  color: var(--text-primary);
-}
-
 /* --- Onboarding: welcome modal (§ Welcome-in) + empty tree banner --- */
 .welcome-scrim {
   position: fixed;
@@ -3653,8 +3588,8 @@ main {
   background: var(--surface-paper);
   cursor: text;
   transition:
-    border-color var(--duration-base) var(--ease-standard),
-    box-shadow var(--duration-base) var(--ease-standard);
+    border-color var(--dur-panel) var(--ease),
+    box-shadow var(--dur-panel) var(--ease);
 }
 .aliases-input-container:focus-within {
   border-color: var(--color-red);
@@ -3677,13 +3612,18 @@ main {
   gap: 6px; /* Prevent overlap between text and remove button */
 }
 
+.form-group .aliases-input-container .alias-input-field,
 .aliases-input-container .alias-input-field {
   flex-grow: 1;
-  padding: 5px;
-  font-family: var(--font-body);
-  font-size: 1em;
+  width: auto;
   min-width: 80px;
-  width: auto !important; /* Override .form-group input[type="text"] 100% width */
+  padding: var(--space-1);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
 }
 
 /* --- Image Upload Styles --- */
@@ -3792,29 +3732,6 @@ main {
   flex-grow: 1; /* Let it grow but not force wrap */
 }
 
-.btn-icon-add {
-  background-color: var(--surface-paper);
-  color: var(--text-rail);
-  border: 1px solid var(--line-control);
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-circle);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.5em;
-  line-height: 1;
-  cursor: pointer;
-  transition:
-    border-color var(--dur-panel) var(--ease),
-    color var(--dur-panel) var(--ease);
-}
-
-.btn-icon-add:hover {
-  border-color: var(--color-red);
-  color: var(--color-red);
-}
-
 .profile-header-info {
   flex-grow: 1;
 }
@@ -3897,16 +3814,10 @@ main {
     gap: var(--space-4);
   }
 
-  /* Tree picker grid → single column on phones. */
-  .tree-grid {
-    grid-template-columns: 1fr !important;
-  }
-
   /* Big-padded pages get tighter. */
   .profile-page-container,
   .members-page,
-  .settings-page,
-  .trees-landing {
+  .settings-page {
     padding: var(--space-4);
   }
 }

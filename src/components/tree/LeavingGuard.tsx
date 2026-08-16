@@ -1,3 +1,6 @@
+"use client";
+
+import { useModalFocus } from "../../hooks/useModalFocus";
 import React from "react";
 import { summarizeChanges, countInWords, type FieldChange } from "../../lib/writeState";
 
@@ -29,9 +32,12 @@ const LeavingGuard: React.FC<LeavingGuardProps> = ({
   const { shown, moreCount, count } = summarizeChanges(changes);
   const things = count === 1 ? "thing" : "things";
 
+  const dialogRef = useModalFocus<HTMLDivElement>(onKeepEditing);
+
   return (
     <div className="dialog-scrim" onClick={onKeepEditing}>
       <div
+        ref={dialogRef}
         className="dialog"
         role="dialog"
         aria-modal="true"

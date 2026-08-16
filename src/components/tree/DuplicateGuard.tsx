@@ -1,3 +1,6 @@
+"use client";
+
+import { useModalFocus } from "../../hooks/useModalFocus";
 import React from "react";
 import type { Person } from "../../types/person";
 import { portraitTint, personInitials } from "../../utils/portrait";
@@ -30,9 +33,12 @@ const DuplicateGuard: React.FC<DuplicateGuardProps> = ({
   busy = false,
 }) => {
   const name = existing.name.official_name;
+  const dialogRef = useModalFocus<HTMLDivElement>(onBack);
+
   return (
     <div className="dialog-scrim">
       <div
+        ref={dialogRef}
         className="dialog dialog--wide"
         role="dialog"
         aria-modal="true"

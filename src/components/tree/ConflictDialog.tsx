@@ -1,5 +1,6 @@
 "use client";
 
+import { useModalFocus } from "../../hooks/useModalFocus";
 import React, { useState } from "react";
 import type { FieldConflict } from "../../lib/writeState";
 import SegmentedControl from "../SegmentedControl";
@@ -40,9 +41,12 @@ const ConflictDialog: React.FC<ConflictDialogProps> = ({
     Object.fromEntries(conflicts.map((c) => [c.field, "mine"]))
   );
 
+  const dialogRef = useModalFocus<HTMLDivElement>(onKeepEditing);
+
   return (
     <div className="dialog-scrim">
       <div
+        ref={dialogRef}
         className="dialog"
         role="dialog"
         aria-modal="true"

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import type { Person, DraftPerson, PersonEvent } from "../types/person";
+import type { DraftPerson, PersonEvent } from "../types/person";
 import { useToast } from "./ToastSystem";
 import ImageUpload from "./ImageUpload";
 import AliasesInput from "./AliasesInput";
@@ -67,17 +67,6 @@ const PersonForm: React.FC<PersonFormProps> = ({
       }
     });
     setFormData({ ...formData, custom_fields: newCustomFields });
-  };
-
-  const handleAddCustomField = () => {
-    const newKey = `new_field_${Date.now()}`;
-    setFormData({
-      ...formData,
-      custom_fields: {
-        ...(formData.custom_fields || {}),
-        [newKey]: "",
-      },
-    });
   };
 
   // Success/error toasts fire in the page-level handlers (which await the
@@ -186,22 +175,6 @@ const PersonForm: React.FC<PersonFormProps> = ({
         <div className="section-card">
           <div className="section-header-row">
             <h3>Life Events</h3>
-            {canEdit && (
-              <button
-                type="button"
-                className="btn-icon-add"
-                onClick={() =>
-                  setFormData({
-                    ...formData,
-                    events: [...(formData.events || []), { type: "", date: "", place: "" }],
-                  })
-                }
-                aria-label="Add life event"
-                title="Add event"
-              >
-                +
-              </button>
-            )}
           </div>
           <EventsEditor
             events={formData.events || []}
@@ -214,17 +187,6 @@ const PersonForm: React.FC<PersonFormProps> = ({
         <div className="section-card">
           <div className="section-header-row">
             <h3>Additional Information</h3>
-            {canEdit && (
-              <button
-                type="button"
-                className="btn-icon-add"
-                onClick={handleAddCustomField}
-                aria-label="Add custom field"
-                title="Add field"
-              >
-                +
-              </button>
-            )}
           </div>
           <CustomFieldsEditor
             customFields={Object.entries(formData.custom_fields || {}).map(([key, value]) => ({
