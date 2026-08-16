@@ -151,32 +151,36 @@ export default function SuggestionsPage() {
           margin-bottom: 30px;
           flex-wrap: wrap;
           padding-bottom: 20px;
-          border-bottom: 1px solid #eee;
+          border-bottom: 1px solid var(--line-inner);
         }
         .filter-btn {
           padding: 8px 16px;
-          border-radius: 20px;
-          border: 1px solid var(--color-node-border);
-          background: var(--color-surface);
+          border-radius: var(--radius-pill);
+          border: 1px solid var(--line-control);
+          background: var(--surface-paper);
           cursor: pointer;
           font-family: var(--font-body);
           font-weight: 500;
-          transition: all 0.2s;
-          color: var(--color-text);
+          transition:
+            background var(--dur-panel) var(--ease),
+            border-color var(--dur-panel) var(--ease),
+            color var(--dur-panel) var(--ease);
+          color: var(--text-rail);
         }
         .filter-btn:hover {
-          background: var(--color-bg);
-          border-color: var(--color-primary);
+          border-color: var(--color-red);
+          color: var(--color-red);
         }
         .filter-btn.active {
-          background: var(--color-primary);
-          color: white;
-          border-color: var(--color-primary);
+          background: var(--color-red-wash);
+          color: var(--color-red-deep);
+          border-color: var(--line-open);
+          font-weight: 600;
         }
         .no-data {
           text-align: center;
           padding: 40px;
-          color: #666;
+          color: var(--text-prose);
           font-style: italic;
         }
         .suggestions-list {
@@ -185,8 +189,8 @@ export default function SuggestionsPage() {
           gap: 20px;
         }
         .suggestion-card {
-          background: var(--color-surface);
-          border: 1px solid var(--color-node-border);
+          background: var(--surface-paper);
+          border: 1px solid var(--line-structure);
           border-radius: var(--border-radius-md);
           padding: 20px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -201,7 +205,7 @@ export default function SuggestionsPage() {
           justify-content: space-between;
           align-items: flex-start;
           margin-bottom: 15px;
-          border-bottom: 1px solid #eee;
+          border-bottom: 1px solid var(--line-inner);
           padding-bottom: 10px;
         }
         .user-info {
@@ -210,7 +214,7 @@ export default function SuggestionsPage() {
         }
         .user-name {
           font-weight: bold;
-          color: var(--color-primary);
+          color: var(--color-red);
           font-size: 1.1em;
         }
         .meta-info {
@@ -221,7 +225,7 @@ export default function SuggestionsPage() {
         }
         .timestamp {
           font-size: 0.8em;
-          color: #888;
+          color: var(--text-meta);
         }
         .status-badge {
           padding: 4px 12px;
@@ -233,10 +237,10 @@ export default function SuggestionsPage() {
         }
         .message-content {
           padding: 15px;
-          background: var(--color-bg);
+          background: var(--surface-canvas);
           border-radius: var(--border-radius-sm);
           line-height: 1.6;
-          color: var(--color-text);
+          color: var(--text-primary);
           margin-bottom: 15px;
           white-space: pre-wrap;
         }
@@ -245,24 +249,24 @@ export default function SuggestionsPage() {
           align-items: center;
           gap: 10px;
           padding-top: 10px;
-          border-top: 1px solid #eee;
+          border-top: 1px solid var(--line-inner);
         }
         .card-actions label {
           font-size: 0.85em;
           font-weight: 600;
-          color: #555;
+          color: var(--text-strong);
         }
         .status-select {
           padding: 6px 12px;
           border-radius: var(--border-radius-sm);
-          border: 1px solid #ddd;
-          background: var(--color-surface);
+          border: 1px solid var(--line-control);
+          background: var(--surface-paper);
           font-family: var(--font-body);
           cursor: pointer;
           outline: none;
         }
         .status-select:focus {
-          border-color: var(--color-primary);
+          border-color: var(--color-red);
         }
       `}</style>
     </div>

@@ -6803,3 +6803,19 @@ button.records-row {
   align-self: flex-start;
   margin-top: var(--space-1);
 }
+
+/* The missing-photograph state on the upload tile — words, in the absent ink. */
+.no-photograph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: var(--font-size-xs);
+  text-align: center;
+}
+/* The overlay actions read as words, not glyphs (§04 allows only ❀ and ✧). */
+.btn-icon-overlay {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}

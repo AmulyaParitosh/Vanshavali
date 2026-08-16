@@ -79,9 +79,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         {imageUrl ? (
           <img src={imageUrl} alt="Upload preview" />
         ) : (
-          <div className="no-image-placeholder">
-            <span>No Image</span>
-          </div>
+          <span className="absent no-photograph">no photograph</span>
         )}
 
         {canEdit && (
@@ -92,9 +90,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               onClick={handleFileSelect}
               disabled={isUploading}
               aria-label={isUploading ? "Uploading image" : "Upload image"}
-              title={isUploading ? "Uploading..." : "Upload image"}
+              title={isUploading ? "Uploading…" : "Upload a photograph"}
             >
-              ✎
+              Change
             </button>
             {imageUrl && (
               <button

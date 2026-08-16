@@ -450,7 +450,7 @@ export default function CommandSearch({ picker }: CommandSearchProps = {}) {
                 onClick={() => openPlace(pl.place)}
               >
                 <span className="cmdk-glyph" aria-hidden="true">
-                  ⌖
+                  ✧
                 </span>
                 <span className="cmdk-row-body">
                   <span className="cmdk-row-primary">

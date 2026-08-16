@@ -64,7 +64,7 @@ const DuplicateGuard: React.FC<DuplicateGuardProps> = ({
             </div>
           </div>
           <span className="dup-sep" aria-hidden="true">
-            ≟
+            ✧
           </span>
           <div className="dup-card dup-card--new">
             <span className="dup-card-label">What you just typed</span>
