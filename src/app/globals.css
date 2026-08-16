@@ -6399,12 +6399,17 @@ button.records-row {
   color: var(--color-red);
 }
 .landing-nav-start {
-  font-size: 15px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: #fff;
-  background: var(--color-red);
-  padding: 10px 20px;
+  color: var(--text-rail);
+  background: var(--surface-paper);
+  border: 1px solid var(--line-control);
+  padding: var(--space-2) var(--space-5);
   border-radius: var(--radius-pill);
+}
+.landing-nav-start:hover {
+  border-color: var(--color-red);
+  color: var(--color-red);
 }
 .landing-nav-start:hover {
   background: var(--color-red-deep);
@@ -6474,11 +6479,11 @@ button.records-row {
 .landing-cta {
   font-size: 17px;
   font-weight: 600;
-  color: #fff;
+  color: var(--surface-paper);
   background: var(--color-red);
-  padding: 16px 34px;
+  padding: var(--space-4) var(--space-8);
   border-radius: var(--radius-pill);
-  box-shadow: 0 2px 8px rgba(178, 34, 34, 0.22);
+  box-shadow: var(--shadow-primary);
 }
 .landing-cta:hover {
   background: var(--color-red-deep);

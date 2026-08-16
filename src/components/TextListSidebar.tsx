@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useMemo, useState } from "react";
 import UnifiedSearch from "./UnifiedSearch";
 import { Sidebar, SidebarContent } from "./Sidebar";

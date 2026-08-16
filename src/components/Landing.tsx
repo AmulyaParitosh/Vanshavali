@@ -96,16 +96,12 @@ export default function Landing() {
             handwriting, and nobody else can add to it.
           </p>
         </div>
-        <div className="landing-photo landing-photo--problem" aria-hidden="true">
-          <span>an elder with grandchildren, warm interior</span>
-        </div>
+        <div className="landing-photo landing-photo--problem" aria-hidden="true"></div>
       </section>
 
       {/* What you get */}
       <section className="landing-band landing-get">
-        <div className="landing-photo landing-photo--product" aria-hidden="true">
-          <span>the Tree route with a record panel open</span>
-        </div>
+        <div className="landing-photo landing-photo--product" aria-hidden="true"></div>
         <div className="landing-band-text">
           <span className="landing-band-eyebrow">What you get</span>
           <h2 className="landing-band-h2">A tree anyone in the family can add to.</h2>
@@ -185,9 +181,7 @@ export default function Landing() {
               hung in the hall where the next generation will see it.
             </p>
           </div>
-          <div className="landing-photo landing-how-portrait" aria-hidden="true">
-            <span>a face from the wall</span>
-          </div>
+          <div className="landing-photo landing-how-portrait" aria-hidden="true"></div>
         </div>
       </section>
 

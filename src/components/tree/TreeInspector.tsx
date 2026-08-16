@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Person, DraftPerson } from "../../types/person";
 import type { Family } from "../../types/family";

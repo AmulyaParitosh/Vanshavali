@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef, useMemo } from "react";
 import { useToast } from "./ToastSystem";
 import { useAppContext } from "../context/AppContext";

@@ -91,8 +91,12 @@ export default function AboutPage() {
           <section className="about-section suggestions-section">
             <h3>Suggestions & Feature Requests</h3>
             <form onSubmit={handleSubmitSuggestion} className="suggestion-form">
+              <label className="field-label" htmlFor="suggestion-body">
+                Your suggestion
+              </label>
               <textarea
-                placeholder="Share your thoughts, suggestions or request new features..."
+                id="suggestion-body"
+                placeholder="Share your thoughts, suggestions or request new features…"
                 value={suggestion}
                 onChange={(e) => setSuggestion(e.target.value)}
                 required

@@ -32,8 +32,12 @@ const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
       {customFields.map((field, index) => (
         <div key={index} className="item">
           <div className="form-group">
-            <label>Field Name</label>
+            <label className="field-label" htmlFor={`field-key-${index}`}>
+              Detail
+            </label>
             <input
+              id={`field-key-${index}`}
+              className="input"
               type="text"
               value={field.key}
               onChange={(e) => handleFieldChange(index, e.target.value, field.value)}
@@ -42,8 +46,12 @@ const CustomFieldsEditor: React.FC<CustomFieldsEditorProps> = ({
             />
           </div>
           <div className="form-group">
-            <label>Field Value</label>
+            <label className="field-label" htmlFor={`field-value-${index}`}>
+              What it says
+            </label>
             <input
+              id={`field-value-${index}`}
+              className="input"
               type="text"
               value={field.value}
               onChange={(e) => handleFieldChange(index, field.key, e.target.value)}

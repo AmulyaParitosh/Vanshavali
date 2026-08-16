@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "../../../context/AppContext";
 import { useToast } from "../../../components/ToastSystem";
@@ -21,21 +22,22 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirm) {
-      toast.error("Passwords don't match.");
+      setFormError("Those passwords don't match.");
       return;
     }
+    setFormError(null);
     setIsSubmitting(true);
     try {
       await authProvider.updatePassword(password);
       toast.success("Password updated. You're signed in.");
       router.replace("/");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Couldn't update the password";
-      toast.error(message);
+      setFormError(error instanceof Error ? error.message : "Couldn't update the password");
     } finally {
       setIsSubmitting(false);
     }
@@ -43,22 +45,30 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="login-screen">
-      <div className="login-content">
-        <h2>Choose a new password</h2>
-        <p>Enter a new password for your account to finish the reset.</p>
+      <Link href="/" className="login-wordmark" aria-label="Vanshavali home">
+        <span className="login-wordmark-latin">Vanshavali</span>
+        <span className="login-wordmark-deva">वंशावली</span>
+      </Link>
 
-        <form className="auth-form" onSubmit={submit}>
+      <div className="login-card">
+        <div className="login-head">
+          <h1 className="login-title">Choose a new password</h1>
+          <p className="login-lede">Enter a new password for your account to finish the reset.</p>
+        </div>
+
+        <form className="auth-form" onSubmit={submit} noValidate>
           <div className="form-group">
             <label htmlFor="new-password">New password</label>
             <input
               id="new-password"
               type="password"
+              className="input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
               required
               minLength={8}
-              disabled={isSubmitting}
+              readOnly={isSubmitting}
             />
           </div>
           <div className="form-group">
@@ -66,20 +76,37 @@ export default function ResetPasswordPage() {
             <input
               id="confirm-password"
               type="password"
+              className={`input${formError ? " is-error" : ""}`}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               autoComplete="new-password"
               required
               minLength={8}
-              disabled={isSubmitting}
+              readOnly={isSubmitting}
+              aria-invalid={!!formError}
             />
           </div>
 
-          <button type="submit" className="btn btn-primary auth-submit" disabled={isSubmitting}>
-            {isSubmitting ? "Working..." : "Set new password"}
+          {formError && (
+            <p className="auth-form-error" role="alert">
+              {formError}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-primary auth-submit"
+            disabled={!password || !confirm || isSubmitting}
+          >
+            {isSubmitting && <span className="auth-spinner" aria-hidden="true" />}
+            {isSubmitting ? "Working…" : "Set new password"}
           </button>
         </form>
       </div>
+
+      <p className="login-privacy">
+        <Link href="/signin">Back to sign in</Link>
+      </p>
     </div>
   );
 }

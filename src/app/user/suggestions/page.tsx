@@ -122,8 +122,11 @@ export default function SuggestionsPage() {
                 <div className="message-content">{s.message}</div>
 
                 <div className="card-actions">
-                  <label>Change Status:</label>
+                  <label className="field-label" htmlFor={`status-${s.id}`}>
+                    Change Status
+                  </label>
                   <select
+                    id={`status-${s.id}`}
                     value={s.status}
                     onChange={(e) => handleStatusChange(s.id, e.target.value as SuggestionStatus)}
                     className="status-select"

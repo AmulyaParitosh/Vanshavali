@@ -26,8 +26,12 @@ const EventsEditor: React.FC<EventsEditorProps> = ({ events, onChange, canEdit }
       {events.map((event, index) => (
         <div key={index} className="item">
           <div className="form-group">
-            <label>Event Type</label>
+            <label className="field-label" htmlFor={`event-type-${index}`}>
+              What happened
+            </label>
             <input
+              id={`event-type-${index}`}
+              className="input"
               type="text"
               value={event.type}
               onChange={(e) => handleEventChange(index, "type", e.target.value)}
@@ -36,8 +40,12 @@ const EventsEditor: React.FC<EventsEditorProps> = ({ events, onChange, canEdit }
             />
           </div>
           <div className="form-group">
-            <label>Date</label>
+            <label className="field-label" htmlFor={`event-date-${index}`}>
+              Date
+            </label>
             <input
+              id={`event-date-${index}`}
+              className="input"
               type="text"
               value={event.date || ""}
               onChange={(e) => handleEventChange(index, "date", e.target.value)}
@@ -46,8 +54,12 @@ const EventsEditor: React.FC<EventsEditorProps> = ({ events, onChange, canEdit }
             />
           </div>
           <div className="form-group">
-            <label>Place</label>
+            <label className="field-label" htmlFor={`event-place-${index}`}>
+              Place
+            </label>
             <input
+              id={`event-place-${index}`}
+              className="input"
               type="text"
               value={event.place || ""}
               onChange={(e) => handleEventChange(index, "place", e.target.value)}
