@@ -7,6 +7,13 @@ import { orthogonalLinkPath } from "./orthogonalLink";
 export type LaidOutNode = d3.HierarchyPointNode<GraphNode>;
 export type LaidOutLink = d3.HierarchyPointLink<GraphNode>;
 
+/**
+ * Which way the generations run. `vertical` is the classic top-down tree;
+ * `horizontal` lays the same hierarchy left→right, which reads far better once a
+ * tree is deep, because each generation gets a column instead of a wider band.
+ */
+export type TreeOrientation = "vertical" | "horizontal";
+
 export interface TreeLayout {
   root: LaidOutNode | null;
   nodes: LaidOutNode[];
@@ -21,12 +28,31 @@ export interface TreeLayout {
  * generation at `n × NODE_HEIGHT`; we shift the whole tree down by GEN_TOP so the
  * rows land at exactly `24 + n × 222`.
  */
-export function computeTreeLayout(data: GraphNode): {
+export function computeTreeLayout(
+  data: GraphNode,
+  orientation: TreeOrientation = "vertical"
+): {
   root: LaidOutNode;
   nodes: LaidOutNode[];
   links: LaidOutLink[];
 } {
   const hierarchy = d3.hierarchy<GraphNode>(data);
+
+  if (orientation === "horizontal") {
+    // d3.tree always spreads siblings along x and depth along y; lay it out with
+    // the pitches swapped, then transpose so depth runs across the canvas.
+    const root = d3.tree<GraphNode>().nodeSize([TREE_CONFIG.ROW_PITCH, TREE_CONFIG.COL_PITCH])(
+      hierarchy
+    );
+    root.each((n) => {
+      const acrossSiblings = n.x;
+      const byDepth = n.y;
+      n.x = byDepth + TREE_CONFIG.GEN_LEFT;
+      n.y = acrossSiblings;
+    });
+    return { root, nodes: root.descendants(), links: root.links() };
+  }
+
   const root = d3.tree<GraphNode>().nodeSize([TREE_CONFIG.NODE_WIDTH, TREE_CONFIG.NODE_HEIGHT])(
     hierarchy
   );
@@ -40,12 +66,15 @@ export function computeTreeLayout(data: GraphNode): {
  * React wrapper over computeTreeLayout: memoizes the layout and supplies the
  * SVG path generator for the parent→child edges.
  */
-export function useTreeLayout(data: GraphNode | null): TreeLayout {
+export function useTreeLayout(
+  data: GraphNode | null,
+  orientation: TreeOrientation = "vertical"
+): TreeLayout {
   return useMemo(() => {
     if (!data) {
       return { root: null, nodes: [], links: [], linkPath: () => null };
     }
-    const { root, nodes, links } = computeTreeLayout(data);
+    const { root, nodes, links } = computeTreeLayout(data, orientation);
     return {
       root,
       nodes,
@@ -53,5 +82,5 @@ export function useTreeLayout(data: GraphNode | null): TreeLayout {
       // Orthogonal thread from the parent pill's centre (Spec 05 g7), not a bezier.
       linkPath: (link: LaidOutLink) => orthogonalLinkPath(link.source, link.target),
     };
-  }, [data]);
+  }, [data, orientation]);
 }

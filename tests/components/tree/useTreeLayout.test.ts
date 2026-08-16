@@ -26,6 +26,31 @@ describe("computeTreeLayout — generation rhythm", () => {
     expect(y("g3")).toBe(24 + 3 * PITCH);
   });
 
+  it("horizontal: generations run across at 24 + n × 308, siblings stack down", () => {
+    const { nodes } = computeTreeLayout(chain, "horizontal");
+    const at = (id: string) => nodes.find((n) => n.data.id === id)!;
+    // Depth now drives x…
+    expect(at("g0").x).toBe(24);
+    expect(at("g1").x).toBe(24 + 308);
+    expect(at("g2").x).toBe(24 + 2 * 308);
+    expect(at("g3").x).toBe(24 + 3 * 308);
+    // …and a single chain stays on one row.
+    expect(new Set(nodes.map((n) => n.y)).size).toBe(1);
+  });
+
+  it("horizontal: siblings share a generation column and spread vertically", () => {
+    const family = {
+      id: "root",
+      children: [{ id: "a" }, { id: "b" }, { id: "c" }],
+    } as unknown as GraphNode;
+    const { nodes } = computeTreeLayout(family, "horizontal");
+    const kids = nodes.filter((n) => n.data.id !== "root");
+    // Same column…
+    expect(new Set(kids.map((n) => n.x))).toEqual(new Set([24 + 308]));
+    // …stacked, never overlapping.
+    expect(new Set(kids.map((n) => n.y)).size).toBe(3);
+  });
+
   it("keeps siblings on the same generation row", () => {
     const family = {
       id: "root",

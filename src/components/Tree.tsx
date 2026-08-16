@@ -9,11 +9,12 @@ import { TREE_CONFIG } from "../constants";
 import { bornInLine } from "../lib/generations";
 import { useAppContext } from "../context/AppContext";
 import { GraphManager } from "../lib/graph/GraphManager";
-import { useTreeLayout, type LaidOutNode } from "./tree/useTreeLayout";
+import { useTreeLayout, type LaidOutNode, type TreeOrientation } from "./tree/useTreeLayout";
 import { useTreeZoom } from "./tree/useTreeZoom";
 import HouseholdCard from "./tree/HouseholdCard";
 import { cardModel, cardHeight, type CardModel } from "./tree/cardModel";
-import { orthogonalLinkPath } from "./tree/orthogonalLink";
+import { orthogonalLinkPath, orthogonalLinkPathH } from "./tree/orthogonalLink";
+import SegmentedControl from "./SegmentedControl";
 import TreeLink from "./tree/TreeLink";
 import RecordInspectorDock from "./tree/RecordInspectorDock";
 import type { GenerationRow } from "./tree/GenerationRail";
@@ -45,6 +46,9 @@ function nodeHasAttention(data: GraphNode, a: Attention): boolean {
 function nodeHasPlace(data: GraphNode, place: string): boolean {
   return nodePersons(data).some((p) => (p.events ?? []).some((e) => e.place === place));
 }
+
+/** Where the chosen tree view is remembered across navigation and reload. */
+const ORIENTATION_KEY = "vanshavali:tree-orientation";
 
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -79,7 +83,29 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   const placeParam = searchParams.get("place");
   const [placeFilter, setPlaceFilter] = useState<string | null>(placeParam);
 
-  const layout = useTreeLayout(data);
+  // Which way the generations run. Remembered across reloads; hydrated after
+  // mount so the server render always starts from the classic top-down view.
+  const [orientation, setOrientation] = useState<TreeOrientation>("vertical");
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(ORIENTATION_KEY) === "horizontal") {
+        setOrientation("horizontal");
+      }
+    } catch {
+      /* storage unavailable — stay top-down */
+    }
+  }, []);
+  const chooseOrientation = (next: TreeOrientation) => {
+    setOrientation(next);
+    try {
+      window.localStorage.setItem(ORIENTATION_KEY, next);
+    } catch {
+      /* storage unavailable — the choice just won't persist */
+    }
+  };
+  const horizontal = orientation === "horizontal";
+
+  const layout = useTreeLayout(data, orientation);
   const people = treeData?.people ?? [];
   const families = treeData?.families ?? [];
   // Who was born into this line (red ring) vs married in (marigold) — the ring
@@ -123,8 +149,23 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
   // they scale and move with the tree. Each band tiles the full generation pitch.
   const bands = useMemo(() => {
     if (!layout.nodes.length) return [];
-    const { GEN_TOP, NODE_HEIGHT, CARD_ROW_H: rowH } = TREE_CONFIG;
+    const { GEN_TOP, NODE_HEIGHT, CARD_ROW_H: rowH, GEN_LEFT, COL_PITCH, CARD_WIDTH } = TREE_CONFIG;
     const depths = [...new Set(layout.nodes.map((n) => n.depth))].sort((a, b) => a - b);
+
+    if (horizontal) {
+      // Left→right: each generation is a vertical column instead of a stripe.
+      const ys = layout.nodes.map((n) => n.y);
+      const y = Math.min(...ys) - 2600;
+      const height = Math.max(...ys) - Math.min(...ys) + 5200;
+      return depths.map((d) => ({
+        depth: d,
+        x: GEN_LEFT + d * COL_PITCH - CARD_WIDTH / 2 - 28,
+        width: COL_PITCH,
+        y,
+        height,
+      }));
+    }
+
     const xs = layout.nodes.map((n) => n.x);
     const minX = Math.min(...xs);
     const maxX = Math.max(...xs);
@@ -137,7 +178,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
       y: GEN_TOP + d * NODE_HEIGHT - rowH - 24,
       height: NODE_HEIGHT,
     }));
-  }, [layout.nodes]);
+  }, [layout.nodes, horizontal]);
 
   // The trunk: the main patrilineal line inked heavier (a panjikar's main stroke,
   // branches thinning out). From the root, follow the eldest son who continues the
@@ -234,6 +275,26 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     if (personParam) setSelectedPersonId(personParam);
   }, [personParam]);
 
+  // Switching the view re-lays every node, so keep the reader where they were:
+  // re-centre on the open record (or their own household, or the root) at the
+  // current zoom, instead of leaving the old transform pointing at empty canvas.
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return undefined;
+    }
+    const raf = requestAnimationFrame(() => {
+      const anchor =
+        (selectedPersonId ? findContainingNode(layout.nodes, selectedPersonId) : null) ??
+        (viewerPersonId ? findContainingNode(layout.nodes, viewerPersonId) : null) ??
+        layout.root;
+      if (anchor) panTo(anchor.x, anchor.y);
+    });
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orientation]);
+
   // Pick up a place filter pushed onto the URL by search, even when the canvas
   // stays mounted (the ⌘K overlay pushes ?place= over the current canvas).
   useEffect(() => {
@@ -258,26 +319,45 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                     width={b.width}
                     height={b.height}
                   />
-                  <line className="gen-band-line" x1={b.x} y1={b.y} x2={b.x + b.width} y2={b.y} />
+                  {horizontal ? (
+                    <line
+                      className="gen-band-line"
+                      x1={b.x}
+                      y1={b.y}
+                      x2={b.x}
+                      y2={b.y + b.height}
+                    />
+                  ) : (
+                    <line className="gen-band-line" x1={b.x} y1={b.y} x2={b.x + b.width} y2={b.y} />
+                  )}
                 </g>
               ))}
             </g>
 
             <g className="links">
               {layout.links.map((link) => {
-                // Descent runs from the parent card's bottom edge to the child
-                // card's top edge (cards are top-aligned at y − CARD_ROW_H).
-                const s = {
-                  x: link.source.x,
-                  y: link.source.y - CARD_ROW_H + heightOf(link.source),
-                };
-                const t = { x: link.target.x, y: link.target.y - CARD_ROW_H };
+                // Descent runs edge-to-edge between the two cards: bottom→top in
+                // the top-down view, right→left in the left→right one (where the
+                // cards are centred on their row, so both anchor at node.y).
+                const s = horizontal
+                  ? { x: link.source.x + TREE_CONFIG.CARD_WIDTH / 2, y: link.source.y }
+                  : {
+                      x: link.source.x,
+                      y: link.source.y - CARD_ROW_H + heightOf(link.source),
+                    };
+                const t = horizontal
+                  ? { x: link.target.x - TREE_CONFIG.CARD_WIDTH / 2, y: link.target.y }
+                  : { x: link.target.x, y: link.target.y - CARD_ROW_H };
                 const key = `${link.source.data.id}-${link.target.data.id}`;
                 const onPath = nodeOnPath(link.source.data) && nodeOnPath(link.target.data);
                 return (
                   <TreeLink
                     key={key}
-                    d={orthogonalLinkPath(s, t, { corner: 10 })}
+                    d={
+                      horizontal
+                        ? orthogonalLinkPathH(s, t, { corner: 10 })
+                        : orthogonalLinkPath(s, t, { corner: 10 })
+                    }
                     trunk={trunkLinks.has(key)}
                     dim={!onPath}
                   />
@@ -290,8 +370,8 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                   className="tree-stub"
                   x1={layout.nodes[0].x}
                   y1={layout.nodes[0].y}
-                  x2={layout.nodes[0].x}
-                  y2={layout.nodes[0].y + 44}
+                  x2={layout.nodes[0].x + (horizontal ? 44 : 0)}
+                  y2={layout.nodes[0].y + (horizontal ? 0 : 44)}
                 />
               )}
             </g>
@@ -316,11 +396,11 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                     <foreignObject
                       className="hcard-fo"
                       x={-CARD_FO_W / 2}
-                      y={-CARD_ROW_H}
+                      y={horizontal ? -CARD_FO_H / 2 : -CARD_ROW_H}
                       width={CARD_FO_W}
                       height={CARD_FO_H}
                     >
-                      <div className="hcard-fo-inner">
+                      <div className={`hcard-fo-inner${horizontal ? " hcard-fo-inner--mid" : ""}`}>
                         <HouseholdCard
                           model={model}
                           selectedId={selectedPersonId}
@@ -337,6 +417,20 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
 
         {/* The "Jump to generation" list and the attention filter live in the
             rail now (Spec 05 g8 / a8), driven through the canvas bridge. */}
+
+        {/* View switcher — which way the generations run. Top-right of the canvas,
+            because it belongs to the drawing, not to the rail's navigation. */}
+        <div className="tree-viewswitch">
+          <SegmentedControl
+            ariaLabel="Tree view"
+            options={[
+              { value: "vertical", label: "Top-down" },
+              { value: "horizontal", label: "Left-right" },
+            ]}
+            value={orientation}
+            onChange={chooseOrientation}
+          />
+        </div>
 
         {/* Place filter chip (Spec 09 a6) — a place dims the rest of the canvas
             rather than opening a page; dismissible, restoring full opacity. */}

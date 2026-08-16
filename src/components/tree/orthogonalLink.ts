@@ -41,3 +41,39 @@ export function orthogonalLinkPath(
     `L ${tx},${ty}`,
   ].join(" ");
 }
+
+/**
+ * The same joinery transposed for the left→right view: out of the parent card's
+ * right edge, across to a shared bus column, down/up to the child's row, then in
+ * to the child's left edge. Mirrors {@link orthogonalLinkPath} exactly, so both
+ * orientations draw the same kind of elbow.
+ */
+export function orthogonalLinkPathH(
+  source: LinkPoint,
+  target: LinkPoint,
+  opts?: { run?: number; corner?: number }
+): string {
+  const run = opts?.run ?? 40;
+  const r = opts?.corner ?? 10;
+  const { x: sx, y: sy } = source;
+  const { x: tx, y: ty } = target;
+  const busX = sx + run;
+
+  // Straight across when the child shares the parent's row, or the bus would sit
+  // at/past the child (degenerate elbow).
+  if (Math.abs(ty - sy) < 0.5 || busX >= tx) {
+    return `M ${sx},${sy} L ${tx},${ty}`;
+  }
+
+  const dy = ty > sy ? 1 : -1;
+  const cr = Math.min(r, Math.abs(ty - sy) / 2, (busX - sx) / 2, tx - busX);
+
+  return [
+    `M ${sx},${sy}`,
+    `L ${busX - cr},${sy}`,
+    `Q ${busX},${sy} ${busX},${sy + dy * cr}`,
+    `L ${busX},${ty - dy * cr}`,
+    `Q ${busX},${ty} ${busX + cr},${ty}`,
+    `L ${tx},${ty}`,
+  ].join(" ");
+}

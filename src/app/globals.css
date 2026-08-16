@@ -1525,6 +1525,21 @@ main {
   gap: 6px;
   pointer-events: none;
 }
+/* View switcher — top-right of the canvas, on its own paper chip so it reads as
+   canvas furniture rather than part of the drawing. */
+.tree-viewswitch {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 5;
+  background: var(--surface-paper);
+  border-radius: var(--radius-12);
+  box-shadow: 0 3px 12px rgba(60, 44, 20, 0.12);
+}
+.tree-viewswitch .segmented-option {
+  padding: 7px 14px;
+  font-size: 13.5px;
+}
 .legend-item {
   display: flex;
   align-items: center;
@@ -1947,6 +1962,11 @@ main {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+}
+/* Left→right view: cards sit centred on their row, so siblings of different
+   heights (a single person vs a couple) line up on one axis. */
+.hcard-fo-inner--mid {
+  align-items: center;
 }
 .hcard {
   position: relative;
