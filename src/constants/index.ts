@@ -56,8 +56,8 @@ export const TREE_CONFIG = {
   // The left→right view: generations run across the canvas and siblings stack
   // down, so the pitches swap roles — ROW_PITCH separates siblings vertically
   // (a couple's card is 88 tall) and COL_PITCH is the generation step across.
-  ROW_PITCH: 128,
-  COL_PITCH: 308,
+  ROW_PITCH: 112,
+  COL_PITCH: 352,
   GEN_LEFT: 24,
   // Zoom (Tree Canvas spec): continuous 0.18–1.4×, step 1.25×, Fit pads 40px. The
   // level of detail swaps at 0.72 (full → compact) and 0.42 (compact → glyph).

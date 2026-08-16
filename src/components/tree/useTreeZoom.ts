@@ -92,7 +92,11 @@ export function useTreeZoom({ svgRef, gRef, initialCenter }: UseTreeZoomOptions)
       const zoom = zoomRef.current;
       if (!svgEl || !gEl || !zoom) return;
       const rect = svgEl.getBoundingClientRect();
-      const box = gEl.getBBox();
+      // Frame the households, not the decoration: the generation bands are drawn
+      // thousands of px wider than the tree so they run off-canvas, and measuring
+      // them would zoom the whole tree down to nothing.
+      const nodesEl = gEl.querySelector<SVGGElement>("g.nodes");
+      const box = (nodesEl ?? gEl).getBBox();
       if (box.width === 0 || box.height === 0) return;
       const scale = Math.max(
         MIN,
