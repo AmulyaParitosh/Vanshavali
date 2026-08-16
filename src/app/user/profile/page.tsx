@@ -1,13 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAppContext } from "../../../context/AppContext";
 import { usePersonPicker } from "../../../providers/PersonPickerProvider";
 import { useToast } from "../../../components/ToastSystem";
 import ConsequenceDialog from "../../../components/tree/ConsequenceDialog";
 import { portraitTint, personInitials } from "../../../utils/portrait";
+import { isOwner } from "../../../lib/access";
 import type { Person } from "../../../types/person";
+import type { TreeCardSummary, TreeRole } from "../../../types/tree";
+
+/** The same access chips the May column uses — one vocabulary for permission. */
+const ROLE_CHIP: Record<TreeRole, { cls: string; label: string }> = {
+  owner: { cls: "chip--keeper", label: "Keeper" },
+  editor: { cls: "chip--write", label: "Write" },
+  viewer: { cls: "chip--read", label: "Read" },
+};
 
 /**
  * Your account (§8) — sign-in details, the person you're linked to in the
@@ -23,18 +32,25 @@ export default function AccountPage() {
   const {
     user,
     profile,
-    myTrees,
     currentTreeId,
     treeData,
     authProvider,
     dataProvider,
     onSave,
     refreshProfile,
+    refreshNonce,
   } = useAppContext();
   const toast = useToast();
   const { openPicker } = usePersonPicker();
   const [leavingTree, setLeavingTree] = useState<{ id: string; name: string } | null>(null);
   const [leaving, setLeaving] = useState(false);
+  // The card summaries carry the viewer's real role per tree; myTrees only splits
+  // owned/member, which can't tell a writer from a reader.
+  const [treeCards, setTreeCards] = useState<TreeCardSummary[] | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    void dataProvider.listMyTreeCards().then(setTreeCards);
+  }, [user, dataProvider, refreshNonce]);
 
   if (!user) {
     return (
@@ -47,13 +63,8 @@ export default function AccountPage() {
   const name = profile?.name || user.displayName || "You";
   const email = profile?.email || user.email || "";
   const linkedPerson = treeData?.people.find((p) => p.userId === user.uid) ?? null;
-  const allTrees = myTrees
-    ? [
-        ...myTrees.owned.map((t) => ({ tree: t, role: "owner" as const })),
-        ...myTrees.member.map((t) => ({ tree: t, role: "member" as const })),
-      ]
-    : [];
-  const currentTree = allTrees.find((t) => t.tree.id === currentTreeId)?.tree;
+  const allTrees = treeCards ?? [];
+  const currentTree = allTrees.find((t) => t.id === currentTreeId);
 
   const handleChangePassword = async () => {
     if (!email) return;
@@ -96,6 +107,8 @@ export default function AccountPage() {
     const person: Person = {
       id,
       name: { official_name: name },
+      // TODO(design-audit): the record shouldn't assume a sex — making
+      // Person.sex optional is a data-model change, tracked in DESIGN-AUDIT.md.
       sex: "M",
       events: [],
       custom_fields: {},
@@ -214,7 +227,7 @@ export default function AccountPage() {
           <p className="settings-note">You&apos;re not in any tree yet.</p>
         ) : (
           <div className="account-trees">
-            {allTrees.map(({ tree, role }) => (
+            {allTrees.map((tree) => (
               <div key={tree.id} className="account-tree-row">
                 <Link href={`/tree/${tree.id}`} className="account-tree-link">
                   <span className="account-tree-dot" style={{ background: portraitTint(tree.id) }}>
@@ -224,11 +237,13 @@ export default function AccountPage() {
                     <span className="account-tree-name">{tree.name}</span>
                   </div>
                 </Link>
-                <span className={`chip ${role === "owner" ? "chip--keeper" : "chip--read"}`}>
-                  {role === "owner" ? "Keeper" : "Member"}
+                {/* The same three access chips as the May column — a writer is
+                    never labelled read-only (§08.5). */}
+                <span className={`chip ${ROLE_CHIP[tree.role].cls}`}>
+                  {ROLE_CHIP[tree.role].label}
                 </span>
-                {/* You can leave a tree you're a member of, but not one you keep (a6). */}
-                {role === "member" && (
+                {/* You can leave a tree you're in, but not one you keep (a6). */}
+                {!isOwner(tree.role) && (
                   <button
                     type="button"
                     className="account-tree-leave"

@@ -3310,10 +3310,8 @@ main {
 }
 
 .btn-icon-remove:hover {
-  background-color: var(--color-danger);
-  color: var(--color-neutral-0);
-  transform: scale(1.1);
-  box-shadow: 0 2px 6px rgba(178, 34, 34, 0.3);
+  background-color: var(--color-red-wash);
+  color: var(--color-red-deep);
 }
 
 .btn-icon-remove.small {
@@ -4002,13 +4000,13 @@ main {
 .search-item-family-images .search-item-image.husband {
   left: 0;
   z-index: 2;
-  border-color: var(--color-primary);
+  border-color: var(--line-control);
 }
 
 .search-item-family-images .search-item-image.wife {
-  left: 32px; /* Reduced overlap (was 20px) */
+  left: 44px; /* seated side by side — two overlapping circles read as one damaged object (§07) */
   z-index: 1;
-  border-color: var(--color-secondary);
+  border-color: var(--line-control);
 }
 
 .search-item-content {
@@ -4032,7 +4030,8 @@ main {
 }
 
 .data-list li.active .search-item-name {
-  color: var(--color-surface);
+  color: var(--color-red-deep);
+  font-weight: 700;
 }
 
 .search-item-subtext {
@@ -4045,7 +4044,7 @@ main {
 }
 
 .data-list li.active .search-item-subtext {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-meta);
 }
 
 /* Sidebar List Item Refinements */
@@ -4094,9 +4093,9 @@ main {
 
 .unified-search-input:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--color-red);
   box-shadow:
-    0 0 0 4px rgba(178, 34, 34, 0.15),
+    var(--shadow-focus),
     inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -4271,8 +4270,7 @@ main {
 }
 
 .header-user-avatar:hover {
-  transform: scale(1.05);
-  border-color: var(--color-primary);
+  border-color: var(--color-red);
 }
 
 .header-user-placeholder {
