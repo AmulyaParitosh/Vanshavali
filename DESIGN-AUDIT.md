@@ -141,6 +141,31 @@ worktrees branch from stale `main`, which would audit code that no longer exists
 | F     | Auth, landing, account pages | LoginScreen, Landing, signin, reset-password, reset, invite/[id], about, trees, trees/new, user/\*                                                  | round 2 |
 | G     | Shared inputs + search       | AliasesInput, CustomFieldsEditor, EventsEditor, ImageUpload, PersonForm, SegmentedControl, SearchItem, UnifiedSearch, CommandSearch, CreateTreeForm | round 2 |
 
+### Round 1 outcome
+
+Fixed (commits `785db4a`, `e43e745`): Households row states (an inline style beat
+every selector), six buttons missing their `.btn` base, marigold text on cream,
+the people-list's red structural border + filled-red active row with a lift,
+gendered partner-picker titles, two blank/em-dash absences, the toast's emoji and
+marigold gradient, green outside its one role — and **"ornament is a setting" made
+real**: `data-heritage` now exists on `<html>` and all four surfaces answer to it
+(it previously drove only the paper wash).
+
+Measured: raw hex outside `:root` **92 → 44**; undefined-token fallbacks (which
+always rendered a literal) **3 → 0**; `--color-node-border` (a red alias used for
+structure) **4 → 0**. New tokens: `--line-open`, `--joinery-trunk`,
+`--joinery-branch`, `--ornament-banner`.
+
+**One finding rejected on review:** the access eyebrow's "What he/she may do" is
+_required_ by Spec 07 a10 (gendered **by the record**), which §08.8 permits
+because sex is recorded. The reviewer read §08.8 as banning it; the e2e test
+encoding a10 is the tiebreaker. Reverted.
+
+**Deferred (large, tracked):** the People page still runs the legacy `.edit-screen`
+shell instead of `RecordsScreen`; ~830 lines of dead CSS to sweep; `ToastSystem`'s
+CSS-in-JS and its duplicate `.confirm-dialog`; the landing page's off-grid spacing;
+the four dialogs' missing focus trap.
+
 ### Baseline (measured before round 1)
 
 - 92 raw-hex occurrences outside `:root` in `globals.css`; top: `#fffdf9` ×17,
