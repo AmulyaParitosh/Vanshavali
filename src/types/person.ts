@@ -17,7 +17,16 @@ export interface Person {
   custom_fields?: Record<string, string>;
   root?: boolean;
   image_url?: string;
+  /**
+   * A small copy of the same photograph, for the places that show a face at
+   * 32–72px: the canvas cards, the descent line, search results. Written by the
+   * upload alongside `image_url` (see `lib/images.ts`). Absent on records
+   * uploaded before it existed — read it as `image_thumb_url ?? image_url`.
+   */
+  image_thumb_url?: string;
   image_storage_path?: string;
+  /** Storage path of the thumbnail, so removing a photograph removes both. */
+  image_thumb_storage_path?: string;
   userId?: string;
   /**
    * Optimistic-lock version from the `people.version` column (not part of the

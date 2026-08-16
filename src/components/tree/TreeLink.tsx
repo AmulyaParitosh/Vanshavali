@@ -13,10 +13,10 @@ interface TreeLinkProps {
  * attribute is computed by the layout so this stays a thin presentational
  * component; `trunk` swaps in the heavier main-line stroke.
  */
-const TreeLink: React.FC<TreeLinkProps> = ({ d, trunk = false, dim = false }) => {
+const TreeLink = React.memo(function TreeLink({ d, trunk = false, dim = false }: TreeLinkProps) {
   if (!d) return null;
   const cls = ["link", trunk && "link--trunk", dim && "off-path"].filter(Boolean).join(" ");
   return <path className={cls} d={d} />;
-};
+});
 
 export default TreeLink;

@@ -1,5 +1,6 @@
 import type { Person } from "../types/person";
 import type { GraphManager } from "./graph/GraphManager";
+import type { PathStep } from "../types/graph";
 
 /**
  * Spec 07 — the record panel's "relation to the viewer" and its prose lineage,
@@ -40,7 +41,33 @@ export function describeRelation(
   gm: GraphManager
 ): string | null {
   if (viewerId === personId) return null;
-  const path = gm.findPath(viewerId, personId);
+  return nameFromPath(gm.findPath(viewerId, personId), gm);
+}
+
+/**
+ * Every person's relation to the viewer, from ONE walk of the graph.
+ *
+ * The naming rules are exactly `describeRelation`'s — they share `nameFromPath`
+ * — but the traversal is done once for the whole tree rather than once per
+ * person. That is the difference between a Members list that re-renders in
+ * milliseconds and one that takes a second and a half at two thousand people.
+ * The viewer maps to "you"; anyone unrelated maps to null.
+ */
+export function relationsFrom(viewerId: string, gm: GraphManager): Map<string, string | null> {
+  const out = new Map<string, string | null>();
+  out.set(viewerId, "you");
+  for (const [personId, path] of gm.pathsFrom(viewerId)) {
+    out.set(personId, nameFromPath(path, gm));
+  }
+  return out;
+}
+
+/**
+ * A kinship path read as a phrase. Common two- and three-step kinships collapse
+ * to a single word; anything else reads as a possessive chain, which is exactly
+ * how the spec renders "father's brother's wife".
+ */
+function nameFromPath(path: PathStep[] | null, gm: GraphManager): string | null {
   if (!path || path.length < 2) return null;
   const steps = path.slice(1); // drop the Start node
   const rels = steps.map((s) => s.relation);

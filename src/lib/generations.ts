@@ -22,23 +22,37 @@ export function generationMap(people: Person[], families: Family[]): Map<string,
   const gen = new Map<string, number>();
   const root = people.find((p) => p.root);
   if (!root) return gen;
+
+  // Index the households each person is a partner in, once. The walk used to
+  // scan every family for every person it reached, which is fine for a dozen
+  // people and quadratic for a thousand.
+  const byPartner = new Map<string, Family[]>();
+  for (const f of families) {
+    for (const id of [f.husband, f.wife]) {
+      if (!id) continue;
+      const list = byPartner.get(id);
+      if (list) list.push(f);
+      else byPartner.set(id, [f]);
+    }
+  }
+
   gen.set(root.id, 1);
+  // An array read by a moving head, not shift(): shift() re-indexes the queue on
+  // every step, which is the second quadratic factor.
   const queue = [root.id];
-  while (queue.length) {
-    const id = queue.shift()!;
+  for (let head = 0; head < queue.length; head++) {
+    const id = queue[head]!;
     const g = gen.get(id)!;
-    for (const f of families) {
-      if (f.husband === id || f.wife === id) {
-        const spouse = f.husband === id ? f.wife : f.husband;
-        if (spouse && !gen.has(spouse)) {
-          gen.set(spouse, g);
-          queue.push(spouse);
-        }
-        for (const c of f.children) {
-          if (!gen.has(c)) {
-            gen.set(c, g + 1);
-            queue.push(c);
-          }
+    for (const f of byPartner.get(id) ?? []) {
+      const spouse = f.husband === id ? f.wife : f.husband;
+      if (spouse && !gen.has(spouse)) {
+        gen.set(spouse, g);
+        queue.push(spouse);
+      }
+      for (const c of f.children) {
+        if (!gen.has(c)) {
+          gen.set(c, g + 1);
+          queue.push(c);
         }
       }
     }

@@ -1,12 +1,26 @@
 "use client";
 
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef } from "react";
 import { useToast } from "./ToastSystem";
 import { useAppContext } from "../context/AppContext";
+import { resizeForUpload } from "../lib/images";
+
+/** A Blob as a File, so the multipart upload keeps a filename and type. */
+function asFile(blob: Blob, name: string, type: string): File {
+  return blob instanceof File ? blob : new File([blob], name, { type: blob.type || type });
+}
+
+/** What one upload produces: the display copy and its thumbnail. */
+export interface UploadedImage {
+  url: string;
+  path: string;
+  thumbUrl: string;
+  thumbPath: string;
+}
 
 interface ImageUploadProps {
   imageUrl?: string;
-  onImageChange: (url: string, path: string) => void;
+  onImageChange: (image: UploadedImage) => void;
   onImageRemove: () => void;
   canEdit: boolean;
   storagePath?: string | undefined;
@@ -41,14 +55,23 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     }
 
     try {
-      // Upload the file using StorageProvider
-      const { url, fullPath } = await storageProvider.uploadImage(
-        file,
-        `${finalStoragePath}/${Date.now()}_${file.name}`
-      );
+      // Resize before uploading, not after: the original never leaves the
+      // device, so the upload is quick on a phone connection and every later
+      // read is small. Two copies — one for the record panel, one for the
+      // avatars (see lib/images.ts).
+      const { display, thumb } = await resizeForUpload(file);
+      const base = `${finalStoragePath}/${Date.now()}_${file.name}`;
+      const [full, small] = await Promise.all([
+        storageProvider.uploadImage(asFile(display, file.name, file.type), base),
+        storageProvider.uploadImage(asFile(thumb, `t_${file.name}`, file.type), `${base}.thumb`),
+      ]);
 
-      // Pass the new URL and the path to the parent component
-      onImageChange(url, fullPath);
+      onImageChange({
+        url: full.url,
+        path: full.fullPath,
+        thumbUrl: small.url,
+        thumbPath: small.fullPath,
+      });
       toast.success("Image uploaded successfully!");
       toast.dismiss(toastId);
     } catch (error: unknown) {

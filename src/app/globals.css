@@ -4373,6 +4373,13 @@ button.descent-person:hover .descent-name {
   text-transform: uppercase;
   color: var(--text-meta);
 }
+/* The rows themselves. A long list renders only the rows on screen and reserves
+ * the rest of its height with two spacers (see RecordsTable), so this stays a
+ * plain block container — anything that changed row layout here would have to be
+ * taught to the windowing maths too. */
+.records-body {
+  display: block;
+}
 /* Row — 60px (40px avatar + 10px top/bottom). The whole row opens the record;
  * only the May cell stops propagation. Hover + open take the red wash; open also
  * bolds the name to 700 #8b0000. Focus is an inset red halo (keyboard nav). */

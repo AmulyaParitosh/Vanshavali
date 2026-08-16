@@ -4,7 +4,12 @@ import { portraitTint, personInitials } from "../../utils/portrait";
 
 interface HouseholdCardProps {
   model: CardModel;
-  /** The id of the person whose record is open, if it is one of this card's rows. */
+  /**
+   * The open record's id **only when it belongs to this card**, null otherwise.
+   * Scoped that way on purpose: were it the global selection, every card on the
+   * canvas would see a changed prop each time someone was selected, and the memo
+   * below would never hit. Scoped, exactly two cards re-render.
+   */
   selectedId: string | null;
   onSelect: (personId: string) => void;
 }
@@ -19,7 +24,11 @@ interface HouseholdCardProps {
  * so names are auto-escaped. Each row is its own hit target: clicking a row opens
  * that person's record; the card takes the selected treatment when either row is.
  */
-const HouseholdCard: React.FC<HouseholdCardProps> = ({ model, selectedId, onSelect }) => {
+const HouseholdCard = React.memo(function HouseholdCard({
+  model,
+  selectedId,
+  onSelect,
+}: HouseholdCardProps) {
   const selected = model.rows.some((r) => r.person.id === selectedId);
   return (
     <div className={`hcard hcard--${model.spine}${selected ? " is-selected" : ""}`}>
@@ -35,7 +44,7 @@ const HouseholdCard: React.FC<HouseholdCardProps> = ({ model, selectedId, onSele
       ))}
     </div>
   );
-};
+});
 
 const CardRowView: React.FC<{
   row: CardRow;
@@ -76,8 +85,19 @@ const CardRowView: React.FC<{
       onKeyDown={onKeyDown}
     >
       <span className={`hcard-portrait hcard-portrait--${row.ring}`}>
-        {person.image_url ? (
-          <img src={person.image_url} alt="" />
+        {person.image_thumb_url || person.image_url ? (
+          // The stored thumbnail, lazily fetched and decoded off-thread: a canvas
+          // of forty households must not pull forty full-size photographs before
+          // it is usable (see lib/images.ts).
+          <img
+            src={person.image_thumb_url ?? person.image_url}
+            alt=""
+            width={32}
+            height={32}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+          />
         ) : (
           <span className="hcard-portrait-tint" style={{ background: portraitTint(person.id) }}>
             {personInitials(person.name.official_name)}

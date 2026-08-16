@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppContext } from "../../../../context/AppContext";
 import type { TreeData } from "../../../../context/AppContext";
 import Loading from "../../../../components/Loading";
@@ -77,14 +77,7 @@ export default function HouseholdsPage() {
   const gens = useMemo(() => generationMap(people, families), [people, families]);
   const born = useMemo(() => bornInLine(people, families), [people, families]);
   const personById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
-  const nameOf = (id: string | undefined) =>
-    (id && personById.get(id)?.name.official_name) || undefined;
 
-  // Marriage-year value for sorting; undated households sort last (Spec 08 g).
-  const marriageValue = (f: Family): number => {
-    const y = f.marriage?.date?.match(/\d{4}/)?.[0];
-    return y ? Number(y) : Number.POSITIVE_INFINITY;
-  };
   const genOf = (f: Family): number =>
     [f.husband, f.wife].map((id) => (id ? gens.get(id) : undefined)).find(Boolean) ?? 99;
 
@@ -98,23 +91,60 @@ export default function HouseholdsPage() {
     [families, gens]
   );
 
+  /**
+   * Everything a row displays, worked out once per household rather than once
+   * per render. Filtering and sorting below hand back these same objects, so a
+   * keystroke changes which rows are on screen without changing any row's
+   * identity — which is what lets the memoised row skip re-rendering.
+   */
+  const models = useMemo<HouseholdRowModel[]>(
+    () =>
+      families.map((f) => {
+        const { husbandId, wifeId } = inferHusbandWife(f);
+        const ids = [husbandId, wifeId].filter((id): id is string => !!id);
+        const partners = ids.map((id) => ({
+          id,
+          initials: personInitials(personById.get(id)?.name.official_name ?? "?"),
+          born: born.has(id),
+        }));
+        const names = ids.map((id) => personById.get(id)?.name.official_name).filter(Boolean);
+        const gen = ids.map((id) => gens.get(id)).find(Boolean) ?? 99;
+        const year = f.marriage?.date?.match(/\d{4}/)?.[0];
+        return {
+          family: f,
+          partners,
+          title: names.join(" & ") || "Unnamed household",
+          married: f.marriage?.date
+            ? [f.marriage.date, f.marriage.place].filter(Boolean).join(", ")
+            : "",
+          children: f.children.length
+            ? `${f.children.length} ${f.children.length === 1 ? "child" : "children"}`
+            : "",
+          gen,
+          genLabel: roman(gen === 99 ? undefined : gen),
+          marriedAt: year ? Number(year) : Number.POSITIVE_INFINITY,
+          undated: !f.marriage?.date?.trim(),
+          search: ids
+            .map((id) => personById.get(id))
+            .filter(Boolean)
+            .flatMap((p) => [p!.name.official_name, ...(p!.name.aliases ?? [])])
+            .join(" ")
+            .toLowerCase(),
+        };
+      }),
+    [families, personById, born, gens]
+  );
+
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = q
-      ? families.filter((f) => {
-          const names = [f.husband, f.wife]
-            .map((id) => (id ? personById.get(id) : undefined))
-            .filter(Boolean)
-            .flatMap((p) => [p!.name.official_name, ...(p!.name.aliases ?? [])]);
-          return names.join(" ").toLowerCase().includes(q);
-        })
-      : families;
-    if (genFilter !== null) list = list.filter((f) => genOf(f) === genFilter);
-    if (undatedOnly) list = list.filter((f) => !f.marriage?.date?.trim());
+    let list = q ? models.filter((m) => m.search.includes(q)) : models;
+    if (genFilter !== null) list = list.filter((m) => m.gen === genFilter);
+    if (undatedOnly) list = list.filter((m) => m.undated);
     // Generation, then marriage date — never arbitrary insertion order.
-    return [...list].sort((a, b) => genOf(a) - genOf(b) || marriageValue(a) - marriageValue(b));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [families, query, personById, gens, genFilter, undatedOnly]);
+    return [...list].sort((a, b) => a.gen - b.gen || a.marriedAt - b.marriedAt);
+  }, [models, query, genFilter, undatedOnly]);
+
+  const openHousehold = useCallback((family: Family) => setSelected(family), []);
 
   if (!data) return <Loading />;
 
@@ -239,61 +269,27 @@ export default function HouseholdsPage() {
       }
       inspectorOpen={!!selected}
     >
-      <RecordsTable columns={HOUSEHOLD_COLUMNS}>
-        {rows.length === 0 ? (
+      <RecordsTable
+        columns={HOUSEHOLD_COLUMNS}
+        items={rows}
+        ariaLabel="Households"
+        rowKey={(m) => m.family.id}
+        empty={
           <div className="records-empty">
             {families.length === 0
               ? "No marriages recorded yet"
               : `No household matches “${query}”.`}
           </div>
-        ) : (
-          rows.map((f) => {
-            const { husbandId, wifeId } = inferHusbandWife(f);
-            const partners = [husbandId, wifeId].filter(Boolean) as string[];
-            const gen = partners.map((id) => gens.get(id)).find(Boolean);
-            return (
-              <button
-                key={f.id}
-                type="button"
-                aria-current={selected?.id === f.id}
-                className={`records-row${selected?.id === f.id ? " open" : ""}`}
-                onClick={() => setSelected(f)}
-              >
-                <span className="couple-glyph">
-                  {partners.map((id) => (
-                    <span
-                      key={id}
-                      className="records-avatar"
-                      style={{
-                        background: portraitTint(id),
-                        border: `2.5px solid ${born.has(id) ? "var(--ring-born)" : "var(--ring-married)"}`,
-                      }}
-                    >
-                      {personInitials(personById.get(id)?.name.official_name ?? "?")}
-                    </span>
-                  ))}
-                </span>
-                <span className="records-name records-col-name" style={{ pointerEvents: "none" }}>
-                  <span className="records-name-primary">
-                    {partners.map((id) => nameOf(id)).join(" & ") || "Unnamed household"}
-                  </span>
-                </span>
-                <span className={`hh-col-married${f.marriage?.date ? "" : " absent"}`}>
-                  {f.marriage?.date
-                    ? [f.marriage.date, f.marriage.place].filter(Boolean).join(", ")
-                    : "no date recorded"}
-                </span>
-                <span className={`hh-col-children${f.children.length ? "" : " absent"}`}>
-                  {f.children.length
-                    ? `${f.children.length} ${f.children.length === 1 ? "child" : "children"}`
-                    : "none listed"}
-                </span>
-                <span className="hh-col-gen">{roman(gen)}</span>
-              </button>
-            );
-          })
+        }
+        renderRow={(m, i) => (
+          <HouseholdRow
+            rowIndex={i}
+            model={m}
+            selected={selected?.id === m.family.id}
+            onOpen={openHousehold}
+          />
         )}
-      </RecordsTable>
+      />
 
       {selected && (
         <div className="record-dock">
@@ -615,3 +611,87 @@ function HouseholdEditor({
     </aside>
   );
 }
+
+/** Everything one household row shows, derived once and kept stable (see `models`). */
+interface HouseholdRowModel {
+  family: Family;
+  partners: { id: string; initials: string; born: boolean }[];
+  title: string;
+  /** "1948, Madhubani" — empty when no date is recorded. */
+  married: string;
+  /** "3 children" — empty when none are listed. */
+  children: string;
+  gen: number;
+  genLabel: string;
+  marriedAt: number;
+  undated: boolean;
+  search: string;
+}
+
+/**
+ * One row of the Households list, memoised. It takes the prepared model rather
+ * than the raw Family so that everything it needs is already a string: React can
+ * then decide "unchanged" from three `===` checks, and selecting a household
+ * re-renders two rows instead of the whole list.
+ */
+const HouseholdRow = React.memo(function HouseholdRow({
+  rowIndex,
+  model,
+  selected,
+  onOpen,
+}: {
+  /** Position in the FULL list, not the rendered window (see RecordsTable). */
+  rowIndex: number;
+  model: HouseholdRowModel;
+  selected: boolean;
+  onOpen: (family: Family) => void;
+}) {
+  return (
+    <div
+      data-row=""
+      role="row"
+      tabIndex={0}
+      aria-rowindex={rowIndex + 1}
+      aria-current={selected}
+      className={`records-row${selected ? " open" : ""}`}
+      onClick={() => onOpen(model.family)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen(model.family);
+        }
+      }}
+    >
+      <span role="gridcell" className="couple-glyph">
+        {model.partners.map((p) => (
+          <span
+            key={p.id}
+            className="records-avatar"
+            style={{
+              background: portraitTint(p.id),
+              border: `2.5px solid ${p.born ? "var(--ring-born)" : "var(--ring-married)"}`,
+            }}
+          >
+            {p.initials}
+          </span>
+        ))}
+      </span>
+      <span
+        role="gridcell"
+        className="records-name records-col-name"
+        style={{ pointerEvents: "none" }}
+      >
+        <span className="records-name-primary">{model.title}</span>
+      </span>
+      <span role="gridcell" className={`hh-col-married${model.married ? "" : " absent"}`}>
+        {model.married || "no date recorded"}
+      </span>
+      <span role="gridcell" className={`hh-col-children${model.children ? "" : " absent"}`}>
+        {model.children || "none listed"}
+      </span>
+      <span role="gridcell" className="hh-col-gen">
+        {model.genLabel}
+      </span>
+    </div>
+  );
+});

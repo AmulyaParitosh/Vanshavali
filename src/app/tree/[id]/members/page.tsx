@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAppContext } from "../../../../context/AppContext";
 import { useToast } from "../../../../components/ToastSystem";
@@ -15,7 +15,7 @@ import { canEdit as canEditRole, canInvite } from "../../../../lib/access";
 import { portraitTint, personInitials } from "../../../../utils/portrait";
 import { generationMap, roman, bornInLine } from "../../../../lib/generations";
 import { GraphManager } from "../../../../lib/graph/GraphManager";
-import { describeRelation } from "../../../../lib/lineage";
+import { relationsFrom } from "../../../../lib/lineage";
 import { findDuplicate, personIdFromName, placePerson } from "../../../../lib/addPerson";
 import type { Person, PersonEvent } from "../../../../types/person";
 import type {
@@ -148,6 +148,16 @@ export default function MembersPage() {
     });
   }, [people, query, gens]);
 
+  // Every row's relation to the viewer, from one walk of the graph rather than
+  // one per row (see relationsFrom). Keyed on the graph and the viewer, so
+  // typing in the search box — which changes neither — recomputes nothing.
+  const relations = useMemo(
+    () => (viewerPersonId ? relationsFrom(viewerPersonId, gm) : new Map<string, string | null>()),
+    [viewerPersonId, gm]
+  );
+
+  const openRecord = useCallback((id: string) => setSelectedPersonId(id), []);
+
   const pendingCount = invites.filter((i) => i.status === "pending").length;
   const selectedPerson = selectedPersonId
     ? (people.find((p) => p.id === selectedPersonId) ?? null)
@@ -254,85 +264,34 @@ export default function MembersPage() {
       }
       inspectorOpen={!!selectedPerson || addOpen}
     >
-      <RecordsTable columns={MEMBER_COLUMNS}>
-        {rows.length === 0 ? (
-          <div className="records-empty">Nobody here by that name</div>
-        ) : (
-          rows.map((p) => {
-            const mem = membershipByPerson.get(p.id);
-            const pending = pendingByPerson.get(p.id);
-            const bornOn = birthDate(p);
-            const ring = born.has(p.id) ? "var(--ring-born)" : "var(--ring-married)";
-            const isYou = viewerPersonId === p.id;
-            const relation = isYou
-              ? "you"
-              : viewerPersonId
-                ? describeRelation(viewerPersonId, p.id, gm)
-                : null;
-            return (
-              <div
-                key={p.id}
-                role="button"
-                tabIndex={0}
-                aria-current={selectedPersonId === p.id}
-                className={`records-row${selectedPersonId === p.id ? " open" : ""}`}
-                onClick={() => setSelectedPersonId(p.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setSelectedPersonId(p.id);
-                  }
-                }}
-              >
-                <span
-                  className="records-avatar records-col-portrait"
-                  style={{ background: portraitTint(p.id), border: `2px solid ${ring}` }}
-                >
-                  {personInitials(p.name.official_name)}
-                </span>
-                <span className="records-name records-col-name">
-                  <span className="records-name-primary">{p.name.official_name}</span>
-                  {p.name.aliases && p.name.aliases.length > 0 && (
-                    <span className="records-name-secondary">
-                      {p.name.aliases.map((a) => `‘${a}’`).join(" · ")}
-                    </span>
-                  )}
-                </span>
-                <span className="records-col-gen">{roman(gens.get(p.id))}</span>
-                <span className={`records-col-born${bornOn ? "" : " absent"}`}>
-                  {bornOn ?? "no date recorded"}
-                </span>
-                <span className={`records-col-relation${isYou ? " you" : relation ? "" : " none"}`}>
-                  {relation ?? "not connected yet"}
-                </span>
-                <span className="records-col-may">
-                  {mem ? (
-                    <span className={`chip ${ROLE_CHIP[mem.role].cls}`}>
-                      {ROLE_CHIP[mem.role].label}
-                    </span>
-                  ) : pending ? (
-                    <span className="chip chip--invited">Invited</span>
-                  ) : ownerCanManage && !isDeceased(p) ? (
-                    <button
-                      type="button"
-                      className="records-invite"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setInvitingPerson(p);
-                      }}
-                    >
-                      Invite
-                    </button>
-                  ) : (
-                    <span className="records-noaccount">no account</span>
-                  )}
-                </span>
-              </div>
-            );
-          })
+      <RecordsTable
+        columns={MEMBER_COLUMNS}
+        items={rows}
+        ariaLabel="Members"
+        rowKey={(p) => p.id}
+        empty={
+          <div className="records-empty">
+            {treeData ? "Nobody here by that name" : "Reading the record…"}
+          </div>
+        }
+        renderRow={(p, i) => (
+          <MemberRow
+            rowIndex={i}
+            person={p}
+            gen={roman(gens.get(p.id))}
+            born={birthDate(p)}
+            bornIntoLine={born.has(p.id)}
+            isYou={viewerPersonId === p.id}
+            relation={relations.get(p.id) ?? null}
+            role={membershipByPerson.get(p.id)?.role ?? null}
+            invited={pendingByPerson.has(p.id)}
+            canInviteThem={ownerCanManage && !isDeceased(p)}
+            selected={selectedPersonId === p.id}
+            onOpen={openRecord}
+            onInvite={setInvitingPerson}
+          />
         )}
-      </RecordsTable>
+      />
 
       <p className="records-note">
         Everyone can read the <strong>May</strong> column — a relative should be able to see who can
@@ -410,3 +369,116 @@ export default function MembersPage() {
     </RecordsScreen>
   );
 }
+
+interface MemberRowProps {
+  /** Position in the FULL list, not the rendered window (see RecordsTable). */
+  rowIndex: number;
+  person: Person;
+  /** Generation as a roman numeral, already formatted. */
+  gen: string;
+  born: string | undefined;
+  bornIntoLine: boolean;
+  isYou: boolean;
+  relation: string | null;
+  role: TreeRole | null;
+  invited: boolean;
+  canInviteThem: boolean;
+  selected: boolean;
+  onOpen: (personId: string) => void;
+  onInvite: (person: Person) => void;
+}
+
+/**
+ * One row of the Members list, memoised.
+ *
+ * Everything it needs arrives as a primitive or a stable reference, so React can
+ * answer "did this row change?" with a handful of `===` checks instead of
+ * re-rendering it. That is what makes opening a record cheap: selecting someone
+ * changes `selected` on exactly two rows, and the other 1,998 are skipped. It
+ * only works while the props stay shallow — pass a freshly-derived object or an
+ * inline arrow here and every row re-renders again, silently.
+ */
+const MemberRow = React.memo(function MemberRow({
+  rowIndex,
+  person,
+  gen,
+  born,
+  bornIntoLine,
+  isYou,
+  relation,
+  role,
+  invited,
+  canInviteThem,
+  selected,
+  onOpen,
+  onInvite,
+}: MemberRowProps) {
+  const aliases = person.name.aliases;
+  return (
+    <div
+      data-row=""
+      role="row"
+      tabIndex={0}
+      aria-rowindex={rowIndex + 1}
+      aria-current={selected}
+      className={`records-row${selected ? " open" : ""}`}
+      onClick={() => onOpen(person.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen(person.id);
+        }
+      }}
+    >
+      <span
+        role="gridcell"
+        className="records-avatar records-col-portrait"
+        style={{
+          background: portraitTint(person.id),
+          border: `2px solid ${bornIntoLine ? "var(--ring-born)" : "var(--ring-married)"}`,
+        }}
+      >
+        {personInitials(person.name.official_name)}
+      </span>
+      <span role="gridcell" className="records-name records-col-name">
+        <span className="records-name-primary">{person.name.official_name}</span>
+        {aliases && aliases.length > 0 && (
+          <span className="records-name-secondary">{aliases.map((a) => `‘${a}’`).join(" · ")}</span>
+        )}
+      </span>
+      <span role="gridcell" className="records-col-gen">
+        {gen}
+      </span>
+      <span role="gridcell" className={`records-col-born${born ? "" : " absent"}`}>
+        {born ?? "no date recorded"}
+      </span>
+      <span
+        role="gridcell"
+        className={`records-col-relation${isYou ? " you" : relation ? "" : " none"}`}
+      >
+        {relation ?? "not connected yet"}
+      </span>
+      <span role="gridcell" className="records-col-may">
+        {role ? (
+          <span className={`chip ${ROLE_CHIP[role].cls}`}>{ROLE_CHIP[role].label}</span>
+        ) : invited ? (
+          <span className="chip chip--invited">Invited</span>
+        ) : canInviteThem ? (
+          <button
+            type="button"
+            className="records-invite"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onInvite(person);
+            }}
+          >
+            Invite
+          </button>
+        ) : (
+          <span className="records-noaccount">no account</span>
+        )}
+      </span>
+    </div>
+  );
+});

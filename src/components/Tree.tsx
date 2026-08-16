@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { GraphNode } from "../types/graph";
 import type { Person } from "../types/person";
@@ -10,7 +10,7 @@ import { bornInLine } from "../lib/generations";
 import { useAppContext } from "../context/AppContext";
 import { GraphManager } from "../lib/graph/GraphManager";
 import { useTreeLayout, type LaidOutNode, type TreeOrientation } from "./tree/useTreeLayout";
-import { useTreeZoom } from "./tree/useTreeZoom";
+import { useTreeZoom, type WorldRect } from "./tree/useTreeZoom";
 import HouseholdCard from "./tree/HouseholdCard";
 import { cardModel, cardHeight, type CardModel } from "./tree/cardModel";
 import { orthogonalLinkPath, orthogonalLinkPathH } from "./tree/orthogonalLink";
@@ -49,6 +49,11 @@ function nodeHasPlace(data: GraphNode, place: string): boolean {
 
 /** Where the chosen tree view is remembered across navigation and reload. */
 const ORIENTATION_KEY = "vanshavali:tree-orientation";
+
+/** Below this many households, render the whole tree — culling would cost more. */
+const CULL_THRESHOLD = 120;
+/** Extra screens of cards drawn either side of the viewport, so panning never pops. */
+const CULL_MARGIN = 0.6;
 
 const Tree: React.FC<TreeProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -208,7 +213,68 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     return target ? { x: target.x, y: target.y } : null;
   }, [layout, viewerPersonId]);
 
-  const { panTo, fitToView, zoomBy } = useTreeZoom({ svgRef, gRef, initialCenter });
+  /**
+   * The drawing's full extent in layout coordinates, padded by a card. Fit needs
+   * it because the SVG no longer holds the whole tree (see `visible` below), and
+   * a `getBBox()` of what happens to be on screen would frame a fragment.
+   */
+  const contentBounds = useMemo<WorldRect | null>(() => {
+    if (!layout.nodes.length) return null;
+    const padX = TREE_CONFIG.CARD_WIDTH / 2 + 40;
+    const padY = TREE_CONFIG.CARD_ROW_H * 2 + 40;
+    const xs = layout.nodes.map((n) => n.x);
+    const ys = layout.nodes.map((n) => n.y);
+    return {
+      minX: Math.min(...xs) - padX,
+      minY: Math.min(...ys) - padY,
+      maxX: Math.max(...xs) + padX,
+      maxY: Math.max(...ys) + padY,
+    };
+  }, [layout.nodes]);
+
+  const [viewport, setViewport] = useState<WorldRect | null>(null);
+  const { panTo, fitToView, zoomBy } = useTreeZoom({
+    svgRef,
+    gRef,
+    initialCenter,
+    contentBounds,
+    onViewport: setViewport,
+  });
+
+  /**
+   * Only the cards and joinery near the viewport are put in the DOM.
+   *
+   * A tree of two thousand people is twenty thousand elements, and the browser
+   * pays for every one of them on every layout, hit-test and accessibility pass —
+   * to show the thirty or so a screen can hold. Culling is by a generous margin
+   * so that panning reveals cards that are already rendered rather than popping
+   * them in, and the viewport is only reported when it has moved appreciably, so
+   * a normal drag does no React work at all. Small trees skip all of this: below
+   * the threshold the bookkeeping costs more than it saves, and rendering
+   * everything keeps find-in-page and screenshots whole.
+   */
+  const visible = useMemo(() => {
+    const all = { nodes: layout.nodes, links: layout.links };
+    if (!viewport || layout.nodes.length <= CULL_THRESHOLD) return all;
+    // The margin is a fraction of the viewport rather than a fixed distance, so
+    // it means the same thing at every zoom: a fixed world margin would be most
+    // of the screen when zoomed out and a sliver when zoomed in.
+    const mx = (viewport.maxX - viewport.minX) * CULL_MARGIN;
+    const my = (viewport.maxY - viewport.minY) * CULL_MARGIN;
+    const inView = (x: number, y: number) =>
+      x >= viewport.minX - mx &&
+      x <= viewport.maxX + mx &&
+      y >= viewport.minY - my &&
+      y <= viewport.maxY + my;
+    const nodes = layout.nodes.filter((n) => inView(n.x, n.y));
+    const kept = new Set(nodes.map((n) => n.data.id));
+    // A link is drawn when either end is rendered, so a card at the edge still
+    // shows the line reaching off-screen to its parent.
+    const links = layout.links.filter(
+      (l) => kept.has(l.source.data.id) || kept.has(l.target.data.id)
+    );
+    return { nodes, links };
+  }, [layout.nodes, layout.links, viewport]);
   const { STEP } = TREE_CONFIG.ZOOM;
   const { CARD_ROW_H } = TREE_CONFIG;
   // The <foreignObject> that frames each card: card width + room for the selected
@@ -252,10 +318,14 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
     panTo(target.x, target.y);
   };
 
-  /** Open a person's record; the effect below centres their household. */
-  const handleSelect = (personId: string) => {
+  /**
+   * Open a person's record; the effect below centres their household. Stable so
+   * that every memoised card keeps the same `onSelect` between renders — an
+   * inline arrow here would change on every render and defeat the memo.
+   */
+  const handleSelect = useCallback((personId: string) => {
     setSelectedPersonId(personId);
-  };
+  }, []);
 
   // Centre the open record's household in the canvas. Runs on every selection —
   // a card click, a relation link, or a ?person= from the Members table/search —
@@ -335,7 +405,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             </g>
 
             <g className="links">
-              {layout.links.map((link) => {
+              {visible.links.map((link) => {
                 // Descent runs edge-to-edge between the two cards: bottom→top in
                 // the top-down view, right→left in the left→right one (where the
                 // cards are centred on their row, so both anchor at node.y).
@@ -377,7 +447,7 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
             </g>
 
             <g className="nodes">
-              {layout.nodes.map((node) => {
+              {visible.nodes.map((node) => {
                 const model = cards.get(node.data.id);
                 if (!model) return null;
                 const dim =
@@ -403,7 +473,15 @@ const Tree: React.FC<TreeProps> = ({ data }) => {
                       <div className={`hcard-fo-inner${horizontal ? " hcard-fo-inner--mid" : ""}`}>
                         <HouseholdCard
                           model={model}
-                          selectedId={selectedPersonId}
+                          // Scoped to this card (see HouseholdCardProps): null for
+                          // every card that doesn't hold the open record, so
+                          // selecting someone re-renders two cards, not the tree.
+                          selectedId={
+                            selectedPersonId &&
+                            model.rows.some((r) => r.person.id === selectedPersonId)
+                              ? selectedPersonId
+                              : null
+                          }
                           onSelect={handleSelect}
                         />
                       </div>

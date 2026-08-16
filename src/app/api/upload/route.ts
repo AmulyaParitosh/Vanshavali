@@ -29,7 +29,11 @@ export async function POST(request: NextRequest) {
     const storage = getStorageClient();
     const { data, error } = await storage.storage.from(BUCKET).upload(path, file, {
       upsert: true,
-      cacheControl: "3600",
+      // Object keys carry the upload timestamp, so a given URL's bytes never
+      // change — a new photograph is a new key. An hour of caching made every
+      // reader re-fetch every face hourly for no reason; a year is the honest
+      // answer for content that is immutable by construction.
+      cacheControl: `${365 * 24 * 60 * 60}`,
       contentType: file.type || "application/octet-stream",
     });
     if (error) throw new HttpError(error.message, 502);

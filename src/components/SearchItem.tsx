@@ -1,40 +1,25 @@
 import React from "react";
 import type { Person } from "../types/person";
 import type { Family } from "../types/family";
-import { portraitTint, personInitials } from "../utils/portrait";
 import { inferHusbandWife } from "../lib/family";
+import Portrait from "./Portrait";
 
 type SearchItemProps =
   | { type: "person"; item: Person }
   | { type: "family"; item: Family; people: Person[] };
 
 /**
- * One row in the People list. Portraits use the same local tint + initials tile
- * as the rest of the product (§01): a person without a photograph is never a
- * network request to a third party, and never a gendered letter.
+ * One row in the People list. Faces come from the shared Portrait (§01): the
+ * tint-and-initials tile when there is no photograph — never a request to a
+ * third party, never a gendered letter — and the small stored copy when there is.
  */
-function Portrait({ person, className }: { person: Person | undefined; className: string }) {
-  if (person?.image_url) {
-    return <img src={person.image_url} alt="" className={className} />;
-  }
-  return (
-    <span
-      className={className}
-      style={person ? { background: portraitTint(person.id) } : undefined}
-      aria-hidden="true"
-    >
-      {person ? personInitials(person.name.official_name) : ""}
-    </span>
-  );
-}
-
 const SearchItem: React.FC<SearchItemProps> = (props) => {
   if (props.type === "person") {
     const person = props.item;
     return (
       <div className="search-item">
         <div className="search-item-image-container">
-          <Portrait person={person} className="search-item-image" />
+          <Portrait person={person} size="table" className="search-item-image" />
         </div>
         <div className="search-item-content">
           <span className="search-item-name">{person.name.official_name}</span>
@@ -55,8 +40,8 @@ const SearchItem: React.FC<SearchItemProps> = (props) => {
   return (
     <div className="search-item">
       <div className="search-item-family-images">
-        <Portrait person={husband} className="search-item-image husband" />
-        <Portrait person={wife} className="search-item-image wife" />
+        <Portrait person={husband} size="table" className="search-item-image husband" />
+        <Portrait person={wife} size="table" className="search-item-image wife" />
       </div>
       <div className="search-item-content">
         <span className="search-item-name">

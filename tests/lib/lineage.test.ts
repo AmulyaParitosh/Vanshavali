@@ -9,6 +9,7 @@ import {
   describeRelation,
   generationLabel,
   ordinalWord,
+  relationsFrom,
 } from "@/lib/lineage";
 import { bornInLine } from "@/lib/generations";
 
@@ -193,5 +194,27 @@ describe("ordinalWord", () => {
   it("maps birth position to a word", () => {
     expect(ordinalWord(0)).toBe("Eldest");
     expect(ordinalWord(1)).toBe("Second");
+  });
+});
+
+describe("relationsFrom — one walk of the graph names everyone", () => {
+  it("agrees with describeRelation for every person", () => {
+    const all = relationsFrom("ani", gm);
+    for (const p of people) {
+      const expected = p.id === "ani" ? "you" : describeRelation("ani", p.id, gm);
+      expect(all.get(p.id) ?? null).toBe(expected);
+    }
+  });
+
+  it("names the viewer, and leaves nobody out", () => {
+    const all = relationsFrom("ani", gm);
+    expect(all.get("ani")).toBe("you");
+    expect(all.get("dev")).toBe("father");
+    expect(all.get("sneha")).toBe("first cousin");
+    expect(all.size).toBe(people.length);
+  });
+
+  it("is empty but valid for someone not in the graph", () => {
+    expect([...relationsFrom("nobody", gm).keys()]).toEqual(["nobody"]);
   });
 });

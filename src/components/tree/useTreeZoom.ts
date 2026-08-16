@@ -2,13 +2,42 @@ import { useEffect, useRef, type RefObject } from "react";
 import * as d3 from "d3";
 import { TREE_CONFIG } from "../../constants";
 
+/** A rectangle in layout (world) coordinates. */
+export interface WorldRect {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
 interface UseTreeZoomOptions {
   svgRef: RefObject<SVGSVGElement | null>;
   gRef: RefObject<SVGGElement | null>;
   /** The household to frame on first data (Spec 05 a4) — the viewer's own, in
    *  layout coordinates. Null until the layout is ready. */
   initialCenter: { x: number; y: number } | null;
+  /**
+   * The whole drawing's extent in layout coordinates. Fit measures this rather
+   * than the rendered SVG, because the canvas only renders the cards near the
+   * viewport — a `getBBox()` of what happens to be on screen would "fit" to a
+   * fraction of the tree.
+   */
+  contentBounds?: WorldRect | null;
+  /**
+   * Called with the visible world rect whenever it moves appreciably. Panning
+   * itself never re-renders React (the <g> transform is mutated directly); this
+   * exists so the canvas can decide which cards are worth rendering at all.
+   */
+  onViewport?: (rect: WorldRect) => void;
 }
+
+/**
+ * How far the viewport must move on SCREEN before it's worth telling React.
+ * Measured in screen pixels, not world units: the same world distance is a whole
+ * screen when zoomed out and a few pixels when zoomed in, so a world-space
+ * threshold would either re-render constantly or never.
+ */
+const VIEWPORT_QUANTUM_PX = 220;
 
 export interface TreeZoomApi {
   /** Centre (x, y) in the canvas. Keeps the current zoom unless `scale` is given. */
@@ -25,10 +54,27 @@ export interface TreeZoomApi {
  * 0.35–2.4× (a9); the first data frames the viewer's own household at 1× (a4); and
  * a level-of-detail class on the <svg> drops labels as the user zooms out (f7).
  */
-export function useTreeZoom({ svgRef, gRef, initialCenter }: UseTreeZoomOptions): TreeZoomApi {
+export function useTreeZoom({
+  svgRef,
+  gRef,
+  initialCenter,
+  contentBounds,
+  onViewport,
+}: UseTreeZoomOptions): TreeZoomApi {
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const isFirstCenterRef = useRef(true);
+  // Both are held in refs, and kept current in an effect that is declared before
+  // the zoom setup below so it runs first: a changed callback identity or new
+  // bounds must not tear down and rebuild the zoom behaviour mid-gesture.
+  const boundsRef = useRef(contentBounds);
+  const onViewportRef = useRef(onViewport);
+  const lastReported = useRef<WorldRect | null>(null);
   const { MIN, MAX, FIT_PAD, LOD_COMPACT, LOD_GLYPH } = TREE_CONFIG.ZOOM;
+
+  useEffect(() => {
+    boundsRef.current = contentBounds;
+    onViewportRef.current = onViewport;
+  }, [contentBounds, onViewport]);
 
   useEffect(() => {
     const svgEl = svgRef.current;
@@ -37,6 +83,30 @@ export function useTreeZoom({ svgRef, gRef, initialCenter }: UseTreeZoomOptions)
 
     const svg = d3.select(svgEl);
     const g = d3.select(gEl);
+
+    /** Screen viewport → world rect, reported only when it has really moved. */
+    const reportViewport = (t: d3.ZoomTransform) => {
+      const report = onViewportRef.current;
+      if (!report) return;
+      const rect = svgEl.getBoundingClientRect();
+      const next: WorldRect = {
+        minX: (0 - t.x) / t.k,
+        minY: (0 - t.y) / t.k,
+        maxX: (rect.width - t.x) / t.k,
+        maxY: (rect.height - t.y) / t.k,
+      };
+      const prev = lastReported.current;
+      const movedPx = (a: number, b: number) => Math.abs(a - b) * t.k;
+      const moved =
+        !prev ||
+        movedPx(next.minX, prev.minX) > VIEWPORT_QUANTUM_PX ||
+        movedPx(next.minY, prev.minY) > VIEWPORT_QUANTUM_PX ||
+        movedPx(next.maxX, prev.maxX) > VIEWPORT_QUANTUM_PX ||
+        movedPx(next.maxY, prev.maxY) > VIEWPORT_QUANTUM_PX;
+      if (!moved) return;
+      lastReported.current = next;
+      report(next);
+    };
 
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
@@ -48,10 +118,13 @@ export function useTreeZoom({ svgRef, gRef, initialCenter }: UseTreeZoomOptions)
         const k = event.transform.k;
         svgEl.classList.toggle("lod-compact", k < LOD_COMPACT && k >= LOD_GLYPH);
         svgEl.classList.toggle("lod-glyph", k < LOD_GLYPH);
+        reportViewport(event.transform);
       });
 
     svg.call(zoom);
     zoomRef.current = zoom;
+    // The first frame has had no zoom event, so nothing would be on screen.
+    reportViewport(d3.zoomTransform(svgEl));
 
     // Frame the viewer's own household the first time we have data at 1×; keep any
     // prior transform on later data changes so a re-fetch doesn't yank the view.
@@ -94,9 +167,17 @@ export function useTreeZoom({ svgRef, gRef, initialCenter }: UseTreeZoomOptions)
       const rect = svgEl.getBoundingClientRect();
       // Frame the households, not the decoration: the generation bands are drawn
       // thousands of px wider than the tree so they run off-canvas, and measuring
-      // them would zoom the whole tree down to nothing.
-      const nodesEl = gEl.querySelector<SVGGElement>("g.nodes");
-      const box = (nodesEl ?? gEl).getBBox();
+      // them would zoom the whole tree down to nothing. Prefer the layout's own
+      // extent — the SVG only holds the cards near the viewport.
+      const bounds = boundsRef.current;
+      const box = bounds
+        ? {
+            x: bounds.minX,
+            y: bounds.minY,
+            width: bounds.maxX - bounds.minX,
+            height: bounds.maxY - bounds.minY,
+          }
+        : (gEl.querySelector<SVGGElement>("g.nodes") ?? gEl).getBBox();
       if (box.width === 0 || box.height === 0) return;
       const scale = Math.max(
         MIN,

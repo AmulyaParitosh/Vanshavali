@@ -45,6 +45,11 @@ function isPublic(pathname: string | null): boolean {
   return PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));
 }
 
+/** The tree id in `/tree/<id>/…`, so its data can be fetched from the first render. */
+function treeIdFromPath(pathname: string | null): string | null {
+  return pathname?.match(/^\/tree\/([^/]+)/)?.[1] ?? null;
+}
+
 export default function AppProvider({ children }: AppProviderProps) {
   const pathname = usePathname();
   const {
@@ -63,7 +68,7 @@ export default function AppProvider({ children }: AppProviderProps) {
     data: dataProvider,
     auth: authProvider,
     storage: storageProvider,
-  } = useAuthAndData();
+  } = useAuthAndData(treeIdFromPath(pathname));
 
   const renderContent = () => {
     if (isLoading) return <Loading />;

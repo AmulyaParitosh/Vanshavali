@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "../../../context/AppContext";
+import Loading from "../../../components/Loading";
 import Tree from "../../../components/Tree";
 import FirstRunCard from "../../../components/onboarding/FirstRunCard";
 import { GraphManager } from "../../../lib/graph/GraphManager";
@@ -60,7 +61,16 @@ export default function TreeViewPage() {
           {validationIssues.length} {UI_CONFIG.MESSAGES.DATA_ISSUES_DETECTED}
         </div>
       )}
-      {hierarchy ? <Tree data={hierarchy} /> : UI_CONFIG.MESSAGES.BUILDING_HIERARCHY}
+      {/* The shell and rail no longer wait for the tree's contents, so this is
+          the one place that says the drawing itself is still on its way — told
+          apart from a tree that genuinely has nothing to draw. */}
+      {hierarchy ? (
+        <Tree data={hierarchy} />
+      ) : treeData ? (
+        UI_CONFIG.MESSAGES.BUILDING_HIERARCHY
+      ) : (
+        <Loading text="Reading the record…" />
+      )}
 
       {currentTreeId && isFirstSession && <FirstRunCard treeId={currentTreeId} />}
     </div>

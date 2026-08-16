@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Person, DraftPerson } from "../../types/person";
 import type { Family } from "../../types/family";
 import type { TreeMembership, TreeRole } from "../../types/tree";
-import { portraitTint, personInitials } from "../../utils/portrait";
+import Portrait from "../Portrait";
 import { GraphManager } from "../../lib/graph/GraphManager";
 import { generationMap, roman, bornInLine } from "../../lib/generations";
 import {
@@ -292,20 +292,7 @@ const TreeInspector: React.FC<TreeInspectorProps> = ({
         ) : (
           <>
             <div className="inspector-identity">
-              <span
-                className={`portrait portrait--panel${married ? " portrait--married" : ""}`}
-                style={{ background: portraitTint(person.id) }}
-              >
-                {person.image_url ? (
-                  <img
-                    src={person.image_url}
-                    alt={person.name.official_name}
-                    className="portrait-img"
-                  />
-                ) : (
-                  personInitials(person.name.official_name)
-                )}
-              </span>
+              <Portrait person={person} size="panel" married={married} eager />
               <div className="inspector-names">
                 <span className="inspector-name">{person.name.official_name}</span>
                 {aliases.length > 0 && (

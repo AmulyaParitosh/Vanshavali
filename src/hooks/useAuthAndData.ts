@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import type { TreeData } from "../services/types";
-import { canEdit, canViewTree } from "../lib/access";
+import { canEdit } from "../lib/access";
 import { formatError } from "../lib/formatError";
 import { withRefresh } from "../services/withRefresh";
 import { useProviders } from "./useProviders";
@@ -25,7 +25,7 @@ import { useTreeSubscription } from "./useTreeSubscription";
  * Auto-creates a first tree on sign-in when the user has none. Selects the
  * user's first owned tree as the active tree until the UI lets them choose.
  */
-export function useAuthAndData() {
+export function useAuthAndData(routeTreeId: string | null = null) {
   const { auth: authProvider, data: rawDataProvider, storage: storageProvider } = useProviders();
 
   // No live updates: mutations bump a nonce that every subscribe* hook depends
@@ -50,7 +50,11 @@ export function useAuthAndData() {
     refreshNonce
   );
 
-  const [currentTreeId, setCurrentTreeId] = useState<string | null>(null);
+  // Seeded from the URL when we're already on a tree route. The `[id]` layout
+  // binds this too, but it can only do so in an effect after its first render —
+  // which meant the membership and data fetches waited for a round trip they
+  // never needed, since the id was sitting in the address bar the whole time.
+  const [currentTreeId, setCurrentTreeId] = useState<string | null>(routeTreeId);
   const [isProvisioningTree, setIsProvisioningTree] = useState(false);
   // One-shot latch guarding auto-provision against re-entry. A ref (not state)
   // so setting it never re-runs the effect below — the previous state-based
@@ -114,19 +118,24 @@ export function useAuthAndData() {
     dataProvider,
     refreshNonce
   );
-  const { treeData, isLoaded: treeLoaded } = useTreeSubscription(
-    canViewTree(membership?.role) ? currentTreeId : null,
-    dataProvider,
-    refreshNonce
-  );
+  // Fetched alongside the membership rather than after it. Waiting for the role
+  // first made two round trips out of one, and bought nothing: the route itself
+  // authorises the read (`requireView`), so a viewer who shouldn't see this tree
+  // gets a 403 whatever the client believed.
+  const { treeData } = useTreeSubscription(currentTreeId, dataProvider, refreshNonce);
 
+  // The gate covers identity and access — who you are, and whether this tree is
+  // yours to see. It deliberately does NOT cover the tree's contents: blocking
+  // on those held the whole app behind the largest fetch it makes, and (because
+  // the gate swaps the page out for a spinner) remounted every page the moment
+  // the data arrived, making each of them fetch twice. Pages render with
+  // `treeData` still null and say so themselves.
   const isLoading =
     !authLoaded ||
     (!!user && !profileLoaded) ||
     (!!user && !myTreesLoaded) ||
     (!!user && isProvisioningTree) ||
-    (!!user && !!currentTreeId && !membershipLoaded) ||
-    (!!user && !!currentTreeId && canViewTree(membership?.role) && !treeLoaded);
+    (!!user && !!currentTreeId && !membershipLoaded);
 
   const handleLogout = useCallback(() => {
     authProvider.signOut().catch((error: unknown) => {

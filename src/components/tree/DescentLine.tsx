@@ -3,7 +3,7 @@
 import React from "react";
 import type { Person } from "../../types/person";
 import type { DescentGeneration } from "../../lib/lineage";
-import { portraitTint, personInitials } from "../../utils/portrait";
+import Portrait from "../Portrait";
 import { yearSpan } from "./cardModel";
 
 interface DescentLineProps {
@@ -62,17 +62,7 @@ const DescentPerson: React.FC<{
   const { years } = yearSpan(person);
   const body = (
     <>
-      <span
-        className={`portrait portrait--descent${married ? " portrait--married" : ""}`}
-        style={{ background: portraitTint(person.id) }}
-        aria-hidden="true"
-      >
-        {person.image_url ? (
-          <img src={person.image_url} alt="" className="portrait-img" />
-        ) : (
-          personInitials(person.name.official_name)
-        )}
-      </span>
+      <Portrait person={person} size="descent" married={married} />
       <span className="descent-who">
         <span className="descent-name">{person.name.official_name}</span>
         {years && <span className="descent-years">{years}</span>}

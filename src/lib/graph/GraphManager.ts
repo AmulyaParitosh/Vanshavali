@@ -3,10 +3,24 @@ import type { Family } from "../../types/family";
 import type { GraphNode, PathStep } from "../../types/graph";
 import { familyPartners, inferHusbandWife } from "../family";
 
+/** One edge out of a person: who it leads to, and what they are to them. */
+interface Neighbour {
+  target: string;
+  relation: string;
+}
+
+/** How a person was first reached during a search. */
+interface Reached {
+  from: string;
+  relation: string;
+}
+
 export class GraphManager {
   private people: Person[];
   private families: Family[];
   private personMap: Map<string, Person>;
+  /** Built on first use by getAdjacency(); see the note there on why caching is safe. */
+  private adjacency: Map<string, Neighbour[]> | null = null;
 
   constructor(people: Person[], families: Family[]) {
     this.people = people || [];
@@ -105,16 +119,47 @@ export class GraphManager {
    */
   findPath(startId: string, endId: string): PathStep[] | null {
     if (startId === endId) return [{ personId: startId, relation: "Self" }];
+    return this.reconstruct(startId, endId, this.search(startId, endId));
+  }
 
-    // Adjacency List Construction (Lazy or Cached could be better, but building here for simplicity)
-    const adj = new Map<string, Array<{ target: string; relation: string }>>();
+  /**
+   * The shortest path from one person to **everyone** reachable, in a single
+   * traversal.
+   *
+   * Naming every row's relation used to mean one `findPath` per row, and each of
+   * those rebuilt the whole adjacency list before it started walking — quadratic
+   * twice over, and the reason a 2,000-person Members list took over a second to
+   * re-render on every keystroke. The graph is the same for all of them, so walk
+   * it once.
+   */
+  pathsFrom(startId: string): Map<string, PathStep[]> {
+    const cameFrom = this.search(startId);
+    const paths = new Map<string, PathStep[]>();
+    for (const id of cameFrom.keys()) {
+      const path = this.reconstruct(startId, id, cameFrom);
+      if (path) paths.set(id, path);
+    }
+    return paths;
+  }
+
+  /**
+   * The kinship graph as a neighbour list, built once and kept.
+   *
+   * Safe to cache because a GraphManager is immutable by construction: callers
+   * build a new one when the tree's people or families change (every consumer
+   * does so from a `useMemo` over exactly those two arrays).
+   */
+  private getAdjacency(): Map<string, Neighbour[]> {
+    if (this.adjacency) return this.adjacency;
+    const adj = new Map<string, Neighbour[]>();
 
     const addEdge = (u: string, v: string, relation: string) => {
-      if (!adj.has(u)) adj.set(u, []);
-      adj.get(u)!.push({ target: v, relation });
+      const list = adj.get(u);
+      if (list) list.push({ target: v, relation });
+      else adj.set(u, [{ target: v, relation }]);
     };
 
-    this.families.forEach((family) => {
+    for (const family of this.families) {
       const partners = familyPartners(family);
 
       // 1. Spouses — pairwise over the partner list.
@@ -129,12 +174,12 @@ export class GraphManager {
 
       // 2. Parent -> Child
       if (partners.length > 0 && family.children) {
-        partners.forEach((pId) => {
-          family.children.forEach((cId) => {
+        for (const pId of partners) {
+          for (const cId of family.children) {
             addEdge(pId, cId, "Child");
             addEdge(cId, pId, "Parent");
-          });
-        });
+          }
+        }
       }
 
       // 3. Siblings (Child <-> Child)
@@ -150,34 +195,57 @@ export class GraphManager {
           }
         }
       }
-    });
-
-    // BFS
-    const queue: PathStep[][] = [[{ personId: startId, relation: "Start" }]];
-    const visited = new Set<string>([startId]);
-
-    while (queue.length > 0) {
-      const path = queue.shift();
-      if (!path) continue;
-      const lastStep = path[path.length - 1];
-      if (!lastStep) continue;
-      const currentId = lastStep.personId;
-
-      if (currentId === endId) {
-        return path;
-      }
-
-      const neighbors = adj.get(currentId) || [];
-      for (const neighbor of neighbors) {
-        if (!visited.has(neighbor.target)) {
-          visited.add(neighbor.target);
-          const newPath = [...path, { personId: neighbor.target, relation: neighbor.relation }];
-          queue.push(newPath);
-        }
-      }
     }
 
-    return null; // No path found
+    this.adjacency = adj;
+    return adj;
+  }
+
+  /**
+   * Breadth-first from `startId`, recording how each person was first reached.
+   *
+   * Parent pointers rather than whole paths: carrying a copied array per queue
+   * entry made the search allocate O(V × depth) arrays to answer a question
+   * about one of them. The queue is an array read by a moving head index, not
+   * `shift()`, which re-indexes the whole queue on every step.
+   */
+  private search(startId: string, stopAt?: string): Map<string, Reached> {
+    const adj = this.getAdjacency();
+    const cameFrom = new Map<string, Reached>();
+    const seen = new Set<string>([startId]);
+    const queue: string[] = [startId];
+
+    for (let head = 0; head < queue.length; head++) {
+      const current = queue[head]!;
+      if (current === stopAt) break;
+      for (const neighbour of adj.get(current) ?? []) {
+        if (seen.has(neighbour.target)) continue;
+        seen.add(neighbour.target);
+        cameFrom.set(neighbour.target, { from: current, relation: neighbour.relation });
+        queue.push(neighbour.target);
+      }
+    }
+    return cameFrom;
+  }
+
+  /** Walk the parent pointers back from `endId` to build the path forwards. */
+  private reconstruct(
+    startId: string,
+    endId: string,
+    cameFrom: Map<string, Reached>
+  ): PathStep[] | null {
+    if (endId === startId) return [{ personId: startId, relation: "Start" }];
+    if (!cameFrom.has(endId)) return null;
+    const steps: PathStep[] = [];
+    let id = endId;
+    while (id !== startId) {
+      const link = cameFrom.get(id);
+      if (!link) return null; // unreachable in practice; a broken chain, not a path
+      steps.push({ personId: id, relation: link.relation });
+      id = link.from;
+    }
+    steps.push({ personId: startId, relation: "Start" });
+    return steps.reverse();
   }
 
   /**

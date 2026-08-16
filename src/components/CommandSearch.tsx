@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppContext } from "../context/AppContext";
 import { portraitTint, personInitials } from "../utils/portrait";
 import { GraphManager } from "../lib/graph/GraphManager";
-import { describeRelation } from "../lib/lineage";
+import { relationsFrom } from "../lib/lineage";
 import { generationMap, roman } from "../lib/generations";
 import type { Person } from "../types/person";
 
@@ -179,13 +179,14 @@ export default function CommandSearch({ picker }: CommandSearchProps = {}) {
   );
   const q = fold(query.trim());
 
-  // Every person result carries their relation to the viewer (a3); null (or self) → no label.
-  const relationOf = (personId: string): string | null =>
-    viewerPersonId === personId
-      ? "you"
-      : viewerPersonId
-        ? describeRelation(viewerPersonId, personId, gm)
-        : null;
+  // Every person result carries their relation to the viewer (a3); null (or self)
+  // → no label. Named for the whole tree in one walk of the graph and memoised on
+  // it, so typing filters results without re-deriving anybody's kinship.
+  const relations = useMemo(
+    () => (viewerPersonId ? relationsFrom(viewerPersonId, gm) : null),
+    [viewerPersonId, gm]
+  );
+  const relationOf = (personId: string): string | null => relations?.get(personId) ?? null;
 
   const { peopleHits, placeHits, eventHits } = useMemo(() => {
     // Navigate index only; a picker computes its own people list below.

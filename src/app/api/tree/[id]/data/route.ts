@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { handle, requireCaller, HttpError } from "../../../../../lib/api";
+import { handle, json, requireCaller, HttpError } from "../../../../../lib/api";
 import { getTreeData, saveTreeData } from "../../../../../services/tree-data-service";
 import type { TreeData } from "../../../../../services/types";
 
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, ctx: { params: Promise<{ id: str
     const caller = await requireCaller(request);
     const { id } = await ctx.params;
     const data = await getTreeData(id, caller.uid);
-    return NextResponse.json(data);
+    return json(data, request);
   });
 }
 

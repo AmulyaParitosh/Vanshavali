@@ -76,10 +76,22 @@ const RecordEditor: React.FC<RecordEditorProps> = ({
         <div className="record-editor-photo">
           <ImageUpload
             imageUrl={draft.image_url || ""}
-            onImageChange={(image_url, image_storage_path) =>
-              patch({ image_url, image_storage_path })
+            onImageChange={(image) =>
+              patch({
+                image_url: image.url,
+                image_storage_path: image.path,
+                image_thumb_url: image.thumbUrl,
+                image_thumb_storage_path: image.thumbPath,
+              })
             }
-            onImageRemove={() => patch({ image_url: "", image_storage_path: "" })}
+            onImageRemove={() =>
+              patch({
+                image_url: "",
+                image_storage_path: "",
+                image_thumb_url: "",
+                image_thumb_storage_path: "",
+              })
+            }
             canEdit={!saving}
             {...(person.id ? { storagePath: `images/people/${person.id}` } : {})}
           />

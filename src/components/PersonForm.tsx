@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import type { DraftPerson, PersonEvent } from "../types/person";
 import { useToast } from "./ToastSystem";
-import ImageUpload from "./ImageUpload";
+import ImageUpload, { type UploadedImage } from "./ImageUpload";
 import AliasesInput from "./AliasesInput";
 import SegmentedControl from "./SegmentedControl";
 import EventsEditor from "./EventsEditor";
@@ -43,16 +43,24 @@ const PersonForm: React.FC<PersonFormProps> = ({
     setFormData({ ...formData, name: { ...formData.name, aliases } });
   };
 
-  const handleImageChange = (imageUrl: string, imagePath: string) => {
+  const handleImageChange = (image: UploadedImage) => {
     setFormData({
       ...formData,
-      image_url: imageUrl,
-      image_storage_path: imagePath,
+      image_url: image.url,
+      image_storage_path: image.path,
+      image_thumb_url: image.thumbUrl,
+      image_thumb_storage_path: image.thumbPath,
     });
   };
 
   const handleImageRemove = () => {
-    setFormData({ ...formData, image_url: "", image_storage_path: "" });
+    setFormData({
+      ...formData,
+      image_url: "",
+      image_storage_path: "",
+      image_thumb_url: "",
+      image_thumb_storage_path: "",
+    });
   };
 
   const handleEventsChange = (events: PersonEvent[]) => {
