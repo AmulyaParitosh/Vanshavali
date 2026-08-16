@@ -69,9 +69,6 @@ export const TREE_CONFIG = {
     LOD_COMPACT: 0.72,
     LOD_GLYPH: 0.42,
   },
-  // Still used by the not-yet-redesigned family editor + search rows.
-  PLACEHOLDER_IMAGE_URL: (color: string, text: string) =>
-    `https://placehold.co/100x100/${color}/FFFFFF?text=${text}`,
 };
 
 export const UI_CONFIG = {

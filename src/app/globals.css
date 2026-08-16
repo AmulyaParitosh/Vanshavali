@@ -3968,12 +3968,18 @@ main {
 .search-item-image {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  box-sizing: border-box;
+  border-radius: var(--radius-circle);
   object-fit: cover;
   border: 1px solid var(--line-control);
-  background-color: var(--color-surface);
-  box-shadow: 0 2px 8px var(--color-shadow);
-  transition: transform 0.2s ease;
+  background-color: var(--surface-quiet);
+  /* The initials tile shares the box with the photo. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--surface-paper);
 }
 
 .data-list li:hover .search-item-image {
@@ -6790,4 +6796,10 @@ button.records-row {
   .landing-hero-h1 {
     font-size: 34px;
   }
+}
+
+/* "Linked" marker on a People row — the read chip, spaced under the name. */
+.linked-badge {
+  align-self: flex-start;
+  margin-top: var(--space-1);
 }
