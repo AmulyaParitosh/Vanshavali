@@ -131,15 +131,15 @@ Report only what you can point at in the code you were given.
 Reviewers are **read-only** and run without worktree isolation on purpose: agent
 worktrees branch from stale `main`, which would audit code that no longer exists.
 
-| Batch | Surface                      | Files                                                                                                                                               | Status  |
-| ----- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| A     | Tree canvas + inspector      | Tree, HouseholdCard, TreeInspector, RecordInspectorDock, RecordEditor, AccessBlock, TreeLink                                                        | round 1 |
-| B     | Records tables + pages       | RecordsScreen, RecordsTable, members, family, people, families                                                                                      | round 1 |
-| C     | Panels, dialogs, guards      | AddPersonPanel, InvitePanel, Conflict/Consequence dialogs, Duplicate/Leaving guards, ToastSystem, GenerationRail                                    | round 1 |
-| D     | The stylesheet               | globals.css (~6.7k lines)                                                                                                                           | round 1 |
-| E     | Chrome, rails, onboarding    | Header, TreeRail, UserSidebar, Sidebar, TextListSidebar, GettingStarted, FirstRunCard, Loading                                                      | round 1 |
-| F     | Auth, landing, account pages | LoginScreen, Landing, signin, reset-password, reset, invite/[id], about, trees, trees/new, user/\*                                                  | round 2 |
-| G     | Shared inputs + search       | AliasesInput, CustomFieldsEditor, EventsEditor, ImageUpload, PersonForm, SegmentedControl, SearchItem, UnifiedSearch, CommandSearch, CreateTreeForm | round 2 |
+| Batch | Surface                      | Files                                                                                                                                               | Status |
+| ----- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| A     | Tree canvas + inspector      | Tree, HouseholdCard, TreeInspector, RecordInspectorDock, RecordEditor, AccessBlock, TreeLink                                                        | done ✓ |
+| B     | Records tables + pages       | RecordsScreen, RecordsTable, members, family, people, families                                                                                      | done ✓ |
+| C     | Panels, dialogs, guards      | AddPersonPanel, InvitePanel, Conflict/Consequence dialogs, Duplicate/Leaving guards, ToastSystem, GenerationRail                                    | done ✓ |
+| D     | The stylesheet               | globals.css (~6.7k lines)                                                                                                                           | done ✓ |
+| E     | Chrome, rails, onboarding    | Header, TreeRail, UserSidebar, Sidebar, TextListSidebar, GettingStarted, FirstRunCard, Loading                                                      | done ✓ |
+| F ✓   | Auth, landing, account pages | LoginScreen, Landing, signin, reset-password, reset, invite/[id], about, trees, trees/new, user/\*                                                  | done ✓ |
+| G ✓   | Shared inputs + search       | AliasesInput, CustomFieldsEditor, EventsEditor, ImageUpload, PersonForm, SegmentedControl, SearchItem, UnifiedSearch, CommandSearch, CreateTreeForm | done ✓ |
 
 ### Round 1 outcome
 
@@ -165,6 +165,34 @@ encoding a10 is the tiebreaker. Reverted.
 shell instead of `RecordsScreen`; ~830 lines of dead CSS to sweep; `ToastSystem`'s
 CSS-in-JS and its duplicate `.confirm-dialog`; the landing page's off-grid spacing;
 the four dialogs' missing focus trap.
+
+### Round 2 outcome
+
+All seven batches reviewed. Fixed (`820202c`, `f88abb1`):
+
+- **A regression round 1 introduced.** Turning `.data-list li.active` from a filled
+  red block into the §06 red wash left its child rules — written for a red
+  background — painting near-white text on cream: the selected name was invisible.
+  Caught by the round-2 reviewer. _Lesson: when a container's background changes
+  role, its descendants' colours must be re-checked._
+- Family thumbnails coloured the portrait ring **by sex** (red = husband, marigold
+  = wife), colliding with the ring's real meaning (born-in vs married-in).
+- The account page invented its own `owner|member` vocabulary from `myTrees`,
+  which can't distinguish a writer from a reader — **every editor was shown the
+  read-only chip**. It now reads the real `TreeRole` from `listMyTreeCards()`.
+- The one focus treatment restored on the search input (a 4px/15% halo vs the
+  system's 3px/10%); destructive icon button no longer fills red with a lift.
+- Colour roles on `/about` and `/user/suggestions` (marigold headings/badges,
+  green links/badges).
+
+**Deferred, and why:** `Person.sex` is **required** by the domain type, so the
+account page still defaults it when creating your record — making it optional is a
+data-model change across repositories, validators and every consumer, not a
+styling fix. Also still open: the People page on the legacy `.edit-screen` shell;
+~830 lines of dead CSS; `ToastSystem`'s CSS-in-JS + duplicate `.confirm-dialog`;
+the landing page's hand-rolled buttons, off-grid spacing and two red primaries;
+`/about`'s 140-line `<style jsx>` block; focus traps for the four dialogs and the
+⌘K panel; `EventsEditor`/`CustomFieldsEditor` inputs lacking labels.
 
 ### Baseline (measured before round 1)
 
