@@ -43,3 +43,6 @@ tsconfig.tsbuildinfo
 
 # Scratch Playwright config used to point the suite at an already-running dev server.
 playwright.*.config.ts
+
+# Database restore points (contain real people's records — never commit)
+/.backups
