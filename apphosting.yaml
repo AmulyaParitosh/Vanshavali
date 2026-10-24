@@ -1,0 +1,25 @@
+# Firebase App Hosting config for the backend serving meri-vanshavali.amulyaparitosh.in.
+# Public values are inlined (they ship in the client bundle anyway); server-only
+# credentials are Cloud Secret Manager secrets — set them with
+# `firebase apphosting:secrets:set <NAME>`.
+
+env:
+  - variable: NEXT_PUBLIC_ENV
+    value: prod
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_SITE_URL
+    value: https://meri-vanshavali.amulyaparitosh.in
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_SUPABASE_URL
+    value: https://vlvmnkuhmuafzkizzrhx.supabase.co
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_SUPABASE_ANON_KEY
+    value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsdm1ua3VobXVhZnpraXp6cmh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NDQ4NjksImV4cCI6MjA5NzEyMDg2OX0._vfTeanggYd-ZEWuZ9cStfH1Mb_YfXkAGKXHo40aSY0
+    availability: [BUILD, RUNTIME]
+
+  - variable: DATABASE_URL
+    secret: DATABASE_URL
+    availability: [RUNTIME]
+  - variable: SUPABASE_SERVICE_ROLE_KEY
+    secret: SUPABASE_SERVICE_ROLE_KEY
+    availability: [RUNTIME]
